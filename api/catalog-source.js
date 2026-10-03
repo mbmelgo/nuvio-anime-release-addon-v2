@@ -277,11 +277,14 @@ export async function buildRollingCatalog(id, date, skip, search, {
           && Number(media.id) > 0
           && isEligibleRollingMedia(media);
       });
+      const uniqueEligibleRows = [...new Map(
+        eligibleRows.map((row) => [Number(row.media.id), row]),
+      ).values()];
       if (!useBingeCatIdentity) {
         throw new Error("BingeCat identity resolution is required for production catalogs");
       }
 
-      const mediaRows = eligibleRows.map((row) => row.media);
+      const mediaRows = uniqueEligibleRows.map((row) => row.media);
       const mappings = await resolveMappingsForRows(mediaRows, {
         resolveMappings,
         resolveSecondaryMappings,
@@ -292,7 +295,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
       const usedIdentities = new Set();
       const unresolvedIds = [];
 
-      for (const row of eligibleRows) {
+      for (const row of uniqueEligibleRows) {
         const media = row.media;
         const mediaId = Number(media.id);
         const baseMeta = toCatalogIdentity(toMetaFromAniList(mediaId, media));
@@ -336,7 +339,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
         metas.push(meta);
       }
 
-      if (unresolvedIds.length || metas.length !== eligibleRows.length) {
+      if (unresolvedIds.length || metas.length !== uniqueEligibleRows.length) {
         throw new Error(
           `BingeCat identity resolution exhausted for rolling catalog; unresolved AniList IDs: ${unresolvedIds.join(",") || "unknown"}`,
         );
