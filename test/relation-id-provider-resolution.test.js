@@ -5,6 +5,7 @@ import { canonicalizeCatalogPageWithBingeCat } from "../api/catalog-source.js";
 const emptyMap = () => new Map();
 
 test("catalog identity resolution can reuse a verified provider mapping from an explicit related AniList id", async () => {
+  const searchedTitles = [];
   const metas = await canonicalizeCatalogPageWithBingeCat([{
     id: 155723,
     title: {
@@ -196,6 +197,7 @@ test("relation identity resolution derives provider installment titles", async (
     resolveAnimeMapperMappings: async () => new Map(),
     resolveTsvMappings: async () => new Map(),
     resolveImdbMappings: async (rows) => {
+      searchedTitles.push(rows[0]?.title?.english || null);
       if (rows[0]?.title?.english !== "Patlabor EZY: File 3") return new Map();
       return new Map([[212653, [{
         source: "imdb-search",
@@ -215,6 +217,7 @@ test("relation identity resolution derives provider installment titles", async (
     resolveAlternativeMappings: async () => new Map(),
   });
 
+  assert.ok(searchedTitles.includes("Patlabor EZY: File 3"), searchedTitles.join(" | "));
   assert.equal(metas.length, 1);
   assert.equal(metas[0].id, "tt39382762");
   assert.equal(metas[0].extra.anilistId, 212653);
