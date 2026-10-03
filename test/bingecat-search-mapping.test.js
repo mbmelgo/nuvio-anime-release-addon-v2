@@ -568,7 +568,7 @@ test("BingeCat search retries transient upstream failures before resolving", asy
   }], {
     fetchImpl: async () => {
       calls += 1;
-      if (calls < 3) return { ok: false, status: 429 };
+      if (calls < 3) return { ok: false, status: 503 };
       return {
         ok: true,
         async json() {
