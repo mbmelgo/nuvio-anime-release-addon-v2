@@ -581,10 +581,10 @@ function mergeMappings(base, additional) {
 
 function getCanonicalFallbackId(row, meta, mappingRecords) {
   const malId = getCanonicalMalId(row, meta, mappingRecords);
-  if (Number.isInteger(malId) && malId > 0) return `mal:${malId}`;
+  if (Number.isInteger(malId) && malId > 0) return { id: `mal:${malId}`, evidence: "canonical-mal-id-fallback" };
 
   const anilistId = Number(row?.id ?? meta?.extra?.anilistId);
-  if (Number.isInteger(anilistId) && anilistId > 0) return `anilist:${anilistId}`;
+  if (Number.isInteger(anilistId) && anilistId > 0) return { id: `anilist:${anilistId}`, evidence: "canonical-anilist-id-fallback" };
   return null;
 }
 
@@ -634,17 +634,17 @@ export async function canonicalizeCatalogPageWithBingeCat(
       if (fallbackId) {
         metas.push({
           ...meta,
-          id: fallbackId,
+          id: fallbackId.id,
           extra: {
             ...meta.extra,
             bingecatProvider: null,
             bingecatId: null,
-            bingecatEvidence: "canonical-mal-id-fallback",
+            bingecatEvidence: fallbackId.evidence,
           },
         });
         continue;
       }
-        unresolvedIds.push(anilistId);
+      unresolvedIds.push(anilistId);
       continue;
     }
 
@@ -763,12 +763,12 @@ export async function buildRollingCatalog(id, date, skip, search, {
           if (fallbackId) {
             const meta = {
               ...baseMeta,
-              id: fallbackId,
+              id: fallbackId.id,
               extra: {
                 ...baseMeta.extra,
                 bingecatProvider: null,
                 bingecatId: null,
-                bingecatEvidence: "canonical-mal-id-fallback",
+                bingecatEvidence: fallbackId.evidence,
                 episode: row.episode,
                 airingAt: row.airingAt,
                 ...(futureOnly ? {
