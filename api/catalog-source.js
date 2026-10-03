@@ -14,10 +14,10 @@ import { filterCatalogMetasBySearch, toMetaFromAniList } from "../lib/catalog-me
 import { queryAnime, queryAiringSchedulePage } from "../lib/catalog-anilist.js";
 import { resolveAniListMappings } from "../lib/arm-mapping.js";
 import { resolveAniListMappingsFribb } from "../lib/fribb-mapping.js";
+import { resolveAniListExternalMappings } from "../lib/external-provider-mapping.js";
 import { getBingeCatCandidates, selectBingeCatIdentity } from "../lib/bingecat-identity.js";
 import {
   resolveAniListMappingsSecondary,
-  resolveAniListMappingsFromDump,
   resolveAniListMappingsByMalIds,
 } from "../lib/secondary-mapping.js";
 
@@ -104,7 +104,7 @@ async function resolveMappingsForRows(
   {
     resolveMappings = resolveAniListMappings,
     resolveFribbMappings = resolveAniListMappingsFribb,
-    resolveAnimeApiDumpMappings = resolveAniListMappingsFromDump,
+    resolveExternalMappings = resolveAniListExternalMappings,
     resolveSecondaryMappings = resolveAniListMappingsSecondary,
     resolveAlternativeMappings = resolveAniListMappingsByMalIds,
   } = {},
@@ -138,12 +138,8 @@ async function resolveMappingsForRows(
   ));
 
   if (unresolvedRows.length) {
-    try {
-      const datasetMappings = await resolveAnimeApiDumpMappings(unresolvedRows.map((row) => Number(row.id)));
-      mappings = mergeMappings(mappings, datasetMappings);
-    } catch (error) {
-      console.error("[identity] AnimeAPI dataset failed; trying live AnimeAPI", error);
-    }
+    const externalMappings = resolveExternalMappings(unresolvedRows);
+    mappings = mergeMappings(mappings, externalMappings);
   }
 
   unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
