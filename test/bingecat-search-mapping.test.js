@@ -507,3 +507,18 @@ test("BingeCat cache is scoped to the AniList identity", async () => {
   await resolveAniListMappingsByBingeCatSearch([rows[1]], { fetchImpl });
   assert.equal(calls, 2);
 });
+
+
+test("TEMP probe live BingeCat for Uncle's Obsession with Cute Things", async () => {
+  clearBingeCatSearchCache();
+  const result = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 202079,
+    idMal: 62907,
+    format: "TV",
+    startDate: { year: 2026 },
+    title: { english: "Uncle's Obsession with Cute Things", romaji: "Oji-san wa Kawaii Mono ga Osuki.", native: "おじさんはカワイイものがお好き。" },
+    synonyms: ["Pops Loves Kawaii Stuff", "This Uncle Likes Cute Things", "Ojikawa", "おじかわ"],
+  }]);
+  console.log("TEMP_BINGECAT_202079", JSON.stringify(result.get(202079) || []));
+  assert.ok(result instanceof Map);
+});
