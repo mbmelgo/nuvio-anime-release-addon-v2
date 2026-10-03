@@ -620,7 +620,7 @@ export async function canonicalizeCatalogPageWithBingeCat(
       { excludeIds: usedIdentities },
     );
 
-    if (!selected) {
+    if (!selected?.bingecatVerified) {
       const malId = getCanonicalMalId(row, meta, mappings.get(anilistId) || []);
       if (Number.isInteger(malId) && malId > 0) {
         metas.push({
@@ -751,7 +751,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
           getBingeCatCandidates(media, mappings.get(mediaId) || []),
           { excludeIds: usedIdentities },
         );
-        if (!selected) {
+        if (!selected?.bingecatVerified) {
           const malId = getCanonicalMalId(media, baseMeta, mappings.get(mediaId) || []);
           if (Number.isInteger(malId) && malId > 0) {
             const meta = {
