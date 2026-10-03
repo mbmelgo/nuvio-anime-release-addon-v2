@@ -76,3 +76,5 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   await validateProduction(baseUrl, expectedVersion);
   console.log("Production validation passed.");
 }
+
+// Release finalization target: production deployment already exists for a7bb721c66dadc526dc8cec3d776405ac4f11667.
