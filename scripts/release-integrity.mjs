@@ -18,6 +18,16 @@ export function incrementMinor(version) {
   return `${major}.${minor + 1}.0`;
 }
 
+export function incrementMajor(version) {
+  const [major] = parseVersion(version);
+  return `${major + 1}.0.0`;
+}
+
+export function isValidNextReleaseVersion(productionVersion, nextReleaseVersion) {
+  return nextReleaseVersion === incrementMinor(productionVersion) ||
+    nextReleaseVersion === incrementMajor(productionVersion);
+}
+
 export function validateVersionConsistency({
   addonVersion,
   packageVersion,
@@ -35,8 +45,8 @@ export function validateVersionConsistency({
   if (!isUnreleasedBaseline && (!/^v\d+\.\d+\.\d+$/.test(productionTag) || productionTag !== `v${productionVersion}`)) {
     throw new Error(`Production tag ${productionTag} does not match production version ${productionVersion}.`);
   }
-  if (incrementMinor(productionVersion) !== nextReleaseVersion) {
-    throw new Error(`Next release ${nextReleaseVersion} is not the minor increment of production ${productionVersion}.`);
+  if (!isValidNextReleaseVersion(productionVersion, nextReleaseVersion)) {
+    throw new Error(`Next release ${nextReleaseVersion} must be either the minor increment or major baseline of production ${productionVersion}.`);
   }
   if (!Number.isInteger(deploymentsSincePause) || !Number.isInteger(deploymentLimit) ||
       deploymentsSincePause < 0 || deploymentLimit <= 0 || deploymentsSincePause > deploymentLimit) {
