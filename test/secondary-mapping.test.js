@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { clearSecondaryMappingCache, normalizeAnimeApiRecord, resolveAniListMappingsSecondary } from "../lib/secondary-mapping.js";
+import { clearSecondaryMappingCache, normalizeAnimeApiRecord, resolveAniListMappingsSecondary, resolveAniListMappingsFromDump } from "../lib/secondary-mapping.js";
 
 
 test("AnimeAPI dataset resolves AniList mappings without per-ID requests", async () => {
