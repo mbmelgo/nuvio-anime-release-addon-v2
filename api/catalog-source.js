@@ -322,7 +322,7 @@ async function resolveMappingsForRows(
 
   if (unverifiedRows.length) {
     try {
-      const verificationMappings = await resolveBingeCatSearchMappings(unverifiedRows);
+      const verificationMappings = await resolveBingeCatSearchMappings(unverifiedRows, { bypassNegativeCache: true });
       mappings = mergeMappings(mappings, verificationMappings);
     } catch (error) {
       console.error("[identity] final BingeCat verification failed; preserving existing fallbacks", error);
