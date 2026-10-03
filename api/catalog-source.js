@@ -16,6 +16,7 @@ import { resolveAniListMappings } from "../lib/arm-mapping.js";
 import { resolveAniListMappingsFribb } from "../lib/fribb-mapping.js";
 import { resolveAniListExternalMappings } from "../lib/external-provider-mapping.js";
 import { resolveAniListMappingsAnimap } from "../lib/animap-mapping.js";
+import { resolveAniListMappingsIdMapper } from "../lib/idmapper-mapping.js";
 import { resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
 import { resolveAniListMappingsFromAnimeApiTsv } from "../lib/animeapi-tsv-mapping.js";
 import { getBingeCatCandidates, selectBingeCatIdentity } from "../lib/bingecat-identity.js";
@@ -109,6 +110,7 @@ async function resolveMappingsForRows(
     resolveFribbMappings = resolveAniListMappingsFribb,
     resolveExternalMappings = resolveAniListExternalMappings,
     resolveAnimapMappings = resolveAniListMappingsAnimap,
+    resolveIdMapperMappings = resolveAniListMappingsIdMapper,
     resolveTsvMappings = resolveAniListMappingsFromAnimeApiTsv,
     resolveImdbMappings = resolveAniListMappingsByImdbSearch,
     resolveSecondaryMappings = resolveAniListMappingsSecondary,
@@ -159,6 +161,20 @@ async function resolveMappingsForRows(
       mappings = mergeMappings(mappings, animapMappings);
     } catch (error) {
       console.error("[identity] AniMap mapping failed; trying AnimeAPI TSV", error);
+    }
+  }
+
+  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
+
+  if (unresolvedRows.length) {
+    try {
+      const idMapperMappings = await resolveIdMapperMappings(unresolvedRows.map((row) => Number(row.id)));
+      mappings = mergeMappings(mappings, idMapperMappings);
+    } catch (error) {
+      console.error("[identity] IDMapper mapping failed; trying AnimeAPI TSV", error);
     }
   }
 
