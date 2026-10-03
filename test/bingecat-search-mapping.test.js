@@ -511,6 +511,7 @@ test("BingeCat cache is scoped to the AniList identity", async () => {
 
 test("BingeCat authoritative verification can retry a cached negative result", async () => {
   clearBingeCatSearchCache();
+  let phase = 0;
   let calls = 0;
   const row = [{
     anilistId: 202079,
@@ -524,7 +525,7 @@ test("BingeCat authoritative verification can retry a cached negative result", a
 
   const fetchImpl = async () => {
     calls += 1;
-    if (calls <= 2) {
+    if (phase === 0) {
       return { ok: true, async json() { return { movies: [], series: [] }; } };
     }
     return {
@@ -544,11 +545,13 @@ test("BingeCat authoritative verification can retry a cached negative result", a
 
   const first = await resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
   assert.equal(first.has(202079), false);
+  const firstCallCount = calls;
+  phase = 1;
 
   const second = await resolveAniListMappingsByBingeCatSearch(row, {
     fetchImpl,
     bypassNegativeCache: true,
   });
   assert.equal(second.get(202079)[0].imdbIds[0], "tt43691343");
-  assert.ok(calls > 2);
+  assert.ok(calls > firstCallCount);
 });
