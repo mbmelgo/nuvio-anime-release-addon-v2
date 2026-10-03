@@ -25,6 +25,10 @@ test("temporary unresolved provider investigation", async () => {
 
     const media = anilist?.data?.Media || null;
     const mapper = await fetch(`https://idmapper.vercel.app/api/mapper?anilist_id=${id}`).then((r) => r.json()).catch((e) => ({ error: String(e) }));
-    console.log(JSON.stringify({ id, media, mapper }));
+    const malId = media?.idMal;
+    const mapperMal = malId ? await fetch(`https://idmapper.vercel.app/api/mapper?mal_id=${malId}`).then((r) => r.json()).catch((e) => ({ error: String(e) })) : null;
+    const animap = await fetch(`https://animap.id/api/v1/map/anilist/${id}`).then((r) => r.json()).catch((e) => ({ error: String(e) }));
+    const animapMal = malId ? await fetch(`https://animap.id/api/v1/map/mal/${malId}`).then((r) => r.json()).catch((e) => ({ error: String(e) })) : null;
+    console.log(JSON.stringify({ id, media, mapper, mapperMal, animap, animapMal }));
   }
 });
