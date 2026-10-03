@@ -43,8 +43,8 @@ test("BingeCat search consumes AniList-shaped title, format, year, MAL, and syno
   const result = await resolveAniListMappingsByBingeCatSearch([{
     id: 212653,
     idMal: 999001,
-    format: "OVA",
-    startDate: { year: 2027 },
+    format: "MOVIE",
+    startDate: { year: 2026 },
     title: {
       english: "Patlabor EZY File 3",
       romaji: "Kidou Keisatsu Patlabor EZY File 3",
@@ -65,7 +65,7 @@ test("BingeCat search consumes AniList-shaped title, format, year, MAL, and syno
                 id: "tt39382762",
                 tmdbId: 1633794,
                 contentType: "movie",
-                year: 2027,
+                year: 2026,
               }],
             };
           },
@@ -127,6 +127,78 @@ test("BingeCat search can fall back to keyword-only exact search", async () => {
   const record = result.get(202390)[0];
   assert.equal(record.imdbIds[0], "tt39195693");
   assert.deepEqual(semanticRatios, ["0.55", "0"]);
+});
+
+test("BingeCat search accepts an exact base-series identity for a numbered TV/ONA continuation", async () => {
+  clearBingeCatSearchCache();
+  const result = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 199353,
+    type: "TV",
+    year: 2026,
+    titleEnglish: "Spare Me, Great Lord! 3",
+  }], {
+    fetchImpl: async (url) => {
+      const parsed = new URL(url);
+      if (parsed.searchParams.get("query") !== "Spare Me, Great Lord!") {
+        return { ok: true, async json() { return { movies: [], series: [] }; } };
+      }
+      return {
+        ok: true,
+        async json() {
+          return {
+            series: [{
+              name: "Spare Me, Great Lord!",
+              id: "tt16409202",
+              tmdbId: 146339,
+              contentType: "series",
+              year: 2021,
+            }],
+          };
+        },
+      };
+    },
+  });
+
+  const record = result.get(199353)[0];
+  assert.equal(record.imdbIds[0], "tt16409202");
+  assert.equal(record.year, null);
+});
+
+test("BingeCat search accepts an OVA movie identity when the AniList format is non-MOVIE", async () => {
+  clearBingeCatSearchCache();
+  const result = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 212653,
+    type: "TV",
+    year: 2027,
+    titleEnglish: "Patlabor EZY File 3",
+    titleRomaji: "Kidou Keisatsu Patlabor EZY File 3",
+    titleNative: "機動警察パトレイバー EZY File 3",
+  }], {
+    fetchImpl: async (url) => {
+      const parsed = new URL(url);
+      if (parsed.searchParams.get("query") !== "Kidou Keisatsu Patlabor EZY File 3") {
+        return { ok: true, async json() { return { movies: [], series: [] }; } };
+      }
+      return {
+        ok: true,
+        async json() {
+          return {
+            movies: [{
+              name: "Patlabor EZY File 3",
+              id: "tt39382762",
+              tmdbId: 1633794,
+              contentType: "movie",
+              year: 2027,
+            }],
+          };
+        },
+      };
+    },
+  });
+
+  const record = result.get(212653)[0];
+  assert.equal(record.imdbIds[0], "tt39382762");
+  assert.deepEqual(record.tmdbMovieIds, []);
 });
 
 test("BingeCat search rejects fuzzy, wrong-type, and wrong-year candidates", () => {
