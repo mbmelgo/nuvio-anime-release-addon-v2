@@ -81,6 +81,7 @@ test("catalog identity resolution preserves all source rows when the MAL bridge 
       [1, [mapping(1, "tt1000001")]],
       [2, [mapping(2, "tt1000002")]],
     ]),
+    resolveBingeCatSearchMappings: async () => new Map(),
     resolveSecondaryMappings: async () => new Map(),
     resolveAlternativeMappings: async (unresolvedRows) => {
       assert.deepEqual(unresolvedRows.map((item) => item.id), [3]);
@@ -106,6 +107,7 @@ test("catalog identity resolution uses Fribb before rate-limited secondary sourc
       assert.deepEqual(ids, [10, 11]);
       return new Map([[10, [mapping(10, "tt1000010")]]]);
     },
+    resolveBingeCatSearchMappings: async () => new Map(),
     resolveSecondaryMappings: async (ids) => {
       secondaryCalls += 1;
       assert.deepEqual(ids, [11]);
@@ -124,6 +126,7 @@ test("catalog identity resolution never silently drops an unresolved source row"
   await assert.rejects(
     canonicalizeCatalogPageWithBingeCat(rows, {
       resolveMappings: async () => new Map([[1, [mapping(1, "tt1000001")]]]),
+      resolveBingeCatSearchMappings: async () => new Map(),
       resolveSecondaryMappings: async () => new Map(),
       resolveAlternativeMappings: async () => new Map(),
     }),
@@ -137,6 +140,7 @@ test("50 AniList source rows produce exactly 50 BingeCat catalog results", async
     resolveMappings: async (ids) => new Map(
       ids.map((id) => [id, [mapping(id, `tt${String(1000000 + id)}`)]])
     ),
+    resolveBingeCatSearchMappings: async () => new Map(),
     resolveSecondaryMappings: async () => new Map(),
     resolveAlternativeMappings: async () => new Map(),
   });

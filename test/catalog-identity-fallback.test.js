@@ -102,6 +102,7 @@ test("later mapping sources supplement unsupported earlier records", async () =>
     ]]),
     resolveFribbMappings: emptyMappings,
     resolveExternalMappings: () => new Map(),
+    resolveBingeCatSearchMappings: emptyMappings,
     resolveAnimapMappings: async () => new Map([[
       123,
       [{
