@@ -253,7 +253,7 @@ test("seasonal catalog uses MAL-only mapping evidence as the final fallback", as
 });
 
 
-test("seasonal catalog executes AniMap fallback when higher-priority mapping sources are unresolved", async () => {
+test("seasonal catalog executes AniMap fallback and accepts independent corroboration", async () => {
   const calls = [];
   const metas = await canonicalizeCatalogPageWithBingeCat([{
     id: 900001,
@@ -265,20 +265,33 @@ test("seasonal catalog executes AniMap fallback when higher-priority mapping sou
     resolveFribbMappings: async () => new Map(),
     resolveExternalMappings: () => new Map(),
     resolveAnimapMappings: async (ids) => {
-      calls.push(ids);
+      calls.push(["animap", ids]);
       return new Map([[900001, [{
         source: "animap",
         anilistId: 900001,
         type: "TV",
-        imdbIds: ["tt9000001"],
-        tvdbId: null,
+        imdbIds: [],
+        tvdbId: 990001,
         tmdbTvId: null,
         tmdbMovieIds: [],
         title: "AniMap Fallback Example",
         year: 2026,
       }]]]);
     },
-    resolveIdMapperMappings: async () => new Map(),
+    resolveIdMapperMappings: async (ids) => {
+      calls.push(["idmapper", ids]);
+      return new Map([[900001, [{
+        source: "idmapper",
+        anilistId: 900001,
+        type: "TV",
+        imdbIds: [],
+        tvdbId: 990001,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: "AniMap Fallback Example",
+        year: 2026,
+      }]]]);
+    },
     resolveBingeCatSearchMappings: async () => new Map(),
     resolveAnimeMapperMappings: async () => new Map(),
     resolveTsvMappings: async () => new Map(),
@@ -287,8 +300,11 @@ test("seasonal catalog executes AniMap fallback when higher-priority mapping sou
     resolveAlternativeMappings: async () => new Map(),
   });
 
-  assert.deepEqual(calls, [[900001]]);
-  assert.equal(metas[0].id, "tt9000001");
+  assert.deepEqual(calls, [
+    ["animap", [900001]],
+    ["idmapper", [900001]],
+  ]);
+  assert.equal(metas[0].id, "tvdb:990001");
 });
 
 test("seasonal catalog executes IDMapper fallback after AniMap is unresolved", async () => {
