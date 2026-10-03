@@ -181,6 +181,29 @@ test("candidate validation rejects materially different titles", () => {
   assert.equal(normalizeTitle("  One-Piece: The Series! "), "one piece the series");
 });
 
+test("exact strong source IDs survive title mismatches when BingeCat verification is unavailable", () => {
+  const media = {
+    anilistId: 211181,
+    title: { english: "Mu Shen Ji 4", romaji: "Mu Shen Ji 4" },
+    startDate: { year: 2026 },
+    format: "TV",
+  };
+  const selected = selectBingeCatIdentity(media, getBingeCatCandidates(media, [{
+    source: "anime-mapper",
+    anilistId: 211181,
+    type: "TV",
+    imdbIds: ["tt33501934"],
+    tvdbId: null,
+    tmdbTvId: null,
+    tmdbMovieIds: [],
+    title: "Tales of Herding Gods 4",
+    year: 2026,
+  }]));
+
+  assert.equal(selected?.stremioId, "tt33501934");
+  assert.equal(selected?.bingecatVerified, false);
+});
+
 test("selected identity is a single stable BingeCat ID", () => {
   const media = { anilistId: 21, title: { english: "ONE PIECE" }, startDate: { year: 1999 }, format: "TV" };
   const selected = selectBingeCatIdentity(media, getBingeCatCandidates(media, [getMapping(21)]));
