@@ -632,20 +632,6 @@ export async function canonicalizeCatalogPageWithBingeCat(
     );
 
     if (!selected || (requireBingeCatVerification && !selected.bingecatVerified)) {
-      const malId = getCanonicalMalId(row, meta, mappings.get(anilistId) || []);
-      if (Number.isInteger(malId) && malId > 0) {
-        metas.push({
-          ...meta,
-          id: `mal:${malId}`,
-          extra: {
-            ...meta.extra,
-            bingecatProvider: null,
-            bingecatId: null,
-            bingecatEvidence: "canonical-mal-id-fallback",
-          },
-        });
-        continue;
-      }
       if (selected) {
         usedIdentities.add(selected.stremioId);
         metas.push({
@@ -662,6 +648,20 @@ export async function canonicalizeCatalogPageWithBingeCat(
         continue;
       }
 
+      const malId = getCanonicalMalId(row, meta, mappings.get(anilistId) || []);
+      if (Number.isInteger(malId) && malId > 0) {
+        metas.push({
+          ...meta,
+          id: `mal:${malId}`,
+          extra: {
+            ...meta.extra,
+            bingecatProvider: null,
+            bingecatId: null,
+            bingecatEvidence: "canonical-mal-id-fallback",
+          },
+        });
+        continue;
+      }
       metas.push({
         ...meta,
         id: `anilist:${anilistId}`,
@@ -790,16 +790,17 @@ export async function buildRollingCatalog(id, date, skip, search, {
           { excludeIds: usedIdentities },
         );
         if (!selected || (requireBingeCatVerification && !selected.bingecatVerified)) {
-          const malId = getCanonicalMalId(media, baseMeta, mappings.get(mediaId) || []);
-          if (Number.isInteger(malId) && malId > 0) {
+          if (selected) {
+            usedIdentities.add(selected.stremioId);
             const meta = {
               ...baseMeta,
-              id: `mal:${malId}`,
+              id: selected.stremioId,
               extra: {
                 ...baseMeta.extra,
-                bingecatProvider: null,
-                bingecatId: null,
-                bingecatEvidence: "canonical-mal-id-fallback",
+                bingecatProvider: selected.provider,
+                bingecatId: selected.id,
+                bingecatEvidence: "provider-id-fallback",
+                bingecatVerification: selected.bingecatVerified ? "verified" : "unverified-upstream",
                 episode: row.episode,
                 airingAt: row.airingAt,
                 ...(futureOnly ? {
@@ -812,17 +813,16 @@ export async function buildRollingCatalog(id, date, skip, search, {
             metas.push(meta);
             continue;
           }
-          if (selected) {
-            usedIdentities.add(selected.stremioId);
+          const malId = getCanonicalMalId(media, baseMeta, mappings.get(mediaId) || []);
+          if (Number.isInteger(malId) && malId > 0) {
             const meta = {
               ...baseMeta,
-              id: selected.stremioId,
+              id: `mal:${malId}`,
               extra: {
                 ...baseMeta.extra,
-                bingecatProvider: selected.provider,
-                bingecatId: selected.id,
-                bingecatEvidence: "provider-id-fallback",
-                bingecatVerification: selected.bingecatVerified ? "verified" : "unverified-upstream",
+                bingecatProvider: null,
+                bingecatId: null,
+                bingecatEvidence: "canonical-mal-id-fallback",
                 episode: row.episode,
                 airingAt: row.airingAt,
                 ...(futureOnly ? {
