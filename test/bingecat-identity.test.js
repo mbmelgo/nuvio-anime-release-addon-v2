@@ -62,6 +62,39 @@ test("Pokémon Horizons keeps its own franchise identity", () => {
   assert.equal(selected.id, "tt26692417");
 });
 
+test("final selection prioritizes a valid IMDb identity over a valid TVDB identity", () => {
+  const candidates = [
+    {
+      provider: "tvdb",
+      id: "331753",
+      stremioId: "tvdb:331753",
+      mediaType: "tv",
+      anilistId: 195604,
+      title: "Black Clover Season 2",
+      relation: true,
+    },
+    {
+      provider: "imdb",
+      id: "tt7441658",
+      stremioId: "tt7441658",
+      mediaType: "tv",
+      anilistId: 195604,
+      title: "Black Clover",
+      derivedTitle: true,
+    },
+  ];
+
+  const selected = selectBingeCatIdentity({
+    anilistId: 195604,
+    title: { english: "Black Clover Season 2", romaji: "Black Clover 2nd Season" },
+    startDate: { year: 2026 },
+    format: "TV",
+  }, candidates);
+
+  assert.equal(selected.stremioId, "tt7441658");
+  assert.equal(selected.provider, "imdb");
+});
+
 test("candidate selection rejects a franchise-mismatched candidate", () => {
   const candidates = [
     { provider: "imdb", id: "tt1234567", title: "Pokémon", year: 1997, mediaType: "tv" },
