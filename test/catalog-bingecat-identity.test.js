@@ -726,3 +726,46 @@ test("catalog verifies an already-resolved external IMDb identity through BingeC
   assert.equal(metas[0].extra.bingecatEvidence[0].source, "bingecat-search");
 });
 
+
+
+test("direct BingeCat evidence survives relation-derived evidence for the same provider ID", () => {
+  const media = {
+    id: 999005,
+    format: "TV",
+    title: { english: "Relation Evidence Example" },
+  };
+  const candidates = getBingeCatCandidates(media, [
+    {
+      source: "arm-relation",
+      anilistId: 999005,
+      imdbIds: ["tt5550005"],
+      tvdbId: null,
+      tmdbTvId: null,
+      title: "Relation Evidence Example",
+      year: 2025,
+      relation: true,
+    },
+    {
+      source: "bingecat-search",
+      anilistId: 999005,
+      imdbIds: ["tt5550005"],
+      tvdbId: null,
+      tmdbTvId: null,
+      title: "Relation Evidence Example",
+      year: 2026,
+      relation: false,
+    },
+  ]);
+
+  assert.equal(candidates.length, 1);
+  assert.equal(candidates[0].relation, false);
+  assert.equal(candidates[0].directlyCorroborated, true);
+  assert.deepEqual(candidates[0].evidence.map((entry) => entry.source).sort(), [
+    "arm-relation",
+    "bingecat-search",
+  ]);
+
+  const selected = selectBingeCatIdentity(media, candidates);
+  assert.equal(selected.id, "tt5550005");
+  assert.equal(selected.bingecatVerified, true);
+});
