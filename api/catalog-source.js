@@ -36,17 +36,10 @@ export function catalogDefinitions(info) {
 
 export function toCatalogIdentity(meta) {
   if (!meta) return null;
-
-  const malId = Number(meta.extra?.malId);
-  if (Number.isInteger(malId) && malId > 0) {
-    return { ...meta, id: `mal:${malId}` };
+  const id = String(meta.id || "");
+  if (/^tt\d+$/.test(id) || /^tvdb:[1-9]\d*$/.test(id) || /^tmdb:[1-9]\d*$/.test(id)) {
+    return { ...meta, id };
   }
-
-  const anilistId = Number(meta.extra?.anilistId);
-  if (Number.isInteger(anilistId) && anilistId > 0) {
-    return { ...meta, id: `anilist:${anilistId}` };
-  }
-
   return null;
 }
 
@@ -296,7 +289,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
       }
 
       const mediaRows = eligibleRows.map((row) => row.media);
-      const mappings = await resolveMappingsForRows(mediaRows);
+      const mappings = await resolveMappingsForRows(mediaRows, {\n        resolveMappings,\n        resolveSecondaryMappings,\n        resolveAlternativeMappings,\n      });
       const metas = [];
       const usedIdentities = new Set();
       const unresolvedIds = [];
