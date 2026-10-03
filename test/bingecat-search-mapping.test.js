@@ -273,6 +273,24 @@ test("BingeCat search uses an explicit related AniList title for a sequel", asyn
   assert.equal(record.year, null);
 });
 
+test("BingeCat search rejects token-compatible candidates from a different year", () => {
+  const row = {
+    anilistId: 202391,
+    type: "TV",
+    year: 2026,
+    titles: ["The Shared Detective"],
+  };
+
+  assert.equal(selectExactCandidate({
+    series: [{
+      name: "The Shared Detective Special",
+      id: "tt87654322",
+      contentType: "series",
+      year: 2020,
+    }],
+  }, row), null);
+});
+
 test("BingeCat search rejects fuzzy, wrong-type, and wrong-year candidates", () => {
   const row = {
     anilistId: 202390,
