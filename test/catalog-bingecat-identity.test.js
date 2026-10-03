@@ -808,3 +808,31 @@ test("direct BingeCat evidence survives relation-derived evidence for the same p
   assert.equal(selected.id, "tt5550005");
   assert.equal(selected.bingecatVerified, true);
 });
+
+
+test("seasonal catalog preserves an entry with AniList fallback when BingeCat and MAL are unavailable", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 900999,
+    title: { english: "No Provider Example", romaji: "No Provider Example" },
+    format: "TV",
+    startDate: { year: 2026 },
+    coverImage: { large: null },
+  }], {
+    requireBingeCatVerification: true,
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "anilist:900999");
+  assert.equal(metas[0].extra.bingecatEvidence, "anilist-id-fallback");
+});
