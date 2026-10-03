@@ -579,6 +579,15 @@ function mergeMappings(base, additional) {
   return merged;
 }
 
+function getCanonicalFallbackId(row, meta, mappingRecords) {
+  const malId = getCanonicalMalId(row, meta, mappingRecords);
+  if (Number.isInteger(malId) && malId > 0) return `mal:${malId}`;
+
+  const anilistId = Number(row?.id ?? meta?.extra?.anilistId);
+  if (Number.isInteger(anilistId) && anilistId > 0) return `anilist:${anilistId}`;
+  return null;
+}
+
 function getCanonicalMalId(row, meta, mappingRecords) {
   const direct = Number(row?.idMal ?? meta?.extra?.malId);
   if (Number.isInteger(direct) && direct > 0) return direct;
@@ -621,11 +630,11 @@ export async function canonicalizeCatalogPageWithBingeCat(
     );
 
     if (!selected) {
-      const malId = getCanonicalMalId(row, meta, mappings.get(anilistId) || []);
-      if (Number.isInteger(malId) && malId > 0) {
+      const fallbackId = getCanonicalFallbackId(row, meta, mappings.get(anilistId) || []);
+      if (fallbackId) {
         metas.push({
           ...meta,
-          id: `mal:${malId}`,
+          id: fallbackId,
           extra: {
             ...meta.extra,
             bingecatProvider: null,
@@ -635,7 +644,7 @@ export async function canonicalizeCatalogPageWithBingeCat(
         });
         continue;
       }
-      unresolvedIds.push(anilistId);
+        unresolvedIds.push(anilistId);
       continue;
     }
 
@@ -653,9 +662,7 @@ export async function canonicalizeCatalogPageWithBingeCat(
   }
 
   if (unresolvedIds.length) {
-    throw new Error(
-      `BingeCat identity resolution exhausted; unresolved AniList IDs: ${unresolvedIds.join(",") || "unknown"}`,
-    );
+    console.warn("[identity] catalog rows could not be represented by a canonical fallback", { unresolvedIds });
   }
 
   return metas;
@@ -752,11 +759,11 @@ export async function buildRollingCatalog(id, date, skip, search, {
           { excludeIds: usedIdentities },
         );
         if (!selected) {
-          const malId = getCanonicalMalId(media, baseMeta, mappings.get(mediaId) || []);
-          if (Number.isInteger(malId) && malId > 0) {
+          const fallbackId = getCanonicalFallbackId(media, baseMeta, mappings.get(mediaId) || []);
+          if (fallbackId) {
             const meta = {
               ...baseMeta,
-              id: `mal:${malId}`,
+              id: fallbackId,
               extra: {
                 ...baseMeta.extra,
                 bingecatProvider: null,
@@ -804,9 +811,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
       }
 
       if (unresolvedIds.length) {
-        throw new Error(
-          `BingeCat identity resolution exhausted for rolling catalog; unresolved AniList IDs: ${unresolvedIds.join(",") || "unknown"}`,
-        );
+        console.warn("[identity] rolling catalog rows could not be represented by a canonical fallback", { unresolvedIds });
       }
 
       return filterCatalogMetasBySearch(metas, search);
