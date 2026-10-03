@@ -14,6 +14,7 @@ import { filterCatalogMetasBySearch, toMetaFromAniList } from "../lib/catalog-me
 import { queryAnime, queryAiringSchedulePage } from "../lib/catalog-anilist.js";
 import { resolveAniListMappings } from "../lib/arm-mapping.js";
 import { getBingeCatCandidates, selectBingeCatIdentity } from "../lib/bingecat-identity.js";
+import { resolveAniListMappingsSecondary } from "../lib/secondary-mapping.js";
 
 export {
   ANILIST_PAGE_SIZE,
@@ -95,7 +96,7 @@ export function normalizeSeasonalCatalogMetaTypes(metas) {
 
 export async function canonicalizeCatalogPageWithBingeCat(
   mediaRows,
-  { resolveMappings = resolveAniListMappings } = {},
+  { resolveMappings = resolveAniListMappings, resolveSecondaryMappings = resolveAniListMappingsSecondary } = {},
 ) {
   const normalizedRows = Array.isArray(mediaRows)
     ? mediaRows
@@ -109,8 +110,23 @@ export async function canonicalizeCatalogPageWithBingeCat(
   try {
     mappings = await resolveMappings(ids);
   } catch (error) {
-    console.error("[identity] ARM mapping failed; retaining legacy catalog identities", error);
-    return canonicalizeCatalogPage(normalizedRows);
+    console.error("[identity] ARM mapping failed; using secondary mapping source", error);
+    mappings = new Map();
+  }
+
+  const unresolvedIds = normalizedRows
+    .filter((row) => !selectBingeCatIdentity(
+      { ...row, anilistId: Number(row.id) },
+      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    ))
+    .map((row) => Number(row.id));
+  if (unresolvedIds.length) {
+    try {
+      const secondary = await resolveSecondaryMappings(unresolvedIds);
+      mappings = new Map([...mappings, ...secondary]);
+    } catch (error) {
+      console.error("[identity] secondary mapping source failed", error);
+    }
   }
 
   return normalizedRows
@@ -123,7 +139,7 @@ export async function canonicalizeCatalogPageWithBingeCat(
       const media = { ...row, anilistId };
       const records = mappings.get(anilistId) || [];
       const selected = selectBingeCatIdentity(media, getBingeCatCandidates(media, records));
-      if (!selected) return meta;
+      if (!selected) return null;
 
       return {
         ...meta,
@@ -207,7 +223,22 @@ export async function buildRollingCatalog(id, date, skip, search, {
         try {
           mappings = await resolveAniListMappings(eligibleRows.map((row) => Number(row.media.id)));
         } catch (error) {
-          console.error("[identity] ARM rolling mapping failed; retaining legacy catalog identities", error);
+          console.error("[identity] ARM rolling mapping failed; using secondary mapping source", error);
+        }
+
+        const unresolved = eligibleRows
+          .filter((row) => !selectBingeCatIdentity(
+            { ...row.media, anilistId: Number(row.media.id) },
+            getBingeCatCandidates(row.media, mappings.get(Number(row.media.id)) || []),
+          ))
+          .map((row) => Number(row.media.id));
+        if (unresolved.length) {
+          try {
+            const secondary = await resolveAniListMappingsSecondary(unresolved);
+            mappings = new Map([...mappings, ...secondary]);
+          } catch (error) {
+            console.error("[identity] secondary rolling mapping failed", error);
+          }
         }
       }
 
@@ -224,6 +255,8 @@ export async function buildRollingCatalog(id, date, skip, search, {
               getBingeCatCandidates(media, mappings.get(mediaId) || []),
             )
           : null;
+        if (useBingeCatIdentity && !selected) continue;
+
         const meta = selected
           ? {
               ...baseMeta,
