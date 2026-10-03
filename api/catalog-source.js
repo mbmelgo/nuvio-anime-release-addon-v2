@@ -277,9 +277,14 @@ export async function buildRollingCatalog(id, date, skip, search, {
           && Number(media.id) > 0
           && isEligibleRollingMedia(media);
       });
-      const uniqueEligibleRows = [...new Map(
-        eligibleRows.map((row) => [Number(row.media.id), row]),
-      ).values()];
+      const uniqueEligibleRows = [];
+      const seenMediaIds = new Set();
+      for (const row of eligibleRows) {
+        const mediaId = Number(row.media.id);
+        if (seenMediaIds.has(mediaId)) continue;
+        seenMediaIds.add(mediaId);
+        uniqueEligibleRows.push(row);
+      }
       if (!useBingeCatIdentity) {
         throw new Error("BingeCat identity resolution is required for production catalogs");
       }
