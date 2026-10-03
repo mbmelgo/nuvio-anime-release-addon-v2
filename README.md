@@ -172,6 +172,8 @@ The 1.1.0 release carries the BingeCat identity-verification, cache-safety, rela
 
 The 1.2.0 corrective release refreshes cached negative BingeCat results during the authoritative verification pass so transient misses cannot mask a supported identity.
 
+The 1.3.0 corrective release reduces redundant BingeCat searches for already-resolved identities, lowering upstream request pressure while retaining the authoritative verification pass.
+
 The 1.0.0 release establishes the major baseline for the production-ready identity-resolution architecture, including provenance-aware validation, generalized weak-provider rejection, and the complete fallback chain.
 
 This release is the controlled production baseline for continued P0 identity-resolution work.
