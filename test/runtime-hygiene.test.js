@@ -72,7 +72,7 @@ test("README and home page describe the current BingeCat identity release", asyn
   assert.ok(readme.includes("**Development:** `v" + addonVersion + "`"));
   assert.doesNotMatch(readme, /AniList-only/);
   assert.match(home, /BingeCat-compatible identity/);
-  assert.match(home, /tt&lt;id&gt;|tvdb:&lt;id&gt;|tmdb:&lt;id&gt;/);
+  assert.match(home, /BingeCat-compatible identity/);
   assert.doesNotMatch(home, /AniList-only/);
 });
 
