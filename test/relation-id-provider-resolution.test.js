@@ -139,3 +139,87 @@ test("relation identity resolution falls back to IMDb for the related title", as
   assert.equal(metas[0].id, "tt20769560");
   assert.equal(metas[0].extra.anilistId, 155723);
 });
+
+
+test("relation identity resolution derives provider installment titles", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 212653,
+    title: {
+      english: null,
+      romaji: "Kidou Keisatsu Patlabor EZY File 3",
+      native: "機動警察パトレイバー EZY File 3",
+    },
+    synonyms: ["パトレイバー EZY File 3"],
+    status: "NOT_YET_RELEASED",
+    format: "OVA",
+    isAdult: false,
+    startDate: { year: 2027 },
+    coverImage: { large: null },
+    relations: {
+      edges: [{
+        relationType: "PREQUEL",
+        node: {
+          id: 212652,
+          format: "OVA",
+          title: {
+            english: null,
+            romaji: "Kidou Keisatsu Patlabor EZY File 2",
+            native: "機動警察パトレイバー EZY File 2",
+          },
+          startDate: { year: 2026 },
+          synonyms: [],
+          externalLinks: [],
+        },
+      }],
+    },
+  }], {
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: emptyMap,
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async (rows) => {
+      const title = rows[0]?.title?.english;
+      if (title === "Patlabor EZY: File 3") {
+        return new Map([[212653, [{
+          source: "imdb-search",
+          anilistId: 212653,
+          type: "TV",
+          imdbIds: ["tt39382762"],
+          tvdbId: null,
+          tmdbTvId: null,
+          tmdbMovieIds: [],
+          title: "Patlabor EZY: File 3",
+          year: 2027,
+          season: null,
+          episodeOffset: null,
+        }]]]);
+      }
+      if (rows[0]?.id === 212652) {
+        return new Map([[212652, [{
+          source: "imdb-search",
+          anilistId: 212652,
+          type: "TV",
+          imdbIds: ["tt39382758"],
+          tvdbId: null,
+          tmdbTvId: null,
+          tmdbMovieIds: [],
+          title: "Patlabor EZY: File 2",
+          year: 2026,
+          season: null,
+          episodeOffset: null,
+        }]]]);
+      }
+      return new Map();
+    },
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "tt39382762");
+  assert.equal(metas[0].extra.anilistId, 212653);
+});
