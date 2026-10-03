@@ -1,10 +1,9 @@
 import test from "node:test";
 
-test("temporary BingeCat Meilisearch request contract investigation", async () => {
+test("temporary BingeCat Meilisearch query builder investigation", async () => {
   const html = await fetch("https://bingecat.com/").then((r) => r.text());
-  const needles = ["fetch(\`\${API_ENDPOINT}?", "const qs =", "API_ENDPOINT ="];
-  for (const needle of needles) {
+  for (const needle of ["function buildSearchQueryParams", "function performSearch"]) {
     const index = html.indexOf(needle);
-    console.log(JSON.stringify({ needle, index, snippet: index >= 0 ? html.slice(Math.max(0, index - 5000), index + 12000) : null }));
+    console.log(JSON.stringify({ needle, index, snippet: index >= 0 ? html.slice(index, index + 12000) : null }));
   }
 });
