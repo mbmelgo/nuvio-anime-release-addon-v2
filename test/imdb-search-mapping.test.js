@@ -8,15 +8,15 @@ test("IMDb fallback selects a title-compatible, year-compatible IMDb result", as
     idMal: 456,
     format: "TV",
     startDate: { year: 2026 },
-    title: { english: "Example Anime", romaji: "Example Anime", native: "例" },
+    title: { english: "Another Example Anime", romaji: "Another Example Anime", native: "例" },
     synonyms: [],
   }], {
     endpoint: "https://example.test/suggestion/x/",
     fetchImpl: async () => new Response(JSON.stringify({
       d: [
         { id: "tt9999999", l: "Unrelated Title", y: 2026 },
-        { id: "tt1234567", l: "Example Anime", y: 2026 },
-        { id: "tt7654321", l: "Example Anime", y: 2020 },
+        { id: "tt1234567", l: "Another Example Anime", y: 2026 },
+        { id: "tt7654321", l: "Another Example Anime", y: 2020 },
       ],
     }), { status: 200 }),
   });
@@ -30,7 +30,7 @@ test("IMDb fallback does not invent a mapping for incompatible search results", 
     id: 123,
     format: "TV",
     startDate: { year: 2026 },
-    title: { english: "Example Anime", romaji: "Example Anime", native: "例" },
+    title: { english: "Another Example Anime", romaji: "Another Example Anime", native: "例" },
   }], {
     endpoint: "https://example.test/suggestion/x/",
     fetchImpl: async () => new Response(JSON.stringify({
