@@ -520,3 +520,49 @@ test("seasonal catalog rejects an unrelated franchise identity returned from a r
   assert.equal(metas[0].id, "mal:64718");
   assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
 });
+
+
+test("seasonal catalog accepts a BingeCat parent identity across numbered installment titles", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 216860,
+    idMal: 63823,
+    title: { english: "Punirunes Puni 4", romaji: "Punirunes Puni 4" },
+    format: "TV_SHORT",
+    startDate: { year: 2026 },
+    relations: {
+      edges: [{
+        relationType: "PREQUEL",
+        node: { title: { english: "Punirunes Puni 3", romaji: "Punirunes Puni 3" } },
+      }],
+    },
+  }], {
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map([[216860, [{
+      source: "bingecat-search",
+      anilistId: 216860,
+      type: "TV_SHORT",
+      imdbIds: ["tt12345678"],
+      tvdbId: null,
+      tmdbTvId: 123456,
+      tmdbMovieIds: [],
+      title: "Punirunes Puni 3",
+      year: null,
+      relation: false,
+      derivedTitle: true,
+      relatedTitleSearch: true,
+      relatedSearchTitles: ["Punirunes Puni 3"],
+    }]]]),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "tt12345678");
+});
