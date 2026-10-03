@@ -215,7 +215,7 @@ jobs:
 
           assert root.get("version") == expected
           assert root.get("id") == "com.marki.nuvio.anime-releases"
-          assert root.get("identityMode") == "mal"
+          assert root.get("identityMode") == "bingecat"
           assert root.get("resources") == [{"name": "catalog", "types": ["anime"]}]
           assert root.get("types") == ["anime"]
           assert root.get("catalogs") and all(c.get("type") == "anime" for c in root["catalogs"])
@@ -223,9 +223,9 @@ jobs:
 
           metas = catalog.get("metas", [])
           assert metas
-          assert all(re.match(r"^(mal:\d+|anilist:\d+)$", str(m.get("id", ""))) for m in metas)
+          assert all(re.match(r"^(tt\d+|tvdb:\d+|tmdb:\d+)$", str(m.get("id", ""))) for m in metas)
           assert all(m.get("type") == "series" for m in metas)
-          assert any(str(m.get("id", "")).startswith("mal:") for m in metas)
+          assert any(str(m.get("id", "")).startswith("tt") for m in metas)
           PY
             then
               echo "Production smoke test passed."

@@ -6,13 +6,13 @@ export const PRODUCTION_CATALOG_IDS = [
   "previous_7_days",
 ];
 
-const ID_PATTERN = /^(mal|anilist):[1-9]\d*$/;
+const ID_PATTERN = /^(tt\d+|tvdb:[1-9]\d*|tmdb:[1-9]\d*)$/;
 
 export function validateManifest(manifest, expectedVersion) {
   if (!manifest || typeof manifest !== "object") throw new Error("Manifest is not an object.");
   if (manifest.version !== expectedVersion) throw new Error(`Manifest version ${manifest.version} does not match expected ${expectedVersion}.`);
   if (manifest.id !== "com.marki.nuvio.anime-releases") throw new Error("Manifest addon id is invalid.");
-  if (manifest.identityMode !== "mal") throw new Error("Manifest identity mode must be mal.");
+  if (manifest.identityMode !== "bingecat") throw new Error("Manifest identity mode must be bingecat.");
   if (JSON.stringify(manifest.resources) !== JSON.stringify([{ name: "catalog", types: ["anime"] }])) {
     throw new Error("Manifest resources do not match the Nuvio catalog contract.");
   }
