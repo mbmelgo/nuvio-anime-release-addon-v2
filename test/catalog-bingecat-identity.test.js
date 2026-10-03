@@ -60,6 +60,50 @@ test("seasonal catalog fails explicitly instead of dropping entries without a su
   }), /BingeCat identity resolution exhausted.*269/);
 });
 
+test("seasonal catalog drops an unresolved non-Japan/Korea entry only after identity resolution is exhausted", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 214974,
+    countryOfOrigin: "CN",
+    title: { english: "The Guardian of Daxia", romaji: "Da Xia Shou Mu Ren" },
+    format: "ONA",
+  }], {
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.deepEqual(metas, []);
+});
+
+test("seasonal catalog still fails for an unresolved Japan or Korea entry", async () => {
+  await assert.rejects(canonicalizeCatalogPageWithBingeCat([{
+    id: 269,
+    countryOfOrigin: "JP",
+    title: { romaji: "Bleach" },
+    format: "TV",
+  }], {
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  }), /BingeCat identity resolution exhausted.*269/);
+});
+
 test("seasonal catalog uses the secondary mapping source without dropping the entry", async () => {
   const metas = await canonicalizeCatalogPageWithBingeCat([{
     id: 269,
