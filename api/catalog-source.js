@@ -94,6 +94,17 @@ export default async function handler(req, res) {
   return send(res, { error: "Not found" }, 404);
 }
 
+export function filterAiringRowsBySearch(rows, search) {
+  const normalizedRows = Array.isArray(rows) ? rows : [];
+  if (!String(search || "").trim()) return normalizedRows;
+  return normalizedRows.filter((row) =>
+    filterCatalogMetasBySearch(
+      [toMetaFromAniList(Number(row?.media?.id), row?.media)],
+      search,
+    ).length > 0
+  );
+}
+
 export function getCatalogFilter(id, info) {
   if (id === "current_season") return { season: info.ongoing, sort: ["ID"] };
   if (id === "previous_season") return { season: info.previous, sort: ["ID"] };
@@ -736,7 +747,8 @@ export async function buildRollingCatalog(id, date, skip, search, {
         throw new Error("BingeCat identity resolution is required for production catalogs");
       }
 
-      const mediaRows = uniqueEligibleRows.map((row) => row.media);
+      const searchedRows = filterAiringRowsBySearch(uniqueEligibleRows, search);
+      const mediaRows = searchedRows.map((row) => row.media);
       const mappings = await resolveMappingsForRows(mediaRows, {
         resolveMappings,
         resolveSecondaryMappings,
