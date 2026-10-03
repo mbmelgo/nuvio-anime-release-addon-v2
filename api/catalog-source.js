@@ -42,6 +42,11 @@ export function catalogDefinitions(info) {
   return getCatalogDefinitions(info);
 }
 
+export function canDropUnresolvedCatalogRow(row) {
+  const countryOfOrigin = String(row?.countryOfOrigin || "").trim().toUpperCase();
+  return Boolean(countryOfOrigin) && countryOfOrigin !== "JP" && countryOfOrigin !== "KR";
+}
+
 export function toCatalogIdentity(meta) {
   if (!meta) return null;
 
@@ -517,7 +522,7 @@ export async function canonicalizeCatalogPageWithBingeCat(
     const anilistId = Number(row.id);
     const rawMeta = toCatalogIdentity(toMetaFromAniList(anilistId, row));
     if (!rawMeta) {
-      unresolvedIds.push(anilistId);
+      if (!canDropUnresolvedCatalogRow(row)) unresolvedIds.push(anilistId);
       continue;
     }
 
@@ -529,7 +534,7 @@ export async function canonicalizeCatalogPageWithBingeCat(
     );
 
     if (!selected) {
-      unresolvedIds.push(anilistId);
+      if (!canDropUnresolvedCatalogRow(row)) unresolvedIds.push(anilistId);
       continue;
     }
 
@@ -546,7 +551,7 @@ export async function canonicalizeCatalogPageWithBingeCat(
     });
   }
 
-  if (unresolvedIds.length || metas.length !== normalizedRows.length) {
+  if (unresolvedIds.length) {
     throw new Error(
       `BingeCat identity resolution exhausted; unresolved AniList IDs: ${unresolvedIds.join(",") || "unknown"}`,
     );
@@ -649,7 +654,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
         const mediaId = Number(media.id);
         const baseMeta = toCatalogIdentity(toMetaFromAniList(mediaId, media));
         if (!baseMeta) {
-          unresolvedIds.push(mediaId);
+          if (!canDropUnresolvedCatalogRow(media)) unresolvedIds.push(mediaId);
           continue;
         }
 
@@ -659,7 +664,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
           { excludeIds: usedIdentities },
         );
         if (!selected) {
-          unresolvedIds.push(mediaId);
+          if (!canDropUnresolvedCatalogRow(media)) unresolvedIds.push(mediaId);
           continue;
         }
 
@@ -688,7 +693,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
         metas.push(meta);
       }
 
-      if (unresolvedIds.length || metas.length !== uniqueEligibleRows.length) {
+      if (unresolvedIds.length) {
         throw new Error(
           `BingeCat identity resolution exhausted for rolling catalog; unresolved AniList IDs: ${unresolvedIds.join(",") || "unknown"}`,
         );
