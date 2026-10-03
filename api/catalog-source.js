@@ -285,6 +285,7 @@ async function resolveRelationMappings(rows, {
 }) {
   const relationIds = [];
   const rowRelations = new Map();
+  const currentRows = new Map();
   const relationRows = new Map();
 
   for (const row of Array.isArray(rows) ? rows : []) {
@@ -299,6 +300,7 @@ async function resolveRelationMappings(rows, {
 
     const relations = relationEdges.map((edge) => Number(edge.node.id));
     rowRelations.set(currentId, relations);
+    currentRows.set(currentId, row);
     relationIds.push(...relations);
 
     for (const edge of relationEdges) {
@@ -356,8 +358,60 @@ async function resolveRelationMappings(rows, {
     }
   }
 
+  const installmentRows = [];
+  let installmentMappings = new Map();
+  if (typeof resolveImdbMappings === "function") {
+    for (const [currentId, relatedIds] of rowRelations) {
+      const currentRow = currentRows.get(currentId);
+      for (const relatedId of relatedIds) {
+        const providerRecords = relationMappings.get(relatedId) || [];
+        const relatedRow = relationRows.get(relatedId);
+        for (const record of providerRecords) {
+          const providerTitle = record?.title || record?.titles?.[0];
+          const derivedTitle = deriveRelatedInstallmentProviderTitle(
+            currentRow,
+            relatedRow,
+            providerTitle,
+          );
+          if (!derivedTitle) continue;
+          installmentRows.push({
+            ...currentRow,
+            id: currentId,
+            title: { english: derivedTitle, romaji: derivedTitle, native: derivedTitle },
+            synonyms: [],
+            relations: { edges: [] },
+          });
+        }
+      }
+    }
+  }
+
+  if (installmentRows.length && typeof resolveImdbMappings === "function") {
+    try {
+      const resolvedInstallmentMappings = await resolveImdbMappings(installmentRows);
+      installmentMappings = new Map(
+        [...(resolvedInstallmentMappings instanceof Map ? resolvedInstallmentMappings : [])]
+          .map(([id, records]) => [
+            id,
+            (Array.isArray(records) ? records : []).map((record) => ({
+              ...record,
+              derivedTitle: true,
+            })),
+          ]),
+      );
+    } catch (error) {
+      console.error("[identity] IMDb related-installment mapping failed", error);
+    }
+  }
+
   const result = new Map();
   for (const [currentId, relatedIds] of rowRelations) {
+    const exactInstallmentRecords = installmentMappings.get(currentId) || [];
+    if (exactInstallmentRecords.length) {
+      result.set(currentId, exactInstallmentRecords);
+      continue;
+    }
+
     const records = [];
     for (const relatedId of relatedIds) {
       for (const record of relationMappings.get(relatedId) || []) {
@@ -377,6 +431,61 @@ async function resolveRelationMappings(rows, {
   }
 
   return result;
+}
+
+function deriveRelatedInstallmentProviderTitle(currentRow, relatedRow, providerTitle) {
+  const currentTitle = [
+    currentRow?.title?.english,
+    currentRow?.title?.romaji,
+    currentRow?.title?.native,
+    ...(Array.isArray(currentRow?.synonyms) ? currentRow.synonyms : []),
+  ].find(Boolean);
+  const relatedTitle = [
+    relatedRow?.title?.english,
+    relatedRow?.title?.romaji,
+    relatedRow?.title?.native,
+    ...(Array.isArray(relatedRow?.synonyms) ? relatedRow.synonyms : []),
+  ].find(Boolean);
+  if (!currentTitle || !relatedTitle || !providerTitle) return null;
+
+  const currentMarker = extractInstallmentMarker(currentTitle);
+  const relatedMarker = extractInstallmentMarker(relatedTitle);
+  const providerMarker = extractInstallmentMarker(providerTitle);
+  if (!currentMarker || !relatedMarker || !providerMarker) return null;
+  if (currentMarker.kind !== relatedMarker.kind || currentMarker.number === relatedMarker.number) return null;
+  if (!providerMarker.kind || providerMarker.kind !== relatedMarker.kind) return null;
+
+  const currentBase = normalizeProviderTitleTokens(currentTitle.replace(currentMarker.raw, ""));
+  const relatedBase = normalizeProviderTitleTokens(relatedTitle.replace(relatedMarker.raw, ""));
+  const overlap = currentBase.filter((token) => relatedBase.includes(token));
+  const distinctiveOverlap = overlap.filter((token) => token.length >= 4);
+  if (distinctiveOverlap.length < 2) return null;
+
+  return providerTitle.replace(
+    providerMarker.raw,
+    providerMarker.raw.replace(String(providerMarker.number), String(currentMarker.number)),
+  );
+}
+
+function normalizeProviderTitleTokens(value) {
+  return String(value || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase()
+    .replace(/[^\p{Letter}\p{Number}]+/gu, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function extractInstallmentMarker(value) {
+  const match = String(value || "").match(/\b(File|Part|Episode|Season)\s*([0-9]+)\b/i);
+  if (!match) return null;
+  return {
+    kind: match[1].toLowerCase(),
+    number: Number(match[2]),
+    raw: match[0],
+  };
 }
 
 function mergeMappings(base, additional) {
