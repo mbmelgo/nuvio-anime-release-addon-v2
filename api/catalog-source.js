@@ -144,48 +144,13 @@ async function resolveMappingsForRows(
     }
   }
 
-  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
-    { ...row, anilistId: Number(row.id) },
-    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-  ));
-
-  if (unresolvedRows.length) {
-    const externalMappings = resolveExternalMappings(unresolvedRows);
-    mappings = mergeMappings(mappings, externalMappings);
-  }
-
-  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
-    { ...row, anilistId: Number(row.id) },
-    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-  ));
-
-  if (unresolvedRows.length) {
-    try {
-      const animapMappings = await resolveAnimapMappings(unresolvedRows.map((row) => Number(row.id)));
-      mappings = mergeMappings(mappings, animapMappings);
-    } catch (error) {
-      console.error("[identity] AniMap mapping failed; trying AnimeAPI TSV", error);
-    }
-  }
-
-  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
-    { ...row, anilistId: Number(row.id) },
-    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-  ));
-
-  if (unresolvedRows.length) {
-    try {
-      const idMapperMappings = await resolveIdMapperMappings(unresolvedRows.map((row) => Number(row.id)));
-      mappings = mergeMappings(mappings, idMapperMappings);
-    } catch (error) {
-      console.error("[identity] IDMapper mapping failed; trying AnimeAPI TSV", error);
-    }
-  }
-
-  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
-    { ...row, anilistId: Number(row.id) },
-    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-  ));
+  unresolvedRows = rows.filter((row) => {
+    const selected = selectBingeCatIdentity(
+      { ...row, anilistId: Number(row.id) },
+      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    );
+    return !selected || selected.provider !== "imdb";
+  });
 
   if (unresolvedRows.length) {
     try {
@@ -245,10 +210,13 @@ async function resolveMappingsForRows(
     }
   }
 
-  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
-    { ...row, anilistId: Number(row.id) },
-    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-  ));
+  unresolvedRows = rows.filter((row) => {
+    const selected = selectBingeCatIdentity(
+      { ...row, anilistId: Number(row.id) },
+      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    );
+    return !selected || selected.provider !== "imdb";
+  });
 
   if (unresolvedRows.length) {
     const imdbMappings = await resolveImdbMappings(unresolvedRows);
