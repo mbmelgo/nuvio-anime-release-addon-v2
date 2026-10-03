@@ -1,12 +1,21 @@
 {
   "deploymentLimit": 10,
-  "deploymentsSincePause": 0,
-  "totalDeployments": 0,
+  "deploymentsSincePause": 1,
+  "totalDeployments": 1,
   "paused": false,
-  "lastDeploymentSha": null,
-  "lastDeploymentId": null,
-  "lastDeploymentVersion": "0.0.0",
-  "nextReleaseVersion": "0.1.0",
-  "lastDeploymentTag": null,
-  "lastDeployment": null
+  "lastDeploymentSha": "8bb914cbd5b39b222b27a05f73a8459403fba4a6",
+  "lastDeploymentId": "dpl_CuqYeRcRjeHGJcj8eYo1JdQg1p3m",
+  "lastDeploymentVersion": "0.1.0",
+  "nextReleaseVersion": "0.2.0",
+  "lastDeploymentTag": "v0.1.0",
+  "lastDeployment": {
+    "version": "0.1.0",
+    "sha": "8bb914cbd5b39b222b27a05f73a8459403fba4a6",
+    "vercelDeploymentId": "dpl_CuqYeRcRjeHGJcj8eYo1JdQg1p3m",
+    "tag": "v0.1.0",
+    "releasedAt": "2026-10-03T02:33:15.818172Z",
+    "ciRunId": "37090017226",
+    "ciRunUrl": "https://github.com/mbmelgo/nuvio-anime-release-addon-v2/actions/runs/37090017226",
+    "smokeTest": "passed"
+  }
 }
