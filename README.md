@@ -7,7 +7,7 @@
 
 > A lightweight, season-aware anime release catalog for Nuvio and Stremio-compatible clients.
 
-**Anime Releases for Nuvio** discovers anime releases from **AniList** and exposes **MAL identities when available**, with an `anilist:<id>` fallback when MAL is unavailable. Detailed anime metadata and provider mapping are intentionally delegated to the metadata addon configured in the client.
+**Anime Releases for Nuvio** discovers anime releases from **AniList**, resolves each catalog item to a BingeCat-compatible identity through the ARM cross-provider mapping service, and delegates detailed metadata to the metadata addon configured in the client.
 
 ## ✨ Features
 
@@ -30,19 +30,17 @@ Two rolling catalogs complement the seasonal views:
 
 Rolling catalogs use AniList airing schedules, deduplicate by anime, and paginate the resulting unique catalog for Nuvio.
 
-### 🔑 MAL-first catalog identity
+### 🔑 BingeCat-compatible catalog identity
 
-Catalog items normally use:
-
-```text
-mal:<id>
-```
-
-When AniList has no valid MAL id, the item falls back to:
+Catalog items normally use one validated BingeCat-compatible identity:
 
 ```text
-anilist:<id>
+IMDb: tt<id>
+TVDB: tvdb:<id>
+TMDB: tmdb:<id>
 ```
+
+The resolver prefers a validated IMDb candidate, then TVDB, then TMDB. ARM supplies the cross-provider mapping in a batched request, and the addon retains the legacy catalog identity if the mapping service is temporarily unavailable.
 
 The catalog keeps the AniList source id in the item's extra metadata so downstream systems can correlate the entry when needed.
 
@@ -98,7 +96,7 @@ The production flow is:
 ```text
 AniList release discovery
         ↓
-mal:<id> (or anilist:<id> fallback)
+validated BingeCat ID
         ↓
 Nuvio catalog
         ↓
@@ -117,7 +115,7 @@ configured metadata addon
 ┌──────────────────────┐
 │ Anime Releases       │
 │      for Nuvio       │
-│ MAL-first identities │
+│ BingeCat identities   │
 └──────────┬───────────┘
            │
            ▼
