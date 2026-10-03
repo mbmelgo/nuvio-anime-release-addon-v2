@@ -158,7 +158,7 @@ test("upcoming rolling catalog returns unique contract-valid anime and coherent 
     maxPages: 1,
   });
 
-  assert.deepEqual(result.map(({ id }) => id), ["mal:1001", "anilist:2"]);
+  assert.deepEqual(result.map(({ id }) => id), ["tt10000001", "tt10000002"]);
   assert.equal(new Set(result.map(({ id }) => id)).size, result.length);
 
   for (const meta of result) {
@@ -181,7 +181,7 @@ test("previous rolling catalog returns unique contract-valid anime without futur
     maxPages: 1,
   });
 
-  assert.deepEqual(result.map(({ id }) => id), ["mal:1001", "anilist:2"]);
+  assert.deepEqual(result.map(({ id }) => id), ["tt10000001", "tt10000002"]);
   for (const meta of result) {
     assertCatalogMeta(meta);
     assert.equal(Object.hasOwn(meta.extra, "nextEpisode"), false);
