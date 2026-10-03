@@ -1,5 +1,5 @@
 test("catalog identity resolution supplements a valid TVDB identity with a preferred BingeCat IMDb identity", async () => {
-  const rows = [row(195604, 61967)];
+  const rows = [{ ...row(195604, 61967), title: { romaji: "Black Clover 2nd Season", english: "Black Clover Season 2", native: "ブラッククローバー 第2期" } }];
   const result = await canonicalizeCatalogPageWithBingeCat(rows, {
     resolveMappings: async () => new Map([[
       195604,
