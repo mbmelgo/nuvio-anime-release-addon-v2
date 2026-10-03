@@ -725,3 +725,4 @@ test("catalog verifies an already-resolved external IMDb identity through BingeC
   assert.equal(metas[0].id, "tt5555555");
   assert.equal(metas[0].extra.bingecatEvidence[0].source, "bingecat-search");
 });
+
