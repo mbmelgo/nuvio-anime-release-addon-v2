@@ -436,7 +436,7 @@ async function resolveRelationMappings(rows, {
           anilistId: currentId,
           source: `${record.source || "mapping"}-relation`,
           relationAnilistId: relatedId,
-          relation: false,
+          relation: true,
           title: providerTitle,
           titles: Array.isArray(record?.titles) && record.titles.length
             ? record.titles
