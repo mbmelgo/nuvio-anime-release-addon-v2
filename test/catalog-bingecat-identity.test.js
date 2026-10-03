@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { canonicalizeCatalogPageWithBingeCat } from "../api/catalog-source.js";
+import { getBingeCatCandidates, selectBingeCatIdentity } from "../lib/bingecat-identity.js";
 
 test("seasonal catalog emits the validated BingeCat identity when ARM mapping is available", async () => {
   const metas = await canonicalizeCatalogPageWithBingeCat([{
@@ -565,4 +566,39 @@ test("seasonal catalog accepts a BingeCat parent identity across numbered instal
 
   assert.equal(metas.length, 1);
   assert.equal(metas[0].id, "tt12345678");
+});
+
+
+test("BingeCat-search evidence outranks an otherwise valid external provider mapping", () => {
+  const media = {
+    id: 999001,
+    format: "TV",
+    title: { english: "Example Anime", romaji: "Example Anime" },
+  };
+  const candidates = getBingeCatCandidates(media, [
+    {
+      source: "arm",
+      imdbIds: ["tt1111111"],
+      tvdbId: null,
+      tmdbTvId: null,
+      title: "Example Anime",
+      year: 2026,
+      relation: false,
+      derivedTitle: false,
+    },
+    {
+      source: "bingecat-search",
+      imdbIds: [],
+      tvdbId: 222222,
+      tmdbTvId: null,
+      title: "Example Anime",
+      year: 2026,
+      relation: false,
+      derivedTitle: false,
+    },
+  ]);
+  const selected = selectBingeCatIdentity(media, candidates);
+  assert.equal(selected.provider, "tvdb");
+  assert.equal(selected.id, "222222");
+  assert.equal(selected.bingecatVerified, true);
 });
