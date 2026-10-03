@@ -19,6 +19,7 @@ test("catalog identity resolution supplements a valid TVDB identity with a prefe
     resolveBingeCatSearchMappings: async (searchRows, options) => {
       assert.deepEqual(searchRows.map((item) => item.id), [195604]);
       verificationOptions.push(options ?? null);
+      if (!options?.bypassNegativeCache) return new Map();
       return new Map([[
         195604,
         [{
