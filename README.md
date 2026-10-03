@@ -3,7 +3,7 @@
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
 [![MAL](https://img.shields.io/badge/MyAnimeList-identity-2e51a2.svg)](https://myanimelist.net)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
-[![Version](https://img.shields.io/badge/version-0.13.0-blue.svg)](https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases)
+[![Version](https://img.shields.io/badge/version-0.13.1-blue.svg)](https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases)
 
 > A lightweight, season-aware anime release catalog for Nuvio and Stremio-compatible clients.
 
@@ -165,7 +165,7 @@ Catalog names and season labels are generated dynamically.
 ## 🚀 Current release
 
 **Production:** `v0.13.0`  
-**Development:** `v0.13.0`  
+**Development:** `v0.13.1`  
 **Major baseline:** `v0.0.0`
 
 The v2 project was initialized from an unreleased `v0.0.0` baseline. The current controlled production release is `v0.4.0`.
