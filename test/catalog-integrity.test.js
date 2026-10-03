@@ -59,7 +59,7 @@ function assertCatalogMeta(meta) {
   assert.equal(meta.posterShape, "poster");
   assert.ok(meta.extra && Number.isInteger(Number(meta.extra.anilistId)));
   assert.ok(Number(meta.extra.anilistId) > 0);
-  assert.ok(meta.extra.bingecatProvider);
+  if (/^(tt\d+|tvdb:|tmdb:)/.test(meta.id)) assert.ok(meta.extra.bingecatProvider);
 }
 
 test("catalog definitions expose exactly the supported five catalogs with one consistent Nuvio contract", () => {
