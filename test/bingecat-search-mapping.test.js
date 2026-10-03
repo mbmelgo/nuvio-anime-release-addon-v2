@@ -43,8 +43,8 @@ test("BingeCat search consumes AniList-shaped title, format, year, MAL, and syno
   const result = await resolveAniListMappingsByBingeCatSearch([{
     id: 212653,
     idMal: 999001,
-    format: "MOVIE",
-    startDate: { year: 2026 },
+    format: "OVA",
+    startDate: { year: 2027 },
     title: {
       english: "Patlabor EZY File 3",
       romaji: "Kidou Keisatsu Patlabor EZY File 3",
@@ -65,7 +65,7 @@ test("BingeCat search consumes AniList-shaped title, format, year, MAL, and syno
                 id: "tt39382762",
                 tmdbId: 1633794,
                 contentType: "movie",
-                year: 2026,
+                year: 2027,
               }],
             };
           },
