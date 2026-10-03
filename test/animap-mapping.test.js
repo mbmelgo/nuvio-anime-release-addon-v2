@@ -8,14 +8,16 @@ import {
 
 test("AniMap records normalize AniList to BingeCat-compatible provider identities", () => {
   assert.deepEqual(normalizeAnimapRecord({
-    anilist_id: 123,
+    sources: [
+      "https://anilist.co/anime/123",
+      "https://www.imdb.com/title/tt1234567/",
+      "https://thetvdb.com/series/example/7654321",
+      "https://www.themoviedb.org/tv/987654",
+    ],
     title: "Example Anime",
     type: "TV",
-    year: 2026,
+    animeSeason: { year: 2026 },
     synonyms: ["Example"],
-    imdb_id: ["tt1234567"],
-    tvdb_id: [7654321],
-    tmdb_id: [{ id: 987654, type: "tv" }],
   }, 123), {
     source: "animap",
     anilistId: 123,
@@ -35,11 +37,11 @@ test("AniMap records normalize AniList to BingeCat-compatible provider identitie
 
 test("AniMap preserves movie TMDB identity as a movie candidate", () => {
   const record = normalizeAnimapRecord({
-    anilist_id: 456,
+    sources: [
+      "https://anilist.co/anime/456",
+      "https://www.themoviedb.org/movie/123456",
+    ],
     type: "MOVIE",
-    imdb_id: [],
-    tvdb_id: [],
-    tmdb_id: [{ id: 123456, type: "movie" }],
   }, 456);
 
   assert.equal(record?.tmdbTvId, null);
@@ -48,15 +50,14 @@ test("AniMap preserves movie TMDB identity as a movie candidate", () => {
 
 test("AniMap rejects cross-source ID mismatches and unmapped records", () => {
   assert.equal(normalizeAnimapRecord({
-    anilist_id: 999,
-    imdb_id: ["tt1234567"],
+    sources: [
+      "https://anilist.co/anime/999",
+      "https://www.imdb.com/title/tt1234567/",
+    ],
   }, 123), null);
 
   assert.equal(normalizeAnimapRecord({
-    anilist_id: 123,
-    imdb_id: [],
-    tvdb_id: [],
-    tmdb_id: [],
+    sources: ["https://anilist.co/anime/123"],
   }, 123), null);
 });
 
@@ -65,18 +66,15 @@ test("AniMap resolver requests only missing IDs and caches negative results", as
   let requests = 0;
   const payloads = {
     123: {
-      anilist_id: 123,
+      sources: [
+        "https://anilist.co/anime/123",
+        "https://www.imdb.com/title/tt1234567/",
+      ],
       type: "TV",
-      imdb_id: ["tt1234567"],
-      tvdb_id: [],
-      tmdb_id: [],
     },
     999: {
-      anilist_id: 999,
+      sources: ["https://anilist.co/anime/999"],
       type: "TV",
-      imdb_id: [],
-      tvdb_id: [],
-      tmdb_id: [],
     },
   };
 
