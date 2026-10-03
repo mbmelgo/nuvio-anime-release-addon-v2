@@ -220,7 +220,8 @@ async function resolveMappingsForRows(
 function mergeMappings(base, additional) {
   const merged = new Map(base);
   for (const [id, records] of additional instanceof Map ? additional : []) {
-    if (!merged.has(id) || !merged.get(id)?.length) merged.set(id, records);
+    const existing = merged.get(id) || [];
+    merged.set(id, [...existing, ...(Array.isArray(records) ? records : [])]);
   }
   return merged;
 }
