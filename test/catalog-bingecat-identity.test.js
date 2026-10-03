@@ -48,6 +48,8 @@ test("seasonal catalog fails explicitly instead of dropping entries without a su
   }], {
     resolveMappings: async () => new Map(),
     resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
     resolveTsvMappings: async () => new Map(),
     resolveImdbMappings: async () => new Map(),
     resolveSecondaryMappings: async () => new Map(),
