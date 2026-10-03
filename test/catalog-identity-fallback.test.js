@@ -48,6 +48,7 @@ test("BingeCat retry supersedes an Anime Mapper identity for the same unresolved
         tmdbMovieIds: [],
         title: "Black Clover",
         year: null,
+        derivedTitle: true,
       }]]]);
     },
     resolveAnimeMapperMappings: async () => new Map([[195604, [{
