@@ -121,6 +121,7 @@ async function resolveMappingsForRows(
     resolveAlternativeMappings = resolveAniListMappingsByMalIds,
   } = {},
 ) {
+  // Preserve the documented resolver order; later independent sources only run after earlier candidates are unresolved.
   const ids = rows.map((row) => Number(row.id));
   let mappings = new Map();
 
