@@ -1,0 +1,125 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {
+  getBingeCatCandidates,
+  selectBingeCatIdentity,
+  normalizeTitle,
+  titlesCompatible,
+} from "../lib/bingecat-identity.js";
+import { normalizeMappingRecord } from "../lib/mapping-record.js";
+
+const MAPPINGS = {
+  269: { anilistId: 269, imdbIds: ["tt0434665"], tvdbId: 74796, tmdbTvId: 30984, type: "TV" },
+  158871: { anilistId: 158871, imdbIds: ["tt26692417"], tvdbId: 76703, tmdbTvId: 220150, type: "TV", season: { tvdb: 20, tmdb: 1 } },
+  516: { anilistId: 516, imdbIds: ["tt0434693"], tvdbId: 75414, tmdbTvId: 63164, type: "TV" },
+  21: { anilistId: 21, imdbIds: ["tt0388629"], tvdbId: 81797, tmdbTvId: 37854, type: "TV" },
+  185262: { anilistId: 185262, imdbIds: ["tt38646634"], tvdbId: 457532, tmdbTvId: 280049, type: "TV", season: { tvdb: 1, tmdb: 1 } },
+  179955: { anilistId: 179955, imdbIds: ["tt35346717"], tvdbId: 452710, tmdbTvId: 260823, type: "TV", season: { tvdb: 1, tmdb: 1 } },
+  159309: { anilistId: 159309, imdbIds: ["tt16255458"], tvdbId: 412826, tmdbTvId: 139512, type: "TV", season: { tvdb: 2, tmdb: 2 } },
+};
+
+const getMapping = (id) => normalizeMappingRecord(MAPPINGS[id], "mapping-fixture");
+
+test("mapping normalization rejects malformed source records", () => {
+  assert.equal(normalizeMappingRecord(null), null);
+  assert.equal(normalizeMappingRecord({ anilistId: 0 }), null);
+  assert.equal(
+    normalizeMappingRecord({ anilistId: 21, imdb_id: ["bad", "tt0388629"], tvdb_id: "81797" }).imdbIds[0],
+    "tt0388629",
+  );
+});
+
+test("mapping fixtures expose BingeCat-compatible IDs for representative regression cases", () => {
+  for (const id of Object.keys(MAPPINGS)) {
+    const record = getMapping(id);
+    assert.ok(record);
+    assert.ok(record.imdbIds.length > 0);
+    assert.ok(record.tvdbId > 0);
+    assert.ok(record.tmdbTvId > 0);
+  }
+});
+
+test("BingeCat candidate ordering prefers IMDb over TVDB and TMDB", () => {
+  const candidates = getBingeCatCandidates(
+    { anilistId: 21, title: { english: "ONE PIECE", romaji: "One Piece" }, format: "TV" },
+    [getMapping(21)],
+  );
+
+  assert.deepEqual(candidates.map((candidate) => candidate.stremioId), [
+    "tt0388629",
+    "tvdb:81797",
+    "tmdb:37854",
+  ]);
+});
+
+test("Pokémon Horizons keeps its own franchise identity", () => {
+  const media = {
+    anilistId: 158871,
+    title: { english: "Pokémon Horizons: The Series", romaji: "Pocket Monsters (2023)" },
+    format: "TV",
+  };
+  const selected = selectBingeCatIdentity(media, getBingeCatCandidates(media, [getMapping(158871)]));
+  assert.equal(selected.id, "tt26692417");
+});
+
+test("candidate selection rejects a franchise-mismatched candidate", () => {
+  const candidates = [
+    { provider: "imdb", id: "tt1234567", title: "Pokémon", year: 1997, mediaType: "tv" },
+    { provider: "imdb", id: "tt26692417", title: "Pokémon Horizons: The Series", year: 2023, mediaType: "tv" },
+  ];
+  const selected = selectBingeCatIdentity({
+    title: { english: "Pokémon Horizons: The Series", romaji: "Pocket Monsters (2023)" },
+    startDate: { year: 2023 },
+    format: "TV",
+  }, candidates);
+
+  assert.equal(selected.id, "tt26692417");
+});
+
+test("candidate validation rejects a mapping record for a different AniList item", () => {
+  const media = { anilistId: 21, title: { english: "ONE PIECE" }, format: "TV" };
+  const candidates = getBingeCatCandidates(media, [{
+    source: "arm",
+    anilistId: 269,
+    imdbIds: ["tt0434665"],
+    tvdbId: 74796,
+    tmdbTvId: 30984,
+    tmdbMovieIds: [],
+    type: "TV",
+  }]);
+
+  assert.equal(selectBingeCatIdentity(media, candidates), null);
+});
+
+test("candidate validation rejects materially different titles", () => {
+  assert.equal(titlesCompatible(["Pokémon Horizons: The Series"], ["Pokémon"]), false);
+  assert.equal(titlesCompatible(["ONE PIECE"], ["One Piece"]), true);
+  assert.equal(normalizeTitle("  One-Piece: The Series! "), "one piece the series");
+});
+
+test("selected identity is a single stable BingeCat ID", () => {
+  const media = { anilistId: 21, title: { english: "ONE PIECE" }, startDate: { year: 1999 }, format: "TV" };
+  const selected = selectBingeCatIdentity(media, getBingeCatCandidates(media, [getMapping(21)]));
+
+  assert.equal(selected.id, "tt0388629");
+  assert.equal(selected.stremioId, "tt0388629");
+  assert.equal(selected.provider, "imdb");
+});
+
+test("representative regression cases resolve to their expected BingeCat identity", () => {
+  const expected = {
+    269: "tt0434665",
+    158871: "tt26692417",
+    516: "tt0434693",
+    21: "tt0388629",
+    185262: "tt38646634",
+    179955: "tt35346717",
+    159309: "tt16255458",
+  };
+
+  for (const [anilistId, expectedId] of Object.entries(expected)) {
+    const media = { anilistId: Number(anilistId), title: { english: "Test Anime" }, format: "TV" };
+    const selected = selectBingeCatIdentity(media, getBingeCatCandidates(media, [getMapping(anilistId)]));
+    assert.equal(selected.id, expectedId, anilistId);
+  }
+});

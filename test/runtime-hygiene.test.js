@@ -58,7 +58,7 @@ test("every retained Vercel runtime module has a serverless default export", asy
   }
 });
 
-test("README and home page describe the current MAL-primary release", async () => {
+test("README and home page describe the current BingeCat identity release", async () => {
   const readme = await readFile("README.md", "utf8");
   const home = await readFile("api/home-selector.js", "utf8");
   const versionSource = await readFile("api/version.js", "utf8");
@@ -67,12 +67,11 @@ test("README and home page describe the current MAL-primary release", async () =
   assert.ok(addonVersion);
   assert.match(readme, /\[!\[MAL\]\(https:\/\/img\.shields\.io\/badge\/MyAnimeList-identity-2e51a2\.svg\)\]\(https:\/\/myanimelist\.net\)/);
   assert.ok(readme.includes("version-" + addonVersion + "-blue"));
-  assert.match(readme, /MAL identities when available/);
+  assert.match(readme, /BingeCat-compatible identity/);
   assert.ok(readme.includes("**Production:** `v" + releaseState.lastDeploymentVersion + "`"));
   assert.ok(readme.includes("**Development:** `v" + addonVersion + "`"));
   assert.doesNotMatch(readme, /AniList-only/);
-  assert.match(home, /MAL is the primary catalog identity when available/);
-  assert.match(home, /mal:&lt;id&gt;/);
+  assert.match(home, /BingeCat-compatible identity/);
   assert.doesNotMatch(home, /AniList-only/);
 });
 
