@@ -210,6 +210,27 @@ async function resolveMappingsForRows(
     }
   }
 
+  // Anime Mapper is intentionally below BingeCat in the resolver priority.
+  // Re-check BingeCat after Anime Mapper because a lower-priority mapping can
+  // otherwise mask a valid BingeCat identity when the initial search was
+  // transiently incomplete or the source cache changed during resolution.
+  const animeMapperResolvedRows = rows.filter((row) => {
+    const selected = selectBingeCatIdentity(
+      { ...row, anilistId: Number(row.id) },
+      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    );
+    return selected?.evidence?.some((entry) => String(entry?.source || "").startsWith("anime-mapper"));
+  });
+
+  if (animeMapperResolvedRows.length) {
+    try {
+      const bingeCatRetryMappings = await resolveBingeCatSearchMappings(animeMapperResolvedRows);
+      mappings = mergeMappings(mappings, bingeCatRetryMappings);
+    } catch (error) {
+      console.error("[identity] BingeCat retry after Anime Mapper failed", error);
+    }
+  }
+
   unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
     { ...row, anilistId: Number(row.id) },
     getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
