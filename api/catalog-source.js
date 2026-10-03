@@ -262,7 +262,82 @@ async function resolveMappingsForRows(
     }
   }
 
+  if (stillUnresolvedRows.length) {
+    try {
+      const relationMappings = await resolveRelationMappings(stillUnresolvedRows, {
+        resolveMappings,
+        resolveFribbMappings,
+      });
+      mappings = mergeMappings(mappings, relationMappings);
+    } catch (error) {
+      console.error("[identity] relation-id mapping fallback failed", error);
+    }
+  }
+
   return mappings;
+}
+
+async function resolveRelationMappings(rows, { resolveMappings, resolveFribbMappings }) {
+  const relationIds = [];
+  const rowRelations = new Map();
+
+  for (const row of Array.isArray(rows) ? rows : []) {
+    const currentId = Number(row?.id);
+    if (!Number.isInteger(currentId) || currentId <= 0) continue;
+    const relations = (Array.isArray(row?.relations?.edges) ? row.relations.edges : [])
+      .filter((edge) => ["PARENT", "PREQUEL", "SEQUEL", "SPIN_OFF", "SIDE_STORY"].includes(
+        String(edge?.relationType || "").toUpperCase(),
+      ))
+      .map((edge) => Number(edge?.node?.id))
+      .filter((id) => Number.isInteger(id) && id > 0);
+    if (!relations.length) continue;
+    rowRelations.set(currentId, relations);
+    relationIds.push(...relations);
+  }
+
+  const uniqueRelationIds = [...new Set(relationIds)];
+  if (!uniqueRelationIds.length) return new Map();
+
+  let relationMappings = new Map();
+  try {
+    relationMappings = await resolveMappings(uniqueRelationIds);
+  } catch (error) {
+    console.error("[identity] ARM relation-id mapping failed; trying Fribb", error);
+  }
+
+  const missingRelationIds = uniqueRelationIds.filter((id) => !(relationMappings.get(id)?.length));
+  if (missingRelationIds.length) {
+    try {
+      relationMappings = mergeMappings(
+        relationMappings,
+        await resolveFribbMappings(missingRelationIds),
+      );
+    } catch (error) {
+      console.error("[identity] Fribb relation-id mapping failed", error);
+    }
+  }
+
+  const result = new Map();
+  for (const [currentId, relatedIds] of rowRelations) {
+    const records = [];
+    for (const relatedId of relatedIds) {
+      for (const record of relationMappings.get(relatedId) || []) {
+        records.push({
+          ...record,
+          anilistId: currentId,
+          source: `${record.source || "mapping"}-relation`,
+          relationAnilistId: relatedId,
+          relation: true,
+          title: null,
+          titles: null,
+          year: null,
+        });
+      }
+    }
+    if (records.length) result.set(currentId, records);
+  }
+
+  return result;
 }
 
 function mergeMappings(base, additional) {
