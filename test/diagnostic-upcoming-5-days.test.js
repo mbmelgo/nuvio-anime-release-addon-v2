@@ -50,11 +50,19 @@ test("diagnostic: dump all AniList upcoming-5-days schedule records", async () =
     if (pageRows.length < 50) break;
   }
 
+  const excluded = [];
   const uniqueMedia = new Map();
   for (const row of rows) {
     const media = row.media;
-    if (!media?.id || media.isAdult === true) continue;
-    if (!["TV","TV_SHORT","ONA","OVA","SPECIAL","MOVIE"].includes(media.format)) continue;
+    if (!media?.id || media.isAdult === true || !["TV","TV_SHORT","ONA","OVA","SPECIAL","MOVIE"].includes(media.format)) {
+      excluded.push({
+        scheduleId: row.id, airingAt: row.airingAt, episode: row.episode,
+        id: media?.id ?? null, idMal: media?.idMal ?? null, format: media?.format ?? null,
+        isAdult: media?.isAdult ?? null, country: media?.countryOfOrigin ?? null,
+        title: media?.title ?? null,
+      });
+      continue;
+    }
     if (!uniqueMedia.has(Number(media.id))) {
       uniqueMedia.set(Number(media.id), {
         scheduleId: row.id, airingAt: row.airingAt, episode: row.episode,
@@ -67,7 +75,7 @@ test("diagnostic: dump all AniList upcoming-5-days schedule records", async () =
   console.log(JSON.stringify({
     now: new Date(nowMs).toISOString(), start, end,
     rawScheduleRows: rows.length, uniqueEligibleMedia: uniqueMedia.size,
-    records: [...uniqueMedia.values()],
+    excluded, records: [...uniqueMedia.values()],
   }, null, 2));
 
   assert.ok(rows.length > 0);
