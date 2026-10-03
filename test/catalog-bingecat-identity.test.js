@@ -667,3 +667,59 @@ test("BingeCat verification survives same-provider evidence dedupe", () => {
   assert.equal(selected.id, "tt3333333");
   assert.equal(selected.bingecatVerified, true);
 });
+
+
+test("catalog verifies an already-resolved external IMDb identity through BingeCat before returning it", async () => {
+  const calls = [];
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 999004,
+    idMal: 999004,
+    title: { english: "External IMDb Example", romaji: "External IMDb Example" },
+    format: "TV",
+    startDate: { year: 2026 },
+  }], {
+    resolveMappings: async () => new Map([[999004, [{
+      source: "arm",
+      anilistId: 999004,
+      type: "TV",
+      imdbIds: ["tt4444444"],
+      tvdbId: null,
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+      title: "External IMDb Example",
+      year: 2026,
+      relation: false,
+      derivedTitle: false,
+    }]]]),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async (rows) => {
+      calls.push(rows.map((row) => Number(row.id)));
+      return new Map([[999004, [{
+        source: "bingecat-search",
+        anilistId: 999004,
+        type: "TV",
+        imdbIds: ["tt5555555"],
+        tvdbId: null,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: "External IMDb Example",
+        year: 2026,
+        relation: false,
+        derivedTitle: false,
+      }]]]);
+    },
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.deepEqual(calls, [[999004]]);
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "tt5555555");
+  assert.equal(metas[0].extra.bingecatEvidence[0].source, "bingecat-search");
+});
