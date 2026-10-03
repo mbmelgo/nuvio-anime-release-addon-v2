@@ -40,7 +40,7 @@ TVDB: tvdb:<id>
 TMDB: tmdb:<id>
 ```
 
-The resolver prefers a validated IMDb candidate, then TVDB, then TMDB. ARM supplies the primary cross-provider mapping in a batched request. ARM misses are retried through AnimeAPI by AniList ID and, when the AniList entry exposes a MAL ID, through the independent MAL identity bridge. Resolution is cardinality-preserving: an AniList source row is never silently omitted because its first mapping attempt failed; if all legitimate mapping strategies are exhausted, the catalog request fails explicitly instead of emitting an unsupported MAL/AniList ID.
+The resolver prefers a validated IMDb candidate, then TVDB, then TMDB. ARM supplies the primary cross-provider mapping in a batched request. Later mapping sources supplement earlier candidates rather than being discarded when an earlier source returned only unsupported identities. ARM misses are retried through Fribb, AniList external provider links, AniMap, the AnimeAPI TSV dataset, IMDb title search, AnimeAPI by AniList ID, and, when the AniList entry exposes a MAL ID, the independent MAL identity bridge. Resolution is cardinality-preserving: an AniList source row is never silently omitted because its first mapping attempt failed; if all legitimate mapping strategies are exhausted, the catalog request fails explicitly instead of emitting an unsupported MAL/AniList ID.
 
 The catalog keeps the AniList source id in the item's extra metadata so downstream systems can correlate the entry when needed.
 
