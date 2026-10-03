@@ -1,3 +1,47 @@
+test("catalog identity resolution supplements a valid TVDB identity with a preferred BingeCat IMDb identity", async () => {
+  const rows = [row(195604, 61967)];
+  const result = await canonicalizeCatalogPageWithBingeCat(rows, {
+    resolveMappings: async () => new Map([[
+      195604,
+      [{
+        source: "arm",
+        anilistId: 195604,
+        type: "TV",
+        imdbIds: [],
+        tvdbId: 331753,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: "Black Clover Season 2",
+        year: 2026,
+      }],
+    ]]),
+    resolveBingeCatSearchMappings: async (searchRows) => {
+      assert.deepEqual(searchRows.map((item) => item.id), [195604]);
+      return new Map([[
+        195604,
+        [{
+          source: "bingecat-search",
+          anilistId: 195604,
+          type: "TV",
+          imdbIds: ["tt7441658"],
+          tvdbId: null,
+          tmdbTvId: null,
+          tmdbMovieIds: [],
+          title: "Black Clover",
+          year: null,
+          derivedTitle: true,
+        }],
+      ]]);
+    },
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0].id, "tt7441658");
+  assert.equal(result[0].extra.bingecatProvider, "imdb");
+});
+
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
