@@ -35,6 +35,7 @@ test("seasonal catalog emits the validated BingeCat identity when ARM mapping is
 
   assert.equal(metas.length, 1);
   assert.equal(metas[0].id, "tt26692417");
+  assert.equal(metas[0].type, "series");
   assert.equal(metas[0].extra.bingecatProvider, "imdb");
   assert.equal(metas[0].extra.bingecatId, "tt26692417");
   assert.equal(metas[0].extra.anilistId, 158871);
@@ -53,5 +54,6 @@ test("seasonal catalog retains the legacy identity when mapping is unavailable",
   });
 
   assert.equal(metas[0].id, "mal:269");
+  assert.equal(metas[0].type, "series");
   assert.equal(metas[0].extra.anilistId, 269);
 });
