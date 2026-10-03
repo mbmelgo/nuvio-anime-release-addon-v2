@@ -13,6 +13,7 @@ import { collectValidatedCatalogPage } from "../lib/catalog-pagination.js";
 import { filterCatalogMetasBySearch, toMetaFromAniList } from "../lib/catalog-meta.js";
 import { queryAnime, queryAiringSchedulePage } from "../lib/catalog-anilist.js";
 import { resolveAniListMappings } from "../lib/arm-mapping.js";
+import { resolveAniListMappingsFribb } from "../lib/fribb-mapping.js";
 import { getBingeCatCandidates, selectBingeCatIdentity } from "../lib/bingecat-identity.js";
 import {
   resolveAniListMappingsSecondary,
@@ -101,6 +102,7 @@ async function resolveMappingsForRows(
   rows,
   {
     resolveMappings = resolveAniListMappings,
+    resolveFribbMappings = resolveAniListMappingsFribb,
     resolveSecondaryMappings = resolveAniListMappingsSecondary,
     resolveAlternativeMappings = resolveAniListMappingsByMalIds,
   } = {},
@@ -114,7 +116,21 @@ async function resolveMappingsForRows(
     console.error("[identity] ARM mapping failed; using secondary mapping sources", error);
   }
 
-  const unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+  let unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
+
+  if (unresolvedRows.length) {
+    try {
+      const fribb = await resolveFribbMappings(unresolvedRows.map((row) => Number(row.id)));
+      mappings = mergeMappings(mappings, fribb);
+    } catch (error) {
+      console.error("[identity] Fribb mapping source failed; trying AnimeAPI", error);
+    }
+  }
+
+  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
     { ...row, anilistId: Number(row.id) },
     getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
   ));
