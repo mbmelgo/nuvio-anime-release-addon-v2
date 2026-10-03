@@ -591,7 +591,7 @@ function getCanonicalMalId(row, meta, mappingRecords) {
 
 export async function canonicalizeCatalogPageWithBingeCat(
   mediaRows,
-  options = {},
+  { requireBingeCatVerification = false, ...options } = {},
 ) {
   const normalizedRows = Array.isArray(mediaRows)
     ? mediaRows
@@ -620,7 +620,7 @@ export async function canonicalizeCatalogPageWithBingeCat(
       { excludeIds: usedIdentities },
     );
 
-    if (!selected) {
+    if (!selected || (requireBingeCatVerification && !selected.bingecatVerified)) {
       const malId = getCanonicalMalId(row, meta, mappings.get(anilistId) || []);
       if (Number.isInteger(malId) && malId > 0) {
         metas.push({
@@ -695,6 +695,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
   resolveMappings = resolveAniListMappings,
   resolveSecondaryMappings = resolveAniListMappingsSecondary,
   resolveAlternativeMappings = resolveAniListMappingsByMalIds,
+  requireBingeCatVerification = false,
 } = {}) {
   const range = getRollingCatalogRange(id, date);
   if (!range) return [];
@@ -751,7 +752,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
           getBingeCatCandidates(media, mappings.get(mediaId) || []),
           { excludeIds: usedIdentities },
         );
-        if (!selected) {
+        if (!selected || (requireBingeCatVerification && !selected.bingecatVerified)) {
           const malId = getCanonicalMalId(media, baseMeta, mappings.get(mediaId) || []);
           if (Number.isInteger(malId) && malId > 0) {
             const meta = {
@@ -821,11 +822,11 @@ export async function buildCatalog(id, info, skip, search) {
       filter,
       skip,
       search,
-      canonicalizePage: canonicalizeCatalogPageWithBingeCat,
+      canonicalizePage: (rows) => canonicalizeCatalogPageWithBingeCat(rows, { requireBingeCatVerification: true }),
     });
   }
   if (getRollingCatalogRange(id, new Date())) {
-    return buildRollingCatalog(id, new Date(), skip, search, { useBingeCatIdentity: true });
+    return buildRollingCatalog(id, new Date(), skip, search, { useBingeCatIdentity: true, requireBingeCatVerification: true });
   }
   return [];
 }
