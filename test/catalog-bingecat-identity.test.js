@@ -39,53 +39,10 @@ test("seasonal catalog emits the validated BingeCat identity when ARM mapping is
   assert.equal(metas[0].extra.anilistId, 158871);
 });
 
-test("seasonal catalog fails explicitly instead of dropping entries without a supported BingeCat identity", async () => {
-  await assert.rejects(canonicalizeCatalogPageWithBingeCat([{
+test("seasonal catalog uses canonical MAL identity as the final fallback", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
     id: 269,
     idMal: 269,
-    title: { romaji: "Bleach" },
-    format: "TV",
-  }], {
-    resolveMappings: async () => new Map(),
-    resolveFribbMappings: async () => new Map(),
-    resolveExternalMappings: () => new Map(),
-    resolveAnimapMappings: async () => new Map(),
-    resolveIdMapperMappings: async () => new Map(),
-    resolveBingeCatSearchMappings: async () => new Map(),
-    resolveAnimeMapperMappings: async () => new Map(),
-    resolveTsvMappings: async () => new Map(),
-    resolveImdbMappings: async () => new Map(),
-    resolveSecondaryMappings: async () => new Map(),
-    resolveAlternativeMappings: async () => new Map(),
-  }), /BingeCat identity resolution exhausted.*269/);
-});
-
-test("seasonal catalog drops an unresolved non-Japan/Korea entry only after identity resolution is exhausted", async () => {
-  const metas = await canonicalizeCatalogPageWithBingeCat([{
-    id: 214974,
-    countryOfOrigin: "CN",
-    title: { english: "The Guardian of Daxia", romaji: "Da Xia Shou Mu Ren" },
-    format: "ONA",
-  }], {
-    resolveMappings: async () => new Map(),
-    resolveFribbMappings: async () => new Map(),
-    resolveExternalMappings: () => new Map(),
-    resolveAnimapMappings: async () => new Map(),
-    resolveIdMapperMappings: async () => new Map(),
-    resolveBingeCatSearchMappings: async () => new Map(),
-    resolveAnimeMapperMappings: async () => new Map(),
-    resolveTsvMappings: async () => new Map(),
-    resolveImdbMappings: async () => new Map(),
-    resolveSecondaryMappings: async () => new Map(),
-    resolveAlternativeMappings: async () => new Map(),
-  });
-
-  assert.deepEqual(metas, []);
-});
-
-test("seasonal catalog still fails for an unresolved Japan or Korea entry", async () => {
-  await assert.rejects(canonicalizeCatalogPageWithBingeCat([{
-    id: 269,
     countryOfOrigin: "JP",
     title: { romaji: "Bleach" },
     format: "TV",
@@ -101,7 +58,104 @@ test("seasonal catalog still fails for an unresolved Japan or Korea entry", asyn
     resolveImdbMappings: async () => new Map(),
     resolveSecondaryMappings: async () => new Map(),
     resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "mal:269");
+  assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
+});
+
+test("seasonal catalog still fails when neither a supported provider identity nor MAL ID exists", async () => {
+  await assert.rejects(canonicalizeCatalogPageWithBingeCat([{
+    id: 269,
+    title: { romaji: "Bleach" },
+    format: "TV",
+  }], {
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
   }), /BingeCat identity resolution exhausted.*269/);
+});
+
+test("seasonal catalog uses canonical MAL fallback for Korea entries too", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 1001,
+    idMal: 1001,
+    countryOfOrigin: "KR",
+    title: { romaji: "Example Korea Anime" },
+    format: "ONA",
+  }], {
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(metas[0].id, "mal:1001");
+});
+
+test("seasonal catalog uses the secondary mapping source without dropping the entry", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 269,
+    title: { romaji: "Bleach" },
+    format: "TV",
+    startDate: { year: 2004 },
+  }], {
+    resolveMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map([
+      [269, [{
+        source: "animeapi",
+        anilistId: 269,
+        type: "TV",
+        imdbIds: ["tt0434665"],
+        tvdbId: 74796,
+        tmdbTvId: 30984,
+        tmdbMovieIds: [],
+      }]],
+    ]),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "tt0434665");
+  assert.equal(metas[0].type, "series");
+});test("seasonal catalog uses canonical MAL fallback for Korea entries too", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 1001,
+    idMal: 1001,
+    countryOfOrigin: "KR",
+    title: { romaji: "Example Korea Anime" },
+    format: "ONA",
+  }], {
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(metas[0].id, "mal:1001");
 });
 
 test("seasonal catalog uses the secondary mapping source without dropping the entry", async () => {
