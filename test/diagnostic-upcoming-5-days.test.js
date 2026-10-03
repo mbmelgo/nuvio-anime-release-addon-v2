@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 const ANILIST_URL = "https://graphql.anilist.co";
+const WINDOW_SECONDS = 5 * 24 * 60 * 60;
 
 const QUERY = `
   query ($page:Int,$start:Int,$end:Int,$notYetAired:Boolean) {
@@ -28,21 +29,12 @@ const QUERY = `
   }
 `;
 
-function manilaDateRange() {
-  const now = new Date();
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit"
-  }).formatToParts(now);
-  const values = Object.fromEntries(parts.filter(x => x.type !== "literal").map(x => [x.type, Number(x.value)]));
-  const start = new Date(Date.UTC(values.year, values.month - 1, values.day));
-  const end = new Date(start);
-  end.setUTCDate(end.getUTCDate() + 5);
-  return { start: Math.floor(start.getTime() / 1000), end: Math.floor(end.getTime() / 1000) };
-}
-
 test("diagnostic: dump all AniList upcoming-5-days schedule records", async () => {
-  const { start, end } = manilaDateRange();
+  const nowMs = Date.now();
+  const start = Math.floor(nowMs / 1000);
+  const end = start + WINDOW_SECONDS;
   const rows = [];
+
   for (let page = 1; page <= 10; page += 1) {
     const response = await fetch(ANILIST_URL, {
       method: "POST",
@@ -73,7 +65,7 @@ test("diagnostic: dump all AniList upcoming-5-days schedule records", async () =
   }
 
   console.log(JSON.stringify({
-    now: new Date().toISOString(), start, end,
+    now: new Date(nowMs).toISOString(), start, end,
     rawScheduleRows: rows.length, uniqueEligibleMedia: uniqueMedia.size,
     records: [...uniqueMedia.values()],
   }, null, 2));
