@@ -6,6 +6,7 @@ import {
   incrementMinor,
   isValidNextReleaseVersion,
   validateVersionConsistency,
+  validateReleaseConcurrencyState,
 } from "../scripts/release-integrity.mjs";
 
 test("release increments support both minor releases and major baselines", () => {
@@ -28,4 +29,16 @@ test("major release baseline passes release-state consistency validation", () =>
     deploymentLimit: 10,
     paused: false,
   }));
+});
+
+test("release concurrency gate rejects a stale target after another release advances main", () => {
+  assert.throws(() => validateReleaseConcurrencyState({
+    state: { paused: true, deploymentsSincePause: 10, deploymentLimit: 10, nextReleaseVersion: "1.5.0" },
+    targetVersion: "1.4.0",
+  }), /Deployment checkpoint reached/);
+
+  assert.throws(() => validateReleaseConcurrencyState({
+    state: { paused: false, deploymentsSincePause: 1, deploymentLimit: 10, nextReleaseVersion: "1.5.0" },
+    targetVersion: "1.4.0",
+  }), /Release target 1.4.0 is stale/);
 });
