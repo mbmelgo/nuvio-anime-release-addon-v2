@@ -646,6 +646,22 @@ export async function canonicalizeCatalogPageWithBingeCat(
         });
         continue;
       }
+      if (selected) {
+        usedIdentities.add(selected.stremioId);
+        metas.push({
+          ...meta,
+          id: selected.stremioId,
+          extra: {
+            ...meta.extra,
+            bingecatProvider: selected.provider,
+            bingecatId: selected.id,
+            bingecatEvidence: "provider-id-fallback",
+            bingecatVerification: selected.bingecatVerified ? "verified" : "unverified-upstream",
+          },
+        });
+        continue;
+      }
+
       metas.push({
         ...meta,
         id: `anilist:${anilistId}`,
