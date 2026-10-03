@@ -812,6 +812,29 @@ export async function buildRollingCatalog(id, date, skip, search, {
             metas.push(meta);
             continue;
           }
+          if (selected) {
+            usedIdentities.add(selected.stremioId);
+            const meta = {
+              ...baseMeta,
+              id: selected.stremioId,
+              extra: {
+                ...baseMeta.extra,
+                bingecatProvider: selected.provider,
+                bingecatId: selected.id,
+                bingecatEvidence: "provider-id-fallback",
+                bingecatVerification: selected.bingecatVerified ? "verified" : "unverified-upstream",
+                episode: row.episode,
+                airingAt: row.airingAt,
+                ...(futureOnly ? {
+                  nextEpisode: row.episode,
+                  nextAiringAt: row.airingAt,
+                } : {}),
+              },
+              type: "series",
+            };
+            metas.push(meta);
+            continue;
+          }
           const meta = {
             ...baseMeta,
             id: `anilist:${mediaId}`,

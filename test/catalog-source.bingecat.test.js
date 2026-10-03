@@ -49,6 +49,7 @@ test("catalog identity resolution supplements a valid TVDB identity with a prefe
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  buildRollingCatalog,
   canonicalizeCatalogPageWithBingeCat,
 } from "../api/catalog-source.js";
 
@@ -156,4 +157,50 @@ test("50 AniList source rows produce exactly 50 BingeCat catalog results", async
 
   assert.equal(result.length, 50);
   assert.ok(result.every((meta) => /^(tt\d+|tvdb:[1-9]\d*|tmdb:[1-9]\d*)$/.test(meta.id)));
+});
+
+
+test("rolling catalogs preserve an exact provider identity when BingeCat verification is unavailable", async () => {
+  const result = await buildRollingCatalog("previous_7_days", new Date("2026-10-03T12:00:00+08:00"), 0, "", {
+    fetchPage: async () => [{
+      media: {
+        id: 211181,
+        idMal: null,
+        title: {
+          english: "Mu Shen Ji 4",
+          romaji: "Mu Shen Ji 4",
+          native: "牧神记4",
+        },
+        format: "TV",
+        startDate: { year: 2026 },
+        isAdult: false,
+      },
+      episode: 25,
+      airingAt: 1791039600,
+    }],
+    resolveMappings: async () => new Map([[
+      211181,
+      [{
+        source: "anime-mapper",
+        anilistId: 211181,
+        type: "TV",
+        imdbIds: ["tt33501934"],
+        tvdbId: null,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: "Tales of Herding Gods 4",
+        year: 2026,
+      }],
+    ]]),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map(),
+    maxPages: 1,
+    requireBingeCatVerification: true,
+  });
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0].id, "tt33501934");
+  assert.equal(result[0].extra.bingecatEvidence, "provider-id-fallback");
+  assert.equal(result[0].extra.bingecatVerification, "unverified-upstream");
 });
