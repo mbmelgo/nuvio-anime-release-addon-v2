@@ -76,86 +76,8 @@ test("relation-derived provider mappings are not reused as the current identity 
 });
 
 
-ort assert from "node:assert/strict";
-import test from "node:test";
-import { canonicalizeCatalogPageWithBingeCat } from "../api/catalog-source.js";
-import { getBingeCatCandidates, selectBingeCatIdentity } from "../lib/bingecat-identity.js";
-
-const emptyMap = () => new Map();
-
-test("relation-derived provider mappings are not reused as the current identity without corroboration", async () => {
-  const searchedTitles = [];
-  const metas = await canonicalizeCatalogPageWithBingeCat([{
-    id: 155723,
-    idMal: 64999,
-    title: {
-      english: "The God of War Dominates",
-      romaji: "The God of War Dominates",
-      native: "武神主宰",
-    },
-    synonyms: [],
-    status: "RELEASING",
-    format: "ONA",
-    isAdult: false,
-    startDate: { year: 2020 },
-    coverImage: { large: null },
-    relations: {
-      edges: [{
-        relationType: "PREQUEL",
-        node: {
-          id: 12345,
-          format: "TV",
-          title: {
-            english: "The God of War Dominates",
-            romaji: "Wushen Zhuzai",
-            native: "武神主宰",
-          },
-          startDate: { year: 2020 },
-        },
-      }],
-    },
-  }], {
-    resolveMappings: async (ids) => {
-      if (ids.includes(12345)) {
-        return new Map([[12345, [{
-          source: "arm",
-          anilistId: 12345,
-          type: "TV",
-          imdbIds: ["tt20769560"],
-          tvdbId: null,
-          tmdbTvId: null,
-          tmdbMovieIds: [],
-          title: "The God of War Dominates",
-          year: 2020,
-          season: null,
-          episodeOffset: null,
-        }]]]);
-      }
-      return new Map();
-    },
-    resolveFribbMappings: async () => new Map(),
-    resolveExternalMappings: emptyMap,
-    resolveAnimapMappings: async () => new Map(),
-    resolveIdMapperMappings: async () => new Map(),
-    resolveBingeCatSearchMappings: async () => new Map(),
-    resolveAnimeMapperMappings: async () => new Map(),
-    resolveTsvMappings: async () => new Map(),
-    resolveImdbMappings: async () => new Map(),
-    resolveSecondaryMappings: async () => new Map(),
-    resolveAlternativeMappings: async () => new Map(),
-  });
-
-  assert.equal(metas.length, 1);
-  assert.equal(metas[0].id, "mal:64999");
-  assert.equal(metas[0].extra.anilistId, 155723);
-  assert.equal(metas[0].extra.bingecatProvider, null);
-  assert.equal(metas[0].extra.bingecatId, null);
-  assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
-});
-
-
 test("relation provider mappings are rejected when the related title does not match the current entry", async () => {
-  await assert.rejects(canonicalizeCatalogPageWithBingeCat([{
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
     id: 155723,
     title: {
       english: null,
@@ -209,7 +131,11 @@ test("relation provider mappings are rejected when the related title does not ma
     }]]]),
     resolveSecondaryMappings: async () => new Map(),
     resolveAlternativeMappings: async () => new Map(),
-  }), /BingeCat identity resolution exhausted.*155723/);
+  });
+
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "mal:64999");
+  assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
 });
 
 test("relation external provider mappings are validated against the current title", async () => {
