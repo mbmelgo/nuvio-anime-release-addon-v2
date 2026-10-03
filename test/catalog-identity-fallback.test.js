@@ -23,7 +23,7 @@ test("later mapping sources supplement unsupported earlier records", async () =>
         source: "arm",
         anilistId: 123,
         type: "TV",
-        imdbIds: [],
+        imdbIds: ["tt1234567"],
         tvdbId: null,
         tmdbTvId: null,
         tmdbMovieIds: [],
