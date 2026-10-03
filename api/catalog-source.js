@@ -752,7 +752,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
           getBingeCatCandidates(media, mappings.get(mediaId) || []),
           { excludeIds: usedIdentities },
         );
-        if (!selected || (requireBingeCatVerification && !selected.bingecatVerified)) {
+        if (!selected || !selected.bingecatVerified) {
           const malId = getCanonicalMalId(media, baseMeta, mappings.get(mediaId) || []);
           if (Number.isInteger(malId) && malId > 0) {
             const meta = {
