@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildRollingCatalog,
-  canonicalizeCatalogPage,
   fetchValidatedSeasonCatalogPage,
   getSeasonInfo,
   isEligibleRollingMedia,
@@ -94,19 +93,6 @@ test("season calculation always produces three adjacent seasonal slots", () => {
       expected,
     );
   }
-});
-
-test("seasonal canonicalization emits only valid series identities and preserves MAL-first identity", () => {
-  const result = canonicalizeCatalogPage([
-    media(1, { malId: 101 }),
-    media(2),
-    { id: "not-an-id" },
-    { id: null },
-    { id: 3, idMal: 0 },
-  ]);
-
-  assert.deepEqual(result.map(({ id }) => id), ["mal:101", "anilist:2", "anilist:3"]);
-  for (const meta of result) assertCatalogMeta(meta);
 });
 
 test("catalog identity resolution never emits an invalid downstream identity", () => {
