@@ -15,8 +15,9 @@ test("catalog identity resolution supplements a valid TVDB identity with a prefe
         year: 2026,
       }],
     ]]),
-    resolveBingeCatSearchMappings: async (searchRows) => {
+    resolveBingeCatSearchMappings: async (searchRows, options) => {
       assert.deepEqual(searchRows.map((item) => item.id), [195604]);
+      assert.deepEqual(options, { bypassNegativeCache: true });
       return new Map([[
         195604,
         [{
