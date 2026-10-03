@@ -728,6 +728,44 @@ test("catalog verifies an already-resolved external IMDb identity through BingeC
 
 
 
+test("catalog falls back to canonical MAL when an external identity cannot be verified by BingeCat", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 999006,
+    idMal: 999006,
+    title: { english: "Unverified External Example", romaji: "Unverified External Example" },
+    format: "TV",
+    startDate: { year: 2026 },
+  }], {
+    resolveMappings: async () => new Map([[999006, [{
+      source: "arm",
+      anilistId: 999006,
+      type: "TV",
+      imdbIds: ["tt6666666"],
+      tvdbId: null,
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+      title: "Unverified External Example",
+      year: 2026,
+      relation: false,
+      derivedTitle: false,
+    }]]]),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "mal:999006");
+  assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
+});
+
 test("direct BingeCat evidence survives relation-derived evidence for the same provider ID", () => {
   const media = {
     id: 999005,
