@@ -154,3 +154,48 @@ test("candidate validation rejects a mapping whose media type conflicts with the
 
   assert.equal(selected, null);
 });
+
+
+test("OVA entries can use an exact movie identity", () => {
+  const selected = selectBingeCatIdentity(
+    {
+      anilistId: 212653,
+      title: { english: "Patlabor EZY File 3" },
+      startDate: { year: 2027 },
+      format: "OVA",
+    },
+    [{
+      provider: "imdb",
+      id: "tt39382762",
+      stremioId: "tt39382762",
+      mediaType: "movie",
+      title: "Patlabor EZY File 3",
+      year: 2027,
+      anilistId: 212653,
+    }],
+  );
+
+  assert.equal(selected.id, "tt39382762");
+});
+
+test("TV entries still reject movie identities", () => {
+  const selected = selectBingeCatIdentity(
+    {
+      anilistId: 1,
+      title: { english: "Test TV" },
+      startDate: { year: 2026 },
+      format: "TV",
+    },
+    [{
+      provider: "imdb",
+      id: "tt1234567",
+      stremioId: "tt1234567",
+      mediaType: "movie",
+      title: "Test TV",
+      year: 2026,
+      anilistId: 1,
+    }],
+  );
+
+  assert.equal(selected, null);
+});
