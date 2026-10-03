@@ -50,7 +50,7 @@ test("release smoke test validates the BingeCat catalog identity", () => {
   assert.doesNotMatch(deployWorkflow, /com\.marki\.nuvio\.anime-releases\.v5/);
   assert.doesNotMatch(deployWorkflow, /\/v5\//);
   assert.match(deployWorkflow, /identityMode.*bingecat/);
-  assert.ok(deployWorkflow.includes('r"^(tt\\d+|tvdb:\\d+|tmdb:\\d+|mal:\\d+|anilist:\\d+)$"'));
+  assert.ok(deployWorkflow.includes('r"^(tt\\d+|tvdb:\\d+|tmdb:\\d+)$"'));
   assert.match(deployWorkflow, /assert all\(m\.get\("type"\) == "series" for m in metas\)/);
 });
 
