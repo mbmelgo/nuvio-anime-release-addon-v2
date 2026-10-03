@@ -597,25 +597,12 @@ export async function canonicalizeCatalogPageWithBingeCat(
   return metas;
 }
 
-export function canonicalizeCatalogPage(mediaRows) {
-  if (!Array.isArray(mediaRows) || mediaRows.length === 0) return [];
-  const normalizedRows = mediaRows
-    .map((row) => (typeof row === "object" && row !== null ? row : { id: row }))
-    .filter((row) => /^\d+$/.test(String(row.id ?? "").trim()));
-  if (normalizedRows.length === 0) return [];
-  return normalizeSeasonalCatalogMetaTypes(
-    normalizedRows
-      .map((row) => toCatalogIdentity(toMetaFromAniList(row.id, row)))
-      .filter(Boolean),
-  );
-}
-
 export async function fetchValidatedSeasonCatalogPage({
   filter,
   skip = 0,
   search = "",
   fetchPage = queryAnime,
-  canonicalizePage = canonicalizeCatalogPage,
+  canonicalizePage = canonicalizeCatalogPageWithBingeCat,
 }) {
   const normalizedSkip = Math.max(0, Number(skip) || 0);
   const anilistPage = Math.floor(normalizedSkip / NUVIO_PAGE_SIZE) + 1;
