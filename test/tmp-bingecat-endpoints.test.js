@@ -7,7 +7,7 @@ test("temporary BingeCat endpoint investigation", async () => {
 
   for (const url of scripts.slice(-20)) {
     const js = await fetch(url).then((r) => r.text()).catch(() => "");
-    const endpoints = [...js.matchAll(/["'](\\/[^"' ]*?(?:search|api)[^"' ]*)["']/gi)].map((m) => m[1]);
-    if (endpoints.length) console.log(JSON.stringify({ url, endpoints: [...new Set(endpoints)].slice(0, 100) }));
+    const lines = js.split("\n").filter((line) => line.includes("/api/") || line.includes("search"));
+    if (lines.length) console.log(JSON.stringify({ url, lines: lines.slice(0, 100) }));
   }
 });
