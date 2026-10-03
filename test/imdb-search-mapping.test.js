@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
+import { clearImdbSearchCache, resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
 
 test("IMDb fallback selects a title-compatible, year-compatible IMDb result", async () => {
+  clearImdbSearchCache();
   const result = await resolveAniListMappingsByImdbSearch([{
     id: 123,
     idMal: 456,
