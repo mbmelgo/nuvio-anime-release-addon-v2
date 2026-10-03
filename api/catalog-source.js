@@ -116,8 +116,9 @@ export async function canonicalizeCatalogPageWithBingeCat(
   return normalizedRows
     .map((row) => {
       const anilistId = Number(row.id);
-      const meta = toCatalogIdentity(toMetaFromAniList(anilistId, row));
-      if (!meta) return null;
+      const rawMeta = toCatalogIdentity(toMetaFromAniList(anilistId, row));
+      if (!rawMeta) return null;
+      const meta = normalizeSeasonalCatalogMetaTypes([rawMeta])[0];
 
       const media = { ...row, anilistId };
       const records = mappings.get(anilistId) || [];
