@@ -140,7 +140,49 @@ async function resolveMappingsForRows(
       const fribb = await resolveFribbMappings(unresolvedRows.map((row) => Number(row.id)));
       mappings = mergeMappings(mappings, fribb);
     } catch (error) {
-      console.error("[identity] Fribb mapping source failed; trying AnimeAPI", error);
+      console.error("[identity] Fribb mapping source failed; trying AniList external links", error);
+    }
+  }
+
+  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
+
+  if (unresolvedRows.length) {
+    try {
+      const externalMappings = resolveExternalMappings(unresolvedRows);
+      mappings = mergeMappings(mappings, externalMappings);
+    } catch (error) {
+      console.error("[identity] AniList external mapping failed; trying AniMap", error);
+    }
+  }
+
+  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
+
+  if (unresolvedRows.length) {
+    try {
+      const animapMappings = await resolveAnimapMappings(unresolvedRows.map((row) => Number(row.id)));
+      mappings = mergeMappings(mappings, animapMappings);
+    } catch (error) {
+      console.error("[identity] AniMap mapping failed; trying IDMapper", error);
+    }
+  }
+
+  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
+
+  if (unresolvedRows.length) {
+    try {
+      const idMapperMappings = await resolveIdMapperMappings(unresolvedRows.map((row) => Number(row.id)));
+      mappings = mergeMappings(mappings, idMapperMappings);
+    } catch (error) {
+      console.error("[identity] IDMapper mapping failed; trying BingeCat search", error);
     }
   }
 
