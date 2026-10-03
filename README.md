@@ -168,6 +168,8 @@ Catalog names and season labels are generated dynamically.
 **Development:** `v0.14.0`  
 **Major baseline:** `v0.0.0`
 
+The 0.14.0 release restores the AniList external-link, AniMap, and IDMapper fallback stages before BingeCat search.
+
 The v2 project was initialized from an unreleased `v0.0.0` baseline. The current controlled production release is `v0.4.0`.
 
 Production releases are published as Git tags and GitHub Releases.
