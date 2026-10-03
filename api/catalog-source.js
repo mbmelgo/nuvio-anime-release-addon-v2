@@ -359,6 +359,7 @@ async function resolveRelationMappings(rows, {
   }
 
   const installmentRows = [];
+  let installmentMappings = new Map();
   if (typeof resolveImdbMappings === "function") {
     for (const [currentId, relatedIds] of rowRelations) {
       const currentRow = currentRows.get(currentId);
@@ -387,10 +388,7 @@ async function resolveRelationMappings(rows, {
 
   if (installmentRows.length && typeof resolveImdbMappings === "function") {
     try {
-      relationMappings = mergeMappings(
-        relationMappings,
-        await resolveImdbMappings(installmentRows),
-      );
+      installmentMappings = await resolveImdbMappings(installmentRows);
     } catch (error) {
       console.error("[identity] IMDb related-installment mapping failed", error);
     }
@@ -398,7 +396,7 @@ async function resolveRelationMappings(rows, {
 
   const result = new Map();
   for (const [currentId, relatedIds] of rowRelations) {
-    const records = [];
+    const records = [...(installmentMappings.get(currentId) || [])];
     for (const relatedId of relatedIds) {
       for (const record of relationMappings.get(relatedId) || []) {
         records.push({
