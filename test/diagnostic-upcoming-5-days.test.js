@@ -51,6 +51,7 @@ test("diagnostic: dump all AniList upcoming-5-days schedule records", async () =
   }
 
   const excluded = [];
+  const duplicateMedia = [];
   const uniqueMedia = new Map();
   for (const row of rows) {
     const media = row.media;
@@ -60,6 +61,14 @@ test("diagnostic: dump all AniList upcoming-5-days schedule records", async () =
         id: media?.id ?? null, idMal: media?.idMal ?? null, format: media?.format ?? null,
         isAdult: media?.isAdult ?? null, country: media?.countryOfOrigin ?? null,
         title: media?.title ?? null,
+      });
+      continue;
+    }
+    if (uniqueMedia.has(Number(media.id))) {
+      duplicateMedia.push({
+        scheduleId: row.id, airingAt: row.airingAt, episode: row.episode,
+        id: media.id, idMal: media.idMal, format: media.format,
+        isAdult: media.isAdult, country: media.countryOfOrigin, title: media.title,
       });
       continue;
     }
@@ -75,7 +84,7 @@ test("diagnostic: dump all AniList upcoming-5-days schedule records", async () =
   console.log(JSON.stringify({
     now: new Date(nowMs).toISOString(), start, end,
     rawScheduleRows: rows.length, uniqueEligibleMedia: uniqueMedia.size,
-    excluded, records: [...uniqueMedia.values()],
+    excluded, duplicateMedia, records: [...uniqueMedia.values()],
   }, null, 2));
 
   assert.ok(rows.length > 0);
