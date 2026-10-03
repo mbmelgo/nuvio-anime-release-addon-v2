@@ -107,12 +107,13 @@ test("seasonal catalog uses canonical MAL identity as the final fallback", async
   assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
 });
 
-test("seasonal catalog still fails when neither a supported provider identity nor MAL ID exists", async () => {
-  await assert.rejects(canonicalizeCatalogPageWithBingeCat([{
+test("seasonal catalog preserves AniList identity when neither a supported provider identity nor MAL ID exists", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
     id: 269,
     title: { romaji: "Bleach" },
     format: "TV",
   }], {
+    requireBingeCatVerification: true,
     resolveMappings: async () => new Map(),
     resolveFribbMappings: async () => new Map(),
     resolveExternalMappings: () => new Map(),
@@ -124,7 +125,10 @@ test("seasonal catalog still fails when neither a supported provider identity no
     resolveImdbMappings: async () => new Map(),
     resolveSecondaryMappings: async () => new Map(),
     resolveAlternativeMappings: async () => new Map(),
-  }), /BingeCat identity resolution exhausted.*269/);
+  });
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "anilist:269");
+  assert.equal(metas[0].extra.bingecatEvidence, "anilist-id-fallback");
 });
 
 test("seasonal catalog uses canonical MAL fallback for Korea entries too", async () => {
