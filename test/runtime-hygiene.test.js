@@ -241,6 +241,7 @@ test("release workflow keeps dry runs non-mutating and deploys idempotently", as
   assert.ok(workflow.includes('root.get("identityMode") == "bingecat"'));
   assert.match(workflow, /Check for an existing Vercel deployment/);
   assert.match(workflow, /state\["lastDeployment"\] = \{/);
+  assert.ok(workflow.includes("git add ops/release-state.json README.md"));
   assert.match(workflow, /GITHUB_RUN_ID/);
 });
 test("release workflow grants read access to commit statuses", async () => {
