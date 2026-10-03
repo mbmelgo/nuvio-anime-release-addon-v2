@@ -184,3 +184,30 @@ test("seasonal catalog uses the secondary mapping source without dropping the en
   assert.equal(metas[0].id, "tt0434665");
   assert.equal(metas[0].type, "series");
 });
+
+
+test("seasonal catalog uses MAL-only mapping evidence as the final fallback", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 212653,
+    title: { romaji: "Example" },
+    format: "ONA",
+  }], {
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map([
+      [212653, [{ source: "animeapi", anilistId: 212653, malId: 62218, imdbIds: [], tvdbId: null, tmdbTvId: null, tmdbMovieIds: [] }]],
+    ]),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "mal:62218");
+  assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
+});
