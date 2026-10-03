@@ -261,7 +261,7 @@ This addon is responsible for:
 
 - seasonal anime release discovery
 - rolling upcoming/recent airing discovery
-- MAL-first catalog identities with AniList fallback
+- BingeCat-compatible catalog identities with ARM-backed cross-provider mapping
 - Nuvio-compatible catalog pagination
 - catalog search
 - dynamic seasonal organization
