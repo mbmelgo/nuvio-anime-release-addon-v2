@@ -408,6 +408,7 @@ jobs:
           import sys
           from pathlib import Path
           from datetime import datetime, timezone
+          import re
 
           path = Path("ops/release-state.json")
           state = json.loads(path.read_text())
@@ -435,7 +436,11 @@ jobs:
           }
 
           path.write_text(json.dumps(state, indent=2) + "\n")
+          readme_path = Path("README.md")
+          readme = readme_path.read_text()
+          readme = re.sub(r"(\\*\\*Production:\\*\\*\\s*)`[^`]+`", rf"\\g<1>`v{version}`", readme)
+          readme_path.write_text(readme)
           PY
-          git add ops/release-state.json
+          git add ops/release-state.json README.md
           git commit -m "chore: record $tag production release [skip-release-pipeline]"
           git push origin HEAD:main
