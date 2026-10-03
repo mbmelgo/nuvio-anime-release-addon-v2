@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
+import { clearImdbSearchCache, resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
 
 test("IMDb search tries AniList synonym and numeric title variants", async () => {
+  clearImdbSearchCache();
   const requested = [];
   const fetchImpl = async (url) => {
     const title = decodeURIComponent(String(url).split("/").pop().replace(/\.json$/, ""));
@@ -39,6 +40,7 @@ test("IMDb search tries AniList synonym and numeric title variants", async () =>
 
 
 test("IMDb search derives constrained installment aliases", async () => {
+  clearImdbSearchCache();
   const requested = [];
   const fetchImpl = async (url) => {
     const title = decodeURIComponent(String(url).split("/").pop().replace(/\.json$/, ""));
