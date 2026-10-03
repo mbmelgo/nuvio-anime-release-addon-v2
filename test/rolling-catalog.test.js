@@ -62,7 +62,7 @@ test("upcoming rolling catalog prefers MAL and falls back to AniList", async () 
     fetchPage: async () => rows,
     maxPages: 1,
   });
-  assert.deepEqual(result.map((meta) => meta.id), ["mal:10010", "anilist:20", "mal:10030"]);
+  assert.deepEqual(result.map((meta) => meta.id), ["tt10000010", "tt10000020", "tt10000030"]);
   assert.equal(result[0].extra.nextEpisode, 2);
   assert.equal(result[0].extra.nextAiringAt, rows[0].airingAt);
 });
@@ -79,7 +79,7 @@ test("previous rolling catalog keeps most-recent schedule order and deduplicates
     fetchPage: async () => rows,
     maxPages: 1,
   });
-  assert.deepEqual(result.map((meta) => meta.id), ["mal:10030", "mal:10010", "mal:10020"]);
+  assert.deepEqual(result.map((meta) => meta.id), ["tt10000030", "tt10000010", "tt10000020"]);
 });
 
 test("rolling pagination fills a Nuvio page across schedule pages after deduplication", async () => {
