@@ -399,9 +399,24 @@ export async function buildRollingCatalog(id, date, skip, search, {
       let mappings = new Map();
       if (useBingeCatIdentity) {
         try {
-          mappings = await resolveRequiredBingeCatMappings(eligibleRows.map((row) => Number(row.media.id)));
+          mappings = await resolveAniListMappings(eligibleRows.map((row) => Number(row.media.id)));
         } catch (error) {
-          console.error("[identity] required rolling BingeCat mapping failed", error);
+          console.error("[identity] ARM rolling mapping failed; using secondary mapping source", error);
+        }
+
+        const unresolved = eligibleRows
+          .filter((row) => !selectBingeCatIdentity(
+            { ...row.media, anilistId: Number(row.media.id) },
+            getBingeCatCandidates(row.media, mappings.get(Number(row.media.id)) || []),
+          ))
+          .map((row) => Number(row.media.id));
+        if (unresolved.length) {
+          try {
+            const secondary = await resolveAniListMappingsSecondary(unresolved);
+            mappings = new Map([...mappings, ...secondary]);
+          } catch (error) {
+            console.error("[identity] secondary rolling mapping failed", error);
+          }
         }
       }
 
