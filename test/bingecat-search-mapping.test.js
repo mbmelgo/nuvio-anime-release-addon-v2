@@ -555,3 +555,36 @@ test("BingeCat authoritative verification can retry a cached negative result", a
   assert.equal(second.get(202079)[0].imdbIds[0], "tt43691343");
   assert.ok(calls > firstCallCount);
 });
+
+
+test("BingeCat search retries transient upstream failures before resolving", async () => {
+  clearBingeCatSearchCache();
+  let calls = 0;
+  const result = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 202079,
+    type: "TV",
+    year: 2026,
+    titleEnglish: "Uncle's Obsession with Cute Things",
+  }], {
+    fetchImpl: async () => {
+      calls += 1;
+      if (calls < 3) return { ok: false, status: 429 };
+      return {
+        ok: true,
+        async json() {
+          return {
+            series: [{
+              name: "Uncle's Obsession with Cute Things",
+              id: "tt43691343",
+              contentType: "series",
+              year: 2026,
+            }],
+          };
+        },
+      };
+    },
+  });
+
+  assert.equal(result.get(202079)[0].imdbIds[0], "tt43691343");
+  assert.equal(calls, 3);
+});
