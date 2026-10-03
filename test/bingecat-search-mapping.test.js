@@ -273,6 +273,38 @@ test("BingeCat search uses an explicit related AniList title for a sequel", asyn
   assert.equal(record.year, null);
 });
 
+test("BingeCat search probes strict suffix aliases for translated titles", async () => {
+  clearBingeCatSearchCache();
+  const result = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 212653,
+    type: "TV",
+    year: 2027,
+    titleRomaji: "Kidou Keisatsu Patlabor EZY File 3",
+  }], {
+    fetchImpl: async (url) => {
+      const parsed = new URL(url);
+      if (parsed.searchParams.get("query") !== "Patlabor EZY File 3") {
+        return { ok: true, async json() { return { movies: [], series: [] }; } };
+      }
+      return {
+        ok: true,
+        async json() {
+          return {
+            movies: [{
+              name: "Patlabor EZY File 3",
+              id: "tt39382762",
+              contentType: "movie",
+              year: 2027,
+            }],
+          };
+        },
+      };
+    },
+  });
+
+  assert.equal(result.get(212653)[0].imdbIds[0], "tt39382762");
+});
+
 test("BingeCat search rejects fuzzy, wrong-type, and wrong-year candidates", () => {
   const row = {
     anilistId: 202390,
