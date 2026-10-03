@@ -322,3 +322,38 @@ test("BingeCat search caches negative lookups", async () => {
   await resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
   assert.equal(calls, 2);
 });
+
+test("BingeCat search can derive a franchise prefix before a subtitle", async () => {
+  clearBingeCatSearchCache();
+  const result = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 205289,
+    type: "MOVIE",
+    year: 2026,
+    titleEnglish: "Norman the Snowman: The Children's Star",
+    titleRomaji: "Norman the Snowman: Kodomo-tachi no Hitotsuboshi",
+  }], {
+    fetchImpl: async (url) => {
+      const parsed = new URL(url);
+      if (parsed.searchParams.get("query") !== "Norman the Snowman") {
+        return { ok: true, async json() { return { movies: [], series: [] }; } };
+      }
+      return {
+        ok: true,
+        async json() {
+          return {
+            movies: [{
+              name: "Norman the Snowman: On a Night of Shooting Stars",
+              id: "tt00000001",
+              contentType: "movie",
+              year: 2016,
+            }],
+          };
+        },
+      };
+    },
+  });
+
+  const record = result.get(205289)[0];
+  assert.equal(record.imdbIds[0], "tt00000001");
+  assert.equal(record.year, null);
+});
