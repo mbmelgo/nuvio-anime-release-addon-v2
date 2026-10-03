@@ -134,8 +134,8 @@ test("relation provider mappings are rejected when the related title does not ma
   });
 
   assert.equal(metas.length, 1);
-  assert.equal(metas[0].id, "mal:64999");
-  assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
+  assert.equal(metas[0].id, "anilist:155723");
+  assert.equal(metas[0].extra.bingecatEvidence, "anilist-id-fallback");
 });
 
 test("relation external provider mappings are validated against the current title", async () => {
