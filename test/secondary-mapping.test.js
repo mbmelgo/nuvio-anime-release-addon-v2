@@ -79,3 +79,17 @@ test("AnimeAPI mapping client caches successful and negative results", async () 
   assert.equal(first.get(1)[0].imdbIds[0], "tt1234567");
   assert.equal(second.get(1)[0].imdbIds[0], "tt1234567");
 });
+
+
+test("AnimeAPI mapping preserves MAL-only records for terminal identity fallback", () => {
+  const record = normalizeAnimeApiRecord({
+    anilist: 212653,
+    myanimelist: 62218,
+    title: "The Guardian of Daxia",
+  }, 212653);
+
+  assert.equal(record.malId, 62218);
+  assert.deepEqual(record.imdbIds, []);
+  assert.equal(record.tvdbId, null);
+  assert.equal(record.tmdbTvId, null);
+});
