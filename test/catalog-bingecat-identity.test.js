@@ -397,8 +397,7 @@ test("catalog accepts a TVDB identity when an independent mapping supplies seman
   }], {
     resolveMappings: async () => new Map([[202079, [{ source: "arm", anilistId: 202079, type: "TV", imdbIds: [], tvdbId: 480889, tmdbTvId: null, tmdbMovieIds: [] }]]]),
     resolveFribbMappings: async () => new Map(),
-    resolveExternalMappings: () => new Map(),
-    resolveAnimapMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),    resolveAnimapMappings: async () => new Map(),
     resolveIdMapperMappings: async () => new Map(),
     resolveBingeCatSearchMappings: async () => new Map(),
     resolveAnimeMapperMappings: async () => new Map(),
@@ -601,4 +600,28 @@ test("BingeCat-search evidence outranks an otherwise valid external provider map
   assert.equal(selected.provider, "tvdb");
   assert.equal(selected.id, "222222");
   assert.equal(selected.bingecatVerified, true);
+});
+test("BingeCat candidate dedupe keeps identical numeric IDs from different providers", () => {
+  const media = {
+    id: 999002,
+    format: "TV",
+    title: { english: "Provider Collision Example" },
+  };
+  const candidates = getBingeCatCandidates(media, [
+    {
+      source: "bingecat-search",
+      imdbIds: ["tt123456"],
+      tvdbId: 123456,
+      tmdbTvId: null,
+      title: "Provider Collision Example",
+      year: 2026,
+      relation: false,
+      derivedTitle: false,
+    },
+  ]);
+
+  assert.deepEqual(
+    candidates.map(({ provider, id }) => [provider, id]),
+    [["imdb", "tt123456"], ["tvdb", "123456"]],
+  );
 });
