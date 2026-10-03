@@ -61,6 +61,7 @@ test("upcoming rolling catalog prefers MAL and falls back to AniList", async () 
   const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
     fetchPage: async () => rows,
     maxPages: 1,
+    resolveMappings: async (ids) => new Map(ids.map((id) => [id, [{ source: "test", anilistId: id, type: "TV", imdbIds: [`tt${10000000 + id}`], tvdbId: null, tmdbTvId: null, tmdbMovieIds: [] }]])),
   });
   assert.deepEqual(result.map((meta) => meta.id), ["tt10000010", "tt10000020", "tt10000030"]);
   assert.equal(result[0].extra.nextEpisode, 2);
@@ -78,6 +79,7 @@ test("previous rolling catalog keeps most-recent schedule order and deduplicates
   const result = await buildRollingCatalog("previous_7_days", now, 0, "", {
     fetchPage: async () => rows,
     maxPages: 1,
+    resolveMappings: async (ids) => new Map(ids.map((id) => [id, [{ source: "test", anilistId: id, type: "TV", imdbIds: [`tt${10000000 + id}`], tvdbId: null, tmdbTvId: null, tmdbMovieIds: [] }]])),
   });
   assert.deepEqual(result.map((meta) => meta.id), ["tt10000030", "tt10000010", "tt10000020"]);
 });
@@ -96,6 +98,7 @@ test("rolling pagination fills a Nuvio page across schedule pages after deduplic
     },
     maxPages: 2,
     pageSize: 4,
+    resolveMappings: async (ids) => new Map(ids.map((id) => [id, [{ source: "test", anilistId: id, type: "TV", imdbIds: [`tt${10000000 + id}`], tvdbId: null, tmdbTvId: null, tmdbMovieIds: [] }]])),
   });
   assert.deepEqual(result.map((meta) => meta.id), ["tt10000001", "tt10000002", "tt10000003", "tt10000004"]);
   assert.deepEqual(calls.map((call) => [call.page, call.futureOnly, call.sort]), [[1, true, "TIME"], [2, true, "TIME"]]);
@@ -115,6 +118,7 @@ test("rolling search is applied before logical pagination so later schedule page
     },
     maxPages: 2,
     pageSize: 2,
+    resolveMappings: async (ids) => new Map(ids.map((id) => [id, [{ source: "test", anilistId: id, type: "TV", imdbIds: [`tt${10000000 + id}`], tvdbId: null, tmdbTvId: null, tmdbMovieIds: [] }]])),
   });
   assert.deepEqual(result.map((meta) => meta.name), ["Target Anime", "Target Anime 2"]);
   assert.deepEqual(calls, [1, 2]);
@@ -158,6 +162,7 @@ test("rolling catalogs exclude adult and unsupported-format media", async () => 
   const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
     fetchPage: async () => rows,
     maxPages: 1,
+    resolveMappings: async (ids) => new Map(ids.map((id) => [id, [{ source: "test", anilistId: id, type: "TV", imdbIds: [`tt${10000000 + id}`], tvdbId: null, tmdbTvId: null, tmdbMovieIds: [] }]])),
   });
   assert.deepEqual(result.map((meta) => meta.id), ["tt10000001", "tt10000003"]);
 });
