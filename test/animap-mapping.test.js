@@ -89,7 +89,7 @@ test("AniMap resolver requests only missing IDs and caches negative results", as
   };
 
   const first = await resolveAniListMappingsAnimap([123, 999], {
-    endpoint: "https://example.test/api/map/anilist",
+    endpoint: "https://example.test/api/v1/map/anilist",
     fetchImpl,
   });
 
