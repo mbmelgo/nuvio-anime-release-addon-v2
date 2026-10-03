@@ -196,6 +196,7 @@ test("rolling catalogs preserve an exact provider identity when BingeCat verific
     resolveAlternativeMappings: async () => new Map(),
     resolveBingeCatSearchMappings: async () => new Map(),
     maxPages: 1,
+    requireBingeCatVerification: true,
   });
 
   assert.equal(result.length, 1);
