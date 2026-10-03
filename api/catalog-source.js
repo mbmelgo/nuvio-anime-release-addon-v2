@@ -267,6 +267,7 @@ async function resolveMappingsForRows(
       const relationMappings = await resolveRelationMappings(stillUnresolvedRows, {
         resolveMappings,
         resolveFribbMappings,
+        resolveExternalMappings,
         resolveImdbMappings,
       });
       mappings = mergeMappings(mappings, relationMappings);
@@ -281,6 +282,7 @@ async function resolveMappingsForRows(
 async function resolveRelationMappings(rows, {
   resolveMappings,
   resolveFribbMappings,
+  resolveExternalMappings,
   resolveImdbMappings,
 }) {
   const relationIds = [];
@@ -344,7 +346,22 @@ async function resolveRelationMappings(rows, {
   }
 
   const stillMissingRelationIds = uniqueRelationIds.filter((id) => !(relationMappings.get(id)?.length));
-  if (stillMissingRelationIds.length && typeof resolveImdbMappings === "function") {
+  if (stillMissingRelationIds.length && typeof resolveExternalMappings === "function") {
+    try {
+      const externalRows = stillMissingRelationIds
+        .map((id) => relationRows.get(id))
+        .filter(Boolean);
+      relationMappings = mergeMappings(
+        relationMappings,
+        resolveExternalMappings(externalRows),
+      );
+    } catch (error) {
+      console.error("[identity] AniList relation external mapping failed", error);
+    }
+  }
+
+  const stillMissingAfterExternalIds = uniqueRelationIds.filter((id) => !(relationMappings.get(id)?.length));
+  if (stillMissingAfterExternalIds.length && typeof resolveImdbMappings === "function") {
     try {
       const imdbRows = stillMissingRelationIds
         .map((id) => relationRows.get(id))
@@ -414,16 +431,22 @@ async function resolveRelationMappings(rows, {
 
     const records = [];
     for (const relatedId of relatedIds) {
+      const relatedRow = relationRows.get(relatedId);
       for (const record of relationMappings.get(relatedId) || []) {
+        const providerTitle = record?.title || record?.titles?.[0];
+        if (!providerTitle) continue;
+
         records.push({
           ...record,
           anilistId: currentId,
           source: `${record.source || "mapping"}-relation`,
           relationAnilistId: relatedId,
-          relation: true,
-          title: null,
-          titles: null,
-          year: null,
+          relation: false,
+          title: providerTitle,
+          titles: Array.isArray(record?.titles) && record.titles.length
+            ? record.titles
+            : [providerTitle],
+          year: record?.year ?? relatedRow?.startDate?.year ?? null,
         });
       }
     }
