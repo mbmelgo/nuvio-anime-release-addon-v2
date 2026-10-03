@@ -15,6 +15,7 @@ import { queryAnime, queryAiringSchedulePage } from "../lib/catalog-anilist.js";
 import { resolveAniListMappings } from "../lib/arm-mapping.js";
 import { resolveAniListMappingsFribb } from "../lib/fribb-mapping.js";
 import { resolveAniListExternalMappings } from "../lib/external-provider-mapping.js";
+import { resolveAniListMappingsAnimap } from "../lib/animap-mapping.js";
 import { resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
 import { resolveAniListMappingsFromAnimeApiTsv } from "../lib/animeapi-tsv-mapping.js";
 import { getBingeCatCandidates, selectBingeCatIdentity } from "../lib/bingecat-identity.js";
@@ -107,6 +108,7 @@ async function resolveMappingsForRows(
     resolveMappings = resolveAniListMappings,
     resolveFribbMappings = resolveAniListMappingsFribb,
     resolveExternalMappings = resolveAniListExternalMappings,
+    resolveAnimapMappings = resolveAniListMappingsAnimap,
     resolveTsvMappings = resolveAniListMappingsFromAnimeApiTsv,
     resolveImdbMappings = resolveAniListMappingsByImdbSearch,
     resolveSecondaryMappings = resolveAniListMappingsSecondary,
@@ -144,6 +146,20 @@ async function resolveMappingsForRows(
   if (unresolvedRows.length) {
     const externalMappings = resolveExternalMappings(unresolvedRows);
     mappings = mergeMappings(mappings, externalMappings);
+  }
+
+  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
+
+  if (unresolvedRows.length) {
+    try {
+      const animapMappings = await resolveAnimapMappings(unresolvedRows.map((row) => Number(row.id)));
+      mappings = mergeMappings(mappings, animapMappings);
+    } catch (error) {
+      console.error("[identity] AniMap mapping failed; trying AnimeAPI TSV", error);
+    }
   }
 
   unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
@@ -204,7 +220,8 @@ async function resolveMappingsForRows(
 function mergeMappings(base, additional) {
   const merged = new Map(base);
   for (const [id, records] of additional instanceof Map ? additional : []) {
-    if (!merged.has(id) || !merged.get(id)?.length) merged.set(id, records);
+    const existing = merged.get(id) || [];
+    merged.set(id, [...existing, ...(Array.isArray(records) ? records : [])]);
   }
   return merged;
 }
