@@ -20,8 +20,8 @@ test("temporary BingeCat public Meilisearch query investigation", async () => {
       shuffle_session_seed: "nuvio-addon-investigation",
       include_reservoir: "1",
     });
-    const response = await fetch("https://bingecat.com/public/meilisearch/api?" + qs);
-    const data = await response.json();
+    const response = await fetch("https://bingecat.com/public/meilisearch/api?" + qs, { headers: { "X-Requested-With": "XMLHttpRequest", Accept: "application/json", Referer: "https://bingecat.com/" } });
+    const data = response.headers.get("content-type")?.includes("json") ? await response.json() : { body: (await response.text()).slice(0, 1000) };
     console.log(JSON.stringify({ title, status: response.status, movies: data.movies, series: data.series }));
   }
 });
