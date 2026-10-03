@@ -602,7 +602,7 @@ export async function fetchValidatedSeasonCatalogPage({
   skip = 0,
   search = "",
   fetchPage = queryAnime,
-  canonicalizePage = canonicalizeCatalogPageWithBingeCat,
+  canonicalizePage,
 }) {
   const normalizedSkip = Math.max(0, Number(skip) || 0);
   const anilistPage = Math.floor(normalizedSkip / NUVIO_PAGE_SIZE) + 1;
