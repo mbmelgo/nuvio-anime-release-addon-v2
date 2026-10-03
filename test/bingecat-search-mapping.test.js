@@ -37,6 +37,98 @@ test("BingeCat search normalizes an exact movie identity", async () => {
   assert.equal(record.tmdbTvId, null);
 });
 
+test("BingeCat search consumes AniList-shaped title, format, year, MAL, and synonyms", async () => {
+  clearBingeCatSearchCache();
+  const calls = [];
+  const result = await resolveAniListMappingsByBingeCatSearch([{
+    id: 212653,
+    idMal: 999001,
+    format: "MOVIE",
+    startDate: { year: 2026 },
+    title: {
+      english: "Patlabor EZY File 3",
+      romaji: "Kidou Keisatsu Patlabor EZY File 3",
+      native: "機動警察パトレイバー EZY File 3",
+    },
+    synonyms: ["Patlabor EZY File 3"],
+  }], {
+    fetchImpl: async (url) => {
+      const parsed = new URL(url);
+      calls.push(parsed.searchParams.get("query"));
+      if (parsed.searchParams.get("query") === "機動警察パトレイバー EZY File 3") {
+        return {
+          ok: true,
+          async json() {
+            return {
+              movies: [{
+                name: "Patlabor EZY File 3",
+                id: "tt39382762",
+                tmdbId: 1633794,
+                contentType: "movie",
+                year: 2026,
+              }],
+            };
+          },
+        };
+      }
+      return {
+        ok: true,
+        async json() {
+          return { movies: [], series: [] };
+        },
+      };
+    },
+  });
+
+  const record = result.get(212653)[0];
+  assert.equal(record.imdbIds[0], "tt39382762");
+  assert.equal(record.malId, 999001);
+  assert.deepEqual(record.tmdbMovieIds, [1633794]);
+  assert.equal(calls.includes("機動警察パトレイバー EZY File 3"), true);
+});
+
+test("BingeCat search can fall back to keyword-only exact search", async () => {
+  clearBingeCatSearchCache();
+  let semanticRatios = [];
+  const result = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 202390,
+    type: "MOVIE",
+    year: 2026,
+    titleEnglish: "Girls und Panzer das Finale: Part 5",
+  }], {
+    fetchImpl: async (url) => {
+      const parsed = new URL(url);
+      semanticRatios.push(parsed.searchParams.get("semantic_ratio"));
+      if (parsed.searchParams.get("semantic_ratio") === "0") {
+        return {
+          ok: true,
+          async json() {
+            return {
+              movies: [{
+                name: "Girls und Panzer das Finale: Part 5",
+                id: "tt39195693",
+                tmdbId: 1592548,
+                contentType: "movie",
+                year: 2026,
+              }],
+            };
+          },
+        };
+      }
+      return {
+        ok: true,
+        async json() {
+          return { movies: [], series: [] };
+        },
+      };
+    },
+  });
+
+  const record = result.get(202390)[0];
+  assert.equal(record.imdbIds[0], "tt39195693");
+  assert.deepEqual(semanticRatios, ["0.55", "0"]);
+});
+
 test("BingeCat search rejects fuzzy, wrong-type, and wrong-year candidates", () => {
   const row = {
     anilistId: 202390,
@@ -84,5 +176,5 @@ test("BingeCat search caches negative lookups", async () => {
 
   await resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
   await resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
-  assert.equal(calls, 1);
+  assert.equal(calls, 2);
 });
