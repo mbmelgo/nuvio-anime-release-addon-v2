@@ -695,6 +695,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
   resolveMappings = resolveAniListMappings,
   resolveSecondaryMappings = resolveAniListMappingsSecondary,
   resolveAlternativeMappings = resolveAniListMappingsByMalIds,
+  requireBingeCatVerification = false,
 } = {}) {
   const range = getRollingCatalogRange(id, date);
   if (!range) return [];
@@ -731,7 +732,6 @@ export async function buildRollingCatalog(id, date, skip, search, {
         resolveMappings,
         resolveSecondaryMappings,
         resolveAlternativeMappings,
-        requireBingeCatVerification: true,
       });
 
       const metas = [];
@@ -752,7 +752,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
           getBingeCatCandidates(media, mappings.get(mediaId) || []),
           { excludeIds: usedIdentities },
         );
-        if (!selected || !selected.bingecatVerified) {
+        if (!selected || (requireBingeCatVerification && !selected.bingecatVerified)) {
           const malId = getCanonicalMalId(media, baseMeta, mappings.get(mediaId) || []);
           if (Number.isInteger(malId) && malId > 0) {
             const meta = {
@@ -826,7 +826,7 @@ export async function buildCatalog(id, info, skip, search) {
     });
   }
   if (getRollingCatalogRange(id, new Date())) {
-    return buildRollingCatalog(id, new Date(), skip, search, { useBingeCatIdentity: true });
+    return buildRollingCatalog(id, new Date(), skip, search, { useBingeCatIdentity: true, requireBingeCatVerification: true });
   }
   return [];
 }
