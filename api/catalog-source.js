@@ -759,7 +759,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
       const usedIdentities = new Set();
       const unresolvedIds = [];
 
-      for (const row of uniqueEligibleRows) {
+      for (const row of searchedRows) {
         const media = row.media;
         const mediaId = Number(media.id);
         const baseMeta = toCatalogIdentity(toMetaFromAniList(mediaId, media));
