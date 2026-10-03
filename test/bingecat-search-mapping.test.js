@@ -170,6 +170,7 @@ test("BingeCat search accepts an OVA movie identity when the AniList format is n
     anilistId: 212653,
     type: "TV",
     year: 2027,
+    titleEnglish: "Patlabor EZY File 3",
     titleRomaji: "Kidou Keisatsu Patlabor EZY File 3",
     titleNative: "機動警察パトレイバー EZY File 3",
   }], {
