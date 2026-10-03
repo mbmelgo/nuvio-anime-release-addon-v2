@@ -320,7 +320,7 @@ test("BingeCat search caches negative lookups", async () => {
 
   await resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
   await resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
-  assert.equal(calls, 4);
+  assert.equal(calls, 2);
 });
 
 test("BingeCat search can derive a franchise prefix before a subtitle", async () => {
@@ -428,5 +428,64 @@ test("BingeCat search cache does not reuse a candidate across distinct AniList r
 
   assert.equal(first.get(900101)[0].imdbIds[0], "tt11111111");
   assert.equal(second.get(900102)[0].imdbIds[0], "tt22222222");
+  assert.equal(calls, 2);
+});
+
+
+test("BingeCat cache continues past a cached negative title variant", async () => {
+  clearBingeCatSearchCache();
+  let calls = 0;
+  const fetchImpl = async (url) => {
+    calls += 1;
+    const query = new URL(url).searchParams.get("query");
+    if (query === "Resolved Alias") {
+      return {
+        ok: true,
+        async json() {
+          return {
+            movies: [{
+              name: "Resolved Alias",
+              id: "tt8888888",
+              contentType: "movie",
+              year: 2026,
+            }],
+          };
+        },
+      };
+    }
+    return { ok: true, async json() { return { movies: [], series: [] }; } };
+  };
+  const row = [{
+    anilistId: 301003,
+    type: "MOVIE",
+    year: 2026,
+    titleEnglish: "Missing Alias",
+    titleRomaji: "Resolved Alias",
+  }];
+
+  const first = await resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
+  assert.equal(first.get(301003)[0].imdbIds[0], "tt8888888");
+  assert.equal(calls, 3);
+
+  const second = await resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
+  assert.equal(second.get(301003)[0].imdbIds[0], "tt8888888");
+  assert.equal(calls, 3);
+});
+
+test("BingeCat cache is scoped to the AniList identity", async () => {
+  clearBingeCatSearchCache();
+  let calls = 0;
+  const fetchImpl = async () => {
+    calls += 1;
+    return { ok: true, async json() {
+      return { movies: [{ name: "Shared Title", id: "tt7777777", contentType: "movie", year: 2026 }] };
+    }};
+  };
+  const rows = [
+    { anilistId: 301001, type: "MOVIE", year: 2026, titleEnglish: "Shared Title" },
+    { anilistId: 301002, type: "MOVIE", year: 2026, titleEnglish: "Shared Title" },
+  ];
+  await resolveAniListMappingsByBingeCatSearch([rows[0]], { fetchImpl });
+  await resolveAniListMappingsByBingeCatSearch([rows[1]], { fetchImpl });
   assert.equal(calls, 2);
 });
