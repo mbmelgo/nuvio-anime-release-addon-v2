@@ -1,13 +1,20 @@
 import test from "node:test";
 
-test("temporary BingeCat endpoint investigation", async () => {
-  const html = await fetch("https://bingecat.com/").then((r) => r.text());
-  const scripts = [...html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)].map((m) => new URL(m[1], "https://bingecat.com/").href);
-  console.log(JSON.stringify({ scripts }));
-
-  for (const url of scripts.slice(-20)) {
-    const js = await fetch(url).then((r) => r.text()).catch(() => "");
-    const lines = js.split("\n").filter((line) => line.includes("/api/") || line.includes("search"));
-    if (lines.length) console.log(JSON.stringify({ url, lines: lines.slice(0, 100) }));
+test("temporary BingeCat search investigation", async () => {
+  for (const title of [
+    "Girls und Panzer das Finale Part 5",
+    "Norman the Snowman Kodomo-tachi no Hitotsuboshi",
+    "Komadori Mofmof Parade",
+    "Kidou Keisatsu Patlabor EZY File 3",
+  ]) {
+    const url = "https://bingecat.com/intellisearch?search=" + encodeURIComponent(title);
+    const response = await fetch(url);
+    const body = await response.text();
+    console.log(JSON.stringify({
+      title,
+      status: response.status,
+      finalUrl: response.url,
+      snippet: body.slice(0, 3000),
+    }));
   }
 });
