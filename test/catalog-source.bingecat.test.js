@@ -125,17 +125,18 @@ test("catalog identity resolution uses Fribb before rate-limited secondary sourc
   assert.equal(secondaryCalls, 1);
 });
 
-test("catalog identity resolution never silently drops an unresolved source row", async () => {
-  const rows = [row(1), row(2, null)];
-  await assert.rejects(
-    canonicalizeCatalogPageWithBingeCat(rows, {
-      resolveMappings: async () => new Map([[1, [mapping(1, "tt1000001")]]]),
-      resolveBingeCatSearchMappings: async () => new Map(),
-      resolveSecondaryMappings: async () => new Map(),
-      resolveAlternativeMappings: async () => new Map(),
-    }),
-    /BingeCat identity resolution exhausted.*2/,
-  );
+test("catalog identity resolution preserves unresolved rows with MAL or AniList terminal fallbacks", async () => {
+  const rows = [row(1, 101), row(2, null)];
+  const result = await canonicalizeCatalogPageWithBingeCat(rows, {
+    resolveMappings: async () => new Map([[1, [mapping(1, "tt1000001")]]]),
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(result.length, 2);
+  assert.deepEqual(result.map((meta) => meta.id), ["tt1000001", "anilist:2"]);
+  assert.equal(result[1].extra.bingecatEvidence, "canonical-anilist-id-fallback");
 });
 
 test("50 AniList source rows produce exactly 50 BingeCat catalog results", async () => {
@@ -150,5 +151,5 @@ test("50 AniList source rows produce exactly 50 BingeCat catalog results", async
   });
 
   assert.equal(result.length, 50);
-  assert.ok(result.every((meta) => /^(tt\d+|tvdb:[1-9]\d*|tmdb:[1-9]\d*)$/.test(meta.id)));
+  assert.ok(result.every((meta) => /^(tt\d+|tvdb:[1-9]\d*|tmdb:[1-9]\d*|mal:[1-9]\d*|anilist:[1-9]\d*)$/.test(meta.id)));
 });
