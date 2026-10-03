@@ -192,7 +192,7 @@ async function resolveMappingsForRows(
       { ...row, anilistId: Number(row.id) },
       getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
     );
-    return !selected || selected.provider !== "imdb";
+    return !selected;
   });
 
   if (unresolvedRows.length) {
