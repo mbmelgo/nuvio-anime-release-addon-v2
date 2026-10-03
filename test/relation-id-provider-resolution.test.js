@@ -143,6 +143,7 @@ test("relation identity resolution falls back to IMDb for the related title", as
 
 
 test("relation identity resolution derives provider installment titles", async () => {
+  const searchedTitles = [];
   const metas = await canonicalizeCatalogPageWithBingeCat([{
     id: 212653,
     title: {
