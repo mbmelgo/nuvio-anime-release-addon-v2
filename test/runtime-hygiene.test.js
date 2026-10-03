@@ -236,12 +236,13 @@ test("release workflow keeps dry runs non-mutating and deploys idempotently", as
   assert.match(workflow, /inputs\.dry_run.*true.*release=true|release=true.*inputs\.dry_run.*true/s);
   assert.ok(workflow.includes("steps.existing_vercel.outputs.needs_deploy == 'true'"));
   assert.ok(workflow.includes("inputs.dry_run != true"));
-  assert.match(workflow, /Create annotated release tag, GitHub Release, and update release state[\s\S]*inputs\.dry_run != true/);\n  assert.match(workflow, /identityMode.*bingecat/);\n  assert.match(workflow, /tt\\\\d\+\\|tvdb:\\\\d\+\\|tmdb:\\\\d\+/);
+  assert.match(workflow, /Create annotated release tag, GitHub Release, and update release state[\\s\\S]*inputs\.dry_run != true/);
+  assert.ok(workflow.includes('re.match(r"^(tt\\\\d+|tvdb:\\\\d+|tmdb:\\\\d+)$"'));
+  assert.ok(workflow.includes('root.get("identityMode") == "bingecat"'));
   assert.match(workflow, /Check for an existing Vercel deployment/);
   assert.match(workflow, /state\["lastDeployment"\] = \{/);
   assert.match(workflow, /GITHUB_RUN_ID/);
 });
-
 test("release workflow grants read access to commit statuses", async () => {
   const workflow = await readFile(".github/workflows/sync-version.yml", "utf8");
   assert.ok(workflow.includes("permissions:\n  contents: write\n  statuses: read"));
