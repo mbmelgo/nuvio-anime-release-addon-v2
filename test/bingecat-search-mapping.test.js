@@ -357,3 +357,37 @@ test("BingeCat search can derive a franchise prefix before a subtitle", async ()
   assert.equal(record.imdbIds[0], "tt00000001");
   assert.equal(record.year, null);
 });
+
+test("BingeCat search derives a base title from File-numbered installments", async () => {
+  clearBingeCatSearchCache();
+  const result = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 212653,
+    type: "TV",
+    year: 2027,
+    titleRomaji: "Kidou Keisatsu Patlabor EZY File 3",
+  }], {
+    fetchImpl: async (url) => {
+      const parsed = new URL(url);
+      if (parsed.searchParams.get("query") !== "Kidou Keisatsu Patlabor EZY") {
+        return { ok: true, async json() { return { movies: [], series: [] }; } };
+      }
+      return {
+        ok: true,
+        async json() {
+          return {
+            movies: [{
+              name: "Patlabor EZY File 3",
+              id: "tt39382762",
+              tmdbId: 1633794,
+              contentType: "movie",
+              year: 2027,
+            }],
+          };
+        },
+      };
+    },
+  });
+
+  const record = result.get(212653)[0];
+  assert.equal(record.imdbIds[0], "tt39382762");
+});
