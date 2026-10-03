@@ -97,7 +97,7 @@ test("rolling pagination fills a Nuvio page across schedule pages after deduplic
     maxPages: 2,
     pageSize: 4,
   });
-  assert.deepEqual(result.map((meta) => meta.id), ["anilist:1", "anilist:2", "anilist:3", "anilist:4"]);
+  assert.deepEqual(result.map((meta) => meta.id), ["tt10000001", "tt10000002", "tt10000003", "tt10000004"]);
   assert.deepEqual(calls.map((call) => [call.page, call.futureOnly, call.sort]), [[1, true, "TIME"], [2, true, "TIME"]]);
 });
 
@@ -159,5 +159,5 @@ test("rolling catalogs exclude adult and unsupported-format media", async () => 
     fetchPage: async () => rows,
     maxPages: 1,
   });
-  assert.deepEqual(result.map((meta) => meta.id), ["anilist:1", "anilist:3"]);
+  assert.deepEqual(result.map((meta) => meta.id), ["tt10000001", "tt10000003"]);
 });
