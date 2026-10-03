@@ -3,7 +3,7 @@
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
 [![MAL](https://img.shields.io/badge/MyAnimeList-identity-2e51a2.svg)](https://myanimelist.net)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
-[![Version](https://img.shields.io/badge/version-0.2.5-blue.svg)](https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases)
+[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases)
 
 > A lightweight, season-aware anime release catalog for Nuvio and Stremio-compatible clients.
 
@@ -40,7 +40,7 @@ TVDB: tvdb:<id>
 TMDB: tmdb:<id>
 ```
 
-The resolver prefers a validated IMDb candidate, then TVDB, then TMDB. ARM supplies the cross-provider mapping in a batched request, and the addon retains the legacy catalog identity if the mapping service is temporarily unavailable.
+The resolver prefers a validated IMDb candidate, then TVDB, then TMDB. ARM supplies the cross-provider mapping in a batched request. Unresolved entries are retried through the secondary AnimeAPI mapping source; if no validated IMDb, TVDB, or TMDB identity can be produced, the entry is omitted rather than emitting an unsupported MAL/AniList ID.
 
 The catalog keeps the AniList source id in the item's extra metadata so downstream systems can correlate the entry when needed.
 
@@ -165,7 +165,7 @@ Catalog names and season labels are generated dynamically.
 ## 🚀 Current release
 
 **Production:** `v0.2.0`  
-**Development:** `v0.2.5`  
+**Development:** `v0.3.0`  
 **Major baseline:** `v0.0.0`
 
 The v2 project was initialized from an unreleased `v0.0.0` baseline. The current controlled production release is `v0.2.0`.
@@ -261,7 +261,7 @@ This addon is responsible for:
 
 - seasonal anime release discovery
 - rolling upcoming/recent airing discovery
-- BingeCat-compatible catalog identities with ARM-backed cross-provider mapping
+- BingeCat-compatible catalog identities with ARM-backed and secondary cross-provider mapping
 - Nuvio-compatible catalog pagination
 - catalog search
 - dynamic seasonal organization
