@@ -166,3 +166,29 @@ test("rolling catalogs exclude adult and unsupported-format media", async () => 
   });
   assert.deepEqual(result.map((meta) => meta.id), ["tt10000001", "tt10000003"]);
 });
+
+
+test("rolling catalog preserves an entry with AniList fallback when no BingeCat or MAL identity exists", async () => {
+  const now = new Date("2026-10-01T00:00:00.000Z");
+  const rows = [schedule(900998, now.getTime() + 60_000, 1, "No Provider Rolling Example")];
+  const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+    fetchPage: async () => rows,
+    maxPages: 1,
+    requireBingeCatVerification: true,
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0].id, "anilist:900998");
+  assert.equal(result[0].extra.bingecatEvidence, "anilist-id-fallback");
+});

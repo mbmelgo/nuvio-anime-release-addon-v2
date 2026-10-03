@@ -107,12 +107,13 @@ test("seasonal catalog uses canonical MAL identity as the final fallback", async
   assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
 });
 
-test("seasonal catalog still fails when neither a supported provider identity nor MAL ID exists", async () => {
-  await assert.rejects(canonicalizeCatalogPageWithBingeCat([{
+test("seasonal catalog preserves AniList identity when neither a supported provider identity nor MAL ID exists", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
     id: 269,
     title: { romaji: "Bleach" },
     format: "TV",
   }], {
+    requireBingeCatVerification: true,
     resolveMappings: async () => new Map(),
     resolveFribbMappings: async () => new Map(),
     resolveExternalMappings: () => new Map(),
@@ -124,7 +125,10 @@ test("seasonal catalog still fails when neither a supported provider identity no
     resolveImdbMappings: async () => new Map(),
     resolveSecondaryMappings: async () => new Map(),
     resolveAlternativeMappings: async () => new Map(),
-  }), /BingeCat identity resolution exhausted.*269/);
+  });
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "anilist:269");
+  assert.equal(metas[0].extra.bingecatEvidence, "anilist-id-fallback");
 });
 
 test("seasonal catalog uses canonical MAL fallback for Korea entries too", async () => {
@@ -807,4 +811,32 @@ test("direct BingeCat evidence survives relation-derived evidence for the same p
   const selected = selectBingeCatIdentity(media, candidates);
   assert.equal(selected.id, "tt5550005");
   assert.equal(selected.bingecatVerified, true);
+});
+
+
+test("seasonal catalog preserves an entry with AniList fallback when BingeCat and MAL are unavailable", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 900999,
+    title: { english: "No Provider Example", romaji: "No Provider Example" },
+    format: "TV",
+    startDate: { year: 2026 },
+    coverImage: { large: null },
+  }], {
+    requireBingeCatVerification: true,
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "anilist:900999");
+  assert.equal(metas[0].extra.bingecatEvidence, "anilist-id-fallback");
 });

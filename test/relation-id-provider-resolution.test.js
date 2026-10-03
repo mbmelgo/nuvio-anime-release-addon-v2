@@ -77,7 +77,7 @@ test("relation-derived provider mappings are not reused as the current identity 
 
 
 test("relation provider mappings are rejected when the related title does not match the current entry", async () => {
-  await assert.rejects(canonicalizeCatalogPageWithBingeCat([{
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
     id: 155723,
     title: {
       english: null,
@@ -131,7 +131,11 @@ test("relation provider mappings are rejected when the related title does not ma
     }]]]),
     resolveSecondaryMappings: async () => new Map(),
     resolveAlternativeMappings: async () => new Map(),
-  }), /BingeCat identity resolution exhausted.*155723/);
+  });
+
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "anilist:155723");
+  assert.equal(metas[0].extra.bingecatEvidence, "anilist-id-fallback");
 });
 
 test("relation external provider mappings are validated against the current title", async () => {
