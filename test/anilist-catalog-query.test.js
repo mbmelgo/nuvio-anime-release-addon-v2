@@ -88,3 +88,21 @@ test("catalog AniList queries request 50 media rows with only fields needed to r
     globalThis.fetch = originalFetch;
   }
 });
+
+test("airing schedule queries include relation titles needed by rolling identity fallbacks", async () => {
+  const originalFetch = globalThis.fetch;
+  let request;
+  globalThis.fetch = async (_url, options) => {
+    request = JSON.parse(options.body);
+    return new Response(JSON.stringify({ data: { Page: { airingSchedules: [] } } }), { status: 200 });
+  };
+
+  try {
+    await queryAiringSchedulePage(Date.now() - 1000, Date.now(), false, 1);
+    assert.match(request.query, /relations\s*\{/);
+    assert.match(request.query, /relationType/);
+    assert.match(request.query, /node\s*\{\s*id\s+format\s+title/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
