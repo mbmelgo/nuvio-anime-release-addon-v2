@@ -410,3 +410,113 @@ test("catalog accepts a TVDB identity when an independent mapping supplies seman
   assert.equal(metas[0].id, "tvdb:480889");
   assert.equal(metas[0].extra.bingecatProvider, "tvdb");
 });
+
+
+test("seasonal catalog accepts a BingeCat direct identity found through a semantically compatible related title", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 155723,
+    idMal: 41409,
+    title: {
+      romaji: "Wushen Zhuzai: Da Wei Pian",
+      native: "武神主宰 大威篇",
+    },
+    format: "ONA",
+    startDate: { year: 2026 },
+    relations: {
+      edges: [{
+        relationType: "PREQUEL",
+        node: {
+          id: 10620,
+          title: {
+            english: "The God of War Dominates",
+            romaji: "Wushen Zhuzai",
+          },
+        },
+      }],
+    },
+  }], {
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map([[155723, [{
+      source: "bingecat-search",
+      anilistId: 155723,
+      type: "ONA",
+      imdbIds: ["tt20769560"],
+      tvdbId: null,
+      tmdbTvId: 110181,
+      tmdbMovieIds: [],
+      title: "The God of War Dominates",
+      year: null,
+      relation: false,
+      derivedTitle: true,
+      relatedTitleSearch: true,
+      relatedSearchTitles: ["The God of War Dominates", "Wushen Zhuzai"],
+    }]]]),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "tt20769560");
+  assert.equal(metas[0].extra.bingecatProvider, "imdb");
+  assert.equal(metas[0].extra.bingecatEvidence[0].source, "bingecat-search");
+});
+
+test("seasonal catalog rejects an unrelated franchise identity returned from a related-title search", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 214703,
+    idMal: 64718,
+    title: {
+      english: "Ghost Meets Gal!",
+      romaji: "Ghost Meets Gal!",
+    },
+    format: "TV",
+    startDate: { year: 2025 },
+    relations: {
+      edges: [{
+        relationType: "SEQUEL",
+        node: {
+          id: 1272,
+          title: {
+            english: "Cardfight!! Vanguard",
+            romaji: "Cardfight!! Vanguard",
+          },
+        },
+      }],
+    },
+  }], {
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map([[214703, [{
+      source: "bingecat-search",
+      anilistId: 214703,
+      type: "TV",
+      imdbIds: ["tt2549176"],
+      tvdbId: null,
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+      title: "Cardfight!! Vanguard",
+      year: null,
+      relation: false,
+      derivedTitle: true,
+    }]]]),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "mal:64718");
+  assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
+});
