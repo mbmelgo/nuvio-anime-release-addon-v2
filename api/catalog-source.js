@@ -497,6 +497,16 @@ function mergeMappings(base, additional) {
   return merged;
 }
 
+function getCanonicalMalId(row, meta, mappingRecords) {
+  const direct = Number(row?.idMal ?? meta?.extra?.malId);
+  if (Number.isInteger(direct) && direct > 0) return direct;
+  for (const record of Array.isArray(mappingRecords) ? mappingRecords : []) {
+    const candidate = Number(record?.malId ?? record?.idMal);
+    if (Number.isInteger(candidate) && candidate > 0) return candidate;
+  }
+  return null;
+}
+
 export async function canonicalizeCatalogPageWithBingeCat(
   mediaRows,
   options = {},
@@ -529,7 +539,7 @@ export async function canonicalizeCatalogPageWithBingeCat(
     );
 
     if (!selected) {
-      const malId = Number(row?.idMal ?? rawMeta.extra?.malId);
+      const malId = getCanonicalMalId(row, meta, mappings.get(anilistId) || []);
       if (Number.isInteger(malId) && malId > 0) {
         metas.push({
           ...meta,
@@ -673,7 +683,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
           { excludeIds: usedIdentities },
         );
         if (!selected) {
-          const malId = Number(media?.idMal ?? baseMeta.extra?.malId);
+          const malId = getCanonicalMalId(media, baseMeta, mappings.get(mediaId) || []);
           if (Number.isInteger(malId) && malId > 0) {
             const meta = {
               ...baseMeta,
