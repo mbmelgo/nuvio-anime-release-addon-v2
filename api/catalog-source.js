@@ -15,6 +15,7 @@ import { queryAnime, queryAiringSchedulePage } from "../lib/catalog-anilist.js";
 import { resolveAniListMappings } from "../lib/arm-mapping.js";
 import { resolveAniListMappingsFribb } from "../lib/fribb-mapping.js";
 import { resolveAniListExternalMappings } from "../lib/external-provider-mapping.js";
+import { resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
 import { getBingeCatCandidates, selectBingeCatIdentity } from "../lib/bingecat-identity.js";
 import {
   resolveAniListMappingsSecondary,
@@ -105,6 +106,7 @@ async function resolveMappingsForRows(
     resolveMappings = resolveAniListMappings,
     resolveFribbMappings = resolveAniListMappingsFribb,
     resolveExternalMappings = resolveAniListExternalMappings,
+    resolveImdbMappings = resolveAniListMappingsByImdbSearch,
     resolveSecondaryMappings = resolveAniListMappingsSecondary,
     resolveAlternativeMappings = resolveAniListMappingsByMalIds,
   } = {},
@@ -140,6 +142,16 @@ async function resolveMappingsForRows(
   if (unresolvedRows.length) {
     const externalMappings = resolveExternalMappings(unresolvedRows);
     mappings = mergeMappings(mappings, externalMappings);
+  }
+
+  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
+
+  if (unresolvedRows.length) {
+    const imdbMappings = await resolveImdbMappings(unresolvedRows);
+    mappings = mergeMappings(mappings, imdbMappings);
   }
 
   unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
