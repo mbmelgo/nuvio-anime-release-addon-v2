@@ -66,7 +66,7 @@ test("release workflow resolves and records the actual Vercel deployment ID", ()
 
 test("dry-run validates the existing production version instead of the unreleased target version", () => {
   assert.equal(deployWorkflow.includes('if [ "${{ inputs.dry_run }}" = "true" ]; then'), true);
-  assert.equal(deployWorkflow.includes('production_expected="$(curl --fail --silent --show-error https://nuvio-anime-releases-addon-rho.vercel.app/manifest.json'), true);
+  assert.equal(deployWorkflow.includes('production_expected="$(curl --fail --silent --show-error https://nuvio-anime-release-addon-v2.vercel.app/manifest.json'), true);
   assert.equal(deployWorkflow.includes('EXPECTED="$production_expected" TARGET="$expected"'), true);
   assert.equal(deployWorkflow.includes('EXPECTED_VERSION="$production_expected" PRODUCTION_BASE_URL='), true);
 });
@@ -79,7 +79,7 @@ test("dry-run trims whitespace from a manually supplied release target SHA", () 
 test("extended production validation defines its production version within the same shell", () => {
   assert.equal(
     deployWorkflow.includes('EXPECTED_VERSION="$production_expected" PRODUCTION_BASE_URL=') &&
-    deployWorkflow.includes('production_expected="$(curl --fail --silent --show-error https://nuvio-anime-releases-addon-rho.vercel.app/manifest.json'),
+    deployWorkflow.includes('production_expected="$(curl --fail --silent --show-error https://nuvio-anime-release-addon-v2.vercel.app/manifest.json'),
     true,
   );
 });

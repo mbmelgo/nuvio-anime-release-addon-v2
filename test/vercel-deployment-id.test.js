@@ -8,13 +8,13 @@ test("resolves a Vercel deployment id from the Vercel GitHub status target URL",
       context: "Vercel",
       state: "success",
       target_url:
-        "https://vercel.com/personal-bcb9/nuvio-anime-releases-addon/Cja365dcwSHTN2BsSttr2nE8VrCU",
+        "https://vercel.com/personal-bcb9/nuvio-anime-release-addon-v2/6z32j2PjAg38vo7x4dPBsQJfydFa",
     },
   ];
 
   assert.equal(
     resolveVercelDeploymentId(statuses),
-    "dpl_Cja365dcwSHTN2BsSttr2nE8VrCU",
+    "dpl_6z32j2PjAg38vo7x4dPBsQJfydFa",
   );
 });
 

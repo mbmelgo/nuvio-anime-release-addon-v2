@@ -90,6 +90,26 @@ test("release version helpers enforce semantic versioning and minor baselines", 
   assert.equal(incrementMinor("5.5.3"), "5.6.0");
 });
 
+test("unreleased v2 baseline is valid without a fabricated deployment or tag", () => {
+  assert.equal(validateVersionConsistency({
+    addonVersion: "0.0.0",
+    packageVersion: "0.0.0",
+    productionVersion: "0.0.0",
+    productionTag: null,
+    nextReleaseVersion: "0.1.0",
+    deploymentsSincePause: 0,
+    deploymentLimit: 10,
+    paused: false,
+  }), true);
+  assert.equal(validateLastDeploymentMetadata({
+    lastDeploymentVersion: "0.0.0",
+    lastDeploymentSha: null,
+    lastDeploymentId: null,
+    lastDeploymentTag: null,
+    lastDeployment: null,
+  }), true);
+});
+
 test("release state rejects inconsistent production and development metadata", () => {
   assert.throws(
     () => validateVersionConsistency({

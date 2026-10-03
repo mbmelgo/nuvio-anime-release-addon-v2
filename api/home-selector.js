@@ -1,8 +1,8 @@
 import { ADDON_VERSION } from "./version.js";
 
-const BASE_URL = "https://nuvio-anime-releases-addon-rho.vercel.app";
-const GITHUB_URL = "https://github.com/mbmelgo/nuvio-anime-releases-addon";
-const RELEASES_URL = "https://github.com/mbmelgo/nuvio-anime-releases-addon/releases";
+const BASE_URL = "https://nuvio-anime-release-addon-v2.vercel.app";
+const GITHUB_URL = "https://github.com/mbmelgo/nuvio-anime-release-addon-v2";
+const RELEASES_URL = "https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases";
 const SAMPLE_IMAGES = [
   ["Seasonal Catalogs", "/docs/images/readme-nuvio-home.png", "Representative seasonal catalog view"],
   ["Season Listing", "/docs/images/readme-nuvio-season.png", "Representative season listing"],

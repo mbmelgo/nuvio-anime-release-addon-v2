@@ -195,15 +195,15 @@ jobs:
             expected="$(git show "${{ steps.gate.outputs.release_target_sha }}:api/version.js" | sed -nE 's/export const ADDON_VERSION = "([^"]+)";/\1/p')"
           fi
           if [ "${{ inputs.dry_run }}" = "true" ]; then
-            production_expected="$(curl --fail --silent --show-error https://nuvio-anime-releases-addon-rho.vercel.app/manifest.json | sed -nE 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p')"
+            production_expected="$(curl --fail --silent --show-error https://nuvio-anime-release-addon-v2.vercel.app/manifest.json | sed -nE 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p')"
             test -n "$production_expected"
           else
             production_expected="$expected"
           fi
           for attempt in $(seq 1 30); do
-            root_manifest="$(curl --fail --silent --show-error https://nuvio-anime-releases-addon-rho.vercel.app/manifest.json || true)"
-            catalog="$(curl --fail --silent --show-error https://nuvio-anime-releases-addon-rho.vercel.app/catalog/anime/current_season.json || true)"
-            meta_status="$(curl --silent --output /dev/null --write-out '%{http_code}' https://nuvio-anime-releases-addon-rho.vercel.app/meta/series/mal%3A39535.json || true)"
+            root_manifest="$(curl --fail --silent --show-error https://nuvio-anime-release-addon-v2.vercel.app/manifest.json || true)"
+            catalog="$(curl --fail --silent --show-error https://nuvio-anime-release-addon-v2.vercel.app/catalog/anime/current_season.json || true)"
+            meta_status="$(curl --silent --output /dev/null --write-out '%{http_code}' https://nuvio-anime-release-addon-v2.vercel.app/meta/series/mal%3A39535.json || true)"
             if EXPECTED="$production_expected" TARGET="$expected" ROOT="$root_manifest" CATALOG="$catalog" META_STATUS="$meta_status" python - <<'PY'
           import json
           import os
@@ -246,13 +246,13 @@ jobs:
             expected="$(git show "${{ steps.gate.outputs.release_target_sha }}:api/version.js" | sed -nE 's/export const ADDON_VERSION = "([^"]+)";/\1/p')"
           fi
           if [ "${{ inputs.dry_run }}" = "true" ]; then
-            production_expected="$(curl --fail --silent --show-error https://nuvio-anime-releases-addon-rho.vercel.app/manifest.json | sed -nE 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p')"
+            production_expected="$(curl --fail --silent --show-error https://nuvio-anime-release-addon-v2.vercel.app/manifest.json | sed -nE 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p')"
             test -n "$production_expected"
           else
             production_expected="$expected"
           fi
           for attempt in $(seq 1 30); do
-            if EXPECTED_VERSION="$production_expected" PRODUCTION_BASE_URL="https://nuvio-anime-releases-addon-rho.vercel.app" node scripts/validate-production.mjs; then
+            if EXPECTED_VERSION="$production_expected" PRODUCTION_BASE_URL="https://nuvio-anime-release-addon-v2.vercel.app" node scripts/validate-production.mjs; then
               echo "Extended production validation passed."
               exit 0
             fi

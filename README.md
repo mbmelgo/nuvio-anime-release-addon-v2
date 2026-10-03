@@ -3,7 +3,7 @@
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
 [![MAL](https://img.shields.io/badge/MyAnimeList-identity-2e51a2.svg)](https://myanimelist.net)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
-[![Version](https://img.shields.io/badge/version-5.6.3-blue.svg)](https://github.com/mbmelgo/nuvio-anime-releases-addon/releases)
+[![Version](https://img.shields.io/badge/version-0.0.0-blue.svg)](https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases)
 
 > A lightweight, season-aware anime release catalog for Nuvio and Stremio-compatible clients.
 
@@ -139,7 +139,7 @@ This addon is intentionally **catalog-focused**. It does not duplicate detailed 
 ### Production manifest
 
 ```text
-https://nuvio-anime-releases-addon-rho.vercel.app/manifest.json
+https://nuvio-anime-release-addon-v2.vercel.app/manifest.json
 ```
 
 Add the manifest URL to a supported Nuvio/Stremio client.
@@ -147,7 +147,7 @@ Add the manifest URL to a supported Nuvio/Stremio client.
 ### Production landing page
 
 ```text
-https://nuvio-anime-releases-addon-rho.vercel.app/
+https://nuvio-anime-release-addon-v2.vercel.app/
 ```
 
 The landing page provides the manifest, current catalog endpoints, release information, and representative screenshots.
@@ -166,17 +166,17 @@ Catalog names and season labels are generated dynamically.
 
 ## 🚀 Current release
 
-**Production:** `v5.5.0`  
-**Development:** `v5.6.3`  
-**Major baseline:** `v5.0.0`
+**Production:** `v0.0.0` (unreleased baseline)  
+**Development:** `v0.0.0`  
+**Major baseline:** `v0.0.0`
 
-v5.5.0 is the current production baseline. It includes MAL-first catalog identity, AniList fallback, Nuvio pagination, and the five supported seasonal/rolling catalogs. Development currently contains additional catalog-integrity and release-validation coverage that has not yet been promoted to production.
+The v2 project is initialized at an unreleased `v0.0.0` baseline. No v2 production release or release tag exists yet; the first production release will establish the `0.1.x` line.
 
 Production releases are published as Git tags and GitHub Releases.
 
 A manual **dry run** validates CI, release metadata, the target version/SHA, and production behavior without deploying to Vercel, creating a tag or GitHub Release, or mutating release state.
 
-**Releases:** https://github.com/mbmelgo/nuvio-anime-releases-addon/releases
+**Releases:** https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases
 
 Versioning:
 

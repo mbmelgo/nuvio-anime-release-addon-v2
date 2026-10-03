@@ -31,7 +31,8 @@ export function validateVersionConsistency({
   if (addonVersion !== packageVersion) {
     throw new Error(`api/version.js (${addonVersion}) does not match package.json (${packageVersion}).`);
   }
-  if (!/^v\d+\.\d+\.\d+$/.test(productionTag) || productionTag !== `v${productionVersion}`) {
+  const isUnreleasedBaseline = productionVersion === "0.0.0" && productionTag === null && deploymentsSincePause === 0;
+  if (!isUnreleasedBaseline && (!/^v\d+\.\d+\.\d+$/.test(productionTag) || productionTag !== `v${productionVersion}`)) {
     throw new Error(`Production tag ${productionTag} does not match production version ${productionVersion}.`);
   }
   if (incrementMinor(productionVersion) !== nextReleaseVersion) {
@@ -59,6 +60,12 @@ export function validateReleaseTarget({ targetVersion, expectedVersion, targetSh
 
 export function validateLastDeploymentMetadata(state) {
   const deployment = state?.lastDeployment;
+  if (state?.lastDeploymentVersion === "0.0.0" && state?.lastDeploymentTag === null && deployment === null) {
+    if (state.lastDeploymentSha !== null || state.lastDeploymentId !== null) {
+      throw new Error("Unreleased baseline must not contain deployment identifiers.");
+    }
+    return true;
+  }
   if (!deployment || typeof deployment !== "object") {
     throw new Error("lastDeployment metadata is missing.");
   }
