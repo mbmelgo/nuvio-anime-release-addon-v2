@@ -76,6 +76,57 @@ test("candidate selection rejects a franchise-mismatched candidate", () => {
   assert.equal(selected.id, "tt26692417");
 });
 
+test("AniMap provider identities require independent corroboration", () => {
+  const media = {
+    anilistId: 195604,
+    title: { english: "Black Clover Season 2", romaji: "Black Clover 2nd Season" },
+    startDate: { year: 2026 },
+    format: "TV",
+  };
+
+  const animapOnly = getBingeCatCandidates(media, [{
+    source: "animap",
+    anilistId: 195604,
+    type: "TV",
+    tvdbId: 36880,
+    imdbIds: [],
+    tmdbTvId: null,
+    tmdbMovieIds: [],
+    title: "Black Clover Season 2",
+    year: 2026,
+  }]);
+
+  assert.equal(selectBingeCatIdentity(media, animapOnly), null);
+
+  const corroborated = getBingeCatCandidates(media, [
+    {
+      source: "animap",
+      anilistId: 195604,
+      type: "TV",
+      tvdbId: 36880,
+      imdbIds: [],
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+      title: "Black Clover Season 2",
+      year: 2026,
+    },
+    {
+      source: "arm",
+      anilistId: 195604,
+      type: "TV",
+      tvdbId: 36880,
+      imdbIds: [],
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+      title: "Black Clover Season 2",
+      year: 2026,
+    },
+  ]);
+
+  const selected = selectBingeCatIdentity(media, corroborated);
+  assert.equal(selected.stremioId, "tvdb:36880");
+});
+
 test("candidate validation rejects a mapping record for a different AniList item", () => {
   const media = { anilistId: 21, title: { english: "ONE PIECE" }, format: "TV" };
   const candidates = getBingeCatCandidates(media, [{
