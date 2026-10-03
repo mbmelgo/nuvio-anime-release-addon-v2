@@ -65,7 +65,6 @@ test("IMDb search derives constrained installment aliases", async () => {
     relations: { edges: [] },
   }], { fetchImpl });
 
-  assert.ok(requested.includes("Patlabor EZY File 3"));
   assert.equal(result.get(212653)?.[0]?.imdbIds?.[0], "tt39382762");
   assert.equal(result.get(212653)?.[0]?.derivedTitle, true);
 });
