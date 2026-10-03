@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { canonicalizeCatalogPageWithBingeCat } from "../api/catalog-source.js";
+import { getBingeCatCandidates, selectBingeCatIdentity } from "../lib/bingecat-identity.js";
 
 test("seasonal catalog emits the validated BingeCat identity when ARM mapping is available", async () => {
   const metas = await canonicalizeCatalogPageWithBingeCat([{
