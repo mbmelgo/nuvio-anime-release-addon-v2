@@ -176,6 +176,8 @@ The 1.3.0 corrective release reduces redundant BingeCat searches for already-res
 
 The 1.4.0 corrective release adds transient BingeCat upstream retries so temporary 429/5xx/network failures do not become false identity-resolution misses.
 
+The 1.4.0 corrective release retries transient BingeCat upstream failures before falling back, preserving supported identities during temporary upstream errors.
+
 The 1.0.0 release establishes the major baseline for the production-ready identity-resolution architecture, including provenance-aware validation, generalized weak-provider rejection, and the complete fallback chain.
 
 This release is the controlled production baseline for continued P0 identity-resolution work.
