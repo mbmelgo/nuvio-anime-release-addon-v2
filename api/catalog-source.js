@@ -14,6 +14,7 @@ import { filterCatalogMetasBySearch, toMetaFromAniList } from "../lib/catalog-me
 import { queryAnime, queryAiringSchedulePage } from "../lib/catalog-anilist.js";
 import { resolveAniListMappings } from "../lib/arm-mapping.js";
 import { getBingeCatCandidates, selectBingeCatIdentity } from "../lib/bingecat-identity.js";
+import { resolveAniListMappingsSecondary } from "../lib/secondary-mapping.js";
 
 export {
   ANILIST_PAGE_SIZE,
@@ -95,7 +96,7 @@ export function normalizeSeasonalCatalogMetaTypes(metas) {
 
 export async function canonicalizeCatalogPageWithBingeCat(
   mediaRows,
-  { resolveMappings = resolveAniListMappings } = {},
+  { resolveMappings = resolveRequiredBingeCatMappings } = {},
 ) {
   const normalizedRows = Array.isArray(mediaRows)
     ? mediaRows
@@ -109,8 +110,8 @@ export async function canonicalizeCatalogPageWithBingeCat(
   try {
     mappings = await resolveMappings(ids);
   } catch (error) {
-    console.error("[identity] ARM mapping failed; retaining legacy catalog identities", error);
-    return canonicalizeCatalogPage(normalizedRows);
+    console.error("[identity] required BingeCat mapping failed", error);
+    return [];
   }
 
   return normalizedRows
@@ -123,7 +124,7 @@ export async function canonicalizeCatalogPageWithBingeCat(
       const media = { ...row, anilistId };
       const records = mappings.get(anilistId) || [];
       const selected = selectBingeCatIdentity(media, getBingeCatCandidates(media, records));
-      if (!selected) return meta;
+      if (!selected) return null;
 
       return {
         ...meta,
@@ -137,6 +138,27 @@ export async function canonicalizeCatalogPageWithBingeCat(
       };
     })
     .filter(Boolean);
+}
+
+async function resolveRequiredBingeCatMappings(anilistIds) {
+  let primary = new Map();
+  try {
+    primary = await resolveAniListMappings(anilistIds);
+  } catch (error) {
+    console.error("[identity] ARM mapping failed; using secondary mapping source", error);
+  }
+
+  const missing = anilistIds.filter((id) => !primary.has(Number(id)));
+  if (!missing.length) return primary;
+
+  let secondary = new Map();
+  try {
+    secondary = await resolveAniListMappingsSecondary(missing);
+  } catch (error) {
+    console.error("[identity] secondary mapping source failed", error);
+  }
+
+  return new Map([...primary, ...secondary]);
 }
 
 export function canonicalizeCatalogPage(mediaRows) {
@@ -205,9 +227,9 @@ export async function buildRollingCatalog(id, date, skip, search, {
       let mappings = new Map();
       if (useBingeCatIdentity) {
         try {
-          mappings = await resolveAniListMappings(eligibleRows.map((row) => Number(row.media.id)));
+          mappings = await resolveRequiredBingeCatMappings(eligibleRows.map((row) => Number(row.media.id)));
         } catch (error) {
-          console.error("[identity] ARM rolling mapping failed; retaining legacy catalog identities", error);
+          console.error("[identity] required rolling BingeCat mapping failed", error);
         }
       }
 
@@ -224,6 +246,8 @@ export async function buildRollingCatalog(id, date, skip, search, {
               getBingeCatCandidates(media, mappings.get(mediaId) || []),
             )
           : null;
+        if (useBingeCatIdentity && !selected) continue;
+
         const meta = selected
           ? {
               ...baseMeta,
