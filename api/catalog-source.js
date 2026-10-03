@@ -100,7 +100,7 @@ export async function canonicalizeCatalogPageWithBingeCat(
   const normalizedRows = Array.isArray(mediaRows)
     ? mediaRows
       .map((row) => (typeof row === "object" && row !== null ? row : { id: row }))
-      .filter((row) => /^\\d+$/.test(String(row.id ?? "").trim()))
+      .filter((row) => /^\d+$/.test(String(row.id ?? "").trim()))
     : [];
   if (!normalizedRows.length) return [];
 
@@ -181,6 +181,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
   fetchPage = queryAiringSchedulePage,
   maxPages = MAX_SCHEDULE_PAGES,
   pageSize = NUVIO_PAGE_SIZE,
+  useBingeCatIdentity = false,
 } = {}) {
   const range = getRollingCatalogRange(id, date);
   if (!range) return [];
@@ -201,23 +202,27 @@ export async function buildRollingCatalog(id, date, skip, search, {
           && isEligibleRollingMedia(media);
       });
       let mappings = new Map();
-      try {
-        mappings = await resolveAniListMappings(
-          eligibleRows.map((row) => Number(row.media.id)),
-        );
-      } catch (error) {
-        console.error("[identity] ARM rolling mapping failed; retaining legacy catalog identities", error);
+      if (useBingeCatIdentity) {
+        try {
+          mappings = await resolveAniListMappings(eligibleRows.map((row) => Number(row.media.id)));
+        } catch (error) {
+          console.error("[identity] ARM rolling mapping failed; retaining legacy catalog identities", error);
+        }
       }
+
       const metas = [];
       for (const row of eligibleRows) {
         const media = row.media;
         const mediaId = Number(media.id);
         const baseMeta = toCatalogIdentity(toMetaFromAniList(mediaId, media));
         if (!baseMeta) continue;
-        const selected = selectBingeCatIdentity(
-          { ...media, anilistId: mediaId },
-          getBingeCatCandidates(media, mappings.get(mediaId) || []),
-        );
+
+        const selected = useBingeCatIdentity
+          ? selectBingeCatIdentity(
+              { ...media, anilistId: mediaId },
+              getBingeCatCandidates(media, mappings.get(mediaId) || []),
+            )
+          : null;
         const meta = selected
           ? {
               ...baseMeta,
@@ -230,6 +235,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
               },
             }
           : baseMeta;
+
         meta.type = "series";
         meta.extra = {
           ...meta.extra,
@@ -257,7 +263,9 @@ export async function buildCatalog(id, info, skip, search) {
       canonicalizePage: canonicalizeCatalogPageWithBingeCat,
     });
   }
-  if (getRollingCatalogRange(id, new Date())) return buildRollingCatalog(id, new Date(), skip, search);
+  if (getRollingCatalogRange(id, new Date())) {
+    return buildRollingCatalog(id, new Date(), skip, search, { useBingeCatIdentity: true });
+  }
   return [];
 }
 
