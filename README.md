@@ -182,7 +182,7 @@ Versioning:
 
 - **PATCH** — meaningful development changes.
 - **MINOR** — production deployments.
-- **MAJOR** — deliberate project or architectural baseline changes.
+- **MAJOR** — deliberate project or architectural baseline changes, including the v1.0.0 production baseline.
 
 ## 🔧 Development
 
