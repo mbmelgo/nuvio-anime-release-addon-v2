@@ -632,20 +632,6 @@ export async function canonicalizeCatalogPageWithBingeCat(
     );
 
     if (!selected || (requireBingeCatVerification && !selected.bingecatVerified)) {
-      const malId = getCanonicalMalId(row, meta, mappings.get(anilistId) || []);
-      if (Number.isInteger(malId) && malId > 0) {
-        metas.push({
-          ...meta,
-          id: `mal:${malId}`,
-          extra: {
-            ...meta.extra,
-            bingecatProvider: null,
-            bingecatId: null,
-            bingecatEvidence: "canonical-mal-id-fallback",
-          },
-        });
-        continue;
-      }
       if (selected) {
         usedIdentities.add(selected.stremioId);
         metas.push({
@@ -662,6 +648,20 @@ export async function canonicalizeCatalogPageWithBingeCat(
         continue;
       }
 
+      const malId = getCanonicalMalId(row, meta, mappings.get(anilistId) || []);
+      if (Number.isInteger(malId) && malId > 0) {
+        metas.push({
+          ...meta,
+          id: `mal:${malId}`,
+          extra: {
+            ...meta.extra,
+            bingecatProvider: null,
+            bingecatId: null,
+            bingecatEvidence: "canonical-mal-id-fallback",
+          },
+        });
+        continue;
+      }
       metas.push({
         ...meta,
         id: `anilist:${anilistId}`,
@@ -790,6 +790,29 @@ export async function buildRollingCatalog(id, date, skip, search, {
           { excludeIds: usedIdentities },
         );
         if (!selected || (requireBingeCatVerification && !selected.bingecatVerified)) {
+          if (selected) {
+            usedIdentities.add(selected.stremioId);
+            const meta = {
+              ...baseMeta,
+              id: selected.stremioId,
+              extra: {
+                ...baseMeta.extra,
+                bingecatProvider: selected.provider,
+                bingecatId: selected.id,
+                bingecatEvidence: "provider-id-fallback",
+                bingecatVerification: selected.bingecatVerified ? "verified" : "unverified-upstream",
+                episode: row.episode,
+                airingAt: row.airingAt,
+                ...(futureOnly ? {
+                  nextEpisode: row.episode,
+                  nextAiringAt: row.airingAt,
+                } : {}),
+              },
+              type: "series",
+            };
+            metas.push(meta);
+            continue;
+          }
           const malId = getCanonicalMalId(media, baseMeta, mappings.get(mediaId) || []);
           if (Number.isInteger(malId) && malId > 0) {
             const meta = {
