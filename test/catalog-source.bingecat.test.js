@@ -1,0 +1,79 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {
+  canonicalizeCatalogPageWithBingeCat,
+} from "../api/catalog-source.js";
+
+function mapping(anilistId, imdb) {
+  return {
+    source: "test",
+    anilistId,
+    type: "TV",
+    imdbIds: [imdb],
+    tvdbId: null,
+    tmdbTvId: null,
+    tmdbMovieIds: [],
+    season: null,
+    episodeOffset: null,
+  };
+}
+
+function row(id, malId = id) {
+  return {
+    id,
+    idMal: malId,
+    title: { romaji: `Anime ${id}`, english: `Anime ${id}`, native: null },
+    format: "TV",
+    startDate: { year: 2026 },
+    endDate: { year: null },
+    isAdult: false,
+  };
+}
+
+test("catalog identity resolution preserves all source rows when the MAL bridge resolves an ARM miss", async () => {
+  const rows = [row(1, 101), row(2, 102), row(3, 103)];
+  const result = await canonicalizeCatalogPageWithBingeCat(rows, {
+    resolveMappings: async () => new Map([
+      [1, [mapping(1, "tt1000001")]],
+      [2, [mapping(2, "tt1000002")]],
+    ]),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async (unresolvedRows) => {
+      assert.deepEqual(unresolvedRows.map((item) => item.id), [3]);
+      return new Map([[3, [mapping(3, "tt1000003")]]]);
+    },
+  });
+
+  assert.equal(result.length, rows.length);
+  assert.deepEqual(result.map((meta) => meta.id), [
+    "tt1000001",
+    "tt1000002",
+    "tt1000003",
+  ]);
+});
+
+test("catalog identity resolution never silently drops an unresolved source row", async () => {
+  const rows = [row(1), row(2)];
+  await assert.rejects(
+    canonicalizeCatalogPageWithBingeCat(rows, {
+      resolveMappings: async () => new Map([[1, [mapping(1, "tt1000001")]]]),
+      resolveSecondaryMappings: async () => new Map(),
+      resolveAlternativeMappings: async () => new Map(),
+    }),
+    /BingeCat identity resolution exhausted.*2/,
+  );
+});
+
+test("50 AniList source rows produce exactly 50 BingeCat catalog results", async () => {
+  const rows = Array.from({ length: 50 }, (_, index) => row(index + 1));
+  const result = await canonicalizeCatalogPageWithBingeCat(rows, {
+    resolveMappings: async (ids) => new Map(
+      ids.map((id) => [id, [mapping(id, `tt${String(1000000 + id)}`)]])
+    ),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(result.length, 50);
+  assert.ok(result.every((meta) => /^(tt\d+|tvdb:[1-9]\d*|tmdb:[1-9]\d*)$/.test(meta.id)));
+});
