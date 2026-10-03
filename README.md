@@ -180,6 +180,7 @@ The 1.4.0 corrective release retries transient BingeCat upstream failures before
 
 The 1.5.0 corrective release preserves every AniList catalog row through terminal identity fallback, requires direct BingeCat evidence for advertised provider identities, and hardens live catalog resolution against unresolved identities.
 This release is the controlled production promotion of the tested identity-preservation and BingeCat-verification fixes.
+Release target: `v1.5.0`.
 
 
 The 1.0.0 release establishes the major baseline for the production-ready identity-resolution architecture, including provenance-aware validation, generalized weak-provider rejection, and the complete fallback chain.
