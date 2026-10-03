@@ -158,6 +158,7 @@ test("relation identity resolution derives provider installment titles", async (
     imdbIds: ["tt39382762"],
     title: "Patlabor EZY: File 3",
     year: 2027,
+    derivedTitle: true,
   };
   assert.equal(selectBingeCatIdentity(
     validationMedia,
