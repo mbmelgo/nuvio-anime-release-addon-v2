@@ -39,6 +39,46 @@ test("seasonal catalog emits the validated BingeCat identity when ARM mapping is
   assert.equal(metas[0].extra.anilistId, 158871);
 });
 
+test("seasonal catalog rejects an uncorroborated AniMap TVDB identity", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 195604,
+    idMal: 61967,
+    title: {
+      english: "Black Clover Season 2",
+      romaji: "Black Clover 2nd Season",
+    },
+    format: "TV",
+    startDate: { year: 2026 },
+    coverImage: { large: null },
+  }], {
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map([[195604, [{
+      source: "animap",
+      anilistId: 195604,
+      type: "TV",
+      imdbIds: [],
+      tvdbId: 36880,
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+      title: "Black Clover Season 2",
+      year: 2026,
+    }]]]),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "mal:61967");
+  assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
+});
+
 test("seasonal catalog uses canonical MAL identity as the final fallback", async () => {
   const metas = await canonicalizeCatalogPageWithBingeCat([{
     id: 269,
