@@ -278,12 +278,12 @@ test("BingeCat search rejects token-compatible candidates from a different year"
     anilistId: 202391,
     type: "TV",
     year: 2026,
-    titles: ["The Shared Detective"],
+    titles: ["The Shared Detective Special"],
   };
 
   assert.equal(selectExactCandidate({
     series: [{
-      name: "The Shared Detective Special",
+      name: "The Shared Detective",
       id: "tt87654322",
       contentType: "series",
       year: 2020,
