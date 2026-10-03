@@ -76,6 +76,21 @@ test("candidate selection rejects a franchise-mismatched candidate", () => {
   assert.equal(selected.id, "tt26692417");
 });
 
+test("candidate validation rejects a mapping record for a different AniList item", () => {
+  const media = { anilistId: 21, title: { english: "ONE PIECE" }, format: "TV" };
+  const candidates = getBingeCatCandidates(media, [{
+    source: "arm",
+    anilistId: 269,
+    imdbIds: ["tt0434665"],
+    tvdbId: 74796,
+    tmdbTvId: 30984,
+    tmdbMovieIds: [],
+    type: "TV",
+  }]);
+
+  assert.equal(selectBingeCatIdentity(media, candidates), null);
+});
+
 test("candidate validation rejects materially different titles", () => {
   assert.equal(titlesCompatible(["Pokémon Horizons: The Series"], ["Pokémon"]), false);
   assert.equal(titlesCompatible(["ONE PIECE"], ["One Piece"]), true);
