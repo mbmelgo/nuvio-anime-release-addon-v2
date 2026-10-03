@@ -555,3 +555,31 @@ test("BingeCat authoritative verification can retry a cached negative result", a
   assert.equal(second.get(202079)[0].imdbIds[0], "tt43691343");
   assert.ok(calls > firstCallCount);
 });
+
+
+test("TEMP live probe logs BingeCat 202079 HTTP statuses", async () => {
+  clearBingeCatSearchCache();
+  const calls = [];
+  const result = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 202079,
+    type: "TV",
+    year: 2026,
+    titleEnglish: "Uncle's Obsession with Cute Things",
+    titleRomaji: "Oji-san wa Kawaii Mono ga Osuki.",
+    titleNative: "おじさんはカワイイものがお好き。",
+    synonyms: ["Pops Loves Kawaii Stuff", "This Uncle Likes Cute Things", "Ojikawa", "おじかわ"],
+  }], {
+    fetchImpl: async (url, init) => {
+      const response = await fetch(url, init);
+      calls.push({
+        query: new URL(url).searchParams.get("query"),
+        semanticRatio: new URL(url).searchParams.get("semantic_ratio"),
+        status: response.status,
+      });
+      return response;
+    },
+  });
+  console.log("TEMP_UNCLE_BINGECAT_HTTP", JSON.stringify(calls));
+  console.log("TEMP_UNCLE_BINGECAT_RESULT", JSON.stringify(result.get(202079) || []));
+  assert.equal(result.get(202079)?.[0]?.imdbIds?.[0], "tt43691343");
+});
