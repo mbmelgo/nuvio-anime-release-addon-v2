@@ -611,3 +611,26 @@ test("BingeCat search opens a batch circuit after sustained 429s", async () => {
   assert.equal(result.size, 0);
   assert.ok(calls <= 9, `expected the batch to stop after the first sustained 429, got ${calls} calls`);
 });
+
+
+test("BingeCat search opens the batch circuit on access denial", async () => {
+  clearBingeCatSearchCache();
+  let calls = 0;
+  const rows = Array.from({ length: 10 }, (_, index) => ({
+    anilistId: 920000 + index,
+    type: "TV",
+    year: 2026,
+    titleEnglish: `Access Denied Anime ${index}`,
+  }));
+
+  const result = await resolveAniListMappingsByBingeCatSearch(rows, {
+    concurrency: 3,
+    fetchImpl: async () => {
+      calls += 1;
+      return { ok: false, status: 403 };
+    },
+  });
+
+  assert.equal(result.size, 0);
+  assert.ok(calls <= 3, `expected access denial to open the batch circuit immediately, got ${calls} calls`);
+});
