@@ -363,7 +363,7 @@ async function resolveRelationMappings(rows, {
   const stillMissingAfterExternalIds = uniqueRelationIds.filter((id) => !(relationMappings.get(id)?.length));
   if (stillMissingAfterExternalIds.length && typeof resolveImdbMappings === "function") {
     try {
-      const imdbRows = stillMissingRelationIds
+      const imdbRows = stillMissingAfterExternalIds
         .map((id) => relationRows.get(id))
         .filter(Boolean);
       relationMappings = mergeMappings(
