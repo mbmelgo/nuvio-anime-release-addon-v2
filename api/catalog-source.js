@@ -12,6 +12,8 @@ import {
 import { collectValidatedCatalogPage } from "../lib/catalog-pagination.js";
 import { filterCatalogMetasBySearch, toMetaFromAniList } from "../lib/catalog-meta.js";
 import { queryAnime, queryAiringSchedulePage } from "../lib/catalog-anilist.js";
+import { resolveAniListMappings } from "../lib/arm-mapping.js";
+import { getBingeCatCandidates, selectBingeCatIdentity } from "../lib/bingecat-identity.js";
 
 export {
   ANILIST_PAGE_SIZE,
@@ -91,6 +93,51 @@ export function normalizeSeasonalCatalogMetaTypes(metas) {
   return metas.map((meta) => ({ ...meta, type: "series" }));
 }
 
+export async function canonicalizeCatalogPageWithBingeCat(
+  mediaRows,
+  { resolveMappings = resolveAniListMappings } = {},
+) {
+  const normalizedRows = Array.isArray(mediaRows)
+    ? mediaRows
+      .map((row) => (typeof row === "object" && row !== null ? row : { id: row }))
+      .filter((row) => /^\\d+$/.test(String(row.id ?? "").trim()))
+    : [];
+  if (!normalizedRows.length) return [];
+
+  const ids = normalizedRows.map((row) => Number(row.id));
+  let mappings;
+  try {
+    mappings = await resolveMappings(ids);
+  } catch (error) {
+    console.error("[identity] ARM mapping failed; retaining legacy catalog identities", error);
+    return canonicalizeCatalogPage(normalizedRows);
+  }
+
+  return normalizedRows
+    .map((row) => {
+      const anilistId = Number(row.id);
+      const meta = toCatalogIdentity(toMetaFromAniList(anilistId, row));
+      if (!meta) return null;
+
+      const media = { ...row, anilistId };
+      const records = mappings.get(anilistId) || [];
+      const selected = selectBingeCatIdentity(media, getBingeCatCandidates(media, records));
+      if (!selected) return meta;
+
+      return {
+        ...meta,
+        id: selected.stremioId,
+        extra: {
+          ...meta.extra,
+          bingecatProvider: selected.provider,
+          bingecatId: selected.id,
+          bingecatEvidence: selected.evidence,
+        },
+      };
+    })
+    .filter(Boolean);
+}
+
 export function canonicalizeCatalogPage(mediaRows) {
   if (!Array.isArray(mediaRows) || mediaRows.length === 0) return [];
   const normalizedRows = mediaRows
@@ -153,8 +200,25 @@ export async function buildRollingCatalog(id, date, skip, search, {
         const mediaId = media?.id;
         if (!Number.isInteger(Number(mediaId)) || Number(mediaId) <= 0) continue;
         if (!isEligibleRollingMedia(media)) continue;
-        const meta = toCatalogIdentity(toMetaFromAniList(mediaId, media));
-        if (!meta) continue;
+        const baseMeta = toCatalogIdentity(toMetaFromAniList(mediaId, media));
+        if (!baseMeta) continue;
+        const mappings = await resolveAniListMappings([Number(mediaId)]);
+        const selected = selectBingeCatIdentity(
+          { ...media, anilistId: Number(mediaId) },
+          getBingeCatCandidates(media, mappings.get(Number(mediaId)) || []),
+        );
+        const meta = selected
+          ? {
+              ...baseMeta,
+              id: selected.stremioId,
+              extra: {
+                ...baseMeta.extra,
+                bingecatProvider: selected.provider,
+                bingecatId: selected.id,
+                bingecatEvidence: selected.evidence,
+              },
+            }
+          : baseMeta;
         meta.type = "series";
         meta.extra = {
           ...meta.extra,
@@ -179,7 +243,7 @@ export async function buildCatalog(id, info, skip, search) {
       filter,
       skip,
       search,
-      canonicalizePage: canonicalizeCatalogPage,
+      canonicalizePage: canonicalizeCatalogPageWithBingeCat,
     });
   }
   if (getRollingCatalogRange(id, new Date())) return buildRollingCatalog(id, new Date(), skip, search);
