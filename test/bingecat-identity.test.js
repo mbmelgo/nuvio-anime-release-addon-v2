@@ -224,6 +224,56 @@ test("candidate selection can choose a different valid provider identity when th
   assert.equal(selected.stremioId, "tvdb:222222");
 });
 
+
+test("relation-derived provider identities require independent corroboration", () => {
+  const media = {
+    anilistId: 214703,
+    title: { english: "Ghost Meets Gal!", romaji: "Ghost Meets Gal!" },
+    startDate: { year: 2026 },
+    format: "TV",
+  };
+
+  const relationOnly = getBingeCatCandidates(media, [{
+    source: "imdb-search-relation",
+    anilistId: 214703,
+    type: "TV",
+    imdbIds: ["tt2549176"],
+    tvdbId: null,
+    tmdbTvId: null,
+    tmdbMovieIds: [],
+    title: "Ghost Meets Gal!",
+    relation: true,
+  }]);
+
+  assert.equal(selectBingeCatIdentity(media, relationOnly), null);
+
+  const corroborated = getBingeCatCandidates(media, [
+    {
+      source: "imdb-search-relation",
+      anilistId: 214703,
+      type: "TV",
+      imdbIds: ["tt2549176"],
+      tvdbId: null,
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+      title: "Ghost Meets Gal!",
+      relation: true,
+    },
+    {
+      source: "arm",
+      anilistId: 214703,
+      type: "TV",
+      imdbIds: ["tt2549176"],
+      tvdbId: null,
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+      title: "Ghost Meets Gal!",
+    },
+  ]);
+
+  assert.equal(selectBingeCatIdentity(media, corroborated)?.stremioId, "tt2549176");
+});
+
 test("candidate validation rejects a mapping whose media type conflicts with the AniList format", () => {
   const selected = selectBingeCatIdentity(
     { anilistId: 1, title: { english: "Test Movie" }, format: "MOVIE" },
