@@ -11,7 +11,7 @@ test("primary manifest uses MAL identity with AniList fallback", () => {
   });
 
   assert.equal(manifest.id, "com.marki.nuvio.anime-releases");
-  assert.equal(manifest.identityMode, "mal");
+  assert.equal(manifest.identityMode, "bingecat");
   assert.equal(manifest.name, "Anime Releases for Nuvio");
   assert.equal(manifest.catalogs.length, 5);
   assert.deepEqual(manifest.catalogs.map((catalog) => catalog.id), [
