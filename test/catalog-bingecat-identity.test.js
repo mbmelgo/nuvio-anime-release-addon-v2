@@ -333,5 +333,5 @@ test("202079 resolves through independent fallback evidence to the current TVDB 
   assert.equal(metas.length, 1);
   assert.equal(metas[0].id, "tvdb:480889");
   assert.equal(metas[0].extra.bingecatProvider, "tvdb");
-  assert.equal(metas[0].extra.bingecatId, 480889);
+  assert.equal(metas[0].extra.bingecatId, "480889");
 });
