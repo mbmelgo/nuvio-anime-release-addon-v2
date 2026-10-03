@@ -68,3 +68,5 @@ test("rolling catalog search resolves only matching rows", async () => {
   assert.equal(result[0].extra.anilistId, targetId);
   assert.deepEqual(calls, [[targetId]]);
 });
+
+// Production release trigger for the urgent rolling-search fix.
