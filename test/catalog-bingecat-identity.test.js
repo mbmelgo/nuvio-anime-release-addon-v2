@@ -17,6 +17,7 @@ test("seasonal catalog emits the validated BingeCat identity when ARM mapping is
     startDate: { year: 2023, month: 4, day: 14 },
     genres: ["Action"],
   }], {
+    resolveBingeCatSearchMappings: async () => new Map(),
     resolveMappings: async () => new Map([
       [158871, [{
         source: "arm",
@@ -157,6 +158,7 @@ test("seasonal catalog uses the secondary mapping source without dropping the en
     format: "TV",
     startDate: { year: 2004 },
   }], {
+    resolveBingeCatSearchMappings: async () => new Map(),
     resolveMappings: async () => new Map(),
     resolveSecondaryMappings: async () => new Map([
       [269, [{
