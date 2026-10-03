@@ -1,0 +1,430 @@
+name: CI, automatic patch versioning, and controlled Vercel release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy_prod:
+        description: 'Authorize the controlled production deployment'
+        required: true
+        default: false
+        type: boolean
+      finalize_release:
+        description: 'Finalize an already-deployed production release without redeploying Vercel'
+        required: true
+        default: false
+        type: boolean
+      dry_run:
+        description: 'Validate a production release without deploying, tagging, or mutating release state'
+        required: true
+        default: false
+        type: boolean
+      release_target_sha:
+        description: 'Exact release commit SHA; required for finalize_release and optional for deploy_prod'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: write
+  statuses: read
+
+concurrency:
+  group: main-release-pipeline
+  cancel-in-progress: false
+
+jobs:
+  release-pipeline:
+    if: ${{ !contains(github.event.head_commit.message || '', '[skip-release-pipeline]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Run full CI
+        run: npm test
+
+      - name: Determine release request
+        id: gate
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message || '' }}
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "push" && "$COMMIT_MESSAGE" == *"[deploy-prod]"* ]]; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "redeploy=true" >> "$GITHUB_OUTPUT"
+            echo "release_target_sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event_name }}" == "push" && "$COMMIT_MESSAGE" =~ \[finalize-prod:([0-9a-fA-F]{40})\] ]]; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "redeploy=false" >> "$GITHUB_OUTPUT"
+            echo "release_target_sha=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.deploy_prod }}" == "true" ]]; then
+            target="$(printf '%s' '${{ inputs.release_target_sha }}' | xargs)"
+            if [ -z "$target" ]; then target="$GITHUB_SHA"; fi
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "redeploy=true" >> "$GITHUB_OUTPUT"
+            echo "release_target_sha=$target" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.finalize_release }}" == "true" ]]; then
+            test -n "${{ inputs.release_target_sha }}"
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "redeploy=false" >> "$GITHUB_OUTPUT"
+            echo "release_target_sha=${{ inputs.release_target_sha }}" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.dry_run }}" == "true" ]]; then
+            target="$(printf '%s' '${{ inputs.release_target_sha }}' | xargs)"
+            if [ -z "$target" ]; then target="$GITHUB_SHA"; fi
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "redeploy=false" >> "$GITHUB_OUTPUT"
+            echo "release_target_sha=$target" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "redeploy=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate repository release metadata
+        if: steps.gate.outputs.release == 'true' || inputs.dry_run == true
+        run: node scripts/release-integrity.mjs
+
+      - name: Bump patch version and sync metadata
+        if: github.event_name == 'push' && steps.gate.outputs.release == 'false' && !contains(github.event.head_commit.message || '', '[skip-version-automation]') && !contains(github.event.head_commit.message || '', '[major-release]')
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          version_path = Path("api/version.js")
+          current = re.search(r'ADDON_VERSION = "([^"]+)"', version_path.read_text()).group(1)
+          major, minor, patch = map(int, current.split("."))
+          next_version = f"{major}.{minor}.{patch + 1}"
+          version_path.write_text(f'export const ADDON_VERSION = "{next_version}";\n')
+
+          package_path = Path("package.json")
+          package = json.loads(package_path.read_text())
+          package["version"] = next_version
+          package_path.write_text(json.dumps(package, indent=2) + "\n")
+
+          readme_path = Path("README.md")
+          readme = readme_path.read_text()
+          readme = re.sub(r"version-\d+\.\d+\.\d+-blue", f"version-{next_version}-blue", readme)
+          readme = re.sub(r"(\*\*Development:\*\*\s*)`v?[^`]+`", rf"\g<1>`v{next_version}`", readme)
+          readme_path.write_text(readme)
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add api/version.js package.json
+          git add README.md
+          git commit -m "chore: bump patch version [skip-release-pipeline]"
+          git push
+
+      - name: Validate release state
+        if: steps.gate.outputs.release == 'true' || inputs.dry_run == true
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          import subprocess
+          state = json.loads(Path("ops/release-state.json").read_text())
+          expected = state["nextReleaseVersion"]
+          if state["paused"] or state["deploymentsSincePause"] >= state["deploymentLimit"]:
+              raise SystemExit("Deployment checkpoint reached.")
+
+          if "${{ steps.gate.outputs.redeploy }}" == "true":
+              version = re.search(r'ADDON_VERSION = "([^"]+)"', Path("api/version.js").read_text()).group(1)
+          else:
+              target = "${{ steps.gate.outputs.release_target_sha }}"
+              subprocess.run(["git", "fetch", "--quiet", "origin", target], check=True)
+              version = re.search(
+                  r'ADDON_VERSION = "([^"]+)"',
+                  subprocess.check_output(["git", "show", f"{target}:api/version.js"], text=True),
+              ).group(1)
+
+          if version != expected:
+              raise SystemExit(f"Release target version {version} does not match next release baseline {expected}.")
+
+          if not re.fullmatch(r"[0-9a-fA-F]{40}", "${{ steps.gate.outputs.release_target_sha }}"):
+              raise SystemExit("Release target SHA must be a full 40-character commit SHA.")
+          PY
+
+      - name: Check for an existing Vercel deployment
+        if: steps.gate.outputs.release == 'true' && inputs.dry_run != true
+        id: existing_vercel
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          target="${{ steps.gate.outputs.release_target_sha }}"
+          status_payload="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${target}/status")"
+          deployment_id="$(printf '%s' "$status_payload" | node scripts/resolve-vercel-deployment-id.mjs || true)"
+          if [ -n "$deployment_id" ]; then
+            echo "needs_deploy=false" >> "$GITHUB_OUTPUT"
+            echo "deployment_id=$deployment_id" >> "$GITHUB_OUTPUT"
+            echo "Existing successful Vercel deployment detected: $deployment_id"
+          else
+            echo "needs_deploy=true" >> "$GITHUB_OUTPUT"
+            echo "deployment_id=" >> "$GITHUB_OUTPUT"
+            echo "No existing successful Vercel deployment found for target."
+          fi
+      - name: Trigger Vercel deployment
+        if: steps.gate.outputs.release == 'true' && steps.gate.outputs.redeploy == 'true' && steps.existing_vercel.outputs.needs_deploy == 'true' && inputs.dry_run != true
+        env:
+          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        run: test -n "$VERCEL_DEPLOY_HOOK_URL" && curl --fail --silent --show-error --request POST "$VERCEL_DEPLOY_HOOK_URL"
+
+      - name: Production smoke test
+        if: steps.gate.outputs.release == 'true' || inputs.dry_run == true
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.gate.outputs.redeploy }}" = "true" ]; then
+            expected="$(sed -nE 's/export const ADDON_VERSION = "([^"]+)";/\1/p' api/version.js)"
+          else
+            git fetch --quiet origin "${{ steps.gate.outputs.release_target_sha }}"
+            expected="$(git show "${{ steps.gate.outputs.release_target_sha }}:api/version.js" | sed -nE 's/export const ADDON_VERSION = "([^"]+)";/\1/p')"
+          fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            production_expected="$(curl --fail --silent --show-error https://nuvio-anime-releases-addon-rho.vercel.app/manifest.json | sed -nE 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p')"
+            test -n "$production_expected"
+          else
+            production_expected="$expected"
+          fi
+          for attempt in $(seq 1 30); do
+            root_manifest="$(curl --fail --silent --show-error https://nuvio-anime-releases-addon-rho.vercel.app/manifest.json || true)"
+            catalog="$(curl --fail --silent --show-error https://nuvio-anime-releases-addon-rho.vercel.app/catalog/anime/current_season.json || true)"
+            meta_status="$(curl --silent --output /dev/null --write-out '%{http_code}' https://nuvio-anime-releases-addon-rho.vercel.app/meta/series/mal%3A39535.json || true)"
+            if EXPECTED="$production_expected" TARGET="$expected" ROOT="$root_manifest" CATALOG="$catalog" META_STATUS="$meta_status" python - <<'PY'
+          import json
+          import os
+          import re
+
+          root = json.loads(os.environ["ROOT"])
+          catalog = json.loads(os.environ["CATALOG"])
+          expected = os.environ["EXPECTED"]
+
+          assert root.get("version") == expected
+          assert root.get("id") == "com.marki.nuvio.anime-releases"
+          assert root.get("identityMode") == "mal"
+          assert root.get("resources") == [{"name": "catalog", "types": ["anime"]}]
+          assert root.get("types") == ["anime"]
+          assert root.get("catalogs") and all(c.get("type") == "anime" for c in root["catalogs"])
+          assert os.environ["META_STATUS"] == "404"
+
+          metas = catalog.get("metas", [])
+          assert metas
+          assert all(re.match(r"^(mal:\d+|anilist:\d+)$", str(m.get("id", ""))) for m in metas)
+          assert all(m.get("type") == "series" for m in metas)
+          assert any(str(m.get("id", "")).startswith("mal:") for m in metas)
+          PY
+            then
+              echo "Production smoke test passed."
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1
+
+      - name: Extended production validation
+        if: steps.gate.outputs.release == 'true' || inputs.dry_run == true
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.gate.outputs.redeploy }}" = "true" ]; then
+            expected="$(sed -nE 's/export const ADDON_VERSION = "([^"]+)";/\1/p' api/version.js)"
+          else
+            git fetch --quiet origin "${{ steps.gate.outputs.release_target_sha }}"
+            expected="$(git show "${{ steps.gate.outputs.release_target_sha }}:api/version.js" | sed -nE 's/export const ADDON_VERSION = "([^"]+)";/\1/p')"
+          fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            production_expected="$(curl --fail --silent --show-error https://nuvio-anime-releases-addon-rho.vercel.app/manifest.json | sed -nE 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p')"
+            test -n "$production_expected"
+          else
+            production_expected="$expected"
+          fi
+          for attempt in $(seq 1 30); do
+            if EXPECTED_VERSION="$production_expected" PRODUCTION_BASE_URL="https://nuvio-anime-releases-addon-rho.vercel.app" node scripts/validate-production.mjs; then
+              echo "Extended production validation passed."
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1
+      - name: Resolve Vercel deployment ID
+        if: steps.gate.outputs.release == 'true' && inputs.dry_run != true
+        id: vercel_deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          target="${{ steps.gate.outputs.release_target_sha }}"
+          status_payload="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${target}/status")"
+          deployment_id="$(printf '%s' "$status_payload" | node scripts/resolve-vercel-deployment-id.mjs)"
+          test -n "$deployment_id"
+          echo "deployment_id=$deployment_id" >> "$GITHUB_OUTPUT"
+          echo "Resolved Vercel deployment ID: $deployment_id"
+
+      - name: Create annotated release tag, GitHub Release, and update release state
+        if: steps.gate.outputs.release == 'true' && inputs.dry_run != true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERCEL_DEPLOYMENT_ID: ${{ steps.vercel_deployment.outputs.deployment_id }}
+        run: |
+          set -euo pipefail
+          release_version="$(python -c 'import json;print(json.load(open("ops/release-state.json"))["nextReleaseVersion"])')"
+          tag="v$release_version"
+
+          if [[ "${{ steps.gate.outputs.redeploy }}" == "true" ]]; then
+            target="$(node scripts/release-target.mjs deploy "$GITHUB_SHA")"
+          else
+            target="$(node scripts/release-target.mjs finalize "${{ steps.gate.outputs.release_target_sha }}")"
+            git cat-file -e "$target^{commit}"
+          fi
+
+          git fetch --tags --force
+          previous="$(git tag --merged "$target^" --sort=-version:refname --list 'v*' | head -n1 || true)"
+          if [ -n "$previous" ]; then
+            range="$previous..$target"
+          else
+            range="$target"
+          fi
+
+          summary="$(python - "$range" "$tag" <<'PY'
+          import re
+          import subprocess
+          import sys
+
+          commit_range, tag = sys.argv[1:]
+          subjects = subprocess.check_output(
+              ["git", "log", "--reverse", "--no-merges", "--pretty=format:%s", commit_range],
+              text=True,
+          ).splitlines()
+
+          seen = set()
+          highlights = []
+          categories = []
+
+          for subject in subjects:
+              subject = re.sub(r"\s*\[[^]]+\]", "", subject).strip()
+              kind, separator, text = subject.partition(": ")
+              kind = kind.lower() if separator else ""
+              text = text.strip() if separator else subject.strip()
+
+              if kind in {"chore", "test", "release"}:
+                  continue
+              if kind == "fix":
+                  categories.append("reliability")
+                  line = text
+              elif kind in {"feat", "feature"}:
+                  categories.append("features")
+                  line = text
+              elif kind == "refactor":
+                  categories.append("maintenance")
+                  line = "Improved the internal organization and reliability of the addon."
+              elif kind == "perf":
+                  categories.append("performance")
+                  line = "Improved addon performance and efficiency."
+              elif kind in {"docs", "documentation"}:
+                  categories.append("documentation")
+                  line = "Improved documentation and guidance."
+              else:
+                  continue
+
+              line = re.sub(r"\s+", " ", line).strip().rstrip(".") + "."
+              key = line.lower()
+              if key not in seen:
+                  seen.add(key)
+                  highlights.append(line)
+
+          overview = []
+          if "features" in categories:
+              overview.append("This release adds new user-facing functionality.")
+          if "reliability" in categories:
+              overview.append("It improves reliability and accuracy when identifying anime across different sources.")
+          if "maintenance" in categories:
+              overview.append("It improves the internal structure of the addon to make future fixes safer and more reliable.")
+          if "performance" in categories:
+              overview.append("It includes performance and efficiency improvements.")
+          if not overview:
+              overview = ["This release contains improvements to the addon."]
+
+          print(f"Release {tag}\n\nOverview")
+          for item in overview:
+              print(item)
+          print("\nHighlights")
+          for line in highlights[:12]:
+              print(f"- {line}")
+          if not highlights:
+              print("- General reliability and maintenance improvements.")
+          PY
+          )"
+
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+
+          if git show-ref --verify --quiet "refs/tags/$tag"; then
+            existing_target="$(git rev-list -n1 "$tag^{commit}")"
+            test "$existing_target" = "$target"
+            test "$(git cat-file -t "refs/tags/$tag")" = "tag"
+          else
+            git tag -a "$tag" "$target" -m "$summary"
+            git push origin "refs/tags/$tag"
+          fi
+
+          test "$(git cat-file -t "refs/tags/$tag")" = "tag"
+          test "$(git rev-list -n1 "$tag^{commit}")" = "$target"
+
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "GitHub Release $tag already exists."
+          else
+            gh release create "$tag" --repo "$GITHUB_REPOSITORY" --title "$tag" --notes "$summary"
+          fi
+
+          git pull --rebase origin main
+          python - "$target" <<'PY'
+          import json
+          import os
+          import sys
+          from pathlib import Path
+          from datetime import datetime, timezone
+
+          path = Path("ops/release-state.json")
+          state = json.loads(path.read_text())
+          version = state["nextReleaseVersion"]
+          major, minor, patch = map(int, version.split("."))
+          deployments = state["deploymentsSincePause"] + 1
+
+          state["deploymentsSincePause"] = deployments
+          state["totalDeployments"] += 1
+          state["paused"] = deployments >= state["deploymentLimit"]
+          state["lastDeploymentSha"] = sys.argv[1]
+          state["lastDeploymentId"] = os.environ["VERCEL_DEPLOYMENT_ID"]
+          state["lastDeploymentVersion"] = version
+          state["nextReleaseVersion"] = f"{major}.{minor + 1}.0"
+          state["lastDeploymentTag"] = "v" + version
+          state["lastDeployment"] = {
+              "version": version,
+              "sha": state["lastDeploymentSha"],
+              "vercelDeploymentId": state["lastDeploymentId"],
+              "tag": state["lastDeploymentTag"],
+              "releasedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+              "ciRunId": os.environ["GITHUB_RUN_ID"],
+              "ciRunUrl": "https://github.com/" + os.environ["GITHUB_REPOSITORY"] + "/actions/runs/" + os.environ["GITHUB_RUN_ID"],
+              "smokeTest": "passed",
+          }
+
+          path.write_text(json.dumps(state, indent=2) + "\n")
+          PY
+          git add ops/release-state.json
+          git commit -m "chore: record $tag production release [skip-release-pipeline]"
+          git push origin HEAD:main

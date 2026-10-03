@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "git": {
+    "deploymentEnabled": false
+  },
+  "rewrites": [
+    {
+      "source": "/manifest.json",
+      "destination": "/api/resolver-manifest"
+    },
+    {
+      "source": "/catalog/:type/:id.json",
+      "destination": "/api/catalog-source?resource=catalog&type=:type&id=:id"
+    },
+    {
+      "source": "/catalog/:type/:id/search=:search&skip=:skip.json",
+      "destination": "/api/catalog-source?resource=catalog&type=:type&id=:id&search=:search&skip=:skip"
+    },
+    {
+      "source": "/catalog/:type/:id/:extra*",
+      "destination": "/api/catalog-source?resource=catalog&type=:type&id=:id&extra=:extra*"
+    },
+    {
+      "source": "/",
+      "destination": "/api/home-selector"
+    }
+  ]
+}
