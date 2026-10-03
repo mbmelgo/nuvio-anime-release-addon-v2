@@ -52,7 +52,7 @@ function schedule(id, airingAt, episode, options = {}) {
 
 function assertCatalogMeta(meta) {
   assert.ok(meta && typeof meta === "object");
-  assert.match(meta.id, /^(tt\d+|tvdb:[1-9]\d*|tmdb:[1-9]\d*)$/);
+  assert.match(meta.id, /^(tt\d+|tvdb:[1-9]\d*|tmdb:[1-9]\d*|mal:[1-9]\d*|anilist:[1-9]\d*)$/);
   assert.equal(meta.type, "series");
   assert.equal(typeof meta.name, "string");
   assert.ok(meta.name.length > 0);
