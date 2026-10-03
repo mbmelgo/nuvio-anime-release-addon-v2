@@ -36,3 +36,36 @@ test("IMDb search tries AniList synonym and numeric title variants", async () =>
   assert.equal(result.get(205289)?.[0]?.imdbIds?.[0], "tt32547691");
   assert.equal(result.get(205289)?.[0]?.source, "imdb-search");
 });
+
+
+test("IMDb search derives constrained installment aliases", async () => {
+  const requested = [];
+  const fetchImpl = async (url) => {
+    const title = decodeURIComponent(String(url).split("/").pop().replace(/\.json$/, ""));
+    requested.push(title);
+    if (title !== "Patlabor EZY File 3") return { ok: true, json: async () => ({ d: [] }) };
+    return {
+      ok: true,
+      json: async () => ({
+        d: [{ id: "tt39382762", l: "Patlabor EZY: File 3", y: 2027 }],
+      }),
+    };
+  };
+
+  const result = await resolveAniListMappingsByImdbSearch([{
+    id: 212653,
+    format: "OVA",
+    startDate: { year: 2027 },
+    title: {
+      english: null,
+      romaji: "Kidou Keisatsu Patlabor EZY File 3",
+      native: "機動警察パトレイバー EZY File 3",
+    },
+    synonyms: ["パトレイバー EZY File 3"],
+    relations: { edges: [] },
+  }], { fetchImpl });
+
+  assert.ok(requested.includes("Patlabor EZY File 3"));
+  assert.equal(result.get(212653)?.[0]?.imdbIds?.[0], "tt39382762");
+  assert.equal(result.get(212653)?.[0]?.derivedTitle, true);
+});
