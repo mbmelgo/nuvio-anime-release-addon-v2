@@ -251,3 +251,80 @@ test("seasonal catalog uses MAL-only mapping evidence as the final fallback", as
   assert.equal(metas[0].id, "mal:62218");
   assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
 });
+
+
+test("seasonal catalog executes AniMap fallback when higher-priority mapping sources are unresolved", async () => {
+  const calls = [];
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 900001,
+    title: { english: "AniMap Fallback Example", romaji: "AniMap Fallback Example" },
+    format: "TV",
+    startDate: { year: 2026 },
+  }], {
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async (ids) => {
+      calls.push(ids);
+      return new Map([[900001, [{
+        source: "animap",
+        anilistId: 900001,
+        type: "TV",
+        imdbIds: ["tt9000001"],
+        tvdbId: null,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: "AniMap Fallback Example",
+        year: 2026,
+      }]]]);
+    },
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.deepEqual(calls, [[900001]]);
+  assert.equal(metas[0].id, "tt9000001");
+});
+
+test("seasonal catalog executes IDMapper fallback after AniMap is unresolved", async () => {
+  const calls = [];
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 900002,
+    title: { english: "IDMapper Fallback Example", romaji: "IDMapper Fallback Example" },
+    format: "TV",
+    startDate: { year: 2026 },
+  }], {
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async (ids) => {
+      calls.push(ids);
+      return new Map([[900002, [{
+        source: "idmapper",
+        anilistId: 900002,
+        type: "TV",
+        imdbIds: ["tt9000002"],
+        tvdbId: null,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: "IDMapper Fallback Example",
+        year: 2026,
+      }]]]);
+    },
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.deepEqual(calls, [[900002]]);
+  assert.equal(metas[0].id, "tt9000002");
+});
