@@ -68,6 +68,16 @@ export function validateReleaseTarget({ targetVersion, expectedVersion, targetSh
   return true;
 }
 
+export function validateReleaseConcurrencyState({ state, targetVersion }) {
+  if (!state || typeof state !== "object") throw new Error("Current release state is missing.");
+  if (state.paused || state.deploymentsSincePause >= state.deploymentLimit) {
+    throw new Error("Deployment checkpoint reached on current main; release target is stale.");
+  }
+  if (state.nextReleaseVersion !== targetVersion) {
+    throw new Error(`Release target ${targetVersion} is stale; current main expects ${state.nextReleaseVersion}.`);
+  }
+  return true;
+}
 export function validateLastDeploymentMetadata(state) {
   const deployment = state?.lastDeployment;
   if (state?.lastDeploymentVersion === "0.0.0" && state?.lastDeploymentTag === null && deployment === null) {
