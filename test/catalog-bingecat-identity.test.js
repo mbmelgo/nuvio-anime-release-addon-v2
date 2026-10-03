@@ -3,21 +3,19 @@ import test from "node:test";
 import { canonicalizeCatalogPageWithBingeCat } from "../api/catalog-source.js";
 
 test("seasonal catalog emits the validated BingeCat identity when ARM mapping is available", async () => {
-  const metas = await canonicalizeCatalogPageWithBingeCat([
-    {
-      id: 158871,
-      title: {
-        english: "Pokémon Horizons: The Series",
-        romaji: "Pocket Monsters (2023)",
-        native: "ポケットモンスター",
-      },
-      format: "TV",
-      coverImage: { large: "https://example.invalid/pokemon.jpg" },
-      status: "RELEASING",
-      startDate: { year: 2023, month: 4, day: 14 },
-      genres: ["Action"],
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 158871,
+    title: {
+      english: "Pokémon Horizons: The Series",
+      romaji: "Pocket Monsters (2023)",
+      native: "ポケットモンスター",
     },
-  ], {
+    format: "TV",
+    coverImage: { large: "https://example.invalid/pokemon.jpg" },
+    status: "RELEASING",
+    startDate: { year: 2023, month: 4, day: 14 },
+    genres: ["Action"],
+  }], {
     resolveMappings: async () => new Map([
       [158871, [{
         source: "arm",
@@ -41,30 +39,26 @@ test("seasonal catalog emits the validated BingeCat identity when ARM mapping is
   assert.equal(metas[0].extra.anilistId, 158871);
 });
 
-test("seasonal catalog drops entries without a supported BingeCat identity", async () => {
-  const metas = await canonicalizeCatalogPageWithBingeCat([
-    {
-      id: 269,
-      idMal: 269,
-      title: { romaji: "Bleach" },
-      format: "TV",
-    },
-  ], {
+test("seasonal catalog fails explicitly instead of dropping entries without a supported BingeCat identity", async () => {
+  await assert.rejects(canonicalizeCatalogPageWithBingeCat([{
+    id: 269,
+    idMal: 269,
+    title: { romaji: "Bleach" },
+    format: "TV",
+  }], {
     resolveMappings: async () => new Map(),
-  });
-
-  assert.deepEqual(metas, []);
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  }), /BingeCat identity resolution exhausted.*269/);
 });
 
-test("seasonal catalog uses the secondary mapping source before dropping an entry", async () => {
-  const metas = await canonicalizeCatalogPageWithBingeCat([
-    {
-      id: 269,
-      title: { romaji: "Bleach" },
-      format: "TV",
-      startDate: { year: 2004 },
-    },
-  ], {
+test("seasonal catalog uses the secondary mapping source without dropping the entry", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 269,
+    title: { romaji: "Bleach" },
+    format: "TV",
+    startDate: { year: 2004 },
+  }], {
     resolveMappings: async () => new Map(),
     resolveSecondaryMappings: async () => new Map([
       [269, [{
@@ -77,6 +71,7 @@ test("seasonal catalog uses the secondary mapping source before dropping an entr
         tmdbMovieIds: [],
       }]],
     ]),
+    resolveAlternativeMappings: async () => new Map(),
   });
 
   assert.equal(metas.length, 1);
