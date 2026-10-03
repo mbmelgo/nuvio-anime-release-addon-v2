@@ -168,7 +168,7 @@ Catalog names and season labels are generated dynamically.
 **Development:** `v0.3.0`  
 **Major baseline:** `v0.0.0`
 
-The v2 project was initialized from an unreleased `v0.0.0` baseline. The current controlled production release is `v0.2.0`.
+The v2 project was initialized from an unreleased `v0.0.0` baseline. The current controlled production release is `v0.2.0` pending the next release candidate.
 
 Production releases are published as Git tags and GitHub Releases.
 
