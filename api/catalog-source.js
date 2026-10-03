@@ -388,7 +388,17 @@ async function resolveRelationMappings(rows, {
 
   if (installmentRows.length && typeof resolveImdbMappings === "function") {
     try {
-      installmentMappings = await resolveImdbMappings(installmentRows);
+      const resolvedInstallmentMappings = await resolveImdbMappings(installmentRows);
+      installmentMappings = new Map(
+        [...(resolvedInstallmentMappings instanceof Map ? resolvedInstallmentMappings : [])]
+          .map(([id, records]) => [
+            id,
+            (Array.isArray(records) ? records : []).map((record) => ({
+              ...record,
+              derivedTitle: true,
+            })),
+          ]),
+      );
     } catch (error) {
       console.error("[identity] IMDb related-installment mapping failed", error);
     }
