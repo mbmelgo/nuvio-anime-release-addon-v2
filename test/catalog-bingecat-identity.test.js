@@ -47,6 +47,7 @@ test("seasonal catalog fails explicitly instead of dropping entries without a su
     format: "TV",
   }], {
     resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
     resolveSecondaryMappings: async () => new Map(),
     resolveAlternativeMappings: async () => new Map(),
   }), /BingeCat identity resolution exhausted.*269/);
