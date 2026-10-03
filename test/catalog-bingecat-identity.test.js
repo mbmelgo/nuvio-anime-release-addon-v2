@@ -41,7 +41,7 @@ test("seasonal catalog emits the validated BingeCat identity when ARM mapping is
   assert.equal(metas[0].extra.anilistId, 158871);
 });
 
-test("seasonal catalog retains the legacy identity when mapping is unavailable", async () => {
+test("seasonal catalog drops entries without a supported BingeCat identity", async () => {
   const metas = await canonicalizeCatalogPageWithBingeCat([
     {
       id: 269,
@@ -53,7 +53,5 @@ test("seasonal catalog retains the legacy identity when mapping is unavailable",
     resolveMappings: async () => new Map(),
   });
 
-  assert.equal(metas[0].id, "mal:269");
-  assert.equal(metas[0].type, "series");
-  assert.equal(metas[0].extra.anilistId, 269);
+  assert.deepEqual(metas, []);
 });
