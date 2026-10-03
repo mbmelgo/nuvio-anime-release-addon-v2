@@ -308,6 +308,27 @@ async function resolveMappingsForRows(
     }
   }
 
+  // BingeCat is the authoritative support check. Any identity that was
+  // resolved by another source must still receive a direct BingeCat search
+  // before it can be returned. This preserves fallback coverage while
+  // ensuring external mappings cannot masquerade as BingeCat-supported.
+  const unverifiedRows = rows.filter((row) => {
+    const selected = selectBingeCatIdentity(
+      { ...row, anilistId: Number(row.id) },
+      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    );
+    return !selected?.bingecatVerified;
+  });
+
+  if (unverifiedRows.length) {
+    try {
+      const verificationMappings = await resolveBingeCatSearchMappings(unverifiedRows);
+      mappings = mergeMappings(mappings, verificationMappings);
+    } catch (error) {
+      console.error("[identity] final BingeCat verification failed; preserving existing fallbacks", error);
+    }
+  }
+
   return mappings;
 }
 
