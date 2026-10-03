@@ -68,7 +68,6 @@ test("seasonal catalog uses canonical MAL identity as the final fallback", async
 test("seasonal catalog still fails when neither a supported provider identity nor MAL ID exists", async () => {
   await assert.rejects(canonicalizeCatalogPageWithBingeCat([{
     id: 269,
-    idMal: 269,
     title: { romaji: "Bleach" },
     format: "TV",
   }], {
@@ -86,12 +85,12 @@ test("seasonal catalog still fails when neither a supported provider identity no
   }), /BingeCat identity resolution exhausted.*269/);
 });
 
-test("seasonal catalog uses canonical MAL fallback regardless of origin", async () => {
+test("seasonal catalog uses canonical MAL fallback for Korea entries too", async () => {
   const metas = await canonicalizeCatalogPageWithBingeCat([{
-    id: 214974,
-    idMal: 62218,
-    countryOfOrigin: "CN",
-    title: { english: "The Guardian of Daxia", romaji: "Da Xia Shou Mu Ren" },
+    id: 1001,
+    idMal: 1001,
+    countryOfOrigin: "KR",
+    title: { romaji: "Example Korea Anime" },
     format: "ONA",
   }], {
     resolveMappings: async () => new Map(),
@@ -104,37 +103,38 @@ test("seasonal catalog uses canonical MAL fallback regardless of origin", async 
     resolveTsvMappings: async () => new Map(),
     resolveImdbMappings: async () => new Map(),
     resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(metas[0].id, "mal:1001");
+});
+
+test("seasonal catalog uses the secondary mapping source without dropping the entry", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 269,
+    title: { romaji: "Bleach" },
+    format: "TV",
+    startDate: { year: 2004 },
+  }], {
+    resolveMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map([
+      [269, [{
+        source: "animeapi",
+        anilistId: 269,
+        type: "TV",
+        imdbIds: ["tt0434665"],
+        tvdbId: 74796,
+        tmdbTvId: 30984,
+        tmdbMovieIds: [],
+      }]],
+    ]),
     resolveAlternativeMappings: async () => new Map(),
   });
 
   assert.equal(metas.length, 1);
-  assert.equal(metas[0].id, "mal:62218");
-});
-
-test("seasonal catalog uses canonical MAL fallback regardless of origin", async () => {
-  const metas = await canonicalizeCatalogPageWithBingeCat([{
-    id: 214974,
-    countryOfOrigin: "CN",
-    title: { english: "The Guardian of Daxia", romaji: "Da Xia Shou Mu Ren" },
-    format: "ONA",
-  }], {
-    resolveMappings: async () => new Map(),
-    resolveFribbMappings: async () => new Map(),
-    resolveExternalMappings: () => new Map(),
-    resolveAnimapMappings: async () => new Map(),
-    resolveIdMapperMappings: async () => new Map(),
-    resolveBingeCatSearchMappings: async () => new Map(),
-    resolveAnimeMapperMappings: async () => new Map(),
-    resolveTsvMappings: async () => new Map(),
-    resolveImdbMappings: async () => new Map(),
-    resolveSecondaryMappings: async () => new Map(),
-    resolveAlternativeMappings: async () => new Map(),
-  });
-
-  assert.deepEqual(metas, []);
-});
-
-test("seasonal catalog uses canonical MAL fallback for Korea entries too", async () => {
+  assert.equal(metas[0].id, "tt0434665");
+  assert.equal(metas[0].type, "series");
+});test("seasonal catalog uses canonical MAL fallback for Korea entries too", async () => {
   const metas = await canonicalizeCatalogPageWithBingeCat([{
     id: 1001,
     idMal: 1001,
