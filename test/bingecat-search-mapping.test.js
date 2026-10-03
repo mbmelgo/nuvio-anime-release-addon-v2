@@ -590,25 +590,24 @@ test("BingeCat search retries transient upstream failures before resolving", asy
 });
 
 
-test("BingeCat search stops the invocation after an upstream 429", async () => {
+test("BingeCat search opens a batch circuit after sustained 429s", async () => {
   clearBingeCatSearchCache();
   let calls = 0;
-  const result = await resolveAniListMappingsByBingeCatSearch([
-    { anilistId: 910001, type: "TV", year: 2026, titleEnglish: "Rate Limited One" },
-    { anilistId: 910002, type: "TV", year: 2026, titleEnglish: "Rate Limited Two" },
-    { anilistId: 910003, type: "TV", year: 2026, titleEnglish: "Rate Limited Three" },
-  ], {
-    concurrency: 1,
+  const rows = Array.from({ length: 10 }, (_, index) => ({
+    anilistId: 910000 + index,
+    type: "TV",
+    year: 2026,
+    titleEnglish: `Rate Limited Anime ${index}`,
+  }));
+
+  const result = await resolveAniListMappingsByBingeCatSearch(rows, {
+    concurrency: 3,
     fetchImpl: async () => {
       calls += 1;
-      return {
-        ok: false,
-        status: 429,
-        async json() { return {}; },
-      };
+      return { ok: false, status: 429 };
     },
   });
 
   assert.equal(result.size, 0);
-  assert.equal(calls, 1);
+  assert.ok(calls <= 9, `expected the batch to stop after the first sustained 429, got ${calls} calls`);
 });
