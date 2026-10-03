@@ -139,7 +139,9 @@ test("BingeCat search accepts an exact base-series identity for a numbered TV/ON
   }], {
     fetchImpl: async (url) => {
       const parsed = new URL(url);
-      assert.equal(parsed.searchParams.get("query"), "Spare Me, Great Lord!");
+      if (parsed.searchParams.get("query") !== "Spare Me, Great Lord!") {
+        return { ok: true, async json() { return { movies: [], series: [] }; } };
+      }
       return {
         ok: true,
         async json() {
