@@ -17,6 +17,7 @@ import { resolveAniListMappingsFribb } from "../lib/fribb-mapping.js";
 import { getBingeCatCandidates, selectBingeCatIdentity } from "../lib/bingecat-identity.js";
 import {
   resolveAniListMappingsSecondary,
+  resolveAniListMappingsFromDump,
   resolveAniListMappingsByMalIds,
 } from "../lib/secondary-mapping.js";
 
@@ -103,6 +104,7 @@ async function resolveMappingsForRows(
   {
     resolveMappings = resolveAniListMappings,
     resolveFribbMappings = resolveAniListMappingsFribb,
+    resolveAnimeApiDumpMappings = resolveAniListMappingsFromDump,
     resolveSecondaryMappings = resolveAniListMappingsSecondary,
     resolveAlternativeMappings = resolveAniListMappingsByMalIds,
   } = {},
@@ -127,6 +129,20 @@ async function resolveMappingsForRows(
       mappings = mergeMappings(mappings, fribb);
     } catch (error) {
       console.error("[identity] Fribb mapping source failed; trying AnimeAPI", error);
+    }
+  }
+
+  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
+
+  if (unresolvedRows.length) {
+    try {
+      const datasetMappings = await resolveAnimeApiDumpMappings(unresolvedRows.map((row) => Number(row.id)));
+      mappings = mergeMappings(mappings, datasetMappings);
+    } catch (error) {
+      console.error("[identity] AnimeAPI dataset failed; trying live AnimeAPI", error);
     }
   }
 
