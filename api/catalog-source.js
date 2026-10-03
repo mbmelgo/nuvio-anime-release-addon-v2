@@ -396,7 +396,13 @@ async function resolveRelationMappings(rows, {
 
   const result = new Map();
   for (const [currentId, relatedIds] of rowRelations) {
-    const records = [...(installmentMappings.get(currentId) || [])];
+    const exactInstallmentRecords = installmentMappings.get(currentId) || [];
+    if (exactInstallmentRecords.length) {
+      result.set(currentId, exactInstallmentRecords);
+      continue;
+    }
+
+    const records = [];
     for (const relatedId of relatedIds) {
       for (const record of relationMappings.get(relatedId) || []) {
         records.push({
