@@ -520,5 +520,5 @@ test("TEMP probe live BingeCat for Uncle's Obsession with Cute Things", async ()
     synonyms: ["Pops Loves Kawaii Stuff", "This Uncle Likes Cute Things", "Ojikawa", "おじかわ"],
   }]);
   console.log("TEMP_BINGECAT_202079", JSON.stringify(result.get(202079) || []));
-  assert.ok(result instanceof Map);
+  assert.equal(result.get(202079)?.[0]?.imdbIds?.[0], "tt43691343");
 });
