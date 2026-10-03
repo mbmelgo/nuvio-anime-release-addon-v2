@@ -251,3 +251,134 @@ test("seasonal catalog uses MAL-only mapping evidence as the final fallback", as
   assert.equal(metas[0].id, "mal:62218");
   assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
 });
+
+
+test("catalog rejects a weak ARM TVDB identity and preserves the AniList entry via MAL fallback", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 202079,
+    idMal: 62907,
+    title: {
+      english: "Uncle's Obsession with Cute Things",
+      romaji: "Oji-san wa Kawaii Mono ga Osuki.",
+    },
+    format: "TV",
+    startDate: { year: 2026 },
+  }], {
+    resolveMappings: async () => new Map([[
+      202079,
+      [{
+        source: "arm",
+        anilistId: 202079,
+        type: "TV",
+        imdbIds: [],
+        tvdbId: 470200,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        season: { tvdb: 1, tmdb: null },
+        episodeOffset: null,
+      }],
+    ]]),
+    resolveFribbMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "mal:62907");
+  assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
+});
+
+test("catalog does not treat multiple weak provider mappings as semantic corroboration", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 202079,
+    idMal: 62907,
+    title: { english: "Uncle's Obsession with Cute Things" },
+    format: "TV",
+    startDate: { year: 2026 },
+  }], {
+    resolveMappings: async () => new Map([[
+      202079,
+      [{
+        source: "arm",
+        anilistId: 202079,
+        type: "TV",
+        imdbIds: [],
+        tvdbId: 470200,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+      }],
+    ]]),
+    resolveFribbMappings: async () => new Map([[
+      202079,
+      [{
+        source: "fribb",
+        anilistId: 202079,
+        type: "TV",
+        imdbIds: [],
+        tvdbId: 470200,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+      }],
+    ]]),
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "mal:62907");
+});
+
+test("catalog accepts a TVDB identity when an independent mapping supplies semantic evidence", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 202079,
+    idMal: 62907,
+    title: { english: "Uncle's Obsession with Cute Things" },
+    format: "TV",
+    startDate: { year: 2026 },
+  }], {
+    resolveMappings: async () => new Map([[
+      202079,
+      [{
+        source: "arm",
+        anilistId: 202079,
+        type: "TV",
+        imdbIds: [],
+        tvdbId: 480889,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+      }],
+    ]]),
+    resolveFribbMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map([[
+      202079,
+      [{
+        source: "animeapi",
+        anilistId: 202079,
+        type: "TV",
+        imdbIds: [],
+        tvdbId: 480889,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: "Uncle's Obsession with Cute Things",
+        year: 2026,
+      }],
+    ]]),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "tvdb:480889");
+  assert.equal(metas[0].extra.bingecatProvider, "tvdb");
+});
