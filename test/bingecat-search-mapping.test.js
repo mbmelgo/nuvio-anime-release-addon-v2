@@ -391,3 +391,42 @@ test("BingeCat search derives a base title from File-numbered installments", asy
   const record = result.get(212653)[0];
   assert.equal(record.imdbIds[0], "tt39382762");
 });
+
+
+test("BingeCat search cache does not reuse a candidate across distinct AniList rows", async () => {
+  clearBingeCatSearchCache();
+  let calls = 0;
+  const fetchImpl = async () => {
+    calls += 1;
+    const id = calls === 1 ? "tt11111111" : "tt22222222";
+    return {
+      ok: true,
+      async json() {
+        return {
+          series: [{
+            name: "Duplicate Title",
+            id,
+            contentType: "series",
+            year: 2026,
+          }],
+        };
+      },
+    };
+  };
+
+  const base = {
+    type: "TV",
+    year: 2026,
+    titleEnglish: "Duplicate Title",
+  };
+  const first = await resolveAniListMappingsByBingeCatSearch([
+    { ...base, anilistId: 900101 },
+  ], { fetchImpl });
+  const second = await resolveAniListMappingsByBingeCatSearch([
+    { ...base, anilistId: 900102 },
+  ], { fetchImpl });
+
+  assert.equal(first.get(900101)[0].imdbIds[0], "tt11111111");
+  assert.equal(second.get(900102)[0].imdbIds[0], "tt22222222");
+  assert.equal(calls, 2);
+});
