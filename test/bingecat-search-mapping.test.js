@@ -201,6 +201,78 @@ test("BingeCat search accepts an OVA movie identity when the AniList format is n
   assert.deepEqual(record.tmdbMovieIds, []);
 });
 
+test("BingeCat search accepts an exact provider title contained in a longer translated AniList title", async () => {
+  clearBingeCatSearchCache();
+  const result = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 212653,
+    type: "TV",
+    year: 2027,
+    titleRomaji: "Kidou Keisatsu Patlabor EZY File 3",
+  }], {
+    fetchImpl: async (url) => {
+      const parsed = new URL(url);
+      if (parsed.searchParams.get("query") !== "Kidou Keisatsu Patlabor EZY File 3") {
+        return { ok: true, async json() { return { movies: [], series: [] }; } };
+      }
+      return {
+        ok: true,
+        async json() {
+          return {
+            movies: [{
+              name: "Patlabor EZY File 3",
+              id: "tt39382762",
+              contentType: "movie",
+              year: 2027,
+            }],
+          };
+        },
+      };
+    },
+  });
+
+  assert.equal(result.get(212653)[0].imdbIds[0], "tt39382762");
+});
+
+test("BingeCat search uses an explicit related AniList title for a sequel", async () => {
+  clearBingeCatSearchCache();
+  const result = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 155723,
+    type: "TV",
+    year: 2026,
+    titleRomaji: "Wushen Zhuzai: Da Wei Pian",
+    relations: {
+      edges: [{
+        relationType: "PREQUEL",
+        node: { title: { english: "The God of War Dominates" } },
+      }],
+    },
+  }], {
+    fetchImpl: async (url) => {
+      const parsed = new URL(url);
+      if (parsed.searchParams.get("query") !== "The God of War Dominates") {
+        return { ok: true, async json() { return { movies: [], series: [] }; } };
+      }
+      return {
+        ok: true,
+        async json() {
+          return {
+            series: [{
+              name: "The God of War Dominates",
+              id: "tt20769560",
+              contentType: "series",
+              year: 2020,
+            }],
+          };
+        },
+      };
+    },
+  });
+
+  const record = result.get(155723)[0];
+  assert.equal(record.imdbIds[0], "tt20769560");
+  assert.equal(record.year, null);
+});
+
 test("BingeCat search rejects fuzzy, wrong-type, and wrong-year candidates", () => {
   const row = {
     anilistId: 202390,
