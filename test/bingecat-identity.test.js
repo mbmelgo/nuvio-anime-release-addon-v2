@@ -225,6 +225,35 @@ test("candidate selection can choose a different valid provider identity when th
 });
 
 
+
+test("multiple relation-derived sources do not count as independent corroboration", () => {
+  const media = {
+    anilistId: 214703,
+    title: { english: "Ghost Meets Gal!", romaji: "Ghost Meets Gal!" },
+    startDate: { year: 2026 },
+    format: "TV",
+  };
+  const candidates = getBingeCatCandidates(media, [
+    {
+      source: "imdb-search-relation",
+      anilistId: 214703,
+      type: "TV",
+      imdbIds: ["tt2549176"],
+      title: "Cardfight!! Vanguard",
+      relation: true,
+    },
+    {
+      source: "animeapi-relation",
+      anilistId: 214703,
+      type: "TV",
+      imdbIds: ["tt2549176"],
+      title: "Cardfight!! Vanguard",
+      relation: true,
+    },
+  ]);
+  assert.equal(selectBingeCatIdentity(media, candidates), null);
+});
+
 test("relation-derived provider identities require independent corroboration", () => {
   const media = {
     anilistId: 214703,
