@@ -200,9 +200,14 @@ export async function buildRollingCatalog(id, date, skip, search, {
           && Number(media.id) > 0
           && isEligibleRollingMedia(media);
       });
-      const mappings = await resolveAniListMappings(
-        eligibleRows.map((row) => Number(row.media.id)),
-      );
+      let mappings = new Map();
+      try {
+        mappings = await resolveAniListMappings(
+          eligibleRows.map((row) => Number(row.media.id)),
+        );
+      } catch (error) {
+        console.error("[identity] ARM rolling mapping failed; retaining legacy catalog identities", error);
+      }
       const metas = [];
       for (const row of eligibleRows) {
         const media = row.media;
