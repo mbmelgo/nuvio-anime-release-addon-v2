@@ -154,7 +154,7 @@ test("production manifest validator enforces the exact five-catalog contract", (
   const manifest = {
     id: "com.marki.nuvio.anime-releases",
     version: "5.5.3",
-    identityMode: "mal",
+    identityMode: "bingecat",
     resources: [{ name: "catalog", types: ["anime"] }],
     types: ["anime"],
     catalogs: PRODUCTION_CATALOG_IDS.map((id) => ({ id, type: "anime" })),
@@ -168,19 +168,19 @@ test("production manifest validator enforces the exact five-catalog contract", (
 
 test("production rolling catalog validators enforce their distinct metadata contracts", () => {
   assert.equal(validateCatalog({
-    metas: [{ id: "mal:1", type: "series", extra: { nextEpisode: 2, nextAiringAt: 123 } }],
+    metas: [{ id: "tt1234567", type: "series", extra: { nextEpisode: 2, nextAiringAt: 123 } }],
   }, "upcoming_5_days"), true);
 
   assert.throws(() => validateCatalog({
-    metas: [{ id: "mal:1", type: "series", extra: { nextEpisode: 2 } }],
+    metas: [{ id: "tmdb:12345", type: "series", extra: { nextEpisode: 2 } }],
   }, "upcoming_5_days"), /next episode and next airing/);
 
   assert.equal(validateCatalog({
-    metas: [{ id: "mal:1", type: "series", extra: {} }],
+    metas: [{ id: "tvdb:12345", type: "series", extra: {} }],
   }, "previous_7_days"), true);
 
   assert.throws(() => validateCatalog({
-    metas: [{ id: "mal:1", type: "series", extra: { nextEpisode: 2, nextAiringAt: 123 } }],
+    metas: [{ id: "tt1234567", type: "series", extra: { nextEpisode: 2, nextAiringAt: 123 } }],
   }, "previous_7_days"), /future-only/);
 });
 
@@ -236,7 +236,7 @@ test("release workflow keeps dry runs non-mutating and deploys idempotently", as
   assert.match(workflow, /inputs\.dry_run.*true.*release=true|release=true.*inputs\.dry_run.*true/s);
   assert.ok(workflow.includes("steps.existing_vercel.outputs.needs_deploy == 'true'"));
   assert.ok(workflow.includes("inputs.dry_run != true"));
-  assert.match(workflow, /Create annotated release tag, GitHub Release, and update release state[\s\S]*inputs\.dry_run != true/);
+  assert.match(workflow, /Create annotated release tag, GitHub Release, and update release state[\s\S]*inputs\.dry_run != true/);\n  assert.match(workflow, /identityMode.*bingecat/);\n  assert.match(workflow, /tt\\\\d\+\\|tvdb:\\\\d\+\\|tmdb:\\\\d\+/);
   assert.match(workflow, /Check for an existing Vercel deployment/);
   assert.match(workflow, /state\["lastDeployment"\] = \{/);
   assert.match(workflow, /GITHUB_RUN_ID/);
