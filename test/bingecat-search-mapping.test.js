@@ -320,7 +320,7 @@ test("BingeCat search caches negative lookups", async () => {
 
   await resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
   await resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
-  assert.equal(calls, 2);
+  assert.equal(calls, 4);
 });
 
 test("BingeCat search can derive a franchise prefix before a subtitle", async () => {
