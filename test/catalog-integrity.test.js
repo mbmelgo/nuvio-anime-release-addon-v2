@@ -156,6 +156,7 @@ test("upcoming rolling catalog returns unique contract-valid anime and coherent 
   const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
     fetchPage: async () => rows,
     maxPages: 1,
+    resolveMappings: async (ids) => new Map(ids.map((id) => [id, [{ source: "test", anilistId: id, type: "TV", imdbIds: [`tt${10000000 + id}`], tvdbId: null, tmdbTvId: null, tmdbMovieIds: [] }]])),
   });
 
   assert.deepEqual(result.map(({ id }) => id), ["tt10000001", "tt10000002"]);
@@ -179,6 +180,7 @@ test("previous rolling catalog returns unique contract-valid anime without futur
   const result = await buildRollingCatalog("previous_7_days", now, 0, "", {
     fetchPage: async () => rows,
     maxPages: 1,
+    resolveMappings: async (ids) => new Map(ids.map((id) => [id, [{ source: "test", anilistId: id, type: "TV", imdbIds: [`tt${10000000 + id}`], tvdbId: null, tmdbTvId: null, tmdbMovieIds: [] }]])),
   });
 
   assert.deepEqual(result.map(({ id }) => id), ["tt10000001", "tt10000002"]);
