@@ -109,3 +109,24 @@ test("airing schedule queries include relation titles needed by rolling identity
     globalThis.fetch = originalFetch;
   }
 });
+
+
+test("catalog AniList queries retry transient 429 responses before failing", async () => {
+  const originalFetch = globalThis.fetch;
+  let attempts = 0;
+  globalThis.fetch = async () => {
+    attempts += 1;
+    if (attempts < 3) return new Response("rate limited", { status: 429 });
+    return new Response(JSON.stringify({ data: { Page: { media: [] } } }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  };
+
+  try {
+    await queryAnime({ season: { season: "FALL", year: 2026 }, sort: ["ID"] }, 1);
+    assert.equal(attempts, 3);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
