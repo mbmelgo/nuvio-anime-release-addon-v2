@@ -52,6 +52,7 @@ test("seasonal catalog fails explicitly instead of dropping entries without a su
     resolveAnimapMappings: async () => new Map(),
     resolveIdMapperMappings: async () => new Map(),
     resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
     resolveTsvMappings: async () => new Map(),
     resolveImdbMappings: async () => new Map(),
     resolveSecondaryMappings: async () => new Map(),
