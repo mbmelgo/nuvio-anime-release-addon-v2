@@ -45,7 +45,7 @@ test("BingeCat candidate ordering prefers IMDb over TVDB and TMDB", () => {
     [getMapping(21)],
   );
 
-  assert.deepEqual(candidates.map((candidate) => candidate.id), [
+  assert.deepEqual(candidates.map((candidate) => candidate.stremioId), [
     "tt0388629",
     "tvdb:81797",
     "tmdb:37854",
