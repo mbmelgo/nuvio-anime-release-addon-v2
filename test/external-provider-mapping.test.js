@@ -36,3 +36,27 @@ test("external-link resolver preserves only rows with supported provider links",
   assert.equal(result.get(1)?.[0]?.imdbIds[0], "tt1111111");
   assert.equal(result.has(2), false);
 });
+
+test("relation provider links are reused under the current AniList identity", () => {
+  const result = resolveAniListExternalMappings([{
+    id: 155723,
+    idMal: 99999,
+    format: "ONA",
+    externalLinks: [],
+    relations: {
+      edges: [{
+        relationType: "PARENT",
+        node: {
+          id: 12345,
+          format: "TV",
+          externalLinks: [{ site: "IMDb", url: "https://www.imdb.com/title/tt20769560/" }],
+        },
+      }],
+    },
+  }]);
+
+  const mapping = result.get(155723)?.[0];
+  assert.equal(mapping.source, "anilist-relation-external");
+  assert.equal(mapping.anilistId, 155723);
+  assert.equal(mapping.imdbIds[0], "tt20769560");
+});
