@@ -123,3 +123,34 @@ test("representative regression cases resolve to their expected BingeCat identit
     assert.equal(selected.id, expectedId, anilistId);
   }
 });
+
+
+test("candidate selection can choose a different valid provider identity when the preferred identity is already used", () => {
+  const candidates = [
+    { provider: "imdb", id: "tt1111111", stremioId: "tt1111111", mediaType: "tv", anilistId: 1 },
+    { provider: "tvdb", id: "222222", stremioId: "tvdb:222222", mediaType: "tv", anilistId: 1 },
+  ];
+
+  const selected = selectBingeCatIdentity(
+    { anilistId: 1, title: { english: "Test Anime" }, format: "TV" },
+    candidates,
+    { excludeIds: new Set(["tt1111111"]) },
+  );
+
+  assert.equal(selected.stremioId, "tvdb:222222");
+});
+
+test("candidate validation rejects a mapping whose media type conflicts with the AniList format", () => {
+  const selected = selectBingeCatIdentity(
+    { anilistId: 1, title: { english: "Test Movie" }, format: "MOVIE" },
+    [{
+      provider: "imdb",
+      id: "tt1234567",
+      stremioId: "tt1234567",
+      mediaType: "tv",
+      anilistId: 1,
+    }],
+  );
+
+  assert.equal(selected, null);
+});

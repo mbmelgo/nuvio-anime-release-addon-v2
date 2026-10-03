@@ -52,14 +52,14 @@ function schedule(id, airingAt, episode, options = {}) {
 
 function assertCatalogMeta(meta) {
   assert.ok(meta && typeof meta === "object");
-  assert.match(meta.id, /^(mal|anilist):[1-9]\d*$/);
+  assert.match(meta.id, /^(tt\d+|tvdb:[1-9]\d*|tmdb:[1-9]\d*|mal:[1-9]\d*|anilist:[1-9]\d*)$/);
   assert.equal(meta.type, "series");
   assert.equal(typeof meta.name, "string");
   assert.ok(meta.name.length > 0);
   assert.equal(meta.posterShape, "poster");
   assert.ok(meta.extra && Number.isInteger(Number(meta.extra.anilistId)));
   assert.ok(Number(meta.extra.anilistId) > 0);
-  assert.ok(meta.id === `anilist:${meta.extra.anilistId}` || meta.id === `mal:${meta.extra.malId}`);
+  if (/^(tt\d+|tvdb:|tmdb:)/.test(meta.id)) assert.ok(meta.extra.bingecatProvider);
 }
 
 test("catalog definitions expose exactly the supported five catalogs with one consistent Nuvio contract", () => {
@@ -156,9 +156,10 @@ test("upcoming rolling catalog returns unique contract-valid anime and coherent 
   const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
     fetchPage: async () => rows,
     maxPages: 1,
+    resolveMappings: async (ids) => new Map(ids.map((id) => [id, [{ source: "test", anilistId: id, type: "TV", imdbIds: [`tt${10000000 + id}`], tvdbId: null, tmdbTvId: null, tmdbMovieIds: [] }]])),
   });
 
-  assert.deepEqual(result.map(({ id }) => id), ["mal:1001", "anilist:2"]);
+  assert.deepEqual(result.map(({ id }) => id), ["tt10000001", "tt10000002"]);
   assert.equal(new Set(result.map(({ id }) => id)).size, result.length);
 
   for (const meta of result) {
@@ -179,9 +180,10 @@ test("previous rolling catalog returns unique contract-valid anime without futur
   const result = await buildRollingCatalog("previous_7_days", now, 0, "", {
     fetchPage: async () => rows,
     maxPages: 1,
+    resolveMappings: async (ids) => new Map(ids.map((id) => [id, [{ source: "test", anilistId: id, type: "TV", imdbIds: [`tt${10000000 + id}`], tvdbId: null, tmdbTvId: null, tmdbMovieIds: [] }]])),
   });
 
-  assert.deepEqual(result.map(({ id }) => id), ["mal:1001", "anilist:2"]);
+  assert.deepEqual(result.map(({ id }) => id), ["tt10000001", "tt10000002"]);
   for (const meta of result) {
     assertCatalogMeta(meta);
     assert.equal(Object.hasOwn(meta.extra, "nextEpisode"), false);

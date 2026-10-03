@@ -20,7 +20,7 @@ export function buildManifest(info) {
     id: "com.marki.nuvio.anime-releases",
     version: ADDON_VERSION,
     name: "Anime Releases for Nuvio",
-    description: "Season-aware anime release catalogs using validated BingeCat-compatible identities, with ARM cross-provider mapping and legacy identity fallback when mapping is unavailable. Detailed metadata is delegated to the user's preferred metadata addon.",
+    description: "Season-aware anime release catalogs using validated BingeCat-compatible identities, with ARM-first cross-provider mapping and secondary identity resolution. Detailed metadata is delegated to the user's preferred metadata addon.",
     resources: [
       { name: "catalog", types: ["anime"] },
     ],

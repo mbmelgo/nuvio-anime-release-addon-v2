@@ -14,7 +14,10 @@ import { filterCatalogMetasBySearch, toMetaFromAniList } from "../lib/catalog-me
 import { queryAnime, queryAiringSchedulePage } from "../lib/catalog-anilist.js";
 import { resolveAniListMappings } from "../lib/arm-mapping.js";
 import { getBingeCatCandidates, selectBingeCatIdentity } from "../lib/bingecat-identity.js";
-import { resolveAniListMappingsSecondary } from "../lib/secondary-mapping.js";
+import {
+  resolveAniListMappingsSecondary,
+  resolveAniListMappingsByMalIds,
+} from "../lib/secondary-mapping.js";
 
 export {
   ANILIST_PAGE_SIZE,
@@ -94,9 +97,65 @@ export function normalizeSeasonalCatalogMetaTypes(metas) {
   return metas.map((meta) => ({ ...meta, type: "series" }));
 }
 
+async function resolveMappingsForRows(
+  rows,
+  {
+    resolveMappings = resolveAniListMappings,
+    resolveSecondaryMappings = resolveAniListMappingsSecondary,
+    resolveAlternativeMappings = resolveAniListMappingsByMalIds,
+  } = {},
+) {
+  const ids = rows.map((row) => Number(row.id));
+  let mappings = new Map();
+
+  try {
+    mappings = await resolveMappings(ids);
+  } catch (error) {
+    console.error("[identity] ARM mapping failed; using secondary mapping sources", error);
+  }
+
+  const unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
+
+  if (unresolvedRows.length) {
+    try {
+      const secondary = await resolveSecondaryMappings(unresolvedRows.map((row) => Number(row.id)));
+      mappings = mergeMappings(mappings, secondary);
+    } catch (error) {
+      console.error("[identity] secondary mapping source failed; trying MAL identity bridge", error);
+    }
+  }
+
+  const stillUnresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
+
+  if (stillUnresolvedRows.length) {
+    try {
+      const alternative = await resolveAlternativeMappings(stillUnresolvedRows);
+      mappings = mergeMappings(mappings, alternative);
+    } catch (error) {
+      console.error("[identity] MAL identity bridge failed", error);
+    }
+  }
+
+  return mappings;
+}
+
+function mergeMappings(base, additional) {
+  const merged = new Map(base);
+  for (const [id, records] of additional instanceof Map ? additional : []) {
+    if (!merged.has(id) || !merged.get(id)?.length) merged.set(id, records);
+  }
+  return merged;
+}
+
 export async function canonicalizeCatalogPageWithBingeCat(
   mediaRows,
-  { resolveMappings = resolveAniListMappings, resolveSecondaryMappings = resolveAniListMappingsSecondary } = {},
+  options = {},
 ) {
   const normalizedRows = Array.isArray(mediaRows)
     ? mediaRows
@@ -105,54 +164,51 @@ export async function canonicalizeCatalogPageWithBingeCat(
     : [];
   if (!normalizedRows.length) return [];
 
-  const ids = normalizedRows.map((row) => Number(row.id));
-  let mappings;
-  try {
-    mappings = await resolveMappings(ids);
-  } catch (error) {
-    console.error("[identity] ARM mapping failed; using secondary mapping source", error);
-    mappings = new Map();
-  }
+  const mappings = await resolveMappingsForRows(normalizedRows, options);
+  const metas = [];
+  const usedIdentities = new Set();
+  const unresolvedIds = [];
 
-  const unresolvedIds = normalizedRows
-    .filter((row) => !selectBingeCatIdentity(
-      { ...row, anilistId: Number(row.id) },
-      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-    ))
-    .map((row) => Number(row.id));
-  if (unresolvedIds.length) {
-    try {
-      const secondary = await resolveSecondaryMappings(unresolvedIds);
-      mappings = new Map([...mappings, ...secondary]);
-    } catch (error) {
-      console.error("[identity] secondary mapping source failed", error);
+  for (const row of normalizedRows) {
+    const anilistId = Number(row.id);
+    const rawMeta = toCatalogIdentity(toMetaFromAniList(anilistId, row));
+    if (!rawMeta) {
+      unresolvedIds.push(anilistId);
+      continue;
     }
+
+    const meta = normalizeSeasonalCatalogMetaTypes([rawMeta])[0];
+    const selected = selectBingeCatIdentity(
+      { ...row, anilistId },
+      getBingeCatCandidates({ ...row, anilistId }, mappings.get(anilistId) || []),
+      { excludeIds: usedIdentities },
+    );
+
+    if (!selected) {
+      unresolvedIds.push(anilistId);
+      continue;
+    }
+
+    usedIdentities.add(selected.stremioId);
+    metas.push({
+      ...meta,
+      id: selected.stremioId,
+      extra: {
+        ...meta.extra,
+        bingecatProvider: selected.provider,
+        bingecatId: selected.id,
+        bingecatEvidence: selected.evidence,
+      },
+    });
   }
 
-  return normalizedRows
-    .map((row) => {
-      const anilistId = Number(row.id);
-      const rawMeta = toCatalogIdentity(toMetaFromAniList(anilistId, row));
-      if (!rawMeta) return null;
-      const meta = normalizeSeasonalCatalogMetaTypes([rawMeta])[0];
+  if (unresolvedIds.length || metas.length !== normalizedRows.length) {
+    throw new Error(
+      `BingeCat identity resolution exhausted; unresolved AniList IDs: ${unresolvedIds.join(",") || "unknown"}`,
+    );
+  }
 
-      const media = { ...row, anilistId };
-      const records = mappings.get(anilistId) || [];
-      const selected = selectBingeCatIdentity(media, getBingeCatCandidates(media, records));
-      if (!selected) return null;
-
-      return {
-        ...meta,
-        id: selected.stremioId,
-        extra: {
-          ...meta.extra,
-          bingecatProvider: selected.provider,
-          bingecatId: selected.id,
-          bingecatEvidence: selected.evidence,
-        },
-      };
-    })
-    .filter(Boolean);
+  return metas;
 }
 
 export function canonicalizeCatalogPage(mediaRows) {
@@ -198,7 +254,10 @@ export async function buildRollingCatalog(id, date, skip, search, {
   fetchPage = queryAiringSchedulePage,
   maxPages = MAX_SCHEDULE_PAGES,
   pageSize = NUVIO_PAGE_SIZE,
-  useBingeCatIdentity = false,
+  useBingeCatIdentity = true,
+  resolveMappings = resolveAniListMappings,
+  resolveSecondaryMappings = resolveAniListMappingsSecondary,
+  resolveAlternativeMappings = resolveAniListMappingsByMalIds,
 } = {}) {
   const range = getRollingCatalogRange(id, date);
   if (!range) return [];
@@ -218,57 +277,59 @@ export async function buildRollingCatalog(id, date, skip, search, {
           && Number(media.id) > 0
           && isEligibleRollingMedia(media);
       });
-      let mappings = new Map();
-      if (useBingeCatIdentity) {
-        try {
-          mappings = await resolveAniListMappings(eligibleRows.map((row) => Number(row.media.id)));
-        } catch (error) {
-          console.error("[identity] ARM rolling mapping failed; using secondary mapping source", error);
-        }
-
-        const unresolved = eligibleRows
-          .filter((row) => !selectBingeCatIdentity(
-            { ...row.media, anilistId: Number(row.media.id) },
-            getBingeCatCandidates(row.media, mappings.get(Number(row.media.id)) || []),
-          ))
-          .map((row) => Number(row.media.id));
-        if (unresolved.length) {
-          try {
-            const secondary = await resolveAniListMappingsSecondary(unresolved);
-            mappings = new Map([...mappings, ...secondary]);
-          } catch (error) {
-            console.error("[identity] secondary rolling mapping failed", error);
-          }
-        }
+      const uniqueEligibleRows = [];
+      const seenMediaIds = new Set();
+      for (const row of eligibleRows) {
+        const mediaId = Number(row.media.id);
+        if (seenMediaIds.has(mediaId)) continue;
+        seenMediaIds.add(mediaId);
+        uniqueEligibleRows.push(row);
+      }
+      if (!useBingeCatIdentity) {
+        throw new Error("BingeCat identity resolution is required for production catalogs");
       }
 
+      const mediaRows = uniqueEligibleRows.map((row) => row.media);
+      const mappings = await resolveMappingsForRows(mediaRows, {
+        resolveMappings,
+        resolveSecondaryMappings,
+        resolveAlternativeMappings,
+      });
+
       const metas = [];
-      for (const row of eligibleRows) {
+      const usedIdentities = new Set();
+      const unresolvedIds = [];
+
+      for (const row of uniqueEligibleRows) {
         const media = row.media;
         const mediaId = Number(media.id);
         const baseMeta = toCatalogIdentity(toMetaFromAniList(mediaId, media));
-        if (!baseMeta) continue;
+        if (!baseMeta) {
+          unresolvedIds.push(mediaId);
+          continue;
+        }
 
-        const selected = useBingeCatIdentity
-          ? selectBingeCatIdentity(
-              { ...media, anilistId: mediaId },
-              getBingeCatCandidates(media, mappings.get(mediaId) || []),
-            )
-          : null;
-        if (useBingeCatIdentity && !selected) continue;
+        const selected = selectBingeCatIdentity(
+          { ...media, anilistId: mediaId },
+          getBingeCatCandidates(media, mappings.get(mediaId) || []),
+          { excludeIds: usedIdentities },
+        );
+        if (!selected) {
+          unresolvedIds.push(mediaId);
+          continue;
+        }
 
-        const meta = selected
-          ? {
-              ...baseMeta,
-              id: selected.stremioId,
-              extra: {
-                ...baseMeta.extra,
-                bingecatProvider: selected.provider,
-                bingecatId: selected.id,
-                bingecatEvidence: selected.evidence,
-              },
-            }
-          : baseMeta;
+        usedIdentities.add(selected.stremioId);
+        const meta = {
+          ...baseMeta,
+          id: selected.stremioId,
+          extra: {
+            ...baseMeta.extra,
+            bingecatProvider: selected.provider,
+            bingecatId: selected.id,
+            bingecatEvidence: selected.evidence,
+          },
+        };
 
         meta.type = "series";
         meta.extra = {
@@ -282,6 +343,13 @@ export async function buildRollingCatalog(id, date, skip, search, {
         };
         metas.push(meta);
       }
+
+      if (unresolvedIds.length || metas.length !== uniqueEligibleRows.length) {
+        throw new Error(
+          `BingeCat identity resolution exhausted for rolling catalog; unresolved AniList IDs: ${unresolvedIds.join(",") || "unknown"}`,
+        );
+      }
+
       return filterCatalogMetasBySearch(metas, search);
     },
   });
