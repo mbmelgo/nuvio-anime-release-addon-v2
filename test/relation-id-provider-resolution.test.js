@@ -5,10 +5,11 @@ import { getBingeCatCandidates, selectBingeCatIdentity } from "../lib/bingecat-i
 
 const emptyMap = () => new Map();
 
-test("catalog identity resolution can reuse a related provider mapping when its title matches the current entry", async () => {
+test("relation-derived provider mappings are not reused as the current identity without corroboration", async () => {
   const searchedTitles = [];
   const metas = await canonicalizeCatalogPageWithBingeCat([{
     id: 155723,
+    idMal: 64999,
     title: {
       english: "The God of War Dominates",
       romaji: "The God of War Dominates",
@@ -67,10 +68,11 @@ test("catalog identity resolution can reuse a related provider mapping when its 
   });
 
   assert.equal(metas.length, 1);
-  assert.equal(metas[0].id, "tt20769560");
+  assert.equal(metas[0].id, "mal:64999");
   assert.equal(metas[0].extra.anilistId, 155723);
-  assert.equal(metas[0].extra.bingecatProvider, "imdb");
-  assert.equal(metas[0].extra.bingecatId, "tt20769560");
+  assert.equal(metas[0].extra.bingecatProvider, null);
+  assert.equal(metas[0].extra.bingecatId, null);
+  assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
 });
 
 
