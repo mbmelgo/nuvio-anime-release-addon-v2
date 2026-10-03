@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { canonicalizeCatalogPageWithBingeCat } from "../api/catalog-source.js";
+import { getBingeCatCandidates, selectBingeCatIdentity } from "../lib/bingecat-identity.js";
 
 const emptyMap = () => new Map();
 
@@ -143,6 +144,26 @@ test("relation identity resolution falls back to IMDb for the related title", as
 
 
 test("relation identity resolution derives provider installment titles", async () => {
+  const validationMedia = {
+    anilistId: 212653,
+    format: "OVA",
+    startDate: { year: 2027 },
+    title: { romaji: "Kidou Keisatsu Patlabor EZY File 3", english: null, native: null },
+    synonyms: ["パトレイバー EZY File 3"],
+  };
+  const validationRecord = {
+    source: "imdb-search",
+    anilistId: 212653,
+    type: "TV",
+    imdbIds: ["tt39382762"],
+    title: "Patlabor EZY: File 3",
+    year: 2027,
+  };
+  assert.equal(selectBingeCatIdentity(
+    validationMedia,
+    getBingeCatCandidates(validationMedia, [validationRecord]),
+  )?.id, "tt39382762");
+
   const searchedTitles = [];
   const metas = await canonicalizeCatalogPageWithBingeCat([{
     id: 212653,
