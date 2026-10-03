@@ -59,7 +59,7 @@ test("ARM mapping client caches successful and negative results", async () => {
   let calls = 0;
   const fetchImpl = async () => {
     calls += 1;
-    return { ok: true, async json() { return [null]; } };
+    return { ok: true, async json() { return []; } };
   };
 
   const first = await resolveAniListMappings([999999], { fetchImpl });
