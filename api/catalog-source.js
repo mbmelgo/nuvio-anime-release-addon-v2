@@ -784,7 +784,24 @@ export async function buildRollingCatalog(id, date, skip, search, {
             metas.push(meta);
             continue;
           }
-          unresolvedIds.push(mediaId);
+          const meta = {
+            ...baseMeta,
+            id: `anilist:${mediaId}`,
+            extra: {
+              ...baseMeta.extra,
+              bingecatProvider: null,
+              bingecatId: null,
+              bingecatEvidence: "anilist-id-fallback",
+              episode: row.episode,
+              airingAt: row.airingAt,
+              ...(futureOnly ? {
+                nextEpisode: row.episode,
+                nextAiringAt: row.airingAt,
+              } : {}),
+            },
+            type: "series",
+          };
+          metas.push(meta);
           continue;
         }
 
