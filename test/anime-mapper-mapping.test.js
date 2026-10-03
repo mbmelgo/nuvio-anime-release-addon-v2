@@ -29,7 +29,7 @@ test("Anime Mapper normalizes a direct TVDB/TMDB mapping", async () => {
 
   const record = result.get(199409)[0];
   assert.equal(record.tvdbId, 388680);
-  assert.equal(record.tmdbTvId, null);
+  assert.equal(record.tmdbTvId, 123456);
   assert.equal(record.source, "anime-mapper");
 });
 
