@@ -27,6 +27,7 @@ test("IMDb fallback selects a title-compatible, year-compatible IMDb result", as
 });
 
 test("IMDb fallback does not invent a mapping for incompatible search results", async () => {
+  clearImdbSearchCache();
   const result = await resolveAniListMappingsByImdbSearch([{
     id: 123,
     format: "TV",
