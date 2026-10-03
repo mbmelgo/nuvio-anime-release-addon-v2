@@ -267,7 +267,6 @@ async function resolveMappingsForRows(
       const relationMappings = await resolveRelationMappings(stillUnresolvedRows, {
         resolveMappings,
         resolveFribbMappings,
-        resolveImdbMappings,
       });
       mappings = mergeMappings(mappings, relationMappings);
     } catch (error) {
@@ -278,45 +277,22 @@ async function resolveMappingsForRows(
   return mappings;
 }
 
-async function resolveRelationMappings(rows, {
-  resolveMappings,
-  resolveFribbMappings,
-  resolveImdbMappings,
-}) {
+async function resolveRelationMappings(rows, { resolveMappings, resolveFribbMappings }) {
   const relationIds = [];
   const rowRelations = new Map();
-  const relationRows = new Map();
 
   for (const row of Array.isArray(rows) ? rows : []) {
     const currentId = Number(row?.id);
     if (!Number.isInteger(currentId) || currentId <= 0) continue;
-    const relationEdges = (Array.isArray(row?.relations?.edges) ? row.relations.edges : [])
+    const relations = (Array.isArray(row?.relations?.edges) ? row.relations.edges : [])
       .filter((edge) => ["PARENT", "PREQUEL", "SEQUEL", "SPIN_OFF", "SIDE_STORY"].includes(
         String(edge?.relationType || "").toUpperCase(),
       ))
-      .filter((edge) => Number.isInteger(Number(edge?.node?.id)) && Number(edge.node.id) > 0);
-    if (!relationEdges.length) continue;
-
-    const relations = relationEdges.map((edge) => Number(edge.node.id));
+      .map((edge) => Number(edge?.node?.id))
+      .filter((id) => Number.isInteger(id) && id > 0);
+    if (!relations.length) continue;
     rowRelations.set(currentId, relations);
     relationIds.push(...relations);
-
-    for (const edge of relationEdges) {
-      const relation = edge.node;
-      const relationId = Number(relation.id);
-      if (!relationRows.has(relationId)) {
-        relationRows.set(relationId, {
-          id: relationId,
-          idMal: relation.idMal,
-          format: relation.format,
-          startDate: relation.startDate,
-          title: relation.title,
-          synonyms: relation.synonyms || [],
-          externalLinks: relation.externalLinks || [],
-          relations: { edges: [] },
-        });
-      }
-    }
   }
 
   const uniqueRelationIds = [...new Set(relationIds)];
@@ -338,21 +314,6 @@ async function resolveRelationMappings(rows, {
       );
     } catch (error) {
       console.error("[identity] Fribb relation-id mapping failed", error);
-    }
-  }
-
-  const stillMissingRelationIds = uniqueRelationIds.filter((id) => !(relationMappings.get(id)?.length));
-  if (stillMissingRelationIds.length && typeof resolveImdbMappings === "function") {
-    try {
-      const imdbRows = stillMissingRelationIds
-        .map((id) => relationRows.get(id))
-        .filter(Boolean);
-      relationMappings = mergeMappings(
-        relationMappings,
-        await resolveImdbMappings(imdbRows),
-      );
-    } catch (error) {
-      console.error("[identity] IMDb relation-id mapping failed", error);
     }
   }
 
