@@ -52,6 +52,29 @@ test("catalog identity resolution preserves all source rows when the MAL bridge 
   ]);
 });
 
+
+test("catalog identity resolution uses Fribb before rate-limited secondary sources", async () => {
+  const rows = [row(10, 110), row(11, 111)];
+  let secondaryCalls = 0;
+  const result = await canonicalizeCatalogPageWithBingeCat(rows, {
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async (ids) => {
+      assert.deepEqual(ids, [10, 11]);
+      return new Map([[10, [mapping(10, "tt1000010")]]]);
+    },
+    resolveSecondaryMappings: async (ids) => {
+      secondaryCalls += 1;
+      assert.deepEqual(ids, [11]);
+      return new Map([[11, [mapping(11, "tt1000011")]]]);
+    },
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(result.length, rows.length);
+  assert.deepEqual(result.map((meta) => meta.id), ["tt1000010", "tt1000011"]);
+  assert.equal(secondaryCalls, 1);
+});
+
 test("catalog identity resolution never silently drops an unresolved source row", async () => {
   const rows = [row(1), row(2)];
   await assert.rejects(
