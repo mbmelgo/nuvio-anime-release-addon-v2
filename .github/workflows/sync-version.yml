@@ -159,6 +159,17 @@ jobs:
               raise SystemExit("Release target SHA must be a full 40-character commit SHA.")
           PY
 
+      - name: Revalidate current release state before deployment
+        if: steps.gate.outputs.release == 'true' && inputs.dry_run != true
+        run: |
+          set -euo pipefail
+          git fetch --quiet origin main
+          target_version="$(git show "${{ steps.gate.outputs.release_target_sha }}:api/version.js" | sed -nE 's/export const ADDON_VERSION = "([^"]+)";/\1/p')"
+          CURRENT_STATE="$(git show origin/main:ops/release-state.json)" TARGET_VERSION="$target_version" node --input-type=module <<'NODE'
+          import { validateReleaseConcurrencyState } from "./scripts/release-integrity.mjs";
+          const state = JSON.parse(process.env.CURRENT_STATE);
+          validateReleaseConcurrencyState({ state, targetVersion: process.env.TARGET_VERSION });
+          NODE
       - name: Check for an existing Vercel deployment
         if: steps.gate.outputs.release == 'true' && inputs.dry_run != true
         id: existing_vercel
