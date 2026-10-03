@@ -55,3 +55,31 @@ test("seasonal catalog drops entries without a supported BingeCat identity", asy
 
   assert.deepEqual(metas, []);
 });
+
+test("seasonal catalog uses the secondary mapping source before dropping an entry", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([
+    {
+      id: 269,
+      title: { romaji: "Bleach" },
+      format: "TV",
+      startDate: { year: 2004 },
+    },
+  ], {
+    resolveMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map([
+      [269, [{
+        source: "animeapi",
+        anilistId: 269,
+        type: "TV",
+        imdbIds: ["tt0434665"],
+        tvdbId: 74796,
+        tmdbTvId: 30984,
+        tmdbMovieIds: [],
+      }]],
+    ]),
+  });
+
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "tt0434665");
+  assert.equal(metas[0].type, "series");
+});
