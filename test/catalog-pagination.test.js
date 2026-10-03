@@ -119,3 +119,16 @@ test("validated catalog pagination fetches the next AniList page only after vali
   assert.deepEqual(result.map((meta) => meta.id), ["1-a", "2-a"]);
   assert.deepEqual(events, ["fetch:1", "validate:1", "fetch:2", "validate:2"]);
 });
+
+test("rolling catalog search filters airing rows before identity resolution", async () => {
+  const { filterAiringRowsBySearch } = await import("../api/catalog-source.js");
+  const rows = [
+    { media: { id: 202079, title: { english: "Uncle's Obsession with Cute Things", romaji: "Uncle's Obsession with Cute Things", native: "異世界おじさん" } } },
+    { media: { id: 214703, title: { english: "Ghost Meets Gal", romaji: "Ghost Meets Gal", native: "Ghost Meets Gal" } } },
+  ];
+
+  assert.deepEqual(
+    filterAiringRowsBySearch(rows, "Uncle's Obsession with Cute Things").map((item) => item.media.id),
+    [202079],
+  );
+});
