@@ -19,6 +19,7 @@ import { resolveAniListMappingsAnimap } from "../lib/animap-mapping.js";
 import { resolveAniListMappingsIdMapper } from "../lib/idmapper-mapping.js";
 import { resolveAniListMappingsByBingeCatSearch } from "../lib/bingecat-search-mapping.js";
 import { resolveAniListMappingsByAnimeMapper } from "../lib/anime-mapper-mapping.js";
+import { resolveAniListMappingsByAnimeCatalog } from "../lib/anime-catalog-mapping.js";
 import { resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
 import { resolveAniListMappingsFromAnimeApiTsv } from "../lib/animeapi-tsv-mapping.js";
 import { getBingeCatCandidates, selectBingeCatIdentity } from "../lib/bingecat-identity.js";
@@ -115,6 +116,7 @@ async function resolveMappingsForRows(
     resolveIdMapperMappings = resolveAniListMappingsIdMapper,
     resolveBingeCatSearchMappings = resolveAniListMappingsByBingeCatSearch,
     resolveAnimeMapperMappings = resolveAniListMappingsByAnimeMapper,
+    resolveAnimeCatalogMappings = resolveAniListMappingsByAnimeCatalog,
     resolveTsvMappings = resolveAniListMappingsFromAnimeApiTsv,
     resolveImdbMappings = resolveAniListMappingsByImdbSearch,
     resolveSecondaryMappings = resolveAniListMappingsSecondary,
@@ -207,6 +209,20 @@ async function resolveMappingsForRows(
       mappings = mergeMappings(mappings, animeMapperMappings);
     } catch (error) {
       console.error("[identity] Anime Mapper mapping source failed; trying AnimeAPI TSV", error);
+    }
+  }
+
+  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
+
+  if (unresolvedRows.length) {
+    try {
+      const animeCatalogMappings = await resolveAnimeCatalogMappings(unresolvedRows);
+      mappings = mergeMappings(mappings, animeCatalogMappings);
+    } catch (error) {
+      console.error("[identity] Anime catalog mapping source failed; trying AnimeAPI TSV", error);
     }
   }
 
