@@ -251,3 +251,87 @@ test("seasonal catalog uses MAL-only mapping evidence as the final fallback", as
   assert.equal(metas[0].id, "mal:62218");
   assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
 });
+
+
+test("seasonal catalog executes AniMap fallback and accepts independent corroboration", async () => {
+  const calls = [];
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 900001,
+    title: { english: "AniMap Fallback Example", romaji: "AniMap Fallback Example" },
+    format: "TV",
+    startDate: { year: 2026 },
+  }], {
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async (ids) => {
+      calls.push(["animap", ids]);
+      return new Map([[900001, [{ source: "animap", anilistId: 900001, type: "TV", imdbIds: [], tvdbId: 990001, tmdbTvId: null, tmdbMovieIds: [], title: "AniMap Fallback Example", year: 2026 }]]]);
+    },
+    resolveIdMapperMappings: async (ids) => {
+      calls.push(["idmapper", ids]);
+      return new Map([[900001, [{ source: "idmapper", anilistId: 900001, type: "TV", imdbIds: [], tvdbId: 990001, tmdbTvId: null, tmdbMovieIds: [], title: "AniMap Fallback Example", year: 2026 }]]]);
+    },
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+  assert.deepEqual(calls, [["animap", [900001]], ["idmapper", [900001]]]);
+  assert.equal(metas[0].id, "tvdb:990001");
+});
+
+test("seasonal catalog executes IDMapper fallback after AniMap is unresolved", async () => {
+  const calls = [];
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 900002,
+    title: { english: "IDMapper Fallback Example", romaji: "IDMapper Fallback Example" },
+    format: "TV",
+    startDate: { year: 2026 },
+  }], {
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async (ids) => {
+      calls.push(ids);
+      return new Map([[900002, [{ source: "idmapper", anilistId: 900002, type: "TV", imdbIds: ["tt9000002"], tvdbId: null, tmdbTvId: null, tmdbMovieIds: [], title: "IDMapper Fallback Example", year: 2026 }]]]);
+    },
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+  assert.deepEqual(calls, [[900002]]);
+  assert.equal(metas[0].id, "tt9000002");
+});
+
+test("202079 resolves through independent fallback evidence to the current TVDB series", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 202079,
+    idMal: 62907,
+    title: { english: "Uncle's Obsession with Cute Things", romaji: "Oji-san wa Kawaii Mono ga Osuki.", native: "おじさんはカワイイものがお好き。" },
+    format: "TV",
+    startDate: { year: 2026 },
+  }], {
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map([[202079, [{ source: "animap", anilistId: 202079, type: "TV", imdbIds: [], tvdbId: 480889, tmdbTvId: null, tmdbMovieIds: [], title: "Oji-san wa Kawaii Mono ga Osuki.", year: 2026 }]]]),
+    resolveIdMapperMappings: async () => new Map([[202079, [{ source: "idmapper", anilistId: 202079, type: "TV", imdbIds: [], tvdbId: 480889, tmdbTvId: null, tmdbMovieIds: [], title: "Oji-san wa Kawaii Mono ga Osuki.", year: 2026 }]]]),
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "tvdb:480889");
+  assert.equal(metas[0].extra.bingecatProvider, "tvdb");
+  assert.equal(metas[0].extra.bingecatId, 480889);
+});
