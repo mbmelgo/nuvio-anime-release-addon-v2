@@ -173,7 +173,21 @@ test("relation identity resolution derives provider installment titles", async (
       }],
     },
   }], {
-    resolveMappings: async () => new Map(),
+    resolveMappings: async (ids) => ids.includes(212652)
+      ? new Map([[212652, [{
+        source: "imdb-search",
+        anilistId: 212652,
+        type: "TV",
+        imdbIds: ["tt39382758"],
+        tvdbId: null,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: "Patlabor EZY: File 2",
+        year: 2026,
+        season: null,
+        episodeOffset: null,
+      }]]])
+      : new Map(),
     resolveFribbMappings: async () => new Map(),
     resolveExternalMappings: emptyMap,
     resolveAnimapMappings: async () => new Map(),
@@ -182,38 +196,20 @@ test("relation identity resolution derives provider installment titles", async (
     resolveAnimeMapperMappings: async () => new Map(),
     resolveTsvMappings: async () => new Map(),
     resolveImdbMappings: async (rows) => {
-      const title = rows[0]?.title?.english;
-      if (title === "Patlabor EZY: File 3") {
-        return new Map([[212653, [{
-          source: "imdb-search",
-          anilistId: 212653,
-          type: "TV",
-          imdbIds: ["tt39382762"],
-          tvdbId: null,
-          tmdbTvId: null,
-          tmdbMovieIds: [],
-          title: "Patlabor EZY: File 3",
-          year: 2027,
-          season: null,
-          episodeOffset: null,
-        }]]]);
-      }
-      if (rows[0]?.id === 212652) {
-        return new Map([[212652, [{
-          source: "imdb-search",
-          anilistId: 212652,
-          type: "TV",
-          imdbIds: ["tt39382758"],
-          tvdbId: null,
-          tmdbTvId: null,
-          tmdbMovieIds: [],
-          title: "Patlabor EZY: File 2",
-          year: 2026,
-          season: null,
-          episodeOffset: null,
-        }]]]);
-      }
-      return new Map();
+      if (rows[0]?.title?.english !== "Patlabor EZY: File 3") return new Map();
+      return new Map([[212653, [{
+        source: "imdb-search",
+        anilistId: 212653,
+        type: "TV",
+        imdbIds: ["tt39382762"],
+        tvdbId: null,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: "Patlabor EZY: File 3",
+        year: 2027,
+        season: null,
+        episodeOffset: null,
+      }]]]);
     },
     resolveSecondaryMappings: async () => new Map(),
     resolveAlternativeMappings: async () => new Map(),
