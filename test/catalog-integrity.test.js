@@ -115,9 +115,10 @@ test("seasonal pagination returns a unique, bounded, contract-valid catalog page
     skip: 0,
     fetchPage: async () => rows,
     canonicalizePage: async (sourceRows) =>
-      sourceRows.map((row) =>
-        toCatalogIdentity(toMetaFromAniList(row.id, row)),
-      ).filter(Boolean),
+      sourceRows.map((row) => {
+        const meta = toCatalogIdentity(toMetaFromAniList(row.id, row));
+        return meta ? { ...meta, type: "series" } : null;
+      }).filter(Boolean),
   });
 
   assert.ok(result.length <= NUVIO_PAGE_SIZE);
