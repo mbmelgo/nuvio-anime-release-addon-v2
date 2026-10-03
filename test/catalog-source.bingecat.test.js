@@ -76,7 +76,7 @@ test("catalog identity resolution uses Fribb before rate-limited secondary sourc
 });
 
 test("catalog identity resolution never silently drops an unresolved source row", async () => {
-  const rows = [row(1), row(2)];
+  const rows = [row(1), row(2, null)];
   await assert.rejects(
     canonicalizeCatalogPageWithBingeCat(rows, {
       resolveMappings: async () => new Map([[1, [mapping(1, "tt1000001")]]]),
