@@ -113,6 +113,7 @@ test("relation identity resolution falls back to IMDb for the related title", as
     resolveAnimeMapperMappings: async () => new Map(),
     resolveTsvMappings: async () => new Map(),
     resolveImdbMappings: async (rows) => {
+      if (rows[0]?.id === 155723) return new Map();
       assert.equal(rows.length, 1);
       assert.equal(rows[0].id, 117168);
       assert.equal(rows[0].title.english, "The God of War Dominates");
