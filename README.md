@@ -170,6 +170,8 @@ Catalog names and season labels are generated dynamically.
 
 The 1.1.0 release carries the BingeCat identity-verification, cache-safety, related-title, numbered-installment, evidence-aggregation, and year-validation fixes validated on main.
 
+The 1.2.0 corrective release refreshes cached negative BingeCat results during the authoritative verification pass so transient misses cannot mask a supported identity.
+
 The 1.0.0 release establishes the major baseline for the production-ready identity-resolution architecture, including provenance-aware validation, generalized weak-provider rejection, and the complete fallback chain.
 
 This release is the controlled production baseline for continued P0 identity-resolution work.
