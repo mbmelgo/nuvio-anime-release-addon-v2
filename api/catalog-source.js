@@ -439,8 +439,8 @@ function deriveRelatedInstallmentProviderTitle(currentRow, relatedRow, providerT
   if (currentMarker.kind !== relatedMarker.kind || currentMarker.number === relatedMarker.number) return null;
   if (!providerMarker.kind || providerMarker.kind !== relatedMarker.kind) return null;
 
-  const currentBase = tokenizeTitle(currentTitle.replace(currentMarker.raw, ""));
-  const relatedBase = tokenizeTitle(relatedTitle.replace(relatedMarker.raw, ""));
+  const currentBase = normalizeProviderTitleTokens(currentTitle.replace(currentMarker.raw, ""));
+  const relatedBase = normalizeProviderTitleTokens(relatedTitle.replace(relatedMarker.raw, ""));
   const overlap = currentBase.filter((token) => relatedBase.includes(token));
   const distinctiveOverlap = overlap.filter((token) => token.length >= 4);
   if (distinctiveOverlap.length < 2) return null;
@@ -449,6 +449,17 @@ function deriveRelatedInstallmentProviderTitle(currentRow, relatedRow, providerT
     providerMarker.raw,
     providerMarker.raw.replace(String(providerMarker.number), String(currentMarker.number)),
   );
+}
+
+function normalizeProviderTitleTokens(value) {
+  return String(value || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase()
+    .replace(/[^\p{Letter}\p{Number}]+/gu, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
 }
 
 function extractInstallmentMarker(value) {
