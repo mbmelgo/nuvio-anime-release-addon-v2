@@ -452,6 +452,8 @@ test("seasonal catalog accepts a BingeCat direct identity found through a semant
       year: null,
       relation: false,
       derivedTitle: true,
+      relatedTitleSearch: true,
+      relatedSearchTitles: ["The God of War Dominates", "Wushen Zhuzai"],
     }]]]),
     resolveAnimeMapperMappings: async () => new Map(),
     resolveTsvMappings: async () => new Map(),
