@@ -736,6 +736,7 @@ test("catalog falls back to canonical MAL when an external identity cannot be ve
     format: "TV",
     startDate: { year: 2026 },
   }], {
+    requireBingeCatVerification: true,
     resolveMappings: async () => new Map([[999006, [{
       source: "arm",
       anilistId: 999006,
