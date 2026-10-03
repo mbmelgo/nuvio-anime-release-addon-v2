@@ -170,6 +170,8 @@ Catalog names and season labels are generated dynamically.
 
 The 1.0.0 release establishes the major baseline for the production-ready identity-resolution architecture, including provenance-aware validation, generalized weak-provider rejection, and the complete fallback chain.
 
+This release is the controlled production baseline for continued P0 identity-resolution work.
+
 The v2 project was initialized from an unreleased `v0.0.0` baseline. Version `1.0.0` is the first deliberate major release.
 
 Production releases are published as Git tags and GitHub Releases.
