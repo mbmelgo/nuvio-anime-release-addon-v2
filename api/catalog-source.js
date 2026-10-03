@@ -433,7 +433,13 @@ async function resolveRelationMappings(rows, {
     for (const relatedId of relatedIds) {
       const relatedRow = relationRows.get(relatedId);
       for (const record of relationMappings.get(relatedId) || []) {
-        const providerTitle = record?.title || record?.titles?.[0];
+        const relatedTitles = [
+          relatedRow?.title?.english,
+          relatedRow?.title?.romaji,
+          relatedRow?.title?.native,
+          ...(Array.isArray(relatedRow?.synonyms) ? relatedRow.synonyms : []),
+        ].map((value) => String(value || "").trim()).filter(Boolean);
+        const providerTitle = record?.title || record?.titles?.[0] || relatedTitles[0];
         if (!providerTitle) continue;
 
         records.push({
@@ -445,7 +451,7 @@ async function resolveRelationMappings(rows, {
           title: providerTitle,
           titles: Array.isArray(record?.titles) && record.titles.length
             ? record.titles
-            : [providerTitle],
+            : relatedTitles.length ? relatedTitles : [providerTitle],
           year: record?.year ?? relatedRow?.startDate?.year ?? null,
         });
       }
