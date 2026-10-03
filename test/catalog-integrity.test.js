@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildRollingCatalog,
-  canonicalizeCatalogPage,
   fetchValidatedSeasonCatalogPage,
   getSeasonInfo,
   isEligibleRollingMedia,
@@ -96,19 +95,6 @@ test("season calculation always produces three adjacent seasonal slots", () => {
   }
 });
 
-test("seasonal canonicalization emits only valid series identities and preserves MAL-first identity", () => {
-  const result = canonicalizeCatalogPage([
-    media(1, { malId: 101 }),
-    media(2),
-    { id: "not-an-id" },
-    { id: null },
-    { id: 3, idMal: 0 },
-  ]);
-
-  assert.deepEqual(result.map(({ id }) => id), ["mal:101", "anilist:2", "anilist:3"]);
-  for (const meta of result) assertCatalogMeta(meta);
-});
-
 test("catalog identity resolution never emits an invalid downstream identity", () => {
   assert.equal(toCatalogIdentity(null), null);
   assert.equal(toCatalogIdentity({ extra: {} }), null);
@@ -128,6 +114,11 @@ test("seasonal pagination returns a unique, bounded, contract-valid catalog page
     filter: { season: SEASON_INFO.ongoing, sort: ["ID"] },
     skip: 0,
     fetchPage: async () => rows,
+    canonicalizePage: async (sourceRows) =>
+      sourceRows.map((row) => {
+        const meta = toCatalogIdentity(toMetaFromAniList(row.id, row));
+        return meta ? { ...meta, type: "series" } : null;
+      }).filter(Boolean),
   });
 
   assert.ok(result.length <= NUVIO_PAGE_SIZE);
