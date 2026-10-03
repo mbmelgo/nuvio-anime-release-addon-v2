@@ -3,7 +3,7 @@
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
 [![MAL](https://img.shields.io/badge/MyAnimeList-identity-2e51a2.svg)](https://myanimelist.net)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
-[![Version](https://img.shields.io/badge/version-1.4.3-blue.svg)](https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases)
+[![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)](https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases)
 
 > A lightweight, season-aware anime release catalog for Nuvio and Stremio-compatible clients.
 
@@ -177,6 +177,9 @@ The 1.3.0 corrective release reduces redundant BingeCat searches for already-res
 The 1.4.0 corrective release adds transient BingeCat upstream retries so temporary 429/5xx/network failures do not become false identity-resolution misses.
 
 The 1.4.0 corrective release retries transient BingeCat upstream failures before falling back, preserving supported identities during temporary upstream errors.
+
+The 1.5.0 corrective release preserves every AniList catalog row through terminal identity fallback, requires direct BingeCat evidence for advertised provider identities, and hardens live catalog resolution against unresolved identities.
+
 
 The 1.0.0 release establishes the major baseline for the production-ready identity-resolution architecture, including provenance-aware validation, generalized weak-provider rejection, and the complete fallback chain.
 
