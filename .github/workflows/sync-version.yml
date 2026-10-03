@@ -223,7 +223,7 @@ jobs:
 
           metas = catalog.get("metas", [])
           assert metas
-          assert all(re.match(r"^(tt\d+|tvdb:\d+|tmdb:\d+)$", str(m.get("id", ""))) for m in metas)
+          assert all(re.match(r"^(tt\d+|tvdb:[1-9]\d*|tmdb:[1-9]\d*|mal:[1-9]\d*)$", str(m.get("id", ""))) for m in metas)
           assert all(m.get("type") == "series" for m in metas)
           assert any(str(m.get("id", "")).startswith("tt") for m in metas)
           PY
