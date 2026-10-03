@@ -507,3 +507,48 @@ test("BingeCat cache is scoped to the AniList identity", async () => {
   await resolveAniListMappingsByBingeCatSearch([rows[1]], { fetchImpl });
   assert.equal(calls, 2);
 });
+
+
+test("BingeCat authoritative verification can retry a cached negative result", async () => {
+  clearBingeCatSearchCache();
+  let calls = 0;
+  const row = [{
+    anilistId: 202079,
+    type: "TV",
+    year: 2026,
+    titleEnglish: "Uncle's Obsession with Cute Things",
+    titleRomaji: "Oji-san wa Kawaii Mono ga Osuki.",
+    titleNative: "おじさんはカワイイものがお好き。",
+    synonyms: ["Pops Loves Kawaii Stuff", "This Uncle Likes Cute Things", "Ojikawa", "おじかわ"],
+  }];
+
+  const fetchImpl = async () => {
+    calls += 1;
+    if (calls <= 2) {
+      return { ok: true, async json() { return { movies: [], series: [] }; } };
+    }
+    return {
+      ok: true,
+      async json() {
+        return {
+          series: [{
+            name: "Uncle's Obsession with Cute Things",
+            id: "tt43691343",
+            contentType: "series",
+            year: 2026,
+          }],
+        };
+      },
+    };
+  };
+
+  const first = await resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
+  assert.equal(first.has(202079), false);
+
+  const second = await resolveAniListMappingsByBingeCatSearch(row, {
+    fetchImpl,
+    bypassNegativeCache: true,
+  });
+  assert.equal(second.get(202079)[0].imdbIds[0], "tt43691343");
+  assert.ok(calls > 2);
+});
