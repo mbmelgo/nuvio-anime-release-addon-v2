@@ -588,3 +588,27 @@ test("BingeCat search retries transient upstream failures before resolving", asy
   assert.equal(result.get(202079)[0].imdbIds[0], "tt43691343");
   assert.equal(calls, 3);
 });
+
+
+test("BingeCat search stops the invocation after an upstream 429", async () => {
+  clearBingeCatSearchCache();
+  let calls = 0;
+  const result = await resolveAniListMappingsByBingeCatSearch([
+    { anilistId: 910001, type: "TV", year: 2026, titleEnglish: "Rate Limited One" },
+    { anilistId: 910002, type: "TV", year: 2026, titleEnglish: "Rate Limited Two" },
+    { anilistId: 910003, type: "TV", year: 2026, titleEnglish: "Rate Limited Three" },
+  ], {
+    concurrency: 1,
+    fetchImpl: async () => {
+      calls += 1;
+      return {
+        ok: false,
+        status: 429,
+        async json() { return {}; },
+      };
+    },
+  });
+
+  assert.equal(result.size, 0);
+  assert.equal(calls, 1);
+});
