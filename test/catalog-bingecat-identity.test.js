@@ -732,7 +732,7 @@ test("catalog verifies an already-resolved external IMDb identity through BingeC
 
 
 
-test("catalog falls back to canonical MAL when an external identity cannot be verified by BingeCat", async () => {
+test("catalog preserves a provider identity when BingeCat verification is unavailable", async () => {
   const metas = await canonicalizeCatalogPageWithBingeCat([{
     id: 999006,
     idMal: 999006,
@@ -767,8 +767,9 @@ test("catalog falls back to canonical MAL when an external identity cannot be ve
   });
 
   assert.equal(metas.length, 1);
-  assert.equal(metas[0].id, "mal:999006");
-  assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
+  assert.equal(metas[0].id, "tt6666666");
+  assert.equal(metas[0].extra.bingecatEvidence, "provider-id-fallback");
+  assert.equal(metas[0].extra.bingecatVerification, "unverified-upstream");
 });
 
 test("direct BingeCat evidence survives relation-derived evidence for the same provider ID", () => {
