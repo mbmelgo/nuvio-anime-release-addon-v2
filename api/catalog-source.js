@@ -635,7 +635,16 @@ export async function canonicalizeCatalogPageWithBingeCat(
         });
         continue;
       }
-      unresolvedIds.push(anilistId);
+      metas.push({
+        ...meta,
+        id: `anilist:${anilistId}`,
+        extra: {
+          ...meta.extra,
+          bingecatProvider: null,
+          bingecatId: null,
+          bingecatEvidence: "anilist-id-fallback",
+        },
+      });
       continue;
     }
 
@@ -802,12 +811,6 @@ export async function buildRollingCatalog(id, date, skip, search, {
           } : {}),
         };
         metas.push(meta);
-      }
-
-      if (unresolvedIds.length) {
-        throw new Error(
-          `BingeCat identity resolution exhausted for rolling catalog; unresolved AniList IDs: ${unresolvedIds.join(",") || "unknown"}`,
-        );
       }
 
       return filterCatalogMetasBySearch(metas, search);
