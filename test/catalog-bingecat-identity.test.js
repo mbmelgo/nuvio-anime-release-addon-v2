@@ -625,3 +625,45 @@ test("BingeCat candidate dedupe keeps identical numeric IDs from different provi
     [["imdb", "tt123456"], ["tvdb", "123456"]],
   );
 });
+
+
+test("BingeCat verification survives same-provider evidence dedupe", () => {
+  const media = {
+    id: 999003,
+    format: "TV",
+    title: { english: "Evidence Aggregation Example" },
+  };
+  const candidates = getBingeCatCandidates(media, [
+    {
+      source: "arm",
+      imdbIds: ["tt3333333"],
+      tvdbId: null,
+      tmdbTvId: null,
+      title: "Evidence Aggregation Example",
+      year: 2026,
+      relation: false,
+      derivedTitle: false,
+    },
+    {
+      source: "bingecat-search",
+      imdbIds: ["tt3333333"],
+      tvdbId: null,
+      tmdbTvId: null,
+      title: "Evidence Aggregation Example",
+      year: 2026,
+      relation: false,
+      derivedTitle: false,
+    },
+  ]);
+
+  assert.equal(candidates.length, 1);
+  assert.deepEqual(candidates[0].evidence.map((entry) => entry.source).sort(), [
+    "arm",
+    "bingecat-search",
+  ]);
+
+  const selected = selectBingeCatIdentity(media, candidates);
+  assert.equal(selected.provider, "imdb");
+  assert.equal(selected.id, "tt3333333");
+  assert.equal(selected.bingecatVerified, true);
+});
