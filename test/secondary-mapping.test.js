@@ -2,6 +2,33 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { clearSecondaryMappingCache, normalizeAnimeApiRecord, resolveAniListMappingsSecondary } from "../lib/secondary-mapping.js";
 
+
+test("AnimeAPI dataset resolves AniList mappings without per-ID requests", async () => {
+  clearSecondaryMappingCache();
+  const result = await resolveAniListMappingsFromDump([123, 456], {
+    endpoint: "https://example.test/animeapi.json",
+    fetchImpl: async () => new Response(JSON.stringify([
+      {
+        anilist: 123,
+        myanimelist: 456,
+        imdb: "tt1234567",
+        thetvdb: 7654321,
+        themoviedb: 987654,
+        themoviedb_type: "tv",
+      },
+      {
+        anilist: 456,
+        myanimelist: 789,
+        imdb: "tt7654321",
+        themoviedb: 123456,
+        themoviedb_type: "movie",
+      },
+    ]), { status: 200 }),
+  });
+
+  assert.equal(result.get(123)?.[0]?.imdbIds[0], "tt1234567");
+  assert.equal(result.get(456)?.[0]?.tmdbMovieIds[0], 123456);
+});
 test("AnimeAPI mapping normalizes supported provider ids", () => {
   const record = normalizeAnimeApiRecord({
     anilist: 158871,
