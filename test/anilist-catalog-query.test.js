@@ -22,6 +22,7 @@ test("catalog AniList queries request all seasonal anime formats without a statu
     assert.match(request.query, /perPage:50/);
     assert.match(request.query, /isAdult:false/);
     assert.match(request.query, /idMal/);
+    assert.match(request.query, /countryOfOrigin/);
   } finally {
     globalThis.fetch = originalFetch;
   }
