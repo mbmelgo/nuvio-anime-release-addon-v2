@@ -194,18 +194,24 @@ export async function buildRollingCatalog(id, date, skip, search, {
     maxPages,
     fetchPage: (page) => fetchPage(range.start, range.end, futureOnly, page, sort),
     canonicalizePage: async (rows) => {
-      const metas = [];
-      for (const row of Array.isArray(rows) ? rows : []) {
+      const eligibleRows = (Array.isArray(rows) ? rows : []).filter((row) => {
         const media = row?.media;
-        const mediaId = media?.id;
-        if (!Number.isInteger(Number(mediaId)) || Number(mediaId) <= 0) continue;
-        if (!isEligibleRollingMedia(media)) continue;
+        return Number.isInteger(Number(media?.id))
+          && Number(media.id) > 0
+          && isEligibleRollingMedia(media);
+      });
+      const mappings = await resolveAniListMappings(
+        eligibleRows.map((row) => Number(row.media.id)),
+      );
+      const metas = [];
+      for (const row of eligibleRows) {
+        const media = row.media;
+        const mediaId = Number(media.id);
         const baseMeta = toCatalogIdentity(toMetaFromAniList(mediaId, media));
         if (!baseMeta) continue;
-        const mappings = await resolveAniListMappings([Number(mediaId)]);
         const selected = selectBingeCatIdentity(
-          { ...media, anilistId: Number(mediaId) },
-          getBingeCatCandidates(media, mappings.get(Number(mediaId)) || []),
+          { ...media, anilistId: mediaId },
+          getBingeCatCandidates(media, mappings.get(mediaId) || []),
         );
         const meta = selected
           ? {
