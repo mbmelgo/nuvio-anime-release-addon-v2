@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   clearAnimeMapperCache,
   resolveAniListMappingsByAnimeMapper,
+  resolveAniListRelatedProviderIdsByAnimeMapper,
 } from "../lib/anime-mapper-mapping.js";
 
 function response(record) {
