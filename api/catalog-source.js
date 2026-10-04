@@ -467,6 +467,7 @@ async function resolveMappingsForRows(
         resolveMappings,
         resolveFribbMappings,
         resolveExternalMappings,
+        resolveAnimeMapperMappings,
       });
       for (const row of relationProtectedRows) {
         row.relatedProviderIds = protectedIds.get(Number(row.id)) || [];
@@ -510,6 +511,7 @@ async function resolveRelatedProviderIds(rows, {
   resolveMappings,
   resolveFribbMappings,
   resolveExternalMappings,
+  resolveAnimeMapperMappings,
 }) {
   const relationIds = new Set();
   const result = new Map();
@@ -551,6 +553,21 @@ async function resolveRelatedProviderIds(rows, {
     mappings = await resolveMappings(ids);
   } catch (error) {
     console.error("[identity] related ARM protection lookup failed", error);
+  }
+
+  if (typeof resolveAnimeMapperMappings === "function") {
+    try {
+      const animeMapperMappings = await resolveAnimeMapperMappings(rows);
+      for (const [currentId, records] of animeMapperMappings instanceof Map ? animeMapperMappings : []) {
+        const protectedIds = result.get(Number(currentId));
+        if (!protectedIds) continue;
+        for (const record of records || []) {
+          for (const providerId of providerIdsFromRecord(record)) protectedIds.add(providerId);
+        }
+      }
+    } catch (error) {
+      console.error("[identity] related Anime Mapper protection lookup failed", error);
+    }
   }
 
   const missing = ids.filter((id) => !(mappings.get(id)?.length));
