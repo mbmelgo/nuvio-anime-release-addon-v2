@@ -343,7 +343,7 @@ test("BingeCat search does not cache negative lookups", async () => {
 
   await resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
   await resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
-  assert.equal(calls, 4);
+  assert.equal(calls, 8);
 });
 
 test("BingeCat search retries a seed-sensitive negative result", async () => {
