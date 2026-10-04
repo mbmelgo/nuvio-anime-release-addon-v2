@@ -321,7 +321,7 @@ test("BingeCat search rejects fuzzy, wrong-type, and wrong-year candidates", () 
   }, row), null);
 });
 
-test("BingeCat search caches negative lookups", async () => {
+test("BingeCat search does not cache negative lookups", async () => {
   clearBingeCatSearchCache();
   let calls = 0;
   const fetchImpl = async () => {
