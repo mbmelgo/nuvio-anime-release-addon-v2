@@ -462,6 +462,7 @@ async function resolveMappingsForRows(
     return Boolean(selected) && !selected.bingecatVerified && hasExplicitProviderRelations(row);
   });
 
+  let protectedProviderIdsByRow = new Map();
   if (relationProtectedRows.length) {
     try {
       const protectedIds = await resolveRelatedProviderIds(relationProtectedRows, {
@@ -471,6 +472,7 @@ async function resolveMappingsForRows(
         resolveAnimeMapperMappings,
         resolveAnimeMapperRelatedProviderIds,
       });
+      protectedProviderIdsByRow = protectedIds;
       for (const row of relationProtectedRows) {
         const relatedProviderIds = protectedIds.get(Number(row.id)) || [];
         row.relatedProviderIds = relatedProviderIds;
@@ -506,6 +508,18 @@ async function resolveMappingsForRows(
     try {
       const verificationMappings = await resolveBingeCatSearchMappings(unverifiedRows);
       mappings = mergeMappings(mappings, verificationMappings);
+      for (const row of relationProtectedRows) {
+        const relatedProviderIds = protectedProviderIdsByRow.get(Number(row.id)) || [];
+        if (!relatedProviderIds.length) continue;
+        const records = mappings.get(Number(row.id)) || [];
+        mappings.set(Number(row.id), records.map((record) => ({
+          ...record,
+          relatedProviderIds: [...new Set([
+            ...(Array.isArray(record?.relatedProviderIds) ? record.relatedProviderIds : []),
+            ...relatedProviderIds,
+          ])],
+        })));
+      }
     } catch (error) {
       console.error("[identity] final BingeCat verification failed; preserving existing fallbacks", error);
     }
