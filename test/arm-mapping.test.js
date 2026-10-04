@@ -54,6 +54,37 @@ test("ARM mapping client batches AniList ids and preserves response order", asyn
   assert.equal(mappings.get(158871)[0].tvdbId, 76703);
 });
 
+test("ARM mapping client coalesces concurrent identical batches", async () => {
+  clearMappingCache();
+  let calls = 0;
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  const fetchImpl = async (_url, options) => {
+    calls += 1;
+    assert.deepEqual(JSON.parse(options.body), [{ anilist: 269 }, { anilist: 158871 }]);
+    await gate;
+    return {
+      ok: true,
+      async json() {
+        return [
+          { anilist: 269, media: "TV", thetvdb: 74796 },
+          { anilist: 158871, media: "TV", thetvdb: 76703 },
+        ];
+      },
+    };
+  };
+
+  const first = resolveAniListMappings([269, 158871], { fetchImpl });
+  const second = resolveAniListMappings([158871, 269], { fetchImpl });
+  await Promise.resolve();
+  assert.equal(calls, 1);
+
+  release();
+  const [firstMappings, secondMappings] = await Promise.all([first, second]);
+  assert.equal(firstMappings.get(269)[0].tvdbId, 74796);
+  assert.equal(secondMappings.get(158871)[0].tvdbId, 76703);
+});
+
 test("ARM mapping client caches successful and negative results", async () => {
   clearMappingCache();
   let calls = 0;
