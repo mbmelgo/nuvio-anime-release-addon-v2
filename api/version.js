@@ -1,1 +1,1 @@
-export const ADDON_VERSION = "1.28.4";
+export const ADDON_VERSION = "1.29.0";
