@@ -523,11 +523,14 @@ async function resolveMappingsForRows(
 
 async function applyRelatedProviderProtection(rows, mappings, dependencies) {
   const relationProtectedRows = rows.filter((row) => {
-    const selected = selectBingeCatIdentity(
+    if (!hasExplicitProviderRelations(row)) return false;
+    const candidates = getBingeCatCandidates(
       { ...row, anilistId: Number(row.id) },
-      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+      mappings.get(Number(row.id)) || [],
     );
-    return Boolean(selected) && !selected.bingecatVerified && hasExplicitProviderRelations(row);
+    return candidates.some((candidate) => !candidate.evidence?.some(
+      (entry) => entry?.source === "bingecat-search",
+    ));
   });
 
   if (!relationProtectedRows.length) return new Map();
