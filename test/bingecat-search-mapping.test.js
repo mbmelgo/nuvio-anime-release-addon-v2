@@ -6,6 +6,57 @@ import {
   selectExactCandidate,
 } from "../lib/bingecat-search-mapping.js";
 
+test("BingeCat search preserves a perfect Meilisearch ranking score on an exact title match", async () => {
+  clearBingeCatSearchCache();
+  const result = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 202401,
+    type: "TV",
+    year: 2026,
+    titleEnglish: "Perfect Score Anime",
+  }], {
+    fetchImpl: async () => ({
+      ok: true,
+      async json() {
+        return {
+          series: [{
+            name: "Perfect Score Anime",
+            id: "tt20240101",
+            contentType: "series",
+            year: 2026,
+            meiliRankingScore: 1,
+          }],
+        };
+      },
+    }),
+  });
+
+  const record = result.get(202401)[0];
+  assert.equal(record.imdbIds[0], "tt20240101");
+  assert.equal(record.meiliRankingScore, 1);
+  assert.equal(record.bingecatExactTitle, true);
+});
+
+test("BingeCat search does not treat a perfect score as exact-title evidence when titles differ", () => {
+  const row = {
+    anilistId: 202402,
+    type: "TV",
+    year: 2026,
+    titles: ["Requested Anime"],
+  };
+
+  const record = selectExactCandidate({
+    series: [{
+      name: "Different Anime",
+      id: "tt20240201",
+      contentType: "series",
+      year: 2026,
+      meiliRankingScore: 1,
+    }],
+  }, row);
+
+  assert.equal(record, null);
+});
+
 test("BingeCat search normalizes an exact movie identity", async () => {
   clearBingeCatSearchCache();
   const result = await resolveAniListMappingsByBingeCatSearch([{
