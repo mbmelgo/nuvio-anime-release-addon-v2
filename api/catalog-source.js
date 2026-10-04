@@ -18,7 +18,7 @@ import { resolveAniListExternalMappings } from "../lib/external-provider-mapping
 import { resolveAniListMappingsAnimap } from "../lib/animap-mapping.js";
 import { resolveAniListMappingsIdMapper } from "../lib/idmapper-mapping.js";
 import { resolveAniListMappingsByBingeCatSearch } from "../lib/bingecat-search-mapping.js";
-import { resolveAniListMappingsByAnimeMapper } from "../lib/anime-mapper-mapping.js";
+import { resolveAniListMappingsByAnimeMapper, resolveAniListRelatedProviderIdsByAnimeMapper } from "../lib/anime-mapper-mapping.js";
 import { resolveAniListMappingsByAniBridge } from "../lib/anibridge-mapping.js";
 import { resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
 import { resolveAniListMappingsFromAnimeApiTsv } from "../lib/animeapi-tsv-mapping.js";
@@ -127,6 +127,7 @@ async function resolveMappingsForRows(
     resolveIdMapperMappings = resolveAniListMappingsIdMapper,
     resolveBingeCatSearchMappings = resolveAniListMappingsByBingeCatSearch,
     resolveAnimeMapperMappings = resolveAniListMappingsByAnimeMapper,
+    resolveAnimeMapperRelatedProviderIds = resolveAniListRelatedProviderIdsByAnimeMapper,
     resolveAniBridgeMappings = resolveAniListMappingsByAniBridge,
     resolveTsvMappings = resolveAniListMappingsFromAnimeApiTsv,
     resolveImdbMappings = resolveAniListMappingsByImdbSearch,
