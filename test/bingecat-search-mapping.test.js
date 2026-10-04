@@ -89,7 +89,7 @@ test("BingeCat search consumes AniList-shaped title, format, year, MAL, and syno
 
 test("BingeCat search can fall back to keyword-only exact search", async () => {
   clearBingeCatSearchCache();
-  let semanticRatios = [];
+  const semanticRatios = [];\n  const sessionSeeds = [];
   const result = await resolveAniListMappingsByBingeCatSearch([{
     anilistId: 202390,
     type: "MOVIE",
