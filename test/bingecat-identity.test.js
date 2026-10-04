@@ -52,6 +52,29 @@ test("BingeCat candidate ordering prefers IMDb over TVDB and TMDB", () => {
   ]);
 });
 
+test("one-word season titles accept an installment-derived BingeCat identity", () => {
+  const media = {
+    anilistId: 191788,
+    title: { english: "Aoashi Season 2", romaji: "Aoashi 2nd Season" },
+    format: "TV",
+    startDate: { year: 2026 },
+  };
+  const selected = selectBingeCatIdentity(media, [{
+    provider: "imdb",
+    id: "tt15792808",
+    stremioId: "tt15792808",
+    anilistId: 191788,
+    mediaType: "tv",
+    title: "Aoashi",
+    year: 2022,
+    derivedTitle: true,
+    derivedInstallmentTitle: true,
+    evidence: [{ source: "bingecat-search" }],
+  }]);
+
+  assert.equal(selected.id, "tt15792808");
+});
+
 test("Pokémon Horizons keeps its own franchise identity", () => {
   const media = {
     anilistId: 158871,
