@@ -89,7 +89,8 @@ test("BingeCat search consumes AniList-shaped title, format, year, MAL, and syno
 
 test("BingeCat search can fall back to keyword-only exact search", async () => {
   clearBingeCatSearchCache();
-  let semanticRatios = [];
+  const semanticRatios = [];
+  const sessionSeeds = [];
   const result = await resolveAniListMappingsByBingeCatSearch([{
     anilistId: 202390,
     type: "MOVIE",
@@ -99,6 +100,7 @@ test("BingeCat search can fall back to keyword-only exact search", async () => {
     fetchImpl: async (url) => {
       const parsed = new URL(url);
       semanticRatios.push(parsed.searchParams.get("semantic_ratio"));
+      sessionSeeds.push(parsed.searchParams.get("shuffle_session_seed"));
       if (parsed.searchParams.get("semantic_ratio") === "0.55") {
         return {
           ok: true,
@@ -127,6 +129,9 @@ test("BingeCat search can fall back to keyword-only exact search", async () => {
   const record = result.get(202390)[0];
   assert.equal(record.imdbIds[0], "tt39195693");
   assert.deepEqual(semanticRatios, ["0", "0.55"]);
+  assert.equal(sessionSeeds.length, 2);
+  assert.ok(sessionSeeds.every((seed) => /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(seed)));
+  assert.notEqual(sessionSeeds[0], sessionSeeds[1]);
 });
 
 test("BingeCat search accepts an exact base-series identity for a numbered TV/ONA continuation", async () => {
