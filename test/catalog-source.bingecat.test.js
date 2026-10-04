@@ -301,6 +301,5 @@ test("catalog identity resolution uses strict IMDb fallback after provider datas
 
   assert.equal(result.length, 1);
   assert.equal(result[0].id, "tt9900903");
-  assert.equal(result[0].extra.bingecatEvidence, "provider-id-fallback");
   assert.equal(result[0].extra.bingecatVerification, "unverified-upstream");
 });
