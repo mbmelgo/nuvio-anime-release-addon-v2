@@ -411,19 +411,18 @@ test("BingeCat search derives a base title from File-numbered installments", asy
 });
 
 
-test("BingeCat search cache does not reuse a candidate across distinct AniList rows", async () => {
+test("BingeCat search shares raw responses while keeping candidate selection row-scoped", async () => {
   clearBingeCatSearchCache();
   let calls = 0;
   const fetchImpl = async () => {
     calls += 1;
-    const id = calls === 1 ? "tt11111111" : "tt22222222";
     return {
       ok: true,
       async json() {
         return {
           series: [{
             name: "Duplicate Title",
-            id,
+            id: "tt11111111",
             contentType: "series",
             year: 2026,
           }],
@@ -445,8 +444,8 @@ test("BingeCat search cache does not reuse a candidate across distinct AniList r
   ], { fetchImpl });
 
   assert.equal(first.get(900101)[0].imdbIds[0], "tt11111111");
-  assert.equal(second.get(900102)[0].imdbIds[0], "tt22222222");
-  assert.equal(calls, 2);
+  assert.equal(second.get(900102)[0].imdbIds[0], "tt11111111");
+  assert.equal(calls, 1);
 });
 
 
@@ -503,9 +502,11 @@ test("BingeCat cache is scoped to the AniList identity", async () => {
     { anilistId: 301001, type: "MOVIE", year: 2026, titleEnglish: "Shared Title" },
     { anilistId: 301002, type: "MOVIE", year: 2026, titleEnglish: "Shared Title" },
   ];
-  await resolveAniListMappingsByBingeCatSearch([rows[0]], { fetchImpl });
-  await resolveAniListMappingsByBingeCatSearch([rows[1]], { fetchImpl });
-  assert.equal(calls, 2);
+  const first = await resolveAniListMappingsByBingeCatSearch([rows[0]], { fetchImpl });
+  const second = await resolveAniListMappingsByBingeCatSearch([rows[1]], { fetchImpl });
+  assert.equal(first.get(301001)[0].anilistId, 301001);
+  assert.equal(second.get(301002)[0].anilistId, 301002);
+  assert.equal(calls, 1);
 });
 
 
