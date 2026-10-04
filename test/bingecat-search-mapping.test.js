@@ -98,7 +98,8 @@ test("BingeCat search can fall back to keyword-only exact search", async () => {
   }], {
     fetchImpl: async (url) => {
       const parsed = new URL(url);
-      semanticRatios.push(parsed.searchParams.get("semantic_ratio"));\n      sessionSeeds.push(parsed.searchParams.get("shuffle_session_seed"));
+      semanticRatios.push(parsed.searchParams.get("semantic_ratio"));
+      sessionSeeds.push(parsed.searchParams.get("shuffle_session_seed"));
       if (parsed.searchParams.get("semantic_ratio") === "0.55") {
         return {
           ok: true,
