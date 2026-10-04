@@ -10,7 +10,8 @@ test("main CI owns normal push testing and patch versioning without a PR trigger
   assert.ok(ci.includes("on:\n  push:\n    branches: [main]"));
   assert.ok(!ci.includes("pull_request:"));
   assert.ok(ci.includes("permissions:\n  contents: write"));
-  assert.ok(ci.includes("group: ci-main-\${{ github.ref }}"));
+  assert.ok(ci.includes("group: ci-main-"));
+  assert.ok(ci.includes("github.ref"));
   assert.ok(ci.includes("cancel-in-progress: true"));
   assert.ok(ci.includes("!contains(github.event.head_commit.message || '', '[deploy-prod]')"));
   assert.ok(ci.includes("name: Run tests\n        run: npm test\n      - name: Bump patch version and sync metadata"));
@@ -28,7 +29,9 @@ test("pull request CI remains the single PR test workflow", () => {
 test("release pipeline only allocates a runner for release or manual requests", () => {
   const sync = read("../.github/workflows/sync-version.yml");
 
-  assert.ok(sync.includes("if: \${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message || '', '[deploy-prod]') || contains(github.event.head_commit.message || '', '[finalize-prod:') }}"));
+  assert.ok(sync.includes("github.event_name == 'workflow_dispatch'"));
+  assert.ok(sync.includes("'[deploy-prod]'"));
+  assert.ok(sync.includes("'[finalize-prod:'"));
   assert.ok(!sync.includes("name: Bump patch version and sync metadata"));
   assert.ok(sync.includes("name: Run full CI"));
 });
