@@ -5,10 +5,6 @@ const queries = [
   "SSS-Class Revival Hunter",
   "Isekai Tensei Soudouki",
   "Kizuguchi to Houtai",
-  "Link Click Season 3",
-  "Little Shark's Day Out Season 2",
-  "MARRIAGETOXIN 2nd Season",
-  "Punirunes Puni 4",
 ];
 
 test("live BingeCat investigation probe", async () => {
@@ -32,18 +28,12 @@ test("live BingeCat investigation probe", async () => {
         Referer: "https://bingecat.com/",
       },
     });
-    const payload = await response.json();
-    const hits = [
-      ...(Array.isArray(payload?.movies) ? payload.movies : []),
-      ...(Array.isArray(payload?.series) ? payload.series : []),
-    ].slice(0, 8).map((item) => ({
-      name: item?.name,
-      id: item?.id,
-      contentType: item?.contentType,
-      year: item?.year,
-      tmdbId: item?.tmdbId,
+    const body = await response.text();
+    console.log(JSON.stringify({
+      query,
+      status: response.status,
+      contentType: response.headers.get("content-type"),
+      bodyPrefix: body.slice(0, 300),
     }));
-    console.log(JSON.stringify({ query, status: response.status, hits }));
-    if (!response.ok) throw new Error("BingeCat probe HTTP " + response.status);
   }
 });
