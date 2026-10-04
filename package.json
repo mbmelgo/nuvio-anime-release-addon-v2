@@ -1,8 +1,12 @@
 {
   "name": "nuvio-anime-release-addon-v2",
-  "version": "1.22.0",
+  "version": "1.22.1",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=20" },
-  "scripts": { "test": "node --test" }
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test"
+  }
 }
