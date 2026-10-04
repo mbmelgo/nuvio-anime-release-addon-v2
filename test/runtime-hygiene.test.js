@@ -5,6 +5,7 @@ import { join } from "node:path";
 import {
   compareVersions,
   incrementMinor,
+  isValidNextReleaseVersion,
   validateVersionConsistency,
   validateReleaseTarget,
   validateLastDeploymentMetadata,
