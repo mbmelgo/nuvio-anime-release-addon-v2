@@ -1,8 +1,8 @@
 {
   "deploymentLimit": 10,
-  "deploymentsSincePause": 10,
+  "deploymentsSincePause": 0,
   "totalDeployments": 50,
-  "paused": true,
+  "paused": false,
   "lastDeploymentSha": "5583340fe9bcfd115e01769ad8fdeb2dd9604ac5",
   "lastDeploymentId": "dpl_2cLyj6MTF5C3pYJbqCdeS1VK7i5H",
   "lastDeploymentVersion": "1.34.0",
@@ -18,10 +18,5 @@
     "ciRunUrl": "https://github.com/mbmelgo/nuvio-anime-release-addon-v2/actions/runs/37219035442",
     "smokeTest": "passed"
   },
-  "supersededReleaseVersions": [
-    "1.24.0",
-    "1.25.0",
-    "1.26.0",
-    "1.27.0"
-  ]
+  "supersededReleaseVersions": ["1.24.0","1.25.0","1.26.0","1.27.0"]
 }
