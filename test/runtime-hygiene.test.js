@@ -83,6 +83,12 @@ test("home page uses only canonical unversioned catalog URLs", async () => {
 });
 
 
+test("release version helpers allow a next release after a superseded release", () => {
+  assert.equal(isValidNextReleaseVersion("1.23.0", "1.25.0", ["1.24.0"]), true);
+  assert.equal(isValidNextReleaseVersion("1.23.0", "1.26.0", ["1.24.0"]), false);
+  assert.equal(isValidNextReleaseVersion("1.23.0", "2.0.0", ["1.24.0"]), true);
+});
+
 test("release version helpers enforce semantic versioning and minor baselines", () => {
   assert.equal(compareVersions("5.5.3", "5.5.0") > 0, true);
   assert.equal(compareVersions("5.5.0", "5.5.0"), 0);
