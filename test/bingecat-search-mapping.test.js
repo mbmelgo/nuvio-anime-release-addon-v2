@@ -441,7 +441,7 @@ test("BingeCat search shares raw responses while keeping candidate selection row
     { ...base, anilistId: 900101 },
   ], { fetchImpl });
   const second = await resolveAniListMappingsByBingeCatSearch([
-    { ...base, anilistId: 900102, type: "MOVIE" },
+    { ...base, anilistId: 900102, year: 2027 },
   ], { fetchImpl });
 
   assert.equal(first.get(900101)[0].imdbIds[0], "tt11111111");
