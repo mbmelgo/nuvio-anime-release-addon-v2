@@ -268,6 +268,14 @@ async function resolveMappingsForRows(
       }
     }
 
+    await applyRelatedProviderProtection(rows, mappings, {
+      resolveMappings,
+      resolveFribbMappings,
+      resolveExternalMappings,
+      resolveAnimeMapperMappings,
+      resolveAnimeMapperRelatedProviderIds,
+    });
+
     return mappings;
   }
 
@@ -464,32 +472,13 @@ async function resolveMappingsForRows(
 
   let protectedProviderIdsByRow = new Map();
   if (relationProtectedRows.length) {
-    try {
-      const protectedIds = await resolveRelatedProviderIds(relationProtectedRows, {
-        resolveMappings,
-        resolveFribbMappings,
-        resolveExternalMappings,
-        resolveAnimeMapperMappings,
-        resolveAnimeMapperRelatedProviderIds,
-      });
-      protectedProviderIdsByRow = protectedIds;
-      for (const row of relationProtectedRows) {
-        const relatedProviderIds = protectedIds.get(Number(row.id)) || [];
-        row.relatedProviderIds = relatedProviderIds;
-        const records = mappings.get(Number(row.id)) || [];
-        if (relatedProviderIds.length && records.length) {
-          mappings.set(Number(row.id), records.map((record) => ({
-            ...record,
-            relatedProviderIds: [...new Set([
-              ...(Array.isArray(record?.relatedProviderIds) ? record.relatedProviderIds : []),
-              ...relatedProviderIds,
-            ])],
-          })));
-        }
-      }
-    } catch (error) {
-      console.error("[identity] related provider protection failed; preserving existing fallbacks", error);
-    }
+    protectedProviderIdsByRow = await applyRelatedProviderProtection(rows, mappings, {
+      resolveMappings,
+      resolveFribbMappings,
+      resolveExternalMappings,
+      resolveAnimeMapperMappings,
+      resolveAnimeMapperRelatedProviderIds,
+    });
   }
 
   // BingeCat is the authoritative support check. Any identity that was
@@ -526,6 +515,40 @@ async function resolveMappingsForRows(
   }
 
   return mappings;
+}
+
+async function applyRelatedProviderProtection(rows, mappings, dependencies) {
+  const relationProtectedRows = rows.filter((row) => {
+    const selected = selectBingeCatIdentity(
+      { ...row, anilistId: Number(row.id) },
+      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    );
+    return Boolean(selected) && !selected.bingecatVerified && hasExplicitProviderRelations(row);
+  });
+
+  if (!relationProtectedRows.length) return new Map();
+
+  try {
+    const protectedIds = await resolveRelatedProviderIds(relationProtectedRows, dependencies);
+    for (const row of relationProtectedRows) {
+      const relatedProviderIds = protectedIds.get(Number(row.id)) || [];
+      row.relatedProviderIds = relatedProviderIds;
+      const records = mappings.get(Number(row.id)) || [];
+      if (relatedProviderIds.length && records.length) {
+        mappings.set(Number(row.id), records.map((record) => ({
+          ...record,
+          relatedProviderIds: [...new Set([
+            ...(Array.isArray(record?.relatedProviderIds) ? record.relatedProviderIds : []),
+            ...relatedProviderIds,
+          ])],
+        })));
+      }
+    }
+    return protectedIds;
+  } catch (error) {
+    console.error("[identity] related provider protection failed; preserving existing fallbacks", error);
+    return new Map();
+  }
 }
 
 function hasExplicitProviderRelations(row) {
