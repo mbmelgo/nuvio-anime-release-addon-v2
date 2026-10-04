@@ -164,15 +164,29 @@ async function resolveMappingsForRows(
   }
 
   if (bingeCatUnavailable) {
-    // Fribb is a single shared dataset request, so it is still safe in
-    // degraded mode and can recover provider identities without reopening
-    // the per-title AniMap/IDMapper/IMDb/secondary fan-out.
+    // Keep degraded mode bounded: use only bulk datasets, never reopen the
+    // per-title AniMap/IDMapper/IMDb/secondary request fan-out.
     try {
       const fribb = await resolveFribbMappings(unresolvedRows.map((row) => Number(row.id)));
       mappings = mergeMappings(mappings, fribb);
     } catch (error) {
       console.error("[identity] Fribb degraded-mode mapping failed", error);
     }
+
+    unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+      { ...row, anilistId: Number(row.id) },
+      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    ));
+
+    if (unresolvedRows.length) {
+      try {
+        const tsvMappings = await resolveTsvMappings(unresolvedRows.map((row) => Number(row.id)));
+        mappings = mergeMappings(mappings, tsvMappings);
+      } catch (error) {
+        console.error("[identity] AnimeAPI TSV degraded-mode mapping failed", error);
+      }
+    }
+
     return mappings;
   }
 
