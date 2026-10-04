@@ -79,7 +79,7 @@ function row(id, malId = id) {
   };
 }
 
-test("catalog identity resolution short-circuits expensive sources when BingeCat denies access", async () => {
+test("catalog identity resolution continues cheap provider sources when BingeCat denies access", async () => {
   const rows = [row(901, 9901), row(902, 9902)];
   let fribbCalls = 0;
   let animapCalls = 0;
@@ -110,9 +110,10 @@ test("catalog identity resolution short-circuits expensive sources when BingeCat
         }],
       ]]);
     },
-    resolveAnimapMappings: async () => {
+    resolveAnimapMappings: async (ids) => {
       animapCalls += 1;
-      return new Map();
+      assert.deepEqual(ids, [902]);
+      return new Map([[902, [mapping(902, "tt9900902")]]]);
     },
     resolveIdMapperMappings: async () => {
       idMapperCalls += 1;
@@ -140,9 +141,9 @@ test("catalog identity resolution short-circuits expensive sources when BingeCat
   });
 
   assert.equal(result.length, rows.length);
-  assert.deepEqual(result.map((meta) => meta.id), ["tt9900901", "mal:9902"]);
+  assert.deepEqual(result.map((meta) => meta.id), ["tt9900901", "tt9900902"]);
   assert.equal(fribbCalls, 1);
-  assert.equal(animapCalls, 0);
+  assert.equal(animapCalls, 1);
   assert.equal(idMapperCalls, 0);
   assert.equal(tsvCalls, 0);
   assert.equal(imdbCalls, 0);
