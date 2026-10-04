@@ -428,3 +428,69 @@ test("final verification mappings cannot bypass protected related provider IDs",
   const candidates = getBingeCatCandidates(media, [{ ...verificationRecord, relatedProviderIds: media.relatedProviderIds }]);
   assert.equal(selectBingeCatIdentity(media, candidates), null);
 });
+test("shared provider IDs are accepted for compatible related installments", () => {
+  const media = {
+    anilistId: 191788,
+    title: { english: "Aoashi Season 2", romaji: "Aoashi 2nd Season" },
+    startDate: { year: 2026 },
+    format: "TV",
+    relations: {
+      edges: [{
+        relationType: "PREQUEL",
+        node: { id: 174, title: { english: "Aoashi" } },
+      }],
+    },
+    relatedProviderIds: ["tvdb:407840"],
+    relatedProviderTitles: ["Aoashi"],
+  };
+  const record = {
+    source: "animeapi",
+    anilistId: 191788,
+    type: "TV",
+    imdbIds: [],
+    tvdbId: 407840,
+    tmdbTvId: null,
+    tmdbMovieIds: [],
+    title: "Aoashi",
+    year: null,
+  };
+
+  const candidate = getBingeCatCandidates(media, [record]).find(
+    (item) => item.provider === "tvdb" && item.id === "407840",
+  );
+  assert.equal(selectBingeCatIdentity(media, [candidate])?.id, "407840");
+});
+
+test("shared provider protection still rejects an unrelated provider collision", () => {
+  const media = {
+    anilistId: 206814,
+    title: { english: "Dragon Ball Super: Beerus", romaji: "Dragon Ball Super: Beerus" },
+    startDate: { year: 2026 },
+    format: "TV",
+    relations: {
+      edges: [{
+        relationType: "PREQUEL",
+        node: { id: 813, title: { english: "Dragon Ball Z" } },
+      }],
+    },
+    relatedProviderIds: ["tvdb:81472"],
+    relatedProviderTitles: ["Dragon Ball Z"],
+  };
+  const record = {
+    source: "arm",
+    anilistId: 206814,
+    type: "TV",
+    imdbIds: [],
+    tvdbId: 81472,
+    tmdbTvId: null,
+    tmdbMovieIds: [],
+    title: "Dragon Ball Super: Beerus",
+    year: 2026,
+  };
+
+  const candidate = getBingeCatCandidates(media, [record]).find(
+    (item) => item.provider === "tvdb" && item.id === "81472",
+  );
+  assert.equal(selectBingeCatIdentity(media, [candidate]), null);
+});
+
