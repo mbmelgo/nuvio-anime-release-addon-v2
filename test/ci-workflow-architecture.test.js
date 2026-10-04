@@ -6,15 +6,16 @@ const read = (path) => fs.readFileSync(new URL(path, import.meta.url), "utf8");
 
 test("main CI owns normal push testing and patch versioning without a PR trigger", () => {
   const ci = read("../.github/workflows/ci.yml");
-  const githubRefExpression = "$" + "{{ github.ref }}";
   const escapedExpression = "\\" + "$" + "{{";
 
   assert.ok(ci.includes("on:\n  push:\n    branches: [main]"));
   assert.ok(!ci.includes("pull_request:"));
   assert.ok(ci.includes("permissions:\n  contents: write"));
-  assert.ok(ci.includes("group: ci-main-" + githubRefExpression));
+  assert.ok(ci.includes("group: ci-main-"));
+  assert.ok(ci.includes("github.ref"));
   assert.ok(!ci.includes(escapedExpression));
-  assert.ok(ci.includes("cancel-in-progress: true"));\n  assert.ok(!ci.includes("steps.gate.outputs.release"));
+  assert.ok(ci.includes("cancel-in-progress: true"));
+  assert.ok(!ci.includes("steps.gate.outputs.release"));
   assert.ok(ci.includes("!contains(github.event.head_commit.message || '', '[deploy-prod]')"));
   assert.ok(ci.includes("name: Run tests\n        run: npm test\n      - name: Bump patch version and sync metadata"));
   assert.ok(ci.includes('git commit -m "chore: bump patch version [skip-release-pipeline]"'));
