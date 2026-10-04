@@ -126,7 +126,7 @@ test("BingeCat search can fall back to keyword-only exact search", async () => {
 
   const record = result.get(202390)[0];
   assert.equal(record.imdbIds[0], "tt39195693");
-  assert.deepEqual(semanticRatios, ["0.55", "0"]);
+  assert.deepEqual(semanticRatios, ["0", "0.55"]);
 });
 
 test("BingeCat search accepts an exact base-series identity for a numbered TV/ONA continuation", async () => {
