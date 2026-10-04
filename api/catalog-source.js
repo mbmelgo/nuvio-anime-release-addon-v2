@@ -166,6 +166,9 @@ async function resolveMappingsForRows(
   }
 
   if (bingeCatUnavailable) {
+    // BingeCat is unavailable, so skip additional BingeCat probes but keep
+    // deterministic/bulk provider sources alive. Previously this branch returned
+    // after AniBridge, unnecessarily downgrading resolvable titles to MAL/AniList.
     // Fribb is a single shared dataset request, so it is still safe in
     // degraded mode and can recover provider identities without reopening
     // the per-title AniMap/IDMapper/IMDb/secondary fan-out.
@@ -252,6 +255,27 @@ async function resolveMappingsForRows(
         mappings = mergeMappings(mappings, aniBridgeMappings);
       } catch (error) {
         console.error("[identity] degraded AniBridge mapping failed", error);
+      }
+    }
+
+    try {
+      const tsvMappings = await resolveTsvMappings(unresolvedRows.map((row) => Number(row.id)));
+      mappings = mergeMappings(mappings, tsvMappings);
+    } catch (error) {
+      console.error("[identity] degraded AnimeAPI TSV mapping failed", error);
+    }
+
+    unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+      { ...row, anilistId: Number(row.id) },
+      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    ));
+
+    if (unresolvedRows.length) {
+      try {
+        const imdbMappings = await resolveImdbMappings(unresolvedRows);
+        mappings = mergeMappings(mappings, imdbMappings);
+      } catch (error) {
+        console.error("[identity] degraded IMDb mapping failed", error);
       }
     }
 
@@ -458,7 +482,7 @@ async function resolveMappingsForRows(
 
   if (unverifiedRows.length) {
     try {
-      const verificationMappings = await resolveBingeCatSearchMappings(unverifiedRows, { bypassNegativeCache: true });
+      const verificationMappings = await resolveBingeCatSearchMappings(unverifiedRows);
       mappings = mergeMappings(mappings, verificationMappings);
     } catch (error) {
       console.error("[identity] final BingeCat verification failed; preserving existing fallbacks", error);
