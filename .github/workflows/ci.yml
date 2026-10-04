@@ -3,11 +3,17 @@ name: CI
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ci-main-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
+    if: ${{ !contains(github.event.head_commit.message || '', '[deploy-prod]') && !contains(github.event.head_commit.message || '', '[finalize-prod:') }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -18,3 +24,37 @@ jobs:
           node-version: 20
       - name: Run tests
         run: npm test
+      - name: Bump patch version and sync metadata
+        if: github.event_name == 'push' && !contains(github.event.head_commit.message || '', '[skip-version-automation]') && !contains(github.event.head_commit.message || '', '[major-release]')
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          version_path = Path("api/version.js")
+          current = re.search(r'ADDON_VERSION = "([^"]+)"', version_path.read_text()).group(1)
+          major, minor, patch = map(int, current.split("."))
+          next_version = f"{major}.{minor}.{patch + 1}"
+          version_path.write_text(f'export const ADDON_VERSION = "{next_version}";\n')
+
+          package_path = Path("package.json")
+          package = json.loads(package_path.read_text())
+          package["version"] = next_version
+          package_path.write_text(json.dumps(package, indent=2) + "\n")
+
+          readme_path = Path("README.md")
+          readme = readme_path.read_text()
+          readme = re.sub(r"version-\d+\.\d+\.\d+-blue", f"version-{next_version}-blue", readme)
+          readme = re.sub(r"(\*\*Development:\*\*\s*)`v?[^`]+`", rf"\g<1>`v{next_version}`", readme)
+          readme_path.write_text(readme)
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add api/version.js package.json
+          git add README.md
+          git commit -m "chore: bump patch version [skip-release-pipeline]"
+          git push
+
