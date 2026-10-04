@@ -82,3 +82,38 @@ test("AniBridge resolver loads the dataset once and resolves only requested AniL
   assert.equal(first.has(123456), false);
   assert.deepEqual(second.get(202079)[0].tvdbId, 470200);
 });
+
+test("AniBridge retains provider IDs from explicit related AniList entries", async () => {
+  clearAniBridgeCache();
+  const current = {
+    ...row(206814),
+    relations: {
+      edges: [{
+        relationType: "PREQUEL",
+        node: {
+          id: 813,
+          format: "TV",
+          title: { english: "Dragon Ball Z", romaji: "Dragon Ball Z", native: null },
+        },
+      }],
+    },
+  };
+  const payload = {
+    "anilist:206814": {
+      "tvdb_show:81472:s1": {},
+    },
+    "anilist:813": {
+      "tvdb_show:81472:s1": {},
+      "tmdb_show:12971:s1": {},
+    },
+  };
+
+  const result = await resolveAniListMappingsByAniBridge([current], {
+    fetchImpl: async () => ({
+      ok: true,
+      json: async () => payload,
+    }),
+  });
+
+  assert.deepEqual(result.get(206814)[0].relatedProviderIds, ["tvdb:81472", "tmdb:12971"]);
+});
