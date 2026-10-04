@@ -101,6 +101,68 @@ test("BingeCat does not make a synonym match authoritative even with a perfect s
   assert.equal(record.bingecatAuthoritative, false);
 });
 
+test("BingeCat continues across original AniList titles until it finds an authoritative score-1 match", async () => {
+  clearBingeCatSearchCache();
+  const queries = [];
+  const result = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 202406,
+    type: "TV",
+    year: 2026,
+    titleEnglish: "Localized Anime Name",
+    titleRomaji: "Original Anime Name",
+    titleNative: "オリジナルアニメ",
+  }], {
+    fetchImpl: async (url) => {
+      const query = new URL(url).searchParams.get("query");
+      queries.push(query);
+      if (query === "Localized Anime Name") {
+        return {
+          ok: true,
+          async json() {
+            return {
+              series: [{
+                name: "Localized Anime Name",
+                id: "tt20240601",
+                contentType: "series",
+                year: 2026,
+                meiliRankingScore: 0.9,
+              }],
+            };
+          },
+        };
+      }
+      if (query === "Original Anime Name") {
+        return {
+          ok: true,
+          async json() {
+            return {
+              series: [{
+                name: "Original Anime Name",
+                id: "tt20240602",
+                contentType: "series",
+                year: 2026,
+                meiliRankingScore: 1,
+              }],
+            };
+          },
+        };
+      }
+      return {
+        ok: true,
+        async json() {
+          return { movies: [], series: [] };
+        },
+      };
+    },
+  });
+
+  const record = result.get(202406)[0];
+  assert.equal(record.imdbIds[0], "tt20240602");
+  assert.equal(record.meiliRankingScore, 1);
+  assert.equal(record.bingecatAuthoritative, true);
+  assert.deepEqual(queries.slice(0, 2), ["Localized Anime Name", "Original Anime Name"]);
+});
+
 test("BingeCat search prefers a perfect exact-title score over an earlier weaker candidate", () => {
   const row = {
     anilistId: 202403,
@@ -276,10 +338,10 @@ test("BingeCat search can fall back to keyword-only exact search", async () => {
 
   const record = result.get(202390)[0];
   assert.equal(record.imdbIds[0], "tt39195693");
-  assert.deepEqual(semanticRatios, ["0", "0.55"]);
-  assert.equal(sessionSeeds.length, 2);
+  assert.deepEqual(semanticRatios, ["0", "0.55", "0", "0.55", "0", "0.55"]);
+  assert.equal(sessionSeeds.length, 6);
   assert.ok(sessionSeeds.every((seed) => /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(seed)));
-  assert.notEqual(sessionSeeds[0], sessionSeeds[1]);
+  assert.equal(new Set(sessionSeeds).size, sessionSeeds.length);
 });
 
 test("BingeCat search accepts an exact base-series identity for a numbered TV/ONA continuation", async () => {
