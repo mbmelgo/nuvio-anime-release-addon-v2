@@ -682,3 +682,63 @@ test("BingeCat stops retrying immediately on HTTP 429", async () => {
   assert.equal(result.has(212888), false);
   assert.equal(calls, 1);
 });
+
+
+test("BingeCat circuit stops sibling workers before they start new requests", async () => {
+  clearBingeCatSearchCache();
+  let calls = 0;
+  const rows = Array.from({ length: 10 }, (_, index) => ({
+    anilistId: 940000 + index,
+    type: "TV",
+    year: 2026,
+    titleEnglish: `Circuit Anime ${index}`,
+  }));
+  const result = await resolveAniListMappingsByBingeCatSearch(rows, {
+    concurrency: 3,
+    fetchImpl: async () => {
+      calls += 1;
+      return { ok: false, status: 429 };
+    },
+  });
+  assert.equal(result.size, 0);
+  assert.equal(calls, 1);
+});
+
+test("BingeCat shares an in-flight search across concurrent resolver calls", async () => {
+  clearBingeCatSearchCache();
+  let calls = 0;
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  const fetchImpl = async () => {
+    calls += 1;
+    await gate;
+    return {
+      ok: true,
+      async json() {
+        return {
+          series: [{
+            name: "Shared Concurrent Anime",
+            id: "tt9876543",
+            contentType: "series",
+            year: 2026,
+          }],
+        };
+      },
+    };
+  };
+  const row = [{
+    anilistId: 940100,
+    type: "TV",
+    year: 2026,
+    titleEnglish: "Shared Concurrent Anime",
+  }];
+
+  const first = resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
+  const second = resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
+  release();
+  const [a, b] = await Promise.all([first, second]);
+
+  assert.equal(calls, 1);
+  assert.equal(a.get(940100)[0].imdbIds[0], "tt9876543");
+  assert.equal(b.get(940100)[0].imdbIds[0], "tt9876543");
+});
