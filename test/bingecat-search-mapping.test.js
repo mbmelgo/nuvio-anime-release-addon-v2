@@ -346,6 +346,46 @@ test("BingeCat search caches negative lookups", async () => {
   assert.equal(calls, 4);
 });
 
+test("BingeCat search retries a seed-sensitive negative result", async () => {
+  clearBingeCatSearchCache();
+  let calls = 0;
+  const fetchImpl = async (url) => {
+    calls += 1;
+    const seed = new URL(url).searchParams.get("shuffle_session_seed");
+    assert.match(seed, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+    if (calls <= 2) {
+      return { ok: true, async json() { return { movies: [], series: [] }; } };
+    }
+    return {
+      ok: true,
+      async json() {
+        return {
+          series: [{
+            name: "Seed Sensitive Result",
+            id: "tt55555555",
+            contentType: "series",
+            year: 2026,
+          }],
+        };
+      },
+    };
+  };
+
+  const row = [{
+    anilistId: 301004,
+    type: "TV",
+    year: 2026,
+    titleEnglish: "Seed Sensitive Result",
+  }];
+
+  const first = await resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
+  assert.equal(first.size, 0);
+
+  const second = await resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
+  assert.equal(second.get(301004)[0].imdbIds[0], "tt55555555");
+  assert.ok(calls >= 3);
+});
+
 test("BingeCat search can derive a franchise prefix before a subtitle", async () => {
   clearBingeCatSearchCache();
   const result = await resolveAniListMappingsByBingeCatSearch([{
