@@ -404,3 +404,27 @@ test("related provider protection is carried by mapping records before final can
   const candidates = getBingeCatCandidates(media, mappings.get(206814));
   assert.equal(selectBingeCatIdentity(media, candidates), null);
 });
+
+
+test("final verification mappings cannot bypass protected related provider IDs", () => {
+  const media = {
+    anilistId: 206814,
+    title: { english: "Dragon Ball Super: Beerus", romaji: "Dragon Ball Super: Beerus" },
+    startDate: { year: 2026 },
+    format: "TV",
+    relations: { edges: [{ relationType: "PREQUEL", node: { id: 813, title: { english: "Dragon Ball Z" } } }] },
+    relatedProviderIds: ["tvdb:81472"],
+  };
+  const verificationRecord = {
+    source: "bingecat-search",
+    anilistId: 206814,
+    type: "TV",
+    imdbIds: [],
+    tvdbId: 81472,
+    tmdbTvId: null,
+    tmdbMovieIds: [],
+    title: "Dragon Ball Super: Beerus",
+  };
+  const candidates = getBingeCatCandidates(media, [{ ...verificationRecord, relatedProviderIds: media.relatedProviderIds }]);
+  assert.equal(selectBingeCatIdentity(media, candidates), null);
+});
