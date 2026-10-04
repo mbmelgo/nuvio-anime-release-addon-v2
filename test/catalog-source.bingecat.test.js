@@ -52,10 +52,6 @@ import {
   buildRollingCatalog,
   canonicalizeCatalogPageWithBingeCat,
 } from "../api/catalog-source.js";
-import {
-  clearBingeCatSearchCache,
-  resolveAniListMappingsByBingeCatSearch,
-} from "../lib/bingecat-search-mapping.js";
 
 function mapping(anilistId, imdb) {
   return {
@@ -84,7 +80,6 @@ function row(id, malId = id) {
 }
 
 test("catalog identity resolution short-circuits expensive sources when BingeCat denies access", async () => {
-  clearBingeCatSearchCache();
   const rows = [row(901, 9901), row(902, 9902)];
   let fribbCalls = 0;
   let animapCalls = 0;
@@ -108,8 +103,11 @@ test("catalog identity resolution short-circuits expensive sources when BingeCat
       idMapperCalls += 1;
       return new Map();
     },
-    resolveBingeCatSearchMappings: (searchRows, options = {}) =>
-      resolveAniListMappingsByBingeCatSearch(searchRows, { fetchImpl, persistCircuit: true, ...options }),
+    resolveBingeCatSearchMappings: async (searchRows, options = {}) => {
+      assert.deepEqual(searchRows.map((item) => item.id), [901]);
+      options.onCircuitOpen?.();
+      return new Map();
+    },
     resolveAnimeMapperMappings: async () => new Map(),
     resolveTsvMappings: async () => {
       tsvCalls += 1;
@@ -134,7 +132,6 @@ test("catalog identity resolution short-circuits expensive sources when BingeCat
   assert.equal(tsvCalls, 0);
   assert.equal(imdbCalls, 0);
   assert.equal(secondaryCalls, 0);
-  clearBingeCatSearchCache();
 });
 
 test("catalog identity resolution preserves all source rows when the MAL bridge resolves an ARM miss", async () => {
