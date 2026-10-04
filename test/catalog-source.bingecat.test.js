@@ -275,3 +275,47 @@ test("rolling catalogs preserve an exact provider identity when BingeCat verific
   assert.equal(result[0].extra.bingecatEvidence, "provider-id-fallback");
   assert.equal(result[0].extra.bingecatVerification, "unverified-upstream");
 });
+
+
+test("catalog identity resolution uses AniBridge bulk mappings after Anime Mapper is exhausted", async () => {
+  const rows = [row(901, 9901), row(902, 9902)];
+  let aniBridgeCalls = 0;
+
+  const result = await canonicalizeCatalogPageWithBingeCat(rows, {
+    probeBingeCat: true,
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async (searchRows, options = {}) => {
+      assert.deepEqual(searchRows.map((item) => item.id), [901]);
+      options.onCircuitOpen?.();
+      return new Map();
+    },
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveAniBridgeMappings: async (unresolvedRows) => {
+      aniBridgeCalls += 1;
+      assert.deepEqual(unresolvedRows.map((item) => item.id), [901, 902]);
+      return new Map([
+        [901, [mapping(901, "tt9900901")]],
+        [902, [{
+          source: "anibridge",
+          anilistId: 902,
+          type: "TV",
+          imdbIds: [],
+          tvdbId: 470902,
+          tmdbTvId: null,
+          tmdbMovieIds: [],
+          title: "Anime 902",
+          year: 2026,
+        }]],
+      ]);
+    },
+    resolveTsvMappings: async () => new Map(),
+  });
+
+  assert.equal(result.length, 2);
+  assert.deepEqual(result.map((meta) => meta.id), ["tt9900901", "tvdb:470902"]);
+  assert.equal(aniBridgeCalls, 1);
+});
