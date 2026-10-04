@@ -71,3 +71,32 @@ test("AniList coalesces identical concurrent catalog requests", async () => {
     clearAniListRateLimitState();
   }
 });
+
+test("AniList reuses successful catalog responses across sequential requests", async () => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    return {
+      ok: true,
+      status: 200,
+      headers: new Headers(),
+      async json() {
+        return { data: { Page: { media: [{ id: 123 }] } } };
+      },
+    };
+  };
+
+  clearAniListRateLimitState();
+  try {
+    const first = await queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1);
+    const second = await queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1);
+
+    assert.deepEqual(first, [{ id: 123 }]);
+    assert.deepEqual(second, [{ id: 123 }]);
+    assert.equal(calls, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    clearAniListRateLimitState();
+  }
+});

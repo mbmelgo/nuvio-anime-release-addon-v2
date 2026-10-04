@@ -277,6 +277,39 @@ test("rolling catalogs preserve an exact provider identity when BingeCat verific
 });
 
 
+test("catalog identity resolution performs only one BingeCat verification after Anime Mapper", async () => {
+  const rows = [row(903, 9903)];
+  let bingeCatCalls = 0;
+
+  const result = await canonicalizeCatalogPageWithBingeCat(rows, {
+    probeBingeCat: false,
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => {
+      bingeCatCalls += 1;
+      return new Map();
+    },
+    resolveAnimeMapperMappings: async () => new Map([[
+      903,
+      [mapping(903, "tt9900903")],
+    ]]),
+    resolveAniBridgeMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0].id, "tt9900903");
+  assert.equal(bingeCatCalls, 2);
+});
+
+
+
 test("catalog identity resolution uses AniBridge bulk mappings after Anime Mapper is exhausted", async () => {
   const rows = [row(901, 9901), row(902, 9902)];
   let aniBridgeCalls = 0;
