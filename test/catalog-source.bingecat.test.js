@@ -414,3 +414,80 @@ test("catalog identity resolution keeps IMDb fallback coverage when BingeCat is 
   assert.equal(bingeCatCalls, 1);
   assert.equal(imdbCalls, 1);
 });
+
+
+test("catalog identity resolution protects related provider IDs when BingeCat is unavailable", async () => {
+  const rows = [{
+    id: 206814,
+    idMal: 63367,
+    title: {
+      english: "Dragon Ball Super: Beerus",
+      romaji: "Dragon Ball Super: Beerus",
+      native: "ドラゴンボール超 ビルス",
+    },
+    synonyms: [],
+    format: "TV",
+    startDate: { year: 2026 },
+    isAdult: false,
+    relations: {
+      edges: [{
+        relationType: "PREQUEL",
+        node: {
+          id: 813,
+          format: "TV",
+          title: { english: "Dragon Ball Z", romaji: "Dragon Ball Z", native: "ドラゴンボールZ" },
+          startDate: { year: 1989 },
+          externalLinks: [],
+        },
+      }],
+    },
+  }];
+
+  const weakMapping = {
+    source: "arm",
+    anilistId: 206814,
+    type: "TV",
+    imdbIds: [],
+    tvdbId: 81472,
+    tmdbTvId: null,
+    tmdbMovieIds: [],
+    title: "Dragon Ball Super: Beerus",
+    year: 2026,
+  };
+  let relationProtectionCalls = 0;
+
+  const result = await canonicalizeCatalogPageWithBingeCat(rows, {
+    probeBingeCat: true,
+    resolveMappings: async (ids) => ids.includes(206814)
+      ? new Map([[206814, [weakMapping]]])
+      : new Map(),
+    resolveFribbMappings: async (ids) => ids.includes(206814)
+      ? new Map([[206814, [{ ...weakMapping, source: "fribb" }]]])
+      : new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async (_rows, options = {}) => {
+      options.onCircuitOpen?.();
+      return new Map();
+    },
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveAnimeMapperRelatedProviderIds: async (protectedRows) => {
+      relationProtectionCalls += 1;
+      assert.deepEqual(protectedRows.map((row) => row.id), [206814]);
+      return new Map([[206814, ["tvdb:81472"]]]);
+    },
+    resolveAniBridgeMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0].id, "mal:63367");
+  assert.equal(result[0].extra.bingecatProvider, null);
+  assert.equal(result[0].extra.bingecatId, null);
+  assert.equal(result[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
+  assert.equal(relationProtectionCalls, 1);
+});
