@@ -124,7 +124,7 @@ test("catalog identity resolution continues cheap provider sources when BingeCat
       options.onCircuitOpen?.();
       return new Map();
     },
-    resolveAnimeMapperMappings: async (rows) => new Map([[902, [mapping(902, "tt9900902")]]]),;
+    resolveAnimeMapperMappings: async (rows) => new Map([[902, [mapping(902, "tt9900902")]]]),
     resolveTsvMappings: async () => {
       tsvCalls += 1;
       return new Map();
