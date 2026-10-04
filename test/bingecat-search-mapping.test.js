@@ -300,7 +300,6 @@ test("BingeCat search consumes AniList-shaped title, format, year, MAL, and syno
 test("BingeCat search can fall back to keyword-only exact search", async () => {
   clearBingeCatSearchCache();
   const semanticRatios = [];
-  const sessionSeeds = [];
   const result = await resolveAniListMappingsByBingeCatSearch([{
     anilistId: 202390,
     type: "MOVIE",
@@ -310,7 +309,6 @@ test("BingeCat search can fall back to keyword-only exact search", async () => {
     fetchImpl: async (url) => {
       const parsed = new URL(url);
       semanticRatios.push(parsed.searchParams.get("semantic_ratio"));
-      sessionSeeds.push(parsed.searchParams.get("shuffle_session_seed"));
       if (parsed.searchParams.get("semantic_ratio") === "0.55") {
         return {
           ok: true,
@@ -339,9 +337,7 @@ test("BingeCat search can fall back to keyword-only exact search", async () => {
   const record = result.get(202390)[0];
   assert.equal(record.imdbIds[0], "tt39195693");
   assert.deepEqual(semanticRatios, ["0", "0.55", "0", "0.55", "0", "0.55"]);
-  assert.equal(sessionSeeds.length, 6);
-  assert.ok(sessionSeeds.every((seed) => /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(seed)));
-  assert.equal(new Set(sessionSeeds).size, sessionSeeds.length);
+  assert.equal(semanticRatios.length, 6);
 });
 
 test("BingeCat search accepts an exact base-series identity for a numbered TV/ONA continuation", async () => {
@@ -556,13 +552,12 @@ test("BingeCat search does not cache negative lookups", async () => {
   assert.equal(calls, 8);
 });
 
-test("BingeCat search retries a seed-sensitive negative result", async () => {
+test("BingeCat search retries a negative result", async () => {
   clearBingeCatSearchCache();
   let calls = 0;
   const fetchImpl = async (url) => {
     calls += 1;
-    const seed = new URL(url).searchParams.get("shuffle_session_seed");
-    assert.match(seed, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+    assert.equal(new URL(url).searchParams.has("shuffle_session_seed"), false);
     if (calls <= 2) {
       return { ok: true, async json() { return { movies: [], series: [] }; } };
     }
