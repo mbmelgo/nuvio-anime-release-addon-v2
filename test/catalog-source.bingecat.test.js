@@ -80,7 +80,7 @@ function row(id, malId = id) {
 }
 
 test("catalog identity resolution short-circuits expensive sources when BingeCat denies access", async () => {
-  const rows = [row(901, 9901), row(902, 9902)];
+  const rows = [row(901, 9901), row(902, 9902), row(903, 9903)];
   let fribbCalls = 0;
   let animapCalls = 0;
   let idMapperCalls = 0;
@@ -124,9 +124,23 @@ test("catalog identity resolution short-circuits expensive sources when BingeCat
       return new Map();
     },
     resolveAnimeMapperMappings: async () => new Map(),
-    resolveTsvMappings: async () => {
+    resolveTsvMappings: async (ids) => {
       tsvCalls += 1;
-      return new Map();
+      assert.deepEqual(ids, [902]);
+      return new Map([[
+        902,
+        [{
+          source: "animeapi-tsv",
+          anilistId: 902,
+          type: "TV",
+          imdbIds: ["tt9900902"],
+          tvdbId: null,
+          tmdbTvId: null,
+          tmdbMovieIds: [],
+          season: null,
+          episodeOffset: null,
+        }],
+      ]]);
     },
     resolveImdbMappings: async () => {
       imdbCalls += 1;
@@ -140,11 +154,11 @@ test("catalog identity resolution short-circuits expensive sources when BingeCat
   });
 
   assert.equal(result.length, rows.length);
-  assert.deepEqual(result.map((meta) => meta.id), ["tt9900901", "mal:9902"]);
+  assert.deepEqual(result.map((meta) => meta.id), ["tt9900901", "tt9900902", "mal:9903"]);
   assert.equal(fribbCalls, 1);
   assert.equal(animapCalls, 0);
   assert.equal(idMapperCalls, 0);
-  assert.equal(tsvCalls, 0);
+  assert.equal(tsvCalls, 1);
   assert.equal(imdbCalls, 0);
   assert.equal(secondaryCalls, 0);
 });
