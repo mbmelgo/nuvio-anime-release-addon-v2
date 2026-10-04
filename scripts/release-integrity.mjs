@@ -23,8 +23,22 @@ export function incrementMajor(version) {
   return `${major + 1}.0.0`;
 }
 
-export function isValidNextReleaseVersion(productionVersion, nextReleaseVersion) {
-  return nextReleaseVersion === incrementMinor(productionVersion) ||
+export function isValidNextReleaseVersion(productionVersion, nextReleaseVersion, supersededReleaseVersions = []) {
+  const baselineVersions = [productionVersion, ...(Array.isArray(supersededReleaseVersions) ? supersededReleaseVersions : [])];
+  const highestBaseline = baselineVersions
+    .map((version) => {
+      try { return { version, parsed: parseVersion(version) }; } catch { return null; }
+    })
+    .filter(Boolean)
+    .sort((left, right) => {
+      for (let i = 0; i < 3; i += 1) {
+        if (left.parsed[i] !== right.parsed[i]) return left.parsed[i] - right.parsed[i];
+      }
+      return 0;
+    })
+    .at(-1)?.version || productionVersion;
+
+  return nextReleaseVersion === incrementMinor(highestBaseline) ||
     nextReleaseVersion === incrementMajor(productionVersion);
 }
 
@@ -34,6 +48,7 @@ export function validateVersionConsistency({
   productionVersion,
   productionTag,
   nextReleaseVersion,
+  supersededReleaseVersions = [],
   deploymentsSincePause,
   deploymentLimit,
   paused,
@@ -45,7 +60,7 @@ export function validateVersionConsistency({
   if (!isUnreleasedBaseline && (!/^v\d+\.\d+\.\d+$/.test(productionTag) || productionTag !== `v${productionVersion}`)) {
     throw new Error(`Production tag ${productionTag} does not match production version ${productionVersion}.`);
   }
-  if (!isValidNextReleaseVersion(productionVersion, nextReleaseVersion)) {
+  if (!isValidNextReleaseVersion(productionVersion, nextReleaseVersion, supersededReleaseVersions)) {
     throw new Error(`Next release ${nextReleaseVersion} must be either the minor increment or major baseline of production ${productionVersion}.`);
   }
   if (!Number.isInteger(deploymentsSincePause) || !Number.isInteger(deploymentLimit) ||
@@ -155,6 +170,7 @@ export function validateRepositoryReleaseState(root = process.cwd()) {
     productionVersion: state.lastDeploymentVersion,
     productionTag: state.lastDeploymentTag,
     nextReleaseVersion: state.nextReleaseVersion,
+    supersededReleaseVersions: state.supersededReleaseVersions,
     deploymentsSincePause: state.deploymentsSincePause,
     deploymentLimit: state.deploymentLimit,
     paused: state.paused,
