@@ -216,6 +216,29 @@ test("BingeCat search does not treat a perfect score as exact-title evidence whe
   assert.equal(record, null);
 });
 
+test("BingeCat search requests omit the shuffle session seed", async () => {
+  clearBingeCatSearchCache();
+  let requestedUrl = null;
+  await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 202407,
+    type: "TV",
+    year: 2026,
+    titleEnglish: "No Session Seed Anime",
+  }], {
+    fetchImpl: async (url) => {
+      requestedUrl = url;
+      return {
+        ok: true,
+        async json() {
+          return { movies: [], series: [] };
+        },
+      };
+    },
+  });
+
+  assert.equal(new URL(requestedUrl).searchParams.has("shuffle_session_seed"), false);
+});
+
 test("BingeCat search normalizes an exact movie identity", async () => {
   clearBingeCatSearchCache();
   const result = await resolveAniListMappingsByBingeCatSearch([{
