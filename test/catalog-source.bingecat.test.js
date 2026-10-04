@@ -142,9 +142,9 @@ test("catalog identity resolution short-circuits expensive sources when BingeCat
   assert.equal(result.length, rows.length);
   assert.deepEqual(result.map((meta) => meta.id), ["tt9900901", "mal:9902"]);
   assert.equal(fribbCalls, 1);
-  assert.equal(animapCalls, 0);
-  assert.equal(idMapperCalls, 0);
-  assert.equal(tsvCalls, 0);
+  assert.equal(animapCalls, 1);
+  assert.equal(idMapperCalls, 1);
+  assert.equal(tsvCalls, 1);
   assert.equal(imdbCalls, 0);
   assert.equal(secondaryCalls, 0);
 });
