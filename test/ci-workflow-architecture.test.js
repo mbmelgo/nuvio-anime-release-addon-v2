@@ -14,7 +14,7 @@ test("main CI owns normal push testing and patch versioning without a PR trigger
   assert.ok(ci.includes("permissions:\n  contents: write"));
   assert.ok(ci.includes("group: ci-main-" + githubRefExpression));
   assert.ok(!ci.includes(escapedExpression));
-  assert.ok(ci.includes("cancel-in-progress: true"));
+  assert.ok(ci.includes("cancel-in-progress: true"));\n  assert.ok(!ci.includes("steps.gate.outputs.release"));
   assert.ok(ci.includes("!contains(github.event.head_commit.message || '', '[deploy-prod]')"));
   assert.ok(ci.includes("name: Run tests\n        run: npm test\n      - name: Bump patch version and sync metadata"));
   assert.ok(ci.includes('git commit -m "chore: bump patch version [skip-release-pipeline]"'));

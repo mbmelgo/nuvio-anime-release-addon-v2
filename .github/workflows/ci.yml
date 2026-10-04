@@ -25,7 +25,7 @@ jobs:
       - name: Run tests
         run: npm test
       - name: Bump patch version and sync metadata
-        if: github.event_name == 'push' && steps.gate.outputs.release == 'false' && !contains(github.event.head_commit.message || '', '[skip-version-automation]') && !contains(github.event.head_commit.message || '', '[major-release]')
+        if: github.event_name == 'push' && !contains(github.event.head_commit.message || '', '[skip-version-automation]') && !contains(github.event.head_commit.message || '', '[major-release]')
         shell: bash
         run: |
           set -euo pipefail
