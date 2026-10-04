@@ -79,6 +79,62 @@ function row(id, malId = id) {
   };
 }
 
+test("catalog identity resolution short-circuits expensive sources when BingeCat denies access", async () => {
+  const rows = [row(901, 9901), row(902, 9902)];
+  let fribbCalls = 0;
+  let animapCalls = 0;
+  let idMapperCalls = 0;
+  let tsvCalls = 0;
+  let imdbCalls = 0;
+  let secondaryCalls = 0;
+  const fetchImpl = async () => ({ ok: false, status: 403 });
+
+  const result = await canonicalizeCatalogPageWithBingeCat(rows, {
+    probeBingeCat: true,
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => {
+      fribbCalls += 1;
+      return new Map();
+    },
+    resolveAnimapMappings: async () => {
+      animapCalls += 1;
+      return new Map();
+    },
+    resolveIdMapperMappings: async () => {
+      idMapperCalls += 1;
+      return new Map();
+    },
+    resolveBingeCatSearchMappings: async (searchRows, options = {}) => {
+      assert.deepEqual(searchRows.map((item) => item.id), [901]);
+      options.onCircuitOpen?.();
+      return new Map();
+    },
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => {
+      tsvCalls += 1;
+      return new Map();
+    },
+    resolveImdbMappings: async () => {
+      imdbCalls += 1;
+      return new Map();
+    },
+    resolveSecondaryMappings: async () => {
+      secondaryCalls += 1;
+      return new Map();
+    },
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(result.length, rows.length);
+  assert.deepEqual(result.map((meta) => meta.id), ["mal:9901", "mal:9902"]);
+  assert.equal(fribbCalls, 0);
+  assert.equal(animapCalls, 0);
+  assert.equal(idMapperCalls, 0);
+  assert.equal(tsvCalls, 0);
+  assert.equal(imdbCalls, 0);
+  assert.equal(secondaryCalls, 0);
+});
+
 test("catalog identity resolution preserves all source rows when the MAL bridge resolves an ARM miss", async () => {
   const rows = [row(1, 101), row(2, 102), row(3, 103)];
   const result = await canonicalizeCatalogPageWithBingeCat(rows, {

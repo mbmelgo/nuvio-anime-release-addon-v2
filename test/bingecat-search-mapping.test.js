@@ -626,7 +626,7 @@ test("BingeCat access denial circuit suppresses repeated requests across catalog
     type: "TV",
     year: 2026,
     titleEnglish: "First Access Denied Anime",
-  }], { fetchImpl });
+  }], { fetchImpl, persistCircuit: true });
 
   assert.equal(first.size, 0);
   const callsAfterFirst = calls;
@@ -636,7 +636,7 @@ test("BingeCat access denial circuit suppresses repeated requests across catalog
     type: "TV",
     year: 2026,
     titleEnglish: "Second Access Denied Anime",
-  }], { fetchImpl });
+  }], { fetchImpl, persistCircuit: true });
 
   assert.equal(second.size, 0);
   assert.equal(calls, callsAfterFirst);
