@@ -60,7 +60,7 @@ test("AnimeAPI TSV resolver recovers provider IDs when the AniList column is mis
   const tsv = [
     "title\tanidb\tanilist\tanimenewsnetwork\tanimeplanet\tanisearch\tannict\thikka\timdb\tkaize\tkaize_id\tkitsu\tletterboxd_lid\tletterboxd_slug\tletterboxd_uid\tlivechart\tmyanimelist\tnautiljon\tnautiljon_id\tnotify\totakotaku\tshikimori\tshoboi\tsilveryasha\tsimkl\tthemoviedb\tthemoviedb_season_id\tthemoviedb_type\tthetvdb\tthetvdb_season_id\ttrakt\ttrakt_may_invalid\ttrakt_season\ttrakt_season_id\ttrakt_slug\ttrakt_type",
     "Ghost Meets Gal!\t20339\t64718\t40470\t\t21895\t17955\tghost-meets-gal-f48789\t\tghost-meets-gal\t25869\t50866\t\t\t\t13740\t64718\t\t\t\t3431\t64718\t\t\t3240648\t334103\t541314\ttv\t482144\t2267023\t327906\tFalse\t1\t533487\tghost-meets-gal\tshows",
-  ].join("\\n");
+  ].join("\n");
 
   const result = await resolveAniListMappingsFromAnimeApiTsv([{ id: 214703, idMal: 64718 }], {
     endpoint: "https://example.test/animeapi.tsv",
