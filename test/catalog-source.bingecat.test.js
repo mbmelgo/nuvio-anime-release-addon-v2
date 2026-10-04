@@ -275,3 +275,33 @@ test("rolling catalogs preserve an exact provider identity when BingeCat verific
   assert.equal(result[0].extra.bingecatEvidence, "provider-id-fallback");
   assert.equal(result[0].extra.bingecatVerification, "unverified-upstream");
 });
+
+
+test("catalog identity resolution uses strict IMDb fallback after provider datasets are exhausted", async () => {
+  const result = await canonicalizeCatalogPageWithBingeCat([row(903, 9903)], {
+    probeBingeCat: true,
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async (searchRows, options = {}) => {
+      assert.deepEqual(searchRows.map((item) => item.id), [903]);
+      options.onCircuitOpen?.();
+      return new Map();
+    },
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async (rows) => {
+      assert.deepEqual(rows.map((item) => item.id), [903]);
+      return new Map([[903, [mapping(903, "tt9900903")]]]);
+    },
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0].id, "tt9900903");
+  assert.equal(result[0].extra.bingecatEvidence, "provider-id-fallback");
+  assert.equal(result[0].extra.bingecatVerification, "unverified-upstream");
+});
