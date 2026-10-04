@@ -463,3 +463,32 @@ test("TV entries still reject movie identities", () => {
 
   assert.equal(selected, null);
 });
+
+test("unverified ARM provider IDs are rejected when the anime has explicit franchise relations", () => {
+  const media = {
+    anilistId: 206814,
+    title: { english: "Dragon Ball Super: Beerus", romaji: "Dragon Ball Super: Beerus" },
+    startDate: { year: 2026 },
+    format: "TV",
+    relations: {
+      edges: [{
+        relationType: "PREQUEL",
+        node: {
+          id: 813,
+          title: { english: "Dragon Ball Z", romaji: "Dragon Ball Z" },
+          synonyms: [],
+        },
+      }],
+    },
+  };
+
+  const candidates = getBingeCatCandidates(media, [{
+    source: "arm",
+    anilistId: 206814,
+    type: "TV",
+    tvdbId: 81472,
+    title: "Dragon Ball Super: Beerus",
+  }]);
+
+  assert.equal(selectBingeCatIdentity(media, candidates), null);
+});
