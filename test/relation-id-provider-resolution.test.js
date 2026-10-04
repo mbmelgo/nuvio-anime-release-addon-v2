@@ -386,3 +386,21 @@ test("current mappings cannot inherit a provider ID owned by an explicit related
   assert.equal(metas[0].extra.bingecatProvider, null);
   assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
 });
+
+
+test("related provider protection is carried by mapping records before final candidate selection", async () => {
+  const mappings = new Map([[206814, [{
+    source: "animeapi", anilistId: 206814, type: "TV", imdbIds: [], tvdbId: 81472,
+    tmdbTvId: null, tmdbMovieIds: [], title: "Dragon Ball Super: Beerus", year: 2026,
+  }]]]);
+  const media = {
+    anilistId: 206814,
+    title: { english: "Dragon Ball Super: Beerus", romaji: "Dragon Ball Super: Beerus" },
+    startDate: { year: 2026 },
+    format: "TV",
+    relations: { edges: [{ relationType: "PREQUEL", node: { id: 813, title: { english: "Dragon Ball Z" } } }] },
+    relatedProviderIds: ["tvdb:81472"],
+  };
+  const candidates = getBingeCatCandidates(media, mappings.get(206814));
+  assert.equal(selectBingeCatIdentity(media, candidates), null);
+});
