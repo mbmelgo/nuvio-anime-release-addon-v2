@@ -93,3 +93,32 @@ test("Anime Mapper caches negative records", async () => {
   await resolveAniListMappingsByAnimeMapper(row, { baseUrl: "https://mapper.test", fetchImpl });
   assert.equal(calls, 1);
 });
+
+
+test("Anime Mapper resolves provider IDs from explicit related entries without per-AniList API calls", async () => {
+  clearAnimeMapperCache();
+  const responses = new Map([
+    ["63367", {
+      mappings: { anilist: 206814 },
+      sequence: [{ relationType: "PREQUEL", malId: 813 }],
+    }],
+    ["813", { mappings: { anilist: 813, tvdb: 81472 } }],
+  ]);
+  const calls = [];
+  const result = await resolveAniListRelatedProviderIdsByAnimeMapper(
+    [{ anilistId: 206814, malId: 63367, type: "TV", title: { english: "Dragon Ball Super: Beerus" } }],
+    {
+      fetchImpl: async (url) => {
+        calls.push(url);
+        const malId = url.match(/\/(\d+)\.json$/)?.[1];
+        return {
+          ok: responses.has(malId),
+          async json() { return responses.get(malId); },
+        };
+      },
+      now: () => 0,
+    },
+  );
+  assert.deepEqual(result.get(206814), ["tvdb:81472"]);
+  assert.equal(calls.length, 2);
+});
