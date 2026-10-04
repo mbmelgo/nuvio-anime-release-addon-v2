@@ -225,6 +225,20 @@ async function resolveMappingsForRows(
       }
     }
 
+    unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+      { ...row, anilistId: Number(row.id) },
+      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    ));
+
+    if (unresolvedRows.length) {
+      try {
+        const animeMapperMappings = await resolveAnimeMapperMappings(unresolvedRows);
+        mappings = mergeMappings(mappings, animeMapperMappings);
+      } catch (error) {
+        console.error("[identity] degraded Anime Mapper mapping failed", error);
+      }
+    }
+
     return mappings;
   }
 
