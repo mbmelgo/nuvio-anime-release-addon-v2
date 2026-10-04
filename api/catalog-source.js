@@ -173,6 +173,37 @@ async function resolveMappingsForRows(
     } catch (error) {
       console.error("[identity] Fribb degraded-mode mapping failed", error);
     }
+    // Do not stop at Fribb during BingeCat outages. BingeCat is only the
+    // support verifier; independent provider mapping sources can still give
+    // us a usable provider identity while verification is unavailable.
+    try {
+      const externalMappings = resolveExternalMappings(unresolvedRows);
+      mappings = mergeMappings(mappings, externalMappings);
+    } catch (error) {
+      console.error("[identity] degraded AniList external mapping failed", error);
+    }
+
+    try {
+      const animapMappings = await resolveAnimapMappings(unresolvedRows.map((row) => Number(row.id)));
+      mappings = mergeMappings(mappings, animapMappings);
+    } catch (error) {
+      console.error("[identity] degraded AniMap mapping failed", error);
+    }
+
+    try {
+      const idMapperMappings = await resolveIdMapperMappings(unresolvedRows.map((row) => Number(row.id)));
+      mappings = mergeMappings(mappings, idMapperMappings);
+    } catch (error) {
+      console.error("[identity] degraded IDMapper mapping failed", error);
+    }
+
+    try {
+      const tsvMappings = await resolveTsvMappings(unresolvedRows.map((row) => Number(row.id)));
+      mappings = mergeMappings(mappings, tsvMappings);
+    } catch (error) {
+      console.error("[identity] degraded AnimeAPI TSV mapping failed", error);
+    }
+
     return mappings;
   }
 
