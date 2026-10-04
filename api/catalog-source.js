@@ -147,6 +147,25 @@ async function resolveMappingsForRows(
     getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
   ));
 
+  // Probe BingeCat before loading additional large mapping datasets. If the
+  // upstream is access-denied/rate-limited, preserve the fast ARM mappings
+  // and let canonical MAL identity remain the terminal fallback.
+  let bingeCatUnavailable = false;
+  if (unresolvedRows.length) {
+    try {
+      const probeMappings = await resolveBingeCatSearchMappings(unresolvedRows.slice(0, 1), {
+        onCircuitOpen: () => { bingeCatUnavailable = true; },
+      });
+      mappings = mergeMappings(mappings, probeMappings);
+    } catch (error) {
+      console.error("[identity] BingeCat availability probe failed", error);
+    }
+  }
+
+  if (bingeCatUnavailable) {
+    return mappings;
+  }
+
   if (unresolvedRows.length) {
     try {
       const fribb = await resolveFribbMappings(unresolvedRows.map((row) => Number(row.id)));
@@ -174,25 +193,6 @@ async function resolveMappingsForRows(
     { ...row, anilistId: Number(row.id) },
     getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
   ));
-
-  // Probe BingeCat before loading additional large mapping datasets. If the
-  // upstream is access-denied/rate-limited, preserve the fast ARM/external
-  // mappings and let canonical MAL identity remain the terminal fallback.
-  let bingeCatUnavailable = false;
-  if (unresolvedRows.length) {
-    try {
-      const probeMappings = await resolveBingeCatSearchMappings(unresolvedRows.slice(0, 1), {
-        onCircuitOpen: () => { bingeCatUnavailable = true; },
-      });
-      mappings = mergeMappings(mappings, probeMappings);
-    } catch (error) {
-      console.error("[identity] BingeCat availability probe failed", error);
-    }
-  }
-
-  if (bingeCatUnavailable) {
-    return mappings;
-  }
 
   if (unresolvedRows.length) {
     try {
