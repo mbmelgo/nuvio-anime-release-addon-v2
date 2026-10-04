@@ -468,6 +468,7 @@ async function resolveMappingsForRows(
         resolveFribbMappings,
         resolveExternalMappings,
         resolveAnimeMapperMappings,
+        resolveAnimeMapperRelatedProviderIds,
       });
       for (const row of relationProtectedRows) {
         const relatedProviderIds = protectedIds.get(Number(row.id)) || [];
@@ -523,6 +524,7 @@ async function resolveRelatedProviderIds(rows, {
   resolveFribbMappings,
   resolveExternalMappings,
   resolveAnimeMapperMappings,
+  resolveAnimeMapperRelatedProviderIds,
 }) {
   const relationIds = new Set();
   const result = new Map();
@@ -566,15 +568,13 @@ async function resolveRelatedProviderIds(rows, {
     console.error("[identity] related ARM protection lookup failed", error);
   }
 
-  if (typeof resolveAnimeMapperMappings === "function") {
+  if (typeof resolveAnimeMapperRelatedProviderIds === "function") {
     try {
-      const animeMapperMappings = await resolveAnimeMapperMappings(rows);
-      for (const [currentId, records] of animeMapperMappings instanceof Map ? animeMapperMappings : []) {
+      const animeMapperProviderIds = await resolveAnimeMapperRelatedProviderIds(rows);
+      for (const [currentId, providerIds] of animeMapperProviderIds instanceof Map ? animeMapperProviderIds : []) {
         const protectedIds = result.get(Number(currentId));
         if (!protectedIds) continue;
-        for (const record of records || []) {
-          for (const providerId of providerIdsFromRecord(record)) protectedIds.add(providerId);
-        }
+        for (const providerId of providerIds || []) protectedIds.add(providerId);
       }
     } catch (error) {
       console.error("[identity] related Anime Mapper protection lookup failed", error);
