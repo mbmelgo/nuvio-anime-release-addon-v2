@@ -13,9 +13,9 @@
     "sha": "c36f615b2ccbf4042080727d573abfc5754d5433",
     "vercelDeploymentId": "dpl_EkoDXCQMVBMNTs4UorP76NGyfEj8",
     "tag": "v1.23.0",
-    "releasedAt": "2026-10-04T05:50:00Z",
-    "ciRunId": null,
-    "ciRunUrl": null,
+    "releasedAt": "2026-10-04T05:52:09Z",
+    "ciRunId": 37181079043,
+    "ciRunUrl": "https://github.com/mbmelgo/nuvio-anime-release-addon-v2/actions/runs/37181079043",
     "smokeTest": "passed"
   }
 }
