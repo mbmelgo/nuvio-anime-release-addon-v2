@@ -19,6 +19,7 @@ import { resolveAniListMappingsAnimap } from "../lib/animap-mapping.js";
 import { resolveAniListMappingsIdMapper } from "../lib/idmapper-mapping.js";
 import { resolveAniListMappingsByBingeCatSearch } from "../lib/bingecat-search-mapping.js";
 import { resolveAniListMappingsByAnimeMapper } from "../lib/anime-mapper-mapping.js";
+import { resolveAniListMappingsByAniBridge } from "../lib/anibridge-mapping.js";
 import { resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
 import { resolveAniListMappingsFromAnimeApiTsv } from "../lib/animeapi-tsv-mapping.js";
 import { getBingeCatCandidates, selectBingeCatIdentity } from "../lib/bingecat-identity.js";
@@ -126,6 +127,7 @@ async function resolveMappingsForRows(
     resolveIdMapperMappings = resolveAniListMappingsIdMapper,
     resolveBingeCatSearchMappings = resolveAniListMappingsByBingeCatSearch,
     resolveAnimeMapperMappings = resolveAniListMappingsByAnimeMapper,
+    resolveAniBridgeMappings = resolveAniListMappingsByAniBridge,
     resolveTsvMappings = resolveAniListMappingsFromAnimeApiTsv,
     resolveImdbMappings = resolveAniListMappingsByImdbSearch,
     resolveSecondaryMappings = resolveAniListMappingsSecondary,
@@ -239,6 +241,20 @@ async function resolveMappingsForRows(
       }
     }
 
+    unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+      { ...row, anilistId: Number(row.id) },
+      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    ));
+
+    if (unresolvedRows.length) {
+      try {
+        const aniBridgeMappings = await resolveAniBridgeMappings(unresolvedRows);
+        mappings = mergeMappings(mappings, aniBridgeMappings);
+      } catch (error) {
+        console.error("[identity] degraded AniBridge mapping failed", error);
+      }
+    }
+
     return mappings;
   }
 
@@ -320,7 +336,21 @@ async function resolveMappingsForRows(
       const animeMapperMappings = await resolveAnimeMapperMappings(unresolvedRows);
       mappings = mergeMappings(mappings, animeMapperMappings);
     } catch (error) {
-      console.error("[identity] Anime Mapper mapping source failed; trying AnimeAPI TSV", error);
+      console.error("[identity] Anime Mapper mapping source failed; trying AniBridge", error);
+    }
+  }
+
+  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
+
+  if (unresolvedRows.length) {
+    try {
+      const aniBridgeMappings = await resolveAniBridgeMappings(unresolvedRows);
+      mappings = mergeMappings(mappings, aniBridgeMappings);
+    } catch (error) {
+      console.error("[identity] AniBridge mapping source failed; trying AnimeAPI TSV", error);
     }
   }
 

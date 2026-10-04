@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { canonicalizeCatalogPageWithBingeCat } from "../api/catalog-source.js";
+import { canonicalizeCatalogPageWithBingeCat as canonicalizeCatalogPageWithBingeCatImpl } from "../api/catalog-source.js";
+
+const emptyAniBridgeMappings = async () => new Map();
+
+async function canonicalizeCatalogPageWithBingeCat(mediaRows, options = {}) {
+  return canonicalizeCatalogPageWithBingeCatImpl(mediaRows, {
+    resolveAniBridgeMappings: emptyAniBridgeMappings,
+    ...options,
+  });
+}
 import { getBingeCatCandidates, selectBingeCatIdentity } from "../lib/bingecat-identity.js";
 
 test("seasonal catalog emits the validated BingeCat identity when ARM mapping is available", async () => {
