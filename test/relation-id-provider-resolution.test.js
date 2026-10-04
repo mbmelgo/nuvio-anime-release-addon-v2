@@ -444,15 +444,15 @@ test("shared provider IDs are accepted for compatible related installments", () 
     relatedProviderTitles: ["Aoashi"],
   };
   const record = {
-    source: "arm",
+    source: "animeapi",
     anilistId: 191788,
     type: "TV",
     imdbIds: [],
     tvdbId: 407840,
     tmdbTvId: null,
     tmdbMovieIds: [],
-    title: "Aoashi",
-    year: 2022,
+    title: "Aoashi Season 2",
+    year: 2026,
   };
 
   const candidate = getBingeCatCandidates(media, [record]).find(
