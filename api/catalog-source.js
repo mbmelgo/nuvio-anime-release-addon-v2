@@ -470,7 +470,18 @@ async function resolveMappingsForRows(
         resolveAnimeMapperMappings,
       });
       for (const row of relationProtectedRows) {
-        row.relatedProviderIds = protectedIds.get(Number(row.id)) || [];
+        const relatedProviderIds = protectedIds.get(Number(row.id)) || [];
+        row.relatedProviderIds = relatedProviderIds;
+        const records = mappings.get(Number(row.id)) || [];
+        if (relatedProviderIds.length && records.length) {
+          mappings.set(Number(row.id), records.map((record) => ({
+            ...record,
+            relatedProviderIds: [...new Set([
+              ...(Array.isArray(record?.relatedProviderIds) ? record.relatedProviderIds : []),
+              ...relatedProviderIds,
+            ])],
+          })));
+        }
       }
     } catch (error) {
       console.error("[identity] related provider protection failed; preserving existing fallbacks", error);
