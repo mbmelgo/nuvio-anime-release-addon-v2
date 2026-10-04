@@ -144,8 +144,8 @@ test("catalog identity resolution continues cheap provider sources when BingeCat
   assert.deepEqual(result.map((meta) => meta.id), ["tt9900901", "tt9900902"]);
   assert.equal(fribbCalls, 1);
   assert.equal(animapCalls, 1);
-  assert.equal(idMapperCalls, 1);
-  assert.equal(tsvCalls, 1);
+  assert.equal(idMapperCalls, 0);
+  assert.equal(tsvCalls, 0);
   assert.equal(imdbCalls, 0);
   assert.equal(secondaryCalls, 0);
 });
