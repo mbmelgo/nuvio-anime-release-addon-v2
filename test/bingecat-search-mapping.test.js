@@ -376,6 +376,42 @@ test("BingeCat search can derive a franchise prefix before a subtitle", async ()
   assert.equal(record.year, null);
 });
 
+test("BingeCat search marks one-word season base titles as installment-derived", async () => {
+  clearBingeCatSearchCache();
+  const result = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 191788,
+    type: "TV",
+    year: 2026,
+    titleEnglish: "Aoashi Season 2",
+    titleRomaji: "Aoashi 2nd Season",
+  }], {
+    fetchImpl: async (url) => {
+      const parsed = new URL(url);
+      if (parsed.searchParams.get("query") !== "Aoashi") {
+        return { ok: true, async json() { return { movies: [], series: [] }; } };
+      }
+      return {
+        ok: true,
+        async json() {
+          return {
+            series: [{
+              name: "Aoashi",
+              id: "tt15792808",
+              contentType: "series",
+              year: 2022,
+            }],
+          };
+        },
+      };
+    },
+  });
+
+  const record = result.get(191788)[0];
+  assert.equal(record.imdbIds[0], "tt15792808");
+  assert.equal(record.derivedTitle, true);
+  assert.equal(record.derivedInstallmentTitle, true);
+});
+
 test("BingeCat search derives a base title from File-numbered installments", async () => {
   clearBingeCatSearchCache();
   const result = await resolveAniListMappingsByBingeCatSearch([{
