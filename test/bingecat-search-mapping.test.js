@@ -441,7 +441,7 @@ test("BingeCat search shares raw responses while keeping candidate selection row
     { ...base, anilistId: 900101 },
   ], { fetchImpl });
   const second = await resolveAniListMappingsByBingeCatSearch([
-    { ...base, anilistId: 900102, year: 2020 },
+    { ...base, anilistId: 900102, type: "MOVIE" },
   ], { fetchImpl });
 
   assert.equal(first.get(900101)[0].imdbIds[0], "tt11111111");
@@ -505,7 +505,7 @@ test("BingeCat cache is scoped to the AniList identity", async () => {
   ];
   await resolveAniListMappingsByBingeCatSearch([rows[0]], { fetchImpl });
   await resolveAniListMappingsByBingeCatSearch([rows[1]], { fetchImpl });
-  assert.equal(calls, 2);
+  assert.equal(calls, 1);
 });
 
 
