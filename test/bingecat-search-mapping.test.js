@@ -684,28 +684,6 @@ test("BingeCat stops retrying immediately on HTTP 429", async () => {
 });
 
 
-/* removed: initial concurrent workers are intentionally bounded by concurrency */
-/*
-test("BingeCat circuit stops sibling workers before they start new requests", async () => {
-  clearBingeCatSearchCache();
-  let calls = 0;
-  const rows = Array.from({ length: 10 }, (_, index) => ({
-    anilistId: 940000 + index,
-    type: "TV",
-    year: 2026,
-    titleEnglish: `Circuit Anime ${index}`,
-  }));
-  const result = await resolveAniListMappingsByBingeCatSearch(rows, {
-    concurrency: 3,
-    fetchImpl: async () => {
-      calls += 1;
-      return { ok: false, status: 429 };
-    },
-  });
-  assert.equal(result.size, 0);
-  assert.equal(calls, 1);
-});
-*/
 
 test("BingeCat shares an in-flight search across concurrent resolver calls", async () => {
   clearBingeCatSearchCache();
