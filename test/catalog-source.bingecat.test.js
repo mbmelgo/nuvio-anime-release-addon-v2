@@ -43,7 +43,7 @@ test("catalog identity resolution supplements a valid TVDB identity with a prefe
   assert.equal(result.length, 1);
   assert.equal(result[0].id, "tt7441658");
   assert.equal(result[0].extra.bingecatProvider, "imdb");
-  assert.equal(verificationOptions.at(-1), undefined);
+  assert.equal(verificationOptions.at(-1), null);
 });
 
 import assert from "node:assert/strict";
