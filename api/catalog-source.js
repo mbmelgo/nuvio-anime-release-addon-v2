@@ -298,6 +298,23 @@ async function resolveMappingsForRows(
     getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
   ));
 
+  // AniBridge is a cached bulk mapping dataset. Consult it before per-title
+  // providers so a 50-item page can resolve from one shared lookup instead
+  // of opening dozens of individual upstream requests.
+  if (unresolvedRows.length) {
+    try {
+      const aniBridgeMappings = await resolveAniBridgeMappings(unresolvedRows);
+      mappings = mergeMappings(mappings, aniBridgeMappings);
+    } catch (error) {
+      console.error("[identity] AniBridge bulk mapping failed; trying AniMap", error);
+    }
+  }
+
+  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
+
   if (unresolvedRows.length) {
     try {
       const animapMappings = await resolveAnimapMappings(unresolvedRows.map((row) => Number(row.id)));
@@ -356,15 +373,6 @@ async function resolveMappingsForRows(
     { ...row, anilistId: Number(row.id) },
     getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
   ));
-
-  if (unresolvedRows.length) {
-    try {
-      const aniBridgeMappings = await resolveAniBridgeMappings(unresolvedRows);
-      mappings = mergeMappings(mappings, aniBridgeMappings);
-    } catch (error) {
-      console.error("[identity] AniBridge mapping source failed; trying AnimeAPI TSV", error);
-    }
-  }
 
   // Do not re-run BingeCat immediately after Anime Mapper. Final authoritative
   // verification below already checks every unverified identity; repeating the
