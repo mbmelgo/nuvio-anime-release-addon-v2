@@ -130,6 +130,7 @@ async function resolveMappingsForRows(
     resolveImdbMappings = resolveAniListMappingsByImdbSearch,
     resolveSecondaryMappings = resolveAniListMappingsSecondary,
     resolveAlternativeMappings = resolveAniListMappingsByMalIds,
+    probeBingeCat = process.env.NODE_ENV === "production",
   } = {},
 ) {
   // Preserve the documented resolver order; later independent sources only run after earlier candidates are unresolved.
@@ -151,7 +152,7 @@ async function resolveMappingsForRows(
   // upstream is access-denied/rate-limited, preserve the fast ARM mappings
   // and let canonical MAL identity remain the terminal fallback.
   let bingeCatUnavailable = false;
-  if (unresolvedRows.length) {
+  if (probeBingeCat && unresolvedRows.length) {
     try {
       const probeMappings = await resolveBingeCatSearchMappings(unresolvedRows.slice(0, 1), {
         onCircuitOpen: () => { bingeCatUnavailable = true; },
