@@ -108,8 +108,8 @@ test("catalog identity resolution short-circuits expensive sources when BingeCat
       idMapperCalls += 1;
       return new Map();
     },
-    resolveBingeCatSearchMappings: (searchRows) =>
-      resolveAniListMappingsByBingeCatSearch(searchRows, { fetchImpl, persistCircuit: true }),
+    resolveBingeCatSearchMappings: (searchRows, options = {}) =>
+      resolveAniListMappingsByBingeCatSearch(searchRows, { fetchImpl, persistCircuit: true, ...options }),
     resolveAnimeMapperMappings: async () => new Map(),
     resolveTsvMappings: async () => {
       tsvCalls += 1;
