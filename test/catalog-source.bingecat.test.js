@@ -310,7 +310,7 @@ test("catalog identity resolution performs only one BingeCat verification after 
 
 
 
-test("catalog identity resolution uses AniBridge bulk mappings after Anime Mapper is exhausted", async () => {
+test("catalog identity resolution uses cached AniBridge bulk mappings before per-title fallbacks", async () => {
   const rows = [row(901, 9901), row(902, 9902)];
   let aniBridgeCalls = 0;
 
@@ -319,14 +319,20 @@ test("catalog identity resolution uses AniBridge bulk mappings after Anime Mappe
     resolveMappings: async () => new Map(),
     resolveFribbMappings: async () => new Map(),
     resolveExternalMappings: () => new Map(),
-    resolveAnimapMappings: async () => new Map(),
-    resolveIdMapperMappings: async () => new Map(),
+    resolveAnimapMappings: async (ids) => {
+      throw new Error(`AniMap should not run before AniBridge: ${ids.join(",")}`);
+    },
+    resolveIdMapperMappings: async () => {
+      throw new Error("IDMapper should not run before AniBridge");
+    },
     resolveBingeCatSearchMappings: async (searchRows, options = {}) => {
       assert.deepEqual(searchRows.map((item) => item.id), [901]);
       options.onCircuitOpen?.();
       return new Map();
     },
-    resolveAnimeMapperMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => {
+      throw new Error("Anime Mapper should not run before AniBridge");
+    },
     resolveAniBridgeMappings: async (unresolvedRows) => {
       aniBridgeCalls += 1;
       assert.deepEqual(unresolvedRows.map((item) => item.id), [901, 902]);
