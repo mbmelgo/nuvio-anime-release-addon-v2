@@ -2,12 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { queryAnime } from "../lib/catalog-anilist.js";
 
-test("AniList retries HTTP 429 before failing", async () => {
+test("AniList retries HTTP 429 once before failing", async () => {
   const originalFetch = globalThis.fetch;
   let calls = 0;
   globalThis.fetch = async () => {
     calls += 1;
-    if (calls < 3) {
+    if (calls < 2) {
       return {
         ok: false,
         status: 429,
@@ -29,7 +29,7 @@ test("AniList retries HTTP 429 before failing", async () => {
       1,
     );
     assert.deepEqual(result.map((row) => row.id), [12345]);
-    assert.equal(calls, 3);
+    assert.equal(calls, 2);
   } finally {
     globalThis.fetch = originalFetch;
   }
