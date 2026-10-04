@@ -11,6 +11,17 @@ test("release workflow exposes manual dispatch inputs", () => {
   assert.match(deployWorkflow, /release_target_sha:/);
 });
 
+test("release finalizer synchronizes the README production version", () => {
+  assert.equal(
+    deployWorkflow.includes('readme = re.sub(r"(\\*\\*Production:\\*\\*\\s*)`[^`]+`", rf"\\g<1>`v{version}`", readme)'),
+    true,
+  );
+  assert.equal(
+    deployWorkflow.includes('readme = re.sub(r"(\\\\*\\\\*Production:'),
+    false,
+  );
+});
+
 test("release finalization validates the deployed target version", () => {
   assert.match(deployWorkflow, /git show/);
   assert.equal(deployWorkflow.includes("api/version.js"), true);
