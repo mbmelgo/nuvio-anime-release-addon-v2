@@ -132,7 +132,7 @@
       "released": "2026-10-23T00:00:00.000Z"
     },
     {
-      "id": "mal:54344",
+      "id": "tt39240299",
       "type": "series",
       "name": "Mahou Shoujo Ikusei Keikaku: restart",
       "posterShape": "poster",
@@ -149,9 +149,10 @@
         "titleRomaji": "Mahou Shoujo Ikusei Keikaku: restart",
         "titleNative": "魔法少女育成計画 restart",
         "status": "NOT_YET_RELEASED",
-        "bingecatProvider": null,
-        "bingecatId": null,
-        "bingecatEvidence": "canonical-mal-id-fallback"
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt39240299",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
       },
       "releaseInfo": "2026",
       "released": "2026-10-06T00:00:00.000Z"
@@ -542,7 +543,7 @@
       "released": "2026-10-04T00:00:00.000Z"
     },
     {
-      "id": "mal:61440",
+      "id": "tt19869172",
       "type": "series",
       "name": "My Happy Marriage Special Episodes",
       "posterShape": "poster",
@@ -559,9 +560,10 @@
         "titleRomaji": "Watashi no Shiawase na Kekkon Tokubetsu-hen",
         "titleNative": "わたしの幸せな結婚 特別篇",
         "status": "NOT_YET_RELEASED",
-        "bingecatProvider": null,
-        "bingecatId": null,
-        "bingecatEvidence": "canonical-mal-id-fallback"
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt19869172",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
       },
       "releaseInfo": "2026",
       "released": "2026-10-25T00:00:00.000Z"
@@ -715,7 +717,7 @@
       "released": "2026-10-10T00:00:00.000Z"
     },
     {
-      "id": "mal:61967",
+      "id": "tt7441658",
       "type": "series",
       "name": "Black Clover Season 2",
       "posterShape": "poster",
@@ -733,9 +735,10 @@
         "titleRomaji": "Black Clover 2nd Season",
         "titleNative": "ブラッククローバー 第2期",
         "status": "RELEASING",
-        "bingecatProvider": null,
-        "bingecatId": null,
-        "bingecatEvidence": "canonical-mal-id-fallback"
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt7441658",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
       },
       "releaseInfo": "2026-",
       "released": "2026-10-03T00:00:00.000Z"
@@ -817,7 +820,7 @@
       "released": "2026-10-03T00:00:00.000Z"
     },
     {
-      "id": "mal:62534",
+      "id": "tt15660128",
       "type": "series",
       "name": "The Prince of Tennis II U-17 WORLD CUP: Final Member Selection Match",
       "posterShape": "poster",
@@ -834,9 +837,10 @@
         "titleRomaji": "Shin Tennis no Ouji-sama: U-17 WORLD CUP Kesshou Member Ketteisen",
         "titleNative": "新テニスの王子様 U-17 WORLD CUP 決勝メンバー決定戦",
         "status": "RELEASING",
-        "bingecatProvider": null,
-        "bingecatId": null,
-        "bingecatEvidence": "canonical-mal-id-fallback"
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt15660128",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
       },
       "releaseInfo": "2026-",
       "released": "2026-10-01T00:00:00.000Z"
@@ -869,7 +873,7 @@
       "released": "2026-10-16T00:00:00.000Z"
     },
     {
-      "id": "mal:62590",
+      "id": "tt35995459",
       "type": "series",
       "name": "HOTEL INHUMANS Season 2",
       "posterShape": "poster",
@@ -885,9 +889,10 @@
         "titleRomaji": "Hotel Inhumans 2nd Season",
         "titleNative": "ホテル・インヒューマンズ 第2期",
         "status": "NOT_YET_RELEASED",
-        "bingecatProvider": null,
-        "bingecatId": null,
-        "bingecatEvidence": "canonical-mal-id-fallback"
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt35995459",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
       },
       "releaseInfo": "2026",
       "released": "2026-10-04T00:00:00.000Z"
@@ -1145,7 +1150,7 @@
       "released": "2026-10-05T00:00:00.000Z"
     },
     {
-      "id": "mal:63140",
+      "id": "tt33258199",
       "type": "series",
       "name": "A Wild Last Boss Appeared! Season 2",
       "posterShape": "poster",
@@ -1162,9 +1167,10 @@
         "titleRomaji": "Yasei no Last Boss ga Arawareta! 2nd Season",
         "titleNative": "野生のラスボスが現れた！ 第2期",
         "status": "RELEASING",
-        "bingecatProvider": null,
-        "bingecatId": null,
-        "bingecatEvidence": "canonical-mal-id-fallback"
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt33258199",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
       },
       "releaseInfo": "2026-",
       "released": "2026-09-26T00:00:00.000Z"
@@ -1265,6 +1271,1088 @@
       },
       "releaseInfo": "2026-",
       "released": "2026-10-09T00:00:00.000Z"
+    },
+    {
+      "id": "tt39369076",
+      "type": "series",
+      "name": "Soukou Kihei Votoms: Haiiro no Hexe",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx206163-c5DwZdBNCXEO.jpg",
+      "genres": [
+        "Mecha",
+        "Sci-Fi"
+      ],
+      "extra": {
+        "anilistId": 206163,
+        "malId": 63323,
+        "titleRomaji": "Soukou Kihei Votoms: Haiiro no Hexe",
+        "titleNative": "装甲騎兵ボトムズ 灰色の魔女",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt39369076",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-11-20T00:00:00.000Z"
+    },
+    {
+      "id": "tt43119470",
+      "type": "series",
+      "name": "FX Fighter Kurumi-chan",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx206401-8cAebkI0i8BA.png",
+      "genres": [
+        "Drama",
+        "Slice of Life"
+      ],
+      "extra": {
+        "anilistId": 206401,
+        "malId": 63337,
+        "titleEnglish": "FX Fighter Kurumi-chan",
+        "titleRomaji": "FX Senshi Kurumi-chan",
+        "titleNative": "FX戦士くるみちゃん",
+        "status": "RELEASING",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt43119470",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026-",
+      "released": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "id": "tvdb:473125",
+      "type": "series",
+      "name": "Now That I Can Control Reality With A Mouse Cursor, I'm Gonna Click Away On The Girls!",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx206774-S65hVQp46NUf.jpg",
+      "genres": [
+        "Ecchi",
+        "Romance",
+        "Supernatural"
+      ],
+      "extra": {
+        "anilistId": 206774,
+        "malId": 63381,
+        "titleEnglish": "Now That I Can Control Reality With A Mouse Cursor, I'm Gonna Click Away On The Girls!",
+        "titleRomaji": "Mouse Cursor de Genjitsu wo Sousa Dekiru You ni Natta node, Onnanoko wo Ippai Click Shimasu",
+        "titleNative": "マウスカーソルで現実を操作できるようになったので、女の子をいっぱいクリックしまーす",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": "tvdb",
+        "bingecatId": "473125",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-05T00:00:00.000Z"
+    },
+    {
+      "id": "mal:63367",
+      "type": "series",
+      "name": "Dragon Ball Super: Beerus",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx206814-PVVzRbf1IQpe.jpg",
+      "genres": [
+        "Action",
+        "Adventure",
+        "Sci-Fi"
+      ],
+      "extra": {
+        "anilistId": 206814,
+        "malId": 63367,
+        "titleEnglish": "Dragon Ball Super: Beerus",
+        "titleRomaji": "Dragon Ball Super: Beerus",
+        "titleNative": "ドラゴンボール超 ビルス",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": null,
+        "bingecatId": null,
+        "bingecatEvidence": "canonical-mal-id-fallback"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-11T00:00:00.000Z"
+    },
+    {
+      "id": "tt41296544",
+      "type": "series",
+      "name": "Nia Liston: The Merciless Maiden",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx206949-4HYI3YuP0eLI.png",
+      "genres": [
+        "Fantasy"
+      ],
+      "extra": {
+        "anilistId": 206949,
+        "malId": 63382,
+        "titleEnglish": "Nia Liston: The Merciless Maiden",
+        "titleRomaji": "Kyouran Reijou Nia Liston",
+        "titleNative": "凶乱令嬢ニア・リストン",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt41296544",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-06T00:00:00.000Z"
+    },
+    {
+      "id": "tt43650300",
+      "type": "series",
+      "name": "Hello, I am a Witch and my Crush Wants me to Make a Love Potion!",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b207191-MV0uJNxN7LNY.jpg",
+      "genres": [
+        "Fantasy",
+        "Romance"
+      ],
+      "extra": {
+        "anilistId": 207191,
+        "malId": 63409,
+        "titleEnglish": "Hello, I am a Witch and my Crush Wants me to Make a Love Potion!",
+        "titleRomaji": "Doumo, Suki na Hito ni Horegusuri wo Irai Sareta Majo desu.",
+        "titleNative": "どうも、好きな人に惚れ薬を依頼された魔女です。",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt43650300",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-05T00:00:00.000Z"
+    },
+    {
+      "id": "tmdb:336630",
+      "type": "series",
+      "name": "Delivery Kitten Unyan (2026)",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b207217-IxKfwpEZZzLh.png",
+      "genres": [
+        "Slice of Life"
+      ],
+      "extra": {
+        "anilistId": 207217,
+        "malId": 65079,
+        "titleEnglish": "Delivery Kitten Unyan (2026)",
+        "titleRomaji": "Koneko no Haitatsuin Uunyan (2026)",
+        "titleNative": "子猫の配達員うーにゃん (2026)",
+        "status": "RELEASING",
+        "bingecatProvider": "tmdb",
+        "bingecatId": "336630",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026-",
+      "released": "2026-09-27T00:00:00.000Z"
+    },
+    {
+      "id": "tt43691434",
+      "type": "series",
+      "name": "To You in the Beyond",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx207327-OSrMbh8DrGE4.jpg",
+      "genres": [
+        "Mystery",
+        "Romance"
+      ],
+      "extra": {
+        "anilistId": 207327,
+        "malId": 63423,
+        "titleEnglish": "To You in the Beyond",
+        "titleRomaji": "Doko yori mo Tooi Basho ni Iru Kimi e",
+        "titleNative": "どこよりも遠い場所にいる君へ",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt43691434",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-09T00:00:00.000Z"
+    },
+    {
+      "id": "tt43691412",
+      "type": "series",
+      "name": "The Laid-Off Cheat-Granting Mage Enjoys a Second Lease on Life",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b207329-6VPeZIDfF4Sr.png",
+      "genres": [
+        "Adventure",
+        "Comedy",
+        "Fantasy",
+        "Slice of Life"
+      ],
+      "extra": {
+        "anilistId": 207329,
+        "malId": 63431,
+        "titleEnglish": "The Laid-Off Cheat-Granting Mage Enjoys a Second Lease on Life",
+        "titleRomaji": "Tsuihou Sareta Cheat Fuyo Majutsushi wa Kimama na Second Life wo Ouka Suru.: Ore wa Buki dake ja Naku, Arayuru Mono ni \"Kyouka Point\" wo Fuyo Dekiru shi, Ore no Ishi de Itsudemo Kouka wo Kaijo Dekiru kedo, Nokotta Hitotachi Daijoubu?",
+        "titleNative": "追放されたチート付与魔術師は気ままなセカンドライフを謳歌する。　～俺は武器だけじゃなく、あらゆるものに『強化ポイント』を付与できるし、俺の意思でいつでも効果を解除できるけど、残った人たち大丈夫？～",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt43691412",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-07T00:00:00.000Z"
+    },
+    {
+      "id": "tt43650323",
+      "type": "series",
+      "name": "I'm Dating a Dark Summoner",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx208025-JKvqWNr8rz8l.jpg",
+      "genres": [
+        "Comedy",
+        "Ecchi",
+        "Fantasy",
+        "Romance"
+      ],
+      "extra": {
+        "anilistId": 208025,
+        "malId": 63509,
+        "titleEnglish": "I'm Dating a Dark Summoner",
+        "titleRomaji": "Dark Summoner to Dekiteiru",
+        "titleNative": "ダークサモナーとデキている",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt43650323",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-05T00:00:00.000Z"
+    },
+    {
+      "id": "tt0404597",
+      "type": "series",
+      "name": "Duel Masters LOST: Danzai no Shounen",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx208367-Z3OsCdeAopH4.png",
+      "genres": [
+        "Adventure",
+        "Supernatural"
+      ],
+      "extra": {
+        "anilistId": 208367,
+        "malId": 64848,
+        "titleRomaji": "Duel Masters LOST: Danzai no Shounen",
+        "titleNative": "Duel Masters LOST ～断罪の少年～",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt0404597",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-09T00:00:00.000Z"
+    },
+    {
+      "id": "mal:63667",
+      "type": "series",
+      "name": "Mahou no Shimai LuluttoLilly Part 2",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx209032-MD8TDzYtFoL0.png",
+      "genres": [
+        "Mahou Shoujo",
+        "Music"
+      ],
+      "extra": {
+        "anilistId": 209032,
+        "malId": 63667,
+        "titleRomaji": "Mahou no Shimai LuluttoLilly Part 2",
+        "titleNative": "魔法の姉妹ルルットリリィ 第2クール",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": null,
+        "bingecatId": null,
+        "bingecatEvidence": "canonical-mal-id-fallback"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-04T00:00:00.000Z"
+    },
+    {
+      "id": "tt43691383",
+      "type": "series",
+      "name": "So What's Wrong with Getting Reborn as a Goblin?",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx209219-3yhKlRx0LX3p.jpg",
+      "genres": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Drama",
+        "Fantasy",
+        "Romance"
+      ],
+      "extra": {
+        "anilistId": 209219,
+        "malId": 63712,
+        "titleEnglish": "So What's Wrong with Getting Reborn as a Goblin?",
+        "titleRomaji": "Tensei Goblin Dakedo Shitsumon Aru?",
+        "titleNative": "転生ゴブリンだけど質問ある？",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt43691383",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-05T00:00:00.000Z"
+    },
+    {
+      "id": "tt43691315",
+      "type": "series",
+      "name": "From Far Away",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx209463-Yxk2q10RXgg8.jpg",
+      "genres": [
+        "Adventure",
+        "Fantasy",
+        "Romance"
+      ],
+      "extra": {
+        "anilistId": 209463,
+        "malId": 63753,
+        "titleEnglish": "From Far Away",
+        "titleRomaji": "Kanata Kara",
+        "titleNative": "彼方から",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt43691315",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-05T00:00:00.000Z"
+    },
+    {
+      "id": "tt43691394",
+      "type": "series",
+      "name": "TANK CHAIR: Sensha Isu",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx209499-S0sWFrCpft85.jpg",
+      "genres": [
+        "Action",
+        "Sci-Fi"
+      ],
+      "extra": {
+        "anilistId": 209499,
+        "malId": 63751,
+        "titleRomaji": "TANK CHAIR: Sensha Isu",
+        "titleNative": "TANK CHAIR-戦車椅子-",
+        "status": "RELEASING",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt43691394",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026-",
+      "released": "2026-10-04T00:00:00.000Z"
+    },
+    {
+      "id": "tt43691365",
+      "type": "series",
+      "name": "The Cold Sato-san is Only Sweet to Me",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx209502-C81oN8M4Smlo.jpg",
+      "genres": [
+        "Comedy",
+        "Romance"
+      ],
+      "extra": {
+        "anilistId": 209502,
+        "malId": 63754,
+        "titleEnglish": "The Cold Sato-san is Only Sweet to Me",
+        "titleRomaji": "Shiotaiou no Satou-san ga Ore ni dake Amai",
+        "titleNative": "塩対応の佐藤さんが俺にだけ甘い",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt43691365",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-06T00:00:00.000Z"
+    },
+    {
+      "id": "tt42487863",
+      "type": "series",
+      "name": "VERTEX FORCE",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx209562-kQQbTKDuql9p.jpg",
+      "genres": [
+        "Action",
+        "Mecha"
+      ],
+      "extra": {
+        "anilistId": 209562,
+        "malId": 63764,
+        "titleEnglish": "VERTEX FORCE",
+        "titleRomaji": "Vertex Force",
+        "titleNative": "バーテックスフォース",
+        "status": "RELEASING",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt42487863",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026-",
+      "released": "2026-10-03T00:00:00.000Z"
+    },
+    {
+      "id": "tt43650359",
+      "type": "series",
+      "name": "Maebashi Witches: Majo Minarai no Emoemories",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx209642-qNj4Wz2hXTvi.jpg",
+      "genres": [
+        "Drama",
+        "Mahou Shoujo",
+        "Music",
+        "Supernatural"
+      ],
+      "extra": {
+        "anilistId": 209642,
+        "malId": 63772,
+        "titleRomaji": "Maebashi Witches: Majo Minarai no Emoemories",
+        "titleNative": "劇場版 前橋ウィッチーズ ～魔女見習いのエモエモリーズ～",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt43650359",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-23T00:00:00.000Z"
+    },
+    {
+      "id": "tt43665709",
+      "type": "series",
+      "name": "Sirotan",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx209709-Wz8BKL1fm5MC.png",
+      "extra": {
+        "anilistId": 209709,
+        "malId": 63901,
+        "titleRomaji": "Sirotan",
+        "titleNative": "しろたん",
+        "status": "RELEASING",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt43665709",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026-",
+      "released": "2026-10-03T00:00:00.000Z"
+    },
+    {
+      "id": "mal:63801",
+      "type": "series",
+      "name": "Ranma1/2 (2024) Season 3",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx209872-RBeVPqwejHFp.jpg",
+      "genres": [
+        "Action",
+        "Comedy",
+        "Romance"
+      ],
+      "extra": {
+        "anilistId": 209872,
+        "malId": 63801,
+        "titleEnglish": "Ranma1/2 (2024) Season 3",
+        "titleRomaji": "Ranma 1/2 (2024) 3rd Season",
+        "titleNative": "らんま1/2 (2024) 第3期",
+        "status": "RELEASING",
+        "bingecatProvider": null,
+        "bingecatId": null,
+        "bingecatEvidence": "canonical-mal-id-fallback"
+      },
+      "releaseInfo": "2026-",
+      "released": "2026-10-04T00:00:00.000Z"
+    },
+    {
+      "id": "mal:61469",
+      "type": "series",
+      "name": "STEEL BALL RUN JoJo's Bizarre Adventure 2nd - 3rd STAGE",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx210482-P1VNKbqdJ6Zj.jpg",
+      "genres": [
+        "Action",
+        "Adventure",
+        "Drama",
+        "Mystery",
+        "Supernatural"
+      ],
+      "extra": {
+        "anilistId": 210482,
+        "malId": 61469,
+        "titleEnglish": "STEEL BALL RUN JoJo's Bizarre Adventure 2nd - 3rd STAGE",
+        "titleRomaji": "JoJo no Kimyou na Bouken: Steel Ball Run - 2nd & 3rd STAGE",
+        "titleNative": "ジョジョの奇妙な冒険 スティール・ボール・ラン 2nd＆3rd STAGE",
+        "status": "RELEASING",
+        "bingecatProvider": null,
+        "bingecatId": null,
+        "bingecatEvidence": "canonical-mal-id-fallback"
+      },
+      "releaseInfo": "2026-",
+      "released": "2026-09-25T00:00:00.000Z"
+    },
+    {
+      "id": "tvdb:477424",
+      "type": "series",
+      "name": "The World's Strongest Witch",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx211778-0MXK5HqVFBYH.jpg",
+      "genres": [
+        "Action",
+        "Comedy",
+        "Fantasy"
+      ],
+      "extra": {
+        "anilistId": 211778,
+        "malId": 64084,
+        "titleEnglish": "The World's Strongest Witch",
+        "titleRomaji": "Sekai Saikyou no Majo, Hajimemashita",
+        "titleNative": "世界最強の魔女、始めました",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": "tvdb",
+        "bingecatId": "477424",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-07T00:00:00.000Z"
+    },
+    {
+      "id": "tvdb:477658",
+      "type": "series",
+      "name": "My Girlfriend's Friend",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx211877-yWQ2r7XmWvG6.jpg",
+      "genres": [
+        "Drama",
+        "Ecchi",
+        "Romance"
+      ],
+      "extra": {
+        "anilistId": 211877,
+        "malId": 64131,
+        "titleEnglish": "My Girlfriend's Friend",
+        "titleRomaji": "Kanojo no Tomodachi",
+        "titleNative": "彼女の友達",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": "tvdb",
+        "bingecatId": "477658",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-05T00:00:00.000Z"
+    },
+    {
+      "id": "mal:64180",
+      "type": "series",
+      "name": "With Vengeance, Sincerely, Your Broken Saintess Season 2",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b212144-9qJMcEdy4Xbo.jpg",
+      "genres": [
+        "Fantasy",
+        "Romance"
+      ],
+      "extra": {
+        "anilistId": 212144,
+        "malId": 64180,
+        "titleEnglish": "With Vengeance, Sincerely, Your Broken Saintess Season 2",
+        "titleRomaji": "Kizu darake Seijo yori Houfuku wo Komete Season2",
+        "titleNative": "傷だらけ聖女より報復をこめて Season2",
+        "status": "RELEASING",
+        "bingecatProvider": null,
+        "bingecatId": null,
+        "bingecatEvidence": "canonical-mal-id-fallback"
+      },
+      "releaseInfo": "2026-",
+      "released": "2026-10-02T00:00:00.000Z"
+    },
+    {
+      "id": "mal:64254",
+      "type": "series",
+      "name": "The Iceblade Sorcerer Shall Rule the World II",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx212503-sXBpRZr96c4e.jpg",
+      "genres": [
+        "Action",
+        "Adventure",
+        "Fantasy"
+      ],
+      "extra": {
+        "anilistId": 212503,
+        "malId": 64254,
+        "titleEnglish": "The Iceblade Sorcerer Shall Rule the World II",
+        "titleRomaji": "Hyouken no Majutsushi ga Sekai wo Suberu II",
+        "titleNative": "冰剣の魔術師が世界を統べるⅡ",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": null,
+        "bingecatId": null,
+        "bingecatEvidence": "canonical-mal-id-fallback"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-09T00:00:00.000Z"
+    },
+    {
+      "id": "tt36988358",
+      "type": "series",
+      "name": "Takopii no Genzai: Arigatou, Mata Ashita",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx212539-mZ3VbIErKBOr.png",
+      "genres": [
+        "Drama",
+        "Psychological",
+        "Sci-Fi"
+      ],
+      "extra": {
+        "anilistId": 212539,
+        "malId": 64266,
+        "titleRomaji": "Takopii no Genzai: Arigatou, Mata Ashita",
+        "titleNative": "タコピーの原罪 -ありがとう、また明日-",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt36988358",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-11-27T00:00:00.000Z"
+    },
+    {
+      "id": "tt44757191",
+      "type": "series",
+      "name": "The Seven Knights of the Marronnier Kingdom",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx212799-n7WDdic7IL1z.png",
+      "genres": [
+        "Comedy",
+        "Fantasy",
+        "Romance"
+      ],
+      "extra": {
+        "anilistId": 212799,
+        "malId": 64326,
+        "titleEnglish": "The Seven Knights of the Marronnier Kingdom",
+        "titleRomaji": "Marronnier Oukoku no Shichinin no Kishi",
+        "titleNative": "マロニエ王国の七人の騎士",
+        "status": "RELEASING",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt44757191",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026-",
+      "released": "2026-10-03T00:00:00.000Z"
+    },
+    {
+      "id": "tt43691353",
+      "type": "series",
+      "name": "Overgeared",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx212888-NhyvqPt5aIuJ.jpg",
+      "genres": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Fantasy"
+      ],
+      "extra": {
+        "anilistId": 212888,
+        "malId": 64340,
+        "titleEnglish": "Overgeared",
+        "titleRomaji": "Tempal: Item no Chikara",
+        "titleNative": "テムパル～アイテムの力～",
+        "status": "RELEASING",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt43691353",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026-",
+      "released": "2026-09-27T00:00:00.000Z"
+    },
+    {
+      "id": "tt43339903",
+      "type": "series",
+      "name": "Dandivine",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx213068-aFSedkY5bQ4m.png",
+      "genres": [
+        "Action",
+        "Mecha"
+      ],
+      "extra": {
+        "anilistId": 213068,
+        "malId": 64344,
+        "titleEnglish": "Dandivine",
+        "titleRomaji": "Juuоu Mujin Dandivine",
+        "titleNative": "獣王武神ダンデヴァイン",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt43339903",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-08T00:00:00.000Z"
+    },
+    {
+      "id": "tvdb:479331",
+      "type": "series",
+      "name": "Yuruyuru Zukan",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx213298-ymB1Sw0yDZ0Y.jpg",
+      "extra": {
+        "anilistId": 213298,
+        "malId": 64430,
+        "titleRomaji": "Yuruyuru Zukan",
+        "titleNative": "ゆるゆる図鑑",
+        "status": "RELEASING",
+        "bingecatProvider": "tvdb",
+        "bingecatId": "479331",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026-",
+      "released": "2026-10-04T00:00:00.000Z"
+    },
+    {
+      "id": "tt43613803",
+      "type": "series",
+      "name": "Fool Night",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx213457-gN5p1GZjK3zi.jpg",
+      "genres": [
+        "Drama",
+        "Psychological",
+        "Sci-Fi",
+        "Thriller"
+      ],
+      "extra": {
+        "anilistId": 213457,
+        "malId": 64459,
+        "titleEnglish": "Fool Night",
+        "titleRomaji": "Fool Night",
+        "titleNative": "フールナイト",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt43613803",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-11-26T00:00:00.000Z"
+    },
+    {
+      "id": "mal:64503",
+      "type": "series",
+      "name": "Mission: Yozakura Family Season 2 Part 2",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx213657-ORNXVEBCjXaz.jpg",
+      "genres": [
+        "Action",
+        "Comedy",
+        "Romance"
+      ],
+      "extra": {
+        "anilistId": 213657,
+        "malId": 64503,
+        "titleEnglish": "Mission: Yozakura Family Season 2 Part 2",
+        "titleRomaji": "Yozakura-san Chi no Daisakusen 2nd Season Part 2",
+        "titleNative": "夜桜さんちの大作戦 第2期 第2クール",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": null,
+        "bingecatId": null,
+        "bingecatEvidence": "canonical-mal-id-fallback"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-11T00:00:00.000Z"
+    },
+    {
+      "id": "mal:64505",
+      "type": "series",
+      "name": "Ace of the Diamond act II -Second Season-",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx213658-D3BPJaqawLxS.png",
+      "genres": [
+        "Sports"
+      ],
+      "extra": {
+        "anilistId": 213658,
+        "malId": 64505,
+        "titleEnglish": "Ace of the Diamond act II -Second Season-",
+        "titleRomaji": "Diamond no Ace act II: Second Season Part 2",
+        "titleNative": "ダイヤのA actⅡ -Second Season- 第2クール",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": null,
+        "bingecatId": null,
+        "bingecatEvidence": "canonical-mal-id-fallback"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-11T00:00:00.000Z"
+    },
+    {
+      "id": "mal:64534",
+      "type": "series",
+      "name": "The Ramparts of Ice Season 2",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx213805-Nokui3uWlIlw.png",
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Romance",
+        "Slice of Life"
+      ],
+      "extra": {
+        "anilistId": 213805,
+        "malId": 64534,
+        "titleEnglish": "The Ramparts of Ice Season 2",
+        "titleRomaji": "Koori no Jouheki 2nd Season",
+        "titleNative": "氷の城壁 第2期",
+        "status": "RELEASING",
+        "bingecatProvider": null,
+        "bingecatId": null,
+        "bingecatEvidence": "canonical-mal-id-fallback"
+      },
+      "releaseInfo": "2026-",
+      "released": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "id": "tt32083183",
+      "type": "series",
+      "name": "CARDFIGHT!! VANGUARD Divinez: Parallactic Fate",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx214536-dl2KJdHcKWJl.jpg",
+      "genres": [
+        "Action",
+        "Adventure",
+        "Fantasy"
+      ],
+      "extra": {
+        "anilistId": 214536,
+        "malId": 63938,
+        "titleEnglish": "CARDFIGHT!! VANGUARD Divinez: Parallactic Fate",
+        "titleRomaji": "Cardfight!! Vanguard Divinez Unmei Seisen-hen",
+        "titleNative": "カードファイト!! ヴァンガード Divinez 運命星戦編",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt32083183",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-11-07T00:00:00.000Z"
+    },
+    {
+      "id": "mal:64717",
+      "type": "series",
+      "name": "Yuusanchi! from Yuuhachi",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx214593-WZ0HaPSRae2E.png",
+      "genres": [
+        "Comedy",
+        "Slice of Life"
+      ],
+      "extra": {
+        "anilistId": 214593,
+        "titleRomaji": "Yuusanchi! from Yuuhachi",
+        "titleNative": "ゆうさんち！from 遊ハち",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": null,
+        "bingecatId": null,
+        "bingecatEvidence": "canonical-mal-id-fallback"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-05T00:00:00.000Z"
+    },
+    {
+      "id": "tt41046414",
+      "type": "series",
+      "name": "Nezumi-kun no Chokki (TV) 2nd Season",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx214968-rrPSP2nKF40C.jpg",
+      "genres": [
+        "Fantasy"
+      ],
+      "extra": {
+        "anilistId": 214968,
+        "titleRomaji": "Nezumi-kun no Chokki (TV) 2nd Season",
+        "titleNative": "ねずみくんのチョッキ (TV) 第2期",
+        "status": "RELEASING",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt41046414",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026-",
+      "released": "2026-10-03T00:00:00.000Z"
+    },
+    {
+      "id": "tt46066849",
+      "type": "series",
+      "name": "Umayuru: Full Gate!",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx215835-B0seSw93V5qM.png",
+      "genres": [
+        "Comedy",
+        "Slice of Life"
+      ],
+      "extra": {
+        "anilistId": 215835,
+        "malId": 64867,
+        "titleRomaji": "Umayuru: Full Gate!",
+        "titleNative": "うまゆるふるげ〜と!",
+        "status": "RELEASING",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt46066849",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026-",
+      "released": "2026-09-27T00:00:00.000Z"
+    },
+    {
+      "id": "tt0434693",
+      "type": "series",
+      "name": "KERORO☆",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx216557-9CXz04CEmXOi.png",
+      "genres": [
+        "Comedy",
+        "Sci-Fi"
+      ],
+      "extra": {
+        "anilistId": 216557,
+        "malId": 63157,
+        "titleEnglish": "KERORO☆",
+        "titleRomaji": "Keroro Gunsou☆",
+        "titleNative": "ケロロ軍曹☆",
+        "status": "RELEASING",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt0434693",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026-",
+      "released": "2026-10-03T00:00:00.000Z"
+    },
+    {
+      "id": "mal:63823",
+      "type": "series",
+      "name": "Punirunes Puni 4",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx216860-ghfSopHbPVNa.png",
+      "genres": [
+        "Slice of Life"
+      ],
+      "extra": {
+        "anilistId": 216860,
+        "titleRomaji": "Punirunes Puni 4",
+        "titleNative": "ぷにるんず ぷに４",
+        "status": "RELEASING",
+        "bingecatProvider": null,
+        "bingecatId": null,
+        "bingecatEvidence": "canonical-mal-id-fallback"
+      },
+      "releaseInfo": "2026-",
+      "released": "2026-10-04T00:00:00.000Z"
+    },
+    {
+      "id": "tt46653736",
+      "type": "series",
+      "name": "Welsh & Shedar",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx216895-Ofx4FSKFa4CQ.jpg",
+      "genres": [
+        "Adventure",
+        "Fantasy"
+      ],
+      "extra": {
+        "anilistId": 216895,
+        "malId": 65009,
+        "titleEnglish": "Welsh & Shedar",
+        "titleRomaji": "Aoki Denshou: Welsh & Shedar",
+        "titleNative": "蒼き伝承 ウェルシュ&シェーダー",
+        "status": "RELEASING",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt46653736",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream"
+      },
+      "releaseInfo": "2026-",
+      "released": "2026-10-02T00:00:00.000Z"
+    },
+    {
+      "id": "anilist:217282",
+      "type": "series",
+      "name": "GelPiyo 2",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx217282-fRAAhF2b5eIr.png",
+      "genres": [
+        "Comedy"
+      ],
+      "extra": {
+        "anilistId": 217282,
+        "titleRomaji": "GelPiyo 2",
+        "titleNative": "ゲルぴよ 2",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": null,
+        "bingecatId": null,
+        "bingecatEvidence": "anilist-id-fallback"
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-21T00:00:00.000Z"
+    },
+    {
+      "id": "mal:65007",
+      "type": "series",
+      "name": "Mazenchu",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx217577-bYfoFScj9Pwi.jpg",
+      "genres": [
+        "Slice of Life"
+      ],
+      "extra": {
+        "anilistId": 217577,
+        "malId": 65007,
+        "titleRomaji": "Mazenchu",
+        "titleNative": "マゼンチュ",
+        "status": "RELEASING",
+        "bingecatProvider": null,
+        "bingecatId": null,
+        "bingecatEvidence": "canonical-mal-id-fallback"
+      },
+      "releaseInfo": "2026-",
+      "released": "2026-10-02T00:00:00.000Z"
+    },
+    {
+      "id": "mal:65095",
+      "type": "series",
+      "name": "PetitCure: Precure Fairies Season 4",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx217624-Cwkze5dZ5txL.jpg",
+      "genres": [
+        "Fantasy",
+        "Slice of Life"
+      ],
+      "extra": {
+        "anilistId": 217624,
+        "malId": 65095,
+        "titleRomaji": "PetitCure: Precure Fairies Season 4",
+        "titleNative": "ぷちきゅあ～Precure Fairies～ シーズン4",
+        "status": "RELEASING",
+        "bingecatProvider": null,
+        "bingecatId": null,
+        "bingecatEvidence": "canonical-mal-id-fallback"
+      },
+      "releaseInfo": "2026-",
+      "released": "2026-10-01T00:00:00.000Z"
     }
   ]
 }
