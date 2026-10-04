@@ -164,6 +164,15 @@ async function resolveMappingsForRows(
   }
 
   if (bingeCatUnavailable) {
+    // Fribb is a single shared dataset request, so it is still safe in
+    // degraded mode and can recover provider identities without reopening
+    // the per-title AniMap/IDMapper/IMDb/secondary fan-out.
+    try {
+      const fribb = await resolveFribbMappings(unresolvedRows.map((row) => Number(row.id)));
+      mappings = mergeMappings(mappings, fribb);
+    } catch (error) {
+      console.error("[identity] Fribb degraded-mode mapping failed", error);
+    }
     return mappings;
   }
 

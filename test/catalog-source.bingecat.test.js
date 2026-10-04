@@ -92,9 +92,23 @@ test("catalog identity resolution short-circuits expensive sources when BingeCat
   const result = await canonicalizeCatalogPageWithBingeCat(rows, {
     probeBingeCat: true,
     resolveMappings: async () => new Map(),
-    resolveFribbMappings: async () => {
+    resolveFribbMappings: async (ids) => {
       fribbCalls += 1;
-      return new Map();
+      assert.deepEqual(ids, [901, 902]);
+      return new Map([[
+        901,
+        [{
+          source: "fribb",
+          anilistId: 901,
+          type: "TV",
+          imdbIds: ["tt9900901"],
+          tvdbId: null,
+          tmdbTvId: null,
+          tmdbMovieIds: [],
+          season: null,
+          episodeOffset: null,
+        }],
+      ]]);
     },
     resolveAnimapMappings: async () => {
       animapCalls += 1;
@@ -126,8 +140,8 @@ test("catalog identity resolution short-circuits expensive sources when BingeCat
   });
 
   assert.equal(result.length, rows.length);
-  assert.deepEqual(result.map((meta) => meta.id), ["mal:9901", "mal:9902"]);
-  assert.equal(fribbCalls, 0);
+  assert.deepEqual(result.map((meta) => meta.id), ["tt9900901", "mal:9902"]);
+  assert.equal(fribbCalls, 1);
   assert.equal(animapCalls, 0);
   assert.equal(idMapperCalls, 0);
   assert.equal(tsvCalls, 0);
