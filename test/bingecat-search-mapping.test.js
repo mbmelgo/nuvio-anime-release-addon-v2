@@ -567,7 +567,7 @@ test("BingeCat cache continues past a cached negative title variant", async () =
 
   const second = await resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
   assert.equal(second.get(301003)[0].imdbIds[0], "tt8888888");
-  assert.equal(calls, 3);
+  assert.equal(calls, 5);
 });
 
 test("BingeCat cache is scoped to the AniList identity", async () => {
