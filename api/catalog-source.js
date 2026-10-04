@@ -183,25 +183,46 @@ async function resolveMappingsForRows(
       console.error("[identity] degraded AniList external mapping failed", error);
     }
 
-    try {
-      const animapMappings = await resolveAnimapMappings(unresolvedRows.map((row) => Number(row.id)));
-      mappings = mergeMappings(mappings, animapMappings);
-    } catch (error) {
-      console.error("[identity] degraded AniMap mapping failed", error);
+    unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+      { ...row, anilistId: Number(row.id) },
+      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    ));
+
+    if (unresolvedRows.length) {
+      try {
+        const animapMappings = await resolveAnimapMappings(unresolvedRows.map((row) => Number(row.id)));
+        mappings = mergeMappings(mappings, animapMappings);
+      } catch (error) {
+        console.error("[identity] degraded AniMap mapping failed", error);
+      }
     }
 
-    try {
-      const idMapperMappings = await resolveIdMapperMappings(unresolvedRows.map((row) => Number(row.id)));
-      mappings = mergeMappings(mappings, idMapperMappings);
-    } catch (error) {
-      console.error("[identity] degraded IDMapper mapping failed", error);
+    unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+      { ...row, anilistId: Number(row.id) },
+      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    ));
+
+    if (unresolvedRows.length) {
+      try {
+        const idMapperMappings = await resolveIdMapperMappings(unresolvedRows.map((row) => Number(row.id)));
+        mappings = mergeMappings(mappings, idMapperMappings);
+      } catch (error) {
+        console.error("[identity] degraded IDMapper mapping failed", error);
+      }
     }
 
-    try {
-      const tsvMappings = await resolveTsvMappings(unresolvedRows.map((row) => Number(row.id)));
-      mappings = mergeMappings(mappings, tsvMappings);
-    } catch (error) {
-      console.error("[identity] degraded AnimeAPI TSV mapping failed", error);
+    unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+      { ...row, anilistId: Number(row.id) },
+      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    ));
+
+    if (unresolvedRows.length) {
+      try {
+        const tsvMappings = await resolveTsvMappings(unresolvedRows.map((row) => Number(row.id)));
+        mappings = mergeMappings(mappings, tsvMappings);
+      } catch (error) {
+        console.error("[identity] degraded AnimeAPI TSV mapping failed", error);
+      }
     }
 
     return mappings;
