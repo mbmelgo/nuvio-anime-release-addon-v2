@@ -170,7 +170,7 @@ Catalog names and season labels are generated dynamically.
 
 The 1.23.0 development baseline hardens BingeCat identity selection so unverified provider mappings cannot inherit identities from explicit franchise-related anime.
 
-The 1.24.0 development baseline protects unverified provider identities that belong to explicit AniList-related anime before final BingeCat verification, using targeted bulk relation checks.
+The 1.24.0 development baseline protects unverified provider identities that belong to explicit AniList-related anime before final BingeCat verification, using targeted, cached bulk relation checks.
 
 The 1.10.0 corrective release extends degraded BingeCat resolution through the independent Anime Mapper dataset before terminal MAL fallback, improving provider-ID coverage when BingeCat search is unavailable.
 
