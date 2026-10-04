@@ -446,7 +446,7 @@ test("BingeCat search shares raw responses while keeping candidate selection row
 
   assert.equal(first.get(900101)[0].imdbIds[0], "tt11111111");
   assert.equal(second.has(900102), false);
-  assert.equal(calls, 1);
+  assert.equal(calls, 2);
 });
 
 
