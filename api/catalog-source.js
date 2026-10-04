@@ -540,6 +540,7 @@ async function applyRelatedProviderProtection(rows, mappings, dependencies) {
     for (const row of relationProtectedRows) {
       const relatedProviderIds = protectedIds.get(Number(row.id)) || [];
       row.relatedProviderIds = relatedProviderIds;
+      row.relatedProviderTitles = getRelatedProviderTitles(row);
       const records = mappings.get(Number(row.id)) || [];
       if (relatedProviderIds.length && records.length) {
         mappings.set(Number(row.id), records.map((record) => ({
@@ -556,6 +557,22 @@ async function applyRelatedProviderProtection(rows, mappings, dependencies) {
     console.error("[identity] related provider protection failed; preserving existing fallbacks", error);
     return new Map();
   }
+}
+
+function getRelatedProviderTitles(row) {
+  const titles = [];
+  for (const edge of Array.isArray(row?.relations?.edges) ? row.relations.edges : []) {
+    const relationType = String(edge?.relationType || "").toUpperCase();
+    if (!["PARENT", "PREQUEL", "SEQUEL", "SPIN_OFF", "SIDE_STORY"].includes(relationType)) continue;
+    const title = edge?.node?.title || {};
+    for (const value of [title.english, title.romaji, title.native]) {
+      if (String(value || "").trim()) titles.push(String(value).trim());
+    }
+    for (const value of Array.isArray(edge?.node?.synonyms) ? edge.node.synonyms : []) {
+      if (String(value || "").trim()) titles.push(String(value).trim());
+    }
+  }
+  return [...new Set(titles)];
 }
 
 function hasExplicitProviderRelations(row) {
