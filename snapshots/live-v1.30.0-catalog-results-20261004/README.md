@@ -1,37 +1,24 @@
-# Live v1.30.0 Catalog Snapshot
+# Live v1.30.0 catalog snapshot — 2026-10-04
 
-{
-  "snapshot": "live-v1.30.0",
-  "capturedAt": "2026-10-04T12:51:20Z",
-  "source": "https://nuvio-anime-release-addon-v2.vercel.app",
-  "deployment": "dpl_2TBWYtyX9AjAUan3HPj4sHMVJuEo",
-  "commit": "b605a90dafe571e8275962fcaa9e1ed04725ca1d",
-  "note": "Temporary production catalog snapshot for regression comparison. Raw public addon JSON; no credentials or secrets.",
-  "catalogs": [
-    {
-      "id": "upcoming_season",
-      "file": "upcoming_season.json",
-      "metaCount": 50
-    },
-    {
-      "id": "current_season",
-      "file": "current_season.json",
-      "metaCount": 50
-    },
-    {
-      "id": "previous_season",
-      "file": "previous_season.json",
-      "metaCount": 50
-    },
-    {
-      "id": "upcoming_5_days",
-      "file": "upcoming_5_days.json",
-      "metaCount": 50
-    },
-    {
-      "id": "previous_7_days",
-      "file": "previous_7_days.json",
-      "metaCount": 50
-    }
-  ]
-}
+Captured from the production addon after correcting for Nuvio catalog pagination.
+
+- Source: https://nuvio-anime-release-addon-v2.vercel.app
+- Deployment: dpl_2TBWYtyX9AjAUan3HPj4sHMVJuEo
+- Commit: b605a90dafe571e8275962fcaa9e1ed04725ca1d
+- Captured: 2026-10-04T12:59:40Z
+- Method: fetch each catalog with skip=0,50,100,... until a page returns fewer than 50 entries.
+- Total captured entries: 393
+
+## Page coverage
+
+- upcoming_season: skip=0 (50), skip=50 (4) — 54 total
+- current_season: skip=0 (50), skip=50 (44) — 94 total
+- previous_season: skip=0 (50), skip=50 (50), skip=100 (7) — 107 total
+- upcoming_5_days: skip=0 (50), skip=50 (4) — 54 total
+- previous_7_days: skip=0 (50), skip=50 (34) — 84 total
+
+## Important correction
+
+The first snapshot only captured page 1 (`skip=0`). The corrected snapshot includes all available pages. **Dragon Ball Super: Beerus** is present in `current_season` page 2 (`skip=50`) with AniList `206814`, MAL `63367`, and current addon output `mal:63367` (`canonical-mal-id-fallback`).
+
+These files are raw public addon JSON for regression comparison only; they contain no credentials or secrets.
