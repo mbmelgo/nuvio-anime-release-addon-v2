@@ -90,6 +90,7 @@ test("catalog identity resolution short-circuits expensive sources when BingeCat
   const fetchImpl = async () => ({ ok: false, status: 403 });
 
   const result = await canonicalizeCatalogPageWithBingeCat(rows, {
+    probeBingeCat: true,
     resolveMappings: async () => new Map(),
     resolveFribbMappings: async () => {
       fribbCalls += 1;
