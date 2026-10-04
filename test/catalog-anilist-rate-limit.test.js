@@ -17,9 +17,9 @@ test("AniList fails fast on HTTP 429 and opens a cooldown", async () => {
 
   clearAniListRateLimitState();
   try {
-    const result = await queryAnime(
-      { season: "FALL", seasonYear: 2026, sort: ["ID"] },
-      1,
+    await assert.rejects(
+      queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1),
+      /Too Many Requests|HTTP 429/,
     );
     await assert.rejects(
       queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1),
