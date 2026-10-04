@@ -463,11 +463,15 @@ async function resolveMappingsForRows(
   // candidate and explicit franchise relations are inspected, so normal rows
   // do not incur relation-resolution fan-out.
   const relationProtectedRows = rows.filter((row) => {
-    const selected = selectBingeCatIdentity(
+    if (!hasExplicitProviderRelations(row)) return false;
+    const records = mappings.get(Number(row.id)) || [];
+    const candidates = getBingeCatCandidates(
       { ...row, anilistId: Number(row.id) },
-      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+      records,
     );
-    return Boolean(selected) && !selected.bingecatVerified && hasExplicitProviderRelations(row);
+    return candidates.some((candidate) => !candidate.evidence?.some(
+      (entry) => entry?.source === "bingecat-search",
+    ));
   });
 
   let protectedProviderIdsByRow = new Map();
