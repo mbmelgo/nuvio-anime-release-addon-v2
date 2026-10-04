@@ -451,8 +451,8 @@ test("shared provider IDs are accepted for compatible related installments", () 
     tvdbId: 407840,
     tmdbTvId: null,
     tmdbMovieIds: [],
-    title: "Aoashi Season 2",
-    year: 2026,
+    title: "Aoashi",
+    year: null,
   };
 
   const candidate = getBingeCatCandidates(media, [record]).find(
