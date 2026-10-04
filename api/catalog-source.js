@@ -239,6 +239,20 @@ async function resolveMappingsForRows(
       }
     }
 
+    unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+      { ...row, anilistId: Number(row.id) },
+      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    ));
+
+    if (unresolvedRows.length) {
+      try {
+        const imdbMappings = await resolveImdbMappings(unresolvedRows);
+        mappings = mergeMappings(mappings, imdbMappings);
+      } catch (error) {
+        console.error("[identity] degraded IMDb search mapping failed", error);
+      }
+    }
+
     return mappings;
   }
 
