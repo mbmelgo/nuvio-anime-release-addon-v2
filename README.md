@@ -164,7 +164,7 @@ Catalog names and season labels are generated dynamically.
 
 ## 🚀 Current release
 
-**Production:** `v1.37.0`  
+**Production:** `v1.36.0`  
 **Development:** `v1.37.0` — release candidate validated
 **Major baseline:** `v1.0.0`
 
