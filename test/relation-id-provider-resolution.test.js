@@ -297,3 +297,80 @@ test("relation identity resolution derives provider installment titles", async (
   assert.equal(metas[0].id, "tt39382762");
   assert.equal(metas[0].extra.anilistId, 212653);
 });
+
+
+test("current mappings cannot inherit a provider ID owned by an explicit related anime", async () => {
+  const metas = await canonicalizeCatalogPageWithBingeCat([{
+    id: 206814,
+    idMal: 63367,
+    title: {
+      english: "Dragon Ball Super: Beerus",
+      romaji: "Dragon Ball Super: Beerus",
+      native: "ドラゴンボール超 ビルス",
+    },
+    synonyms: [],
+    status: "NOT_YET_RELEASED",
+    format: "TV",
+    isAdult: false,
+    startDate: { year: 2026 },
+    coverImage: { large: null },
+    relations: {
+      edges: [{
+        relationType: "PREQUEL",
+        node: {
+          id: 813,
+          format: "TV",
+          title: { english: "Dragon Ball Z", romaji: "Dragon Ball Z", native: "ドラゴンボールZ" },
+          startDate: { year: 1989 },
+          synonyms: [],
+          externalLinks: [],
+        },
+      }],
+    },
+  }], {
+    resolveMappings: async (ids) => {
+      if (ids.includes(206814)) {
+        return new Map([[206814, [{
+          source: "animeapi",
+          anilistId: 206814,
+          type: "TV",
+          imdbIds: [],
+          tvdbId: 81472,
+          tmdbTvId: null,
+          tmdbMovieIds: [],
+          title: "Dragon Ball Super: Beerus",
+          year: 2026,
+        }]]]);
+      }
+      if (ids.includes(813)) {
+        return new Map([[813, [{
+          source: "arm",
+          anilistId: 813,
+          type: "TV",
+          imdbIds: [],
+          tvdbId: 81472,
+          tmdbTvId: null,
+          tmdbMovieIds: [],
+          title: "Dragon Ball Z",
+          year: 1989,
+        }]]]);
+      }
+      return new Map();
+    },
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(metas.length, 1);
+  assert.equal(metas[0].id, "mal:63367");
+  assert.equal(metas[0].extra.bingecatProvider, null);
+  assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
+});

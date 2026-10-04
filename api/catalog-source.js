@@ -448,6 +448,34 @@ async function resolveMappingsForRows(
     }
   }
 
+  // Protect unverified identities that may belong to an explicit related
+  // AniList entry before authoritative BingeCat verification. This is a
+  // targeted bulk lookup: only rows that already have an unverified provider
+  // candidate and explicit franchise relations are inspected, so normal rows
+  // do not incur relation-resolution fan-out.
+  const relationProtectedRows = rows.filter((row) => {
+    const selected = selectBingeCatIdentity(
+      { ...row, anilistId: Number(row.id) },
+      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    );
+    return Boolean(selected) && !selected.bingecatVerified && hasExplicitProviderRelations(row);
+  });
+
+  if (relationProtectedRows.length) {
+    try {
+      const protectedIds = await resolveRelatedProviderIds(relationProtectedRows, {
+        resolveMappings,
+        resolveFribbMappings,
+        resolveExternalMappings,
+      });
+      for (const row of relationProtectedRows) {
+        row.relatedProviderIds = protectedIds.get(Number(row.id)) || [];
+      }
+    } catch (error) {
+      console.error("[identity] related provider protection failed; preserving existing fallbacks", error);
+    }
+  }
+
   // BingeCat is the authoritative support check. Any identity that was
   // resolved by another source must still receive a direct BingeCat search
   // before it can be returned. This preserves fallback coverage while
@@ -470,6 +498,136 @@ async function resolveMappingsForRows(
   }
 
   return mappings;
+}
+
+function hasExplicitProviderRelations(row) {
+  return Array.isArray(row?.relations?.edges)
+    && row.relations.edges.some((edge) => ["PARENT", "PREQUEL", "SEQUEL", "SPIN_OFF", "SIDE_STORY"]
+      .includes(String(edge?.relationType || "").toUpperCase()));
+}
+
+async function resolveRelatedProviderIds(rows, {
+  resolveMappings,
+  resolveFribbMappings,
+  resolveExternalMappings,
+}) {
+  const relationIds = new Set();
+  const result = new Map();
+  const relationRows = new Map();
+
+  for (const row of Array.isArray(rows) ? rows : []) {
+    const currentId = Number(row?.id);
+    if (!Number.isInteger(currentId) || currentId <= 0) continue;
+    const edges = (Array.isArray(row?.relations?.edges) ? row.relations.edges : [])
+      .filter((edge) => ["PARENT", "PREQUEL", "SEQUEL", "SPIN_OFF", "SIDE_STORY"]
+        .includes(String(edge?.relationType || "").toUpperCase()))
+      .filter((edge) => Number.isInteger(Number(edge?.node?.id)) && Number(edge.node.id) > 0);
+
+    const providerIds = new Set();
+    for (const edge of edges) {
+      for (const providerId of parseRelatedProviderLinks(edge?.node?.externalLinks)) {
+        providerIds.add(providerId);
+      }
+      const relatedId = Number(edge.node.id);
+      relationIds.add(relatedId);
+      if (!relationRows.has(relatedId)) {
+        relationRows.set(relatedId, {
+          id: relatedId,
+          format: edge.node.format,
+          title: edge.node.title,
+          startDate: edge.node.startDate,
+          externalLinks: edge.node.externalLinks || [],
+        });
+      }
+    }
+    result.set(currentId, providerIds);
+  }
+
+  const ids = [...relationIds];
+  if (!ids.length) return new Map();
+
+  let mappings = new Map();
+  try {
+    mappings = await resolveMappings(ids);
+  } catch (error) {
+    console.error("[identity] related ARM protection lookup failed", error);
+  }
+
+  const missing = ids.filter((id) => !(mappings.get(id)?.length));
+  if (missing.length) {
+    try {
+      mappings = mergeMappings(mappings, await resolveFribbMappings(missing));
+    } catch (error) {
+      console.error("[identity] related Fribb protection lookup failed", error);
+    }
+  }
+
+  const stillMissing = ids.filter((id) => !(mappings.get(id)?.length));
+  if (stillMissing.length && typeof resolveExternalMappings === "function") {
+    try {
+      const externalRows = stillMissing.map((id) => relationRows.get(id)).filter(Boolean);
+      mappings = mergeMappings(mappings, resolveExternalMappings(externalRows));
+    } catch (error) {
+      console.error("[identity] related external protection lookup failed", error);
+    }
+  }
+
+  for (const row of Array.isArray(rows) ? rows : []) {
+    const currentId = Number(row?.id);
+    const protectedIds = result.get(currentId);
+    if (!protectedIds) continue;
+
+    const edges = Array.isArray(row?.relations?.edges) ? row.relations.edges : [];
+    for (const edge of edges) {
+      const relationType = String(edge?.relationType || "").toUpperCase();
+      if (!["PARENT", "PREQUEL", "SEQUEL", "SPIN_OFF", "SIDE_STORY"].includes(relationType)) continue;
+      const relatedId = Number(edge?.node?.id);
+      for (const record of mappings.get(relatedId) || []) {
+        for (const providerId of providerIdsFromRecord(record)) protectedIds.add(providerId);
+      }
+    }
+  }
+
+  return new Map([...result.entries()].map(([id, idsForRow]) => [id, [...idsForRow]]));
+}
+
+function parseRelatedProviderLinks(links) {
+  const ids = [];
+  for (const link of Array.isArray(links) ? links : []) {
+    const url = String(link?.url || "");
+    const site = String(link?.site || "").toLowerCase();
+    let match;
+    if ((site.includes("imdb") || /imdb\.com\/title\/tt\d+/i.test(url))
+        && (match = url.match(/imdb\.com\/title\/(tt\d+)/i))) {
+      ids.push("imdb:" + match[1]);
+    }
+    if ((site.includes("tvdb") || /thetvdb\.com\/.*series\/\d+/i.test(url))
+        && (match = url.match(/thetvdb\.com\/.*series\/(\d+)/i))) {
+      ids.push("tvdb:" + match[1]);
+    }
+    if ((site.includes("tmdb") || /themoviedb\.org\/(?:tv|movie)\/\d+/i.test(url))
+        && (match = url.match(/themoviedb\.org\/(tv|movie)\/(\d+)/i))) {
+      ids.push("tmdb:" + match[2]);
+    }
+  }
+  return ids;
+}
+
+function providerIdsFromRecord(record) {
+  const ids = [];
+  for (const imdbId of Array.isArray(record?.imdbIds) ? record.imdbIds : []) {
+    if (/^tt\d+$/.test(String(imdbId))) ids.push("imdb:" + imdbId);
+  }
+  if (Number.isInteger(Number(record?.tvdbId)) && Number(record.tvdbId) > 0) {
+    ids.push("tvdb:" + Number(record.tvdbId));
+  }
+  if (Number.isInteger(Number(record?.tmdbTvId)) && Number(record.tmdbTvId) > 0) {
+    ids.push("tmdb:" + Number(record.tmdbTvId));
+  }
+  for (const tmdbId of Array.isArray(record?.tmdbMovieIds) ? record.tmdbMovieIds : []) {
+    if (Number.isInteger(Number(tmdbId)) && Number(tmdbId) > 0) ids.push("tmdb:" + Number(tmdbId));
+  }
+  return ids;
 }
 
 async function resolveRelationMappings(rows, {
