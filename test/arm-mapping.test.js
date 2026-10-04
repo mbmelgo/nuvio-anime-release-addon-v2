@@ -85,6 +85,35 @@ test("ARM mapping client coalesces concurrent identical batches", async () => {
   assert.equal(secondMappings.get(158871)[0].tvdbId, 76703);
 });
 
+test("ARM mapping client chunks batches at the upstream maximum", async () => {
+  clearMappingCache();
+  let calls = 0;
+  const ids = Array.from({ length: 101 }, (_, index) => index + 1);
+
+  const mappings = await resolveAniListMappings(ids, {
+    fetchImpl: async (_url, options) => {
+      calls += 1;
+      const body = JSON.parse(options.body);
+      assert.ok(body.length <= 100);
+      return {
+        ok: true,
+        async json() {
+          return body.map(({ anilist }) => ({
+            anilist,
+            media: "TV",
+            imdb: `tt${String(10000000 + anilist)}`,
+          }));
+        },
+      };
+    },
+  });
+
+  assert.equal(calls, 2);
+  assert.equal(mappings.size, 101);
+  assert.equal(mappings.get(1)[0].imdbIds[0], "tt10000001");
+  assert.equal(mappings.get(101)[0].imdbIds[0], "tt10000101");
+});
+
 test("ARM mapping client caches successful and negative results", async () => {
   clearMappingCache();
   let calls = 0;
