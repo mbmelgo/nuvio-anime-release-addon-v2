@@ -94,6 +94,10 @@ test("AniBridge retains provider IDs from explicit related AniList entries", asy
           id: 813,
           format: "TV",
           title: { english: "Dragon Ball Z", romaji: "Dragon Ball Z", native: null },
+          externalLinks: [
+            { site: "TheTVDB", url: "https://thetvdb.com/series/81472" },
+            { site: "TMDB", url: "https://www.themoviedb.org/tv/12971" },
+          ],
         },
       }],
     },
@@ -115,5 +119,35 @@ test("AniBridge retains provider IDs from explicit related AniList entries", asy
     }),
   });
 
+  assert.deepEqual(result.get(206814)[0].relatedProviderIds, ["tvdb:81472", "tmdb:12971"]);
+});
+
+test("AniBridge retains provider IDs directly from AniList relation links", async () => {
+  clearAniBridgeCache();
+  const current = {
+    ...row(206814),
+    relations: {
+      edges: [{
+        relationType: "PREQUEL",
+        node: {
+          id: 813,
+          format: "TV",
+          title: { english: "Dragon Ball Z", romaji: "Dragon Ball Z", native: null },
+          externalLinks: [
+            { site: "TheTVDB", url: "https://thetvdb.com/series/81472" },
+            { site: "TMDB", url: "https://www.themoviedb.org/tv/12971" },
+          ],
+        },
+      }],
+    },
+  };
+  const result = await resolveAniListMappingsByAniBridge([current], {
+    fetchImpl: async () => ({
+      ok: true,
+      json: async () => ({
+        "anilist:206814": { "tvdb_show:81472:s1": {} },
+      }),
+    }),
+  });
   assert.deepEqual(result.get(206814)[0].relatedProviderIds, ["tvdb:81472", "tmdb:12971"]);
 });
