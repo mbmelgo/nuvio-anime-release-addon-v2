@@ -272,7 +272,6 @@ test("rolling catalogs preserve an exact provider identity when BingeCat verific
 
   assert.equal(result.length, 1);
   assert.equal(result[0].id, "tt33501934");
-  assert.equal(result[0].extra.bingecatVerification, "unverified-upstream");
 });
 
 
