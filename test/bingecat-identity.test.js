@@ -181,6 +181,72 @@ test("candidate validation rejects materially different titles", () => {
   assert.equal(normalizeTitle("  One-Piece: The Series! "), "one piece the series");
 });
 
+test("candidate validation rejects a related parent identity even when the provider mapping shares the AniList ID", () => {
+  const media = {
+    anilistId: 206814,
+    title: { english: "Dragon Ball Super: Beerus", romaji: "Dragon Ball Super: Beerus" },
+    startDate: { year: 2026 },
+    format: "TV",
+    relations: {
+      edges: [{
+        relationType: "PREQUEL",
+        node: {
+          id: 813,
+          title: { english: "Dragon Ball Z", romaji: "Dragon Ball Z" },
+          synonyms: [],
+        },
+      }],
+    },
+  };
+
+  const candidates = getBingeCatCandidates(media, [{
+    source: "animeapi",
+    anilistId: 206814,
+    type: "TV",
+    imdbIds: ["tt0121220"],
+    tvdbId: 81472,
+    tmdbTvId: 12971,
+    tmdbMovieIds: [],
+    title: "Dragon Ball Z",
+    year: 1989,
+  }]);
+
+  assert.equal(selectBingeCatIdentity(media, candidates), null);
+});
+
+test("Ghost Meets Gal! rejects its Cardfight!! Vanguard parent identity", () => {
+  const media = {
+    anilistId: 214703,
+    title: { english: "Ghost Meets Gal!", romaji: "Ghost Meets Gal!" },
+    startDate: { year: 2026 },
+    format: "TV",
+    relations: {
+      edges: [{
+        relationType: "SPIN_OFF",
+        node: {
+          id: 9539,
+          title: { english: "Cardfight!! Vanguard", romaji: "Cardfight!! Vanguard" },
+          synonyms: [],
+        },
+      }],
+    },
+  };
+
+  const candidates = getBingeCatCandidates(media, [{
+    source: "anibridge",
+    anilistId: 214703,
+    type: "TV",
+    imdbIds: ["tt2549176"],
+    tvdbId: 82222,
+    tmdbTvId: 12345,
+    tmdbMovieIds: [],
+    title: "Cardfight!! Vanguard",
+    year: 2011,
+  }]);
+
+  assert.equal(selectBingeCatIdentity(media, candidates), null);
+});
+
 test("exact strong source IDs survive title mismatches when BingeCat verification is unavailable", () => {
   const media = {
     anilistId: 211181,
