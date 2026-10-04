@@ -613,6 +613,35 @@ test("BingeCat search opens a batch circuit after sustained 429s", async () => {
 });
 
 
+test("BingeCat access denial circuit suppresses repeated requests across catalog calls", async () => {
+  clearBingeCatSearchCache();
+  let calls = 0;
+  const fetchImpl = async () => {
+    calls += 1;
+    return { ok: false, status: 403 };
+  };
+
+  const first = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 930001,
+    type: "TV",
+    year: 2026,
+    titleEnglish: "First Access Denied Anime",
+  }], { fetchImpl });
+
+  assert.equal(first.size, 0);
+  const callsAfterFirst = calls;
+
+  const second = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 930002,
+    type: "TV",
+    year: 2026,
+    titleEnglish: "Second Access Denied Anime",
+  }], { fetchImpl });
+
+  assert.equal(second.size, 0);
+  assert.equal(calls, callsAfterFirst);
+});
+
 test("BingeCat search opens the batch circuit on access denial", async () => {
   clearBingeCatSearchCache();
   let calls = 0;
