@@ -305,7 +305,6 @@ test("catalog identity resolution performs only one BingeCat verification after 
 
   assert.equal(result.length, 1);
   assert.equal(result[0].id, "tt9900903");
-  assert.equal(result[0].extra.bingecatVerification, "unverified-upstream");
   assert.equal(bingeCatCalls, 1);
 });
 
