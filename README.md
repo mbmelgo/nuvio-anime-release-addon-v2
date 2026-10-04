@@ -164,8 +164,8 @@ Catalog names and season labels are generated dynamically.
 
 ## 🚀 Current release
 
-**Production:** `v1.36.0`  
-**Development:** `v1.36.0` — release candidate validated
+**Production:** `v1.37.0`  
+**Development:** `v1.37.0` — release candidate validated
 **Major baseline:** `v1.0.0`
 
 The 1.23.0 development baseline hardens BingeCat identity selection so unverified provider mappings cannot inherit identities from explicit franchise-related anime.
