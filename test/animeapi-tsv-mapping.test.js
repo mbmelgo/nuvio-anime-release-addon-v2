@@ -53,3 +53,32 @@ test("AnimeAPI TSV resolver indexes only requested AniList IDs", async () => {
   assert.equal(result.get(123)?.[0]?.imdbIds[0], "tt1234567");
   assert.equal(result.has(999), false);
 });
+
+
+test("AnimeAPI TSV resolver recovers provider IDs when the AniList column is misaligned but MAL matches", async () => {
+  clearAnimeApiTsvCache();
+  const tsv = [
+    "title\tanidb\tanilist\tanimenewsnetwork\tanimeplanet\tanisearch\tannict\thikka\timdb\tkaize\tkaize_id\tkitsu\tletterboxd_lid\tletterboxd_slug\tletterboxd_uid\tlivechart\tmyanimelist\tnautiljon\tnautiljon_id\tnotify\totakotaku\tshikimori\tshoboi\tsilveryasha\tsimkl\tthemoviedb\tthemoviedb_season_id\tthemoviedb_type\tthetvdb\tthetvdb_season_id\ttrakt\ttrakt_may_invalid\ttrakt_season\ttrakt_season_id\ttrakt_slug\ttrakt_type",
+    "Ghost Meets Gal!\t20339\t64718\t40470\t\t21895\t17955\tghost-meets-gal-f48789\t\tghost-meets-gal\t25869\t50866\t\t\t\t13740\t64718\t\t\t\t3431\t64718\t\t\t3240648\t334103\t541314\ttv\t482144\t2267023\t327906\tFalse\t1\t533487\tghost-meets-gal\tshows",
+  ].join("\n");
+
+  const result = await resolveAniListMappingsFromAnimeApiTsv([{ id: 214703, idMal: 64718 }], {
+    endpoint: "https://example.test/animeapi.tsv",
+    fetchImpl: async () => new Response(tsv, { status: 200 }),
+  });
+
+  assert.deepEqual(result.get(214703)?.[0], {
+    source: "animeapi-tsv-mal-aligned",
+    anilistId: 214703,
+    type: "TV",
+    malId: 64718,
+    imdbIds: [],
+    tvdbId: 482144,
+    tmdbTvId: 334103,
+    tmdbMovieIds: [],
+    season: { tvdb: 2267023, tmdb: 541314 },
+    episodeOffset: null,
+    title: "Ghost Meets Gal!",
+    year: null,
+  });
+});
