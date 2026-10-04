@@ -1213,6 +1213,105 @@
       },
       "releaseInfo": "2026-",
       "released": "2026-10-02T00:00:00.000Z"
+    },
+    {
+      "id": "tt26692417",
+      "type": "series",
+      "name": "Pokémon Horizons: The Series",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx158871-GBM9AMDfDRSu.jpg",
+      "extra": {
+        "anilistId": 158871,
+        "malId": 53876,
+        "titleEnglish": "Pokémon Horizons: The Series",
+        "titleRomaji": "Pocket Monsters (2023)",
+        "titleNative": "ポケットモンスター (2023)",
+        "status": "RELEASING",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt26692417",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream",
+        "episode": 152,
+        "airingAt": 1791539700,
+        "nextEpisode": 152,
+        "nextAiringAt": 1791539700
+      },
+      "releaseInfo": "2023-",
+      "released": "2023-04-14T00:00:00.000Z"
+    },
+    {
+      "id": "tt27865962",
+      "type": "series",
+      "name": "BEYBLADE X",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx165159-aCFC9Sng7t4M.png",
+      "extra": {
+        "anilistId": 165159,
+        "malId": 56566,
+        "titleEnglish": "BEYBLADE X",
+        "titleRomaji": "BEYBLADE X",
+        "titleNative": "BEYBLADE X",
+        "status": "RELEASING",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt27865962",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream",
+        "episode": 135,
+        "airingAt": 1791540000,
+        "nextEpisode": 135,
+        "nextAiringAt": 1791540000
+      },
+      "releaseInfo": "2023-",
+      "released": "2023-10-06T00:00:00.000Z"
+    },
+    {
+      "id": "tt0404597",
+      "type": "series",
+      "name": "Duel Masters LOST: Danzai no Shounen",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx208367-Z3OsCdeAopH4.png",
+      "extra": {
+        "anilistId": 208367,
+        "malId": 64848,
+        "titleRomaji": "Duel Masters LOST: Danzai no Shounen",
+        "titleNative": "Duel Masters LOST ～断罪の少年～",
+        "status": "NOT_YET_RELEASED",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt0404597",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream",
+        "episode": 1,
+        "airingAt": 1791547200,
+        "nextEpisode": 1,
+        "nextAiringAt": 1791547200
+      },
+      "releaseInfo": "2026",
+      "released": "2026-10-09T00:00:00.000Z"
+    },
+    {
+      "id": "tt46653736",
+      "type": "series",
+      "name": "Welsh & Shedar",
+      "posterShape": "poster",
+      "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx216895-Ofx4FSKFa4CQ.jpg",
+      "extra": {
+        "anilistId": 216895,
+        "malId": 65009,
+        "titleEnglish": "Welsh & Shedar",
+        "titleRomaji": "Aoki Denshou: Welsh & Shedar",
+        "titleNative": "蒼き伝承 ウェルシュ&シェーダー",
+        "status": "RELEASING",
+        "bingecatProvider": "imdb",
+        "bingecatId": "tt46653736",
+        "bingecatEvidence": "provider-id-fallback",
+        "bingecatVerification": "unverified-upstream",
+        "episode": 2,
+        "airingAt": 1791548760,
+        "nextEpisode": 2,
+        "nextAiringAt": 1791548760
+      },
+      "releaseInfo": "2026-",
+      "released": "2026-10-02T00:00:00.000Z"
     }
   ]
 }
