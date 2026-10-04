@@ -223,7 +223,7 @@ async function resolveMappingsForRows(
 
     if (unresolvedRows.length) {
       try {
-        const tsvMappings = await resolveTsvMappings(unresolvedRows.map((row) => Number(row.id)));
+        const tsvMappings = await resolveTsvMappings(unresolvedRows);
         mappings = mergeMappings(mappings, tsvMappings);
       } catch (error) {
         console.error("[identity] degraded AnimeAPI TSV mapping failed", error);
