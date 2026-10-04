@@ -194,6 +194,11 @@ test("candidate validation rejects a related parent identity even when the provi
           id: 813,
           title: { english: "Dragon Ball Z", romaji: "Dragon Ball Z" },
           synonyms: [],
+          externalLinks: [
+            { site: "IMDb", url: "https://www.imdb.com/title/tt0121220/" },
+            { site: "TheTVDB", url: "https://thetvdb.com/series/81472" },
+            { site: "TMDB", url: "https://www.themoviedb.org/tv/12971" },
+          ],
         },
       }],
     },
@@ -207,8 +212,8 @@ test("candidate validation rejects a related parent identity even when the provi
     tvdbId: 81472,
     tmdbTvId: 12971,
     tmdbMovieIds: [],
-    title: "Dragon Ball Z",
-    year: 1989,
+    title: "Dragon Ball Super: Beerus",
+    year: 2026,
   }]);
 
   assert.equal(selectBingeCatIdentity(media, candidates), null);
@@ -227,6 +232,11 @@ test("Ghost Meets Gal! rejects its Cardfight!! Vanguard parent identity", () => 
           id: 9539,
           title: { english: "Cardfight!! Vanguard", romaji: "Cardfight!! Vanguard" },
           synonyms: [],
+          externalLinks: [
+            { site: "IMDb", url: "https://www.imdb.com/title/tt2549176/" },
+            { site: "TheTVDB", url: "https://thetvdb.com/series/82222" },
+            { site: "TMDB", url: "https://www.themoviedb.org/tv/12345" },
+          ],
         },
       }],
     },
@@ -240,8 +250,8 @@ test("Ghost Meets Gal! rejects its Cardfight!! Vanguard parent identity", () => 
     tvdbId: 82222,
     tmdbTvId: 12345,
     tmdbMovieIds: [],
-    title: "Cardfight!! Vanguard",
-    year: 2011,
+    title: "Ghost Meets Gal!",
+    year: 2026,
   }]);
 
   assert.equal(selectBingeCatIdentity(media, candidates), null);
