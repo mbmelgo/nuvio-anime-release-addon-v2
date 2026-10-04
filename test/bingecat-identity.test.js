@@ -66,7 +66,7 @@ test("one-word season titles accept an installment-derived BingeCat identity", (
     anilistId: 191788,
     mediaType: "tv",
     title: "Aoashi",
-    year: 2022,
+    year: null,
     derivedTitle: true,
     derivedInstallmentTitle: true,
     evidence: [{ source: "bingecat-search" }],
