@@ -164,8 +164,8 @@ Catalog names and season labels are generated dynamically.
 
 ## 🚀 Current release
 
-**Production:** `v1.5.0`  
-**Development:** `v1.5.1`  
+**Production:** `v1.6.0`  
+**Development:** `v1.6.0`  
 **Major baseline:** `v1.0.0`
 
 The 1.1.0 release carries the BingeCat identity-verification, cache-safety, related-title, numbered-installment, evidence-aggregation, and year-validation fixes validated on main.
