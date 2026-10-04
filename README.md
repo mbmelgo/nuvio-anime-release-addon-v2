@@ -170,7 +170,7 @@ Catalog names and season labels are generated dynamically.
 
 The 1.10.0 corrective release extends degraded BingeCat resolution through the independent Anime Mapper dataset before terminal MAL fallback, improving provider-ID coverage when BingeCat search is unavailable.
 
-The 1.11.0 corrective release adds a cached AniBridge v3 bulk cross-provider mapping fallback after Anime Mapper, improving IMDb/TVDB/TMDB coverage without issuing per-title external mapping requests when BingeCat is unavailable.
+The 1.11.0 corrective release adds a cached AniBridge v3 bulk cross-provider mapping fallback after Anime Mapper, improving IMDb/TVDB/TMDB coverage without issuing per-title external mapping requests when BingeCat is unavailable. This is the controlled production release of the cached bulk-mapping fallback.
 
 The 1.1.0 release carries the BingeCat identity-verification, cache-safety, related-title, numbered-installment, evidence-aggregation, and year-validation fixes validated on main.
 
