@@ -258,18 +258,6 @@ async function resolveMappingsForRows(
       }
     }
 
-    try {
-      const tsvMappings = await resolveTsvMappings(unresolvedRows.map((row) => Number(row.id)));
-      mappings = mergeMappings(mappings, tsvMappings);
-    } catch (error) {
-      console.error("[identity] degraded AnimeAPI TSV mapping failed", error);
-    }
-
-    unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
-      { ...row, anilistId: Number(row.id) },
-      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-    ));
-
     if (unresolvedRows.length) {
       try {
         const imdbMappings = await resolveImdbMappings(unresolvedRows);
