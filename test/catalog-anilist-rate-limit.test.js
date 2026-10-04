@@ -23,7 +23,7 @@ test("AniList fails fast on HTTP 429 and opens a cooldown", async () => {
     );
     await assert.rejects(
       queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1),
-      /Too Many Requests|HTTP 429/,
+      /cooldown active/,
     );
     assert.equal(calls, 1);
 
