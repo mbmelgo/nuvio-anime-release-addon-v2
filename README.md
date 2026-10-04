@@ -165,7 +165,7 @@ Catalog names and season labels are generated dynamically.
 ## 🚀 Current release
 
 **Production:** `v1.10.0`  
-**Development:** `v1.10.0`  
+**Development:** `v1.11.0`  
 **Major baseline:** `v1.0.0`
 
 The 1.10.0 corrective release extends degraded BingeCat resolution through the independent Anime Mapper dataset before terminal MAL fallback, improving provider-ID coverage when BingeCat search is unavailable.
