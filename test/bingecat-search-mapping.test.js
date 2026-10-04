@@ -37,6 +37,70 @@ test("BingeCat search preserves a perfect Meilisearch ranking score on an exact 
   assert.equal(record.bingecatAuthoritative, true);
 });
 
+test("BingeCat treats any original AniList title field as authoritative, not only the display title", async () => {
+  clearBingeCatSearchCache();
+  const result = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 202404,
+    type: "TV",
+    year: 2026,
+    titleEnglish: "Localized Anime Name",
+    titleRomaji: "Original Anime Name",
+    titleNative: "オリジナルアニメ",
+  }], {
+    fetchImpl: async () => ({
+      ok: true,
+      async json() {
+        return {
+          series: [{
+            name: "Original Anime Name",
+            id: "tt20240401",
+            contentType: "series",
+            year: 2026,
+            meiliRankingScore: 1,
+          }],
+        };
+      },
+    }),
+  });
+
+  const record = result.get(202404)[0];
+  assert.equal(record.bingecatExactTitle, true);
+  assert.equal(record.bingecatOriginalTitleMatch, true);
+  assert.equal(record.bingecatAuthoritative, true);
+});
+
+test("BingeCat does not make a synonym match authoritative even with a perfect score", async () => {
+  clearBingeCatSearchCache();
+  const result = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 202405,
+    type: "TV",
+    year: 2026,
+    titleEnglish: "Original Anime Name",
+    synonyms: ["Alternative Anime Name"],
+  }], {
+    fetchImpl: async () => ({
+      ok: true,
+      async json() {
+        return {
+          series: [{
+            name: "Alternative Anime Name",
+            id: "tt20240501",
+            contentType: "series",
+            year: 2026,
+            meiliRankingScore: 1,
+          }],
+        };
+      },
+    }),
+  });
+
+  const record = result.get(202405)[0];
+  assert.equal(record.bingecatExactTitle, false);
+  assert.equal(record.bingecatOriginalTitleMatch, false);
+  assert.equal(record.bingecatSynonymTitle, true);
+  assert.equal(record.bingecatAuthoritative, false);
+});
+
 test("BingeCat search prefers a perfect exact-title score over an earlier weaker candidate", () => {
   const row = {
     anilistId: 202403,
