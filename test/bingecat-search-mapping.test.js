@@ -663,3 +663,22 @@ test("BingeCat search opens the batch circuit on access denial", async () => {
   assert.equal(result.size, 0);
   assert.ok(calls <= 3, `expected access denial to open the batch circuit immediately, got ${calls} calls`);
 });
+
+
+test("BingeCat stops retrying immediately on HTTP 429", async () => {
+  clearBingeCatSearchCache();
+  let calls = 0;
+  const result = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 212888,
+    type: "TV",
+    year: 2026,
+    titleEnglish: "Overgeared",
+  }], {
+    fetchImpl: async () => {
+      calls += 1;
+      return { ok: false, status: 429, async json() { return {}; } };
+    },
+  });
+  assert.equal(result.has(212888), false);
+  assert.equal(calls, 1);
+});
