@@ -319,3 +319,59 @@ test("catalog identity resolution uses AniBridge bulk mappings after Anime Mappe
   assert.deepEqual(result.map((meta) => meta.id), ["tt9900901", "tvdb:470902"]);
   assert.equal(aniBridgeCalls, 1);
 });
+
+
+test("catalog identity resolution keeps IMDb fallback coverage when BingeCat is rate-limited", async () => {
+  const rows = [{
+    id: 212888,
+    idMal: 64340,
+    title: { english: "Overgeared", romaji: "Tempal: Item no Chikara", native: "テムパル～アイテムの力～" },
+    synonyms: [],
+    format: "TV",
+    startDate: { year: 2026 },
+    endDate: { year: null },
+    isAdult: false,
+  }];
+  let bingeCatCalls = 0;
+  let imdbCalls = 0;
+
+  const result = await canonicalizeCatalogPageWithBingeCat(rows, {
+    probeBingeCat: true,
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async (_searchRows, options = {}) => {
+      bingeCatCalls += 1;
+      options.onCircuitOpen?.();
+      return new Map();
+    },
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveAniBridgeMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async (unresolvedRows) => {
+      imdbCalls += 1;
+      assert.deepEqual(unresolvedRows.map((row) => row.id), [212888]);
+      return new Map([[212888, [{
+        source: "imdb-search",
+        anilistId: 212888,
+        type: "TV",
+        malId: 64340,
+        imdbIds: ["tt43691353"],
+        tvdbId: null,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: "Overgeared",
+        year: 2026,
+      }]]]);
+    },
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0].id, "tt43691353");
+  assert.equal(bingeCatCalls, 1);
+  assert.equal(imdbCalls, 1);
+});
