@@ -36,3 +36,38 @@ test("AniList fails fast on HTTP 429 and opens a cooldown", async () => {
     globalThis.fetch = originalFetch;
   }
 });
+
+
+test("AniList coalesces identical concurrent catalog requests", async () => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  globalThis.fetch = async () => {
+    calls += 1;
+    await gate;
+    return {
+      ok: true,
+      status: 200,
+      headers: new Headers(),
+      async json() {
+        return { data: { Page: { media: [] } } };
+      },
+    };
+  };
+
+  clearAniListRateLimitState();
+  try {
+    const first = queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1);
+    const second = queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1);
+    release();
+    const [a, b] = await Promise.all([first, second]);
+
+    assert.deepEqual(a, []);
+    assert.deepEqual(b, []);
+    assert.equal(calls, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    clearAniListRateLimitState();
+  }
+});
