@@ -60,7 +60,19 @@ test("relation-derived provider mappings are not reused as the current identity 
     resolveAnimapMappings: async () => new Map(),
     resolveIdMapperMappings: async () => new Map(),
     resolveBingeCatSearchMappings: async () => new Map(),
-    resolveAnimeMapperMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async (rows) => rows.some((row) => Number(row.id) === 206814)
+      ? new Map([[206814, [{
+        source: "anime-mapper-relation",
+        anilistId: 206814,
+        type: "TV",
+        imdbIds: [],
+        tvdbId: 81472,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: "Dragon Ball Super: Beerus",
+        year: null,
+      }]]])
+      : new Map(),
     resolveTsvMappings: async () => new Map(),
     resolveImdbMappings: async () => new Map(),
     resolveSecondaryMappings: async () => new Map(),
