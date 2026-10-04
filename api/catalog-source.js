@@ -17,7 +17,7 @@ import { resolveAniListMappingsFribb } from "../lib/fribb-mapping.js";
 import { resolveAniListExternalMappings } from "../lib/external-provider-mapping.js";
 import { resolveAniListMappingsAnimap } from "../lib/animap-mapping.js";
 import { resolveAniListMappingsIdMapper } from "../lib/idmapper-mapping.js";
-import { isBingeCatSearchCircuitOpen, resolveAniListMappingsByBingeCatSearch } from "../lib/bingecat-search-mapping.js";
+import { resolveAniListMappingsByBingeCatSearch } from "../lib/bingecat-search-mapping.js";
 import { resolveAniListMappingsByAnimeMapper } from "../lib/anime-mapper-mapping.js";
 import { resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
 import { resolveAniListMappingsFromAnimeApiTsv } from "../lib/animeapi-tsv-mapping.js";
@@ -178,15 +178,16 @@ async function resolveMappingsForRows(
   // Probe BingeCat before loading additional large mapping datasets. If the
   // upstream is access-denied/rate-limited, preserve the fast ARM/external
   // mappings and let canonical MAL identity remain the terminal fallback.
-  let bingeCatUnavailable = isBingeCatSearchCircuitOpen();
-  if (unresolvedRows.length && !bingeCatUnavailable) {
+  let bingeCatUnavailable = false;
+  if (unresolvedRows.length) {
     try {
-      const probeMappings = await resolveBingeCatSearchMappings(unresolvedRows.slice(0, 1));
+      const probeMappings = await resolveBingeCatSearchMappings(unresolvedRows.slice(0, 1), {
+        onCircuitOpen: () => { bingeCatUnavailable = true; },
+      });
       mappings = mergeMappings(mappings, probeMappings);
     } catch (error) {
       console.error("[identity] BingeCat availability probe failed", error);
     }
-    bingeCatUnavailable = isBingeCatSearchCircuitOpen();
   }
 
   if (bingeCatUnavailable) {
