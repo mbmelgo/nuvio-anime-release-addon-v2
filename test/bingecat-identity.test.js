@@ -214,6 +214,7 @@ test("candidate validation rejects a related parent identity even when the provi
     tmdbMovieIds: [],
     title: "Dragon Ball Super: Beerus",
     year: 2026,
+    relatedProviderIds: ["tvdb:81472", "tmdb:12971"],
   }]);
 
   assert.equal(selectBingeCatIdentity(media, candidates), null);
@@ -252,6 +253,7 @@ test("Ghost Meets Gal! rejects its Cardfight!! Vanguard parent identity", () => 
     tmdbMovieIds: [],
     title: "Ghost Meets Gal!",
     year: 2026,
+    relatedProviderIds: ["tvdb:82222", "tmdb:12345"],
   }]);
 
   assert.equal(selectBingeCatIdentity(media, candidates), null);
