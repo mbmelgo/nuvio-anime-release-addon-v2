@@ -416,6 +416,66 @@ test("catalog identity resolution keeps IMDb fallback coverage when BingeCat is 
 });
 
 
+test("Beerus prefers its current BingeCat identity over the Dragon Ball Z relation", async () => {
+  const rows = [{
+    id: 206814,
+    idMal: 63367,
+    title: {
+      english: "Dragon Ball Super: Beerus",
+      romaji: "Dragon Ball Super: Beerus",
+      native: "ドラゴンボール超 ビルス",
+    },
+    synonyms: [],
+    format: "TV",
+    startDate: { year: 2026 },
+    isAdult: false,
+    relations: {
+      edges: [{
+        relationType: "PREQUEL",
+        node: {
+          id: 813,
+          format: "TV",
+          title: { english: "Dragon Ball Z", romaji: "Dragon Ball Z", native: "ドラゴンボールZ" },
+          startDate: { year: 1989 },
+          externalLinks: [],
+        },
+      }],
+    },
+  }];
+
+  const result = await canonicalizeCatalogPageWithBingeCat(rows, {
+    probeBingeCat: false,
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async () => new Map([[206814, [{
+      source: "bingecat-search",
+      anilistId: 206814,
+      type: "TV",
+      malId: 63367,
+      imdbIds: ["tt39395275"],
+      tvdbId: 473154,
+      tmdbTvId: 312359,
+      tmdbMovieIds: [],
+      title: "Dragon Ball Super: Beerus",
+      year: 2026,
+    }]]]),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveAniBridgeMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0].id, "tt39395275");
+  assert.equal(result[0].extra.bingecatProvider, "imdb");
+  assert.equal(result[0].extra.bingecatId, "tt39395275");
+});
+
 test("catalog identity resolution protects related provider IDs when BingeCat is unavailable", async () => {
   const rows = [{
     id: 206814,
