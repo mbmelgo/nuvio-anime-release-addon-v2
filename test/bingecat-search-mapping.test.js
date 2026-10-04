@@ -411,7 +411,7 @@ test("BingeCat search derives a base title from File-numbered installments", asy
 });
 
 
-test("BingeCat search cache does not reuse a candidate across distinct AniList rows", async () => {
+test("BingeCat search shares raw responses while keeping candidate selection row-scoped", async () => {
   clearBingeCatSearchCache();
   let calls = 0;
   const fetchImpl = async () => {
@@ -441,12 +441,12 @@ test("BingeCat search cache does not reuse a candidate across distinct AniList r
     { ...base, anilistId: 900101 },
   ], { fetchImpl });
   const second = await resolveAniListMappingsByBingeCatSearch([
-    { ...base, anilistId: 900102 },
+    { ...base, anilistId: 900102, year: 2020 },
   ], { fetchImpl });
 
   assert.equal(first.get(900101)[0].imdbIds[0], "tt11111111");
-  assert.equal(second.get(900102)[0].imdbIds[0], "tt22222222");
-  assert.equal(calls, 2);
+  assert.equal(second.has(900102), false);
+  assert.equal(calls, 1);
 });
 
 
