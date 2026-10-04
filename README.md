@@ -168,6 +168,8 @@ Catalog names and season labels are generated dynamically.
 **Development:** `v1.10.0`  
 **Major baseline:** `v1.0.0`
 
+The 1.10.0 corrective release extends degraded BingeCat resolution through the independent Anime Mapper dataset before terminal MAL fallback, improving provider-ID coverage when BingeCat search is unavailable.
+
 The 1.1.0 release carries the BingeCat identity-verification, cache-safety, related-title, numbered-installment, evidence-aggregation, and year-validation fixes validated on main.
 
 The 1.2.0 corrective release refreshes cached negative BingeCat results during the authoritative verification pass so transient misses cannot mask a supported identity.
