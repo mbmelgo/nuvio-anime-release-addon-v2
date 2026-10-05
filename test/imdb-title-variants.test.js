@@ -110,11 +110,11 @@ test("IMDb search accepts one-word franchise bases for derived installments", as
   }
 });
 
-test("IMDb derived one-word matching does not accept an unrelated one-word title", async () => {
+test("IMDb derived matching does not accept a shorter unrelated one-word IMDb candidate", async () => {
   clearImdbSearchCache();
   const fetchImpl = async (url) => {
     const title = decodeURIComponent(String(url).split("/").pop().replace(/\.json$/, ""));
-    if (title !== "Dragon") return { ok: true, json: async () => ({ d: [] }) };
+    if (title !== "Dragon Quest") return { ok: true, json: async () => ({ d: [] }) };
     return { ok: true, json: async () => ({ d: [{ id: "tt99999999", l: "Dragon", y: 2026 }] }) };
   };
 
