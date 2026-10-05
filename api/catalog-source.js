@@ -183,10 +183,17 @@ async function resolveMappingsForRows(
     }
   }
 
-  const tmdbRows = rows.filter((row) => !selectProviderIdentity(
-    { ...row, anilistId: Number(row.id) },
-    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-  ));
+  const tmdbRows = rows.filter((row) => {
+    const candidates = getProviderCandidates(
+      { ...row, anilistId: Number(row.id) },
+      mappings.get(Number(row.id)) || [],
+    );
+    const selected = selectProviderIdentity(
+      { ...row, anilistId: Number(row.id) },
+      candidates,
+    );
+    return !selected || selected.provider !== "imdb";
+  });
   if (tmdbRows.length) {
     try {
       mappings = mergeMappings(mappings, await resolveTMDBMappings(tmdbRows));
