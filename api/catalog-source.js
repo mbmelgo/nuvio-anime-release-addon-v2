@@ -318,7 +318,7 @@ async function applyRelatedProviderProtection(rows, mappings, dependencies) {
       mappings.get(Number(row.id)) || [],
     );
     return candidates.some((candidate) => !candidate.evidence?.some(
-      (entry) => entry?.source === "bingecat-search",
+      (entry) => false,
     ));
   });
 
@@ -772,7 +772,7 @@ function getCanonicalMalId(row, meta, mappingRecords) {
   return null;
 }
 
-export async function canonicalizeCatalogPageWithBingeCat(
+export async function canonicalizeCatalogPage(
   mediaRows,
   {  = false, ...options } = {},
 ) {
@@ -810,9 +810,6 @@ export async function canonicalizeCatalogPageWithBingeCat(
         id: tmdbSelected.stremioId,
         extra: {
           ...meta.extra,
-          bingecatProvider: null,
-          bingecatId: null,
-          bingecatEvidence: null,
           tmdbProvider: tmdbSelected.provider,
           tmdbId: tmdbSelected.id,
           tmdbEvidence: "tmdb-search",
@@ -835,10 +832,9 @@ export async function canonicalizeCatalogPageWithBingeCat(
           id: selected.stremioId,
           extra: {
             ...meta.extra,
-            bingecatProvider: selected.provider,
-            bingecatId: selected.id,
-            bingecatEvidence: "provider-id-fallback",
-            bingecatVerification: selected.bingecatVerified ? "verified" : "unverified-upstream",
+            identityProvider: selected.provider,
+            identityId: selected.id,
+            identityEvidence: "provider-id-fallback",
           },
         });
         continue;
@@ -851,9 +847,9 @@ export async function canonicalizeCatalogPageWithBingeCat(
           id: `mal:${malId}`,
           extra: {
             ...meta.extra,
-            bingecatProvider: null,
-            bingecatId: null,
-            bingecatEvidence: "canonical-mal-id-fallback",
+            identityProvider: null,
+            identityId: null,
+            identityEvidence: "canonical-mal-id-fallback",
           },
         });
         continue;
@@ -863,9 +859,9 @@ export async function canonicalizeCatalogPageWithBingeCat(
         id: `anilist:${anilistId}`,
         extra: {
           ...meta.extra,
-          bingecatProvider: null,
-          bingecatId: null,
-          bingecatEvidence: "anilist-id-fallback",
+          identityProvider: null,
+          identityId: null,
+          identityEvidence: "anilist-id-fallback",
         },
       });
       continue;
@@ -877,9 +873,9 @@ export async function canonicalizeCatalogPageWithBingeCat(
       id: selected.stremioId,
       extra: {
         ...meta.extra,
-        bingecatProvider: selected.provider,
-        bingecatId: selected.id,
-        bingecatEvidence: selected.evidence,
+        identityProvider: selected.provider,
+        identityId: selected.id,
+        identityEvidence: selected.evidence,
       },
     });
   }
@@ -923,7 +919,6 @@ export async function buildRollingCatalog(id, date, skip, search, {
   fetchPage = queryAiringSchedulePage,
   maxPages = MAX_SCHEDULE_PAGES,
   pageSize = NUVIO_PAGE_SIZE,
-  useBingeCatIdentity = true,
   resolveMappings = resolveAniListMappings,
   resolveSecondaryMappings = resolveAniListMappingsSecondary,
   resolveAlternativeMappings = resolveAniListMappingsByMalIds,
@@ -954,9 +949,6 @@ export async function buildRollingCatalog(id, date, skip, search, {
         if (seenMediaIds.has(mediaId)) continue;
         seenMediaIds.add(mediaId);
         uniqueEligibleRows.push(row);
-      }
-      if (!useBingeCatIdentity) {
-        throw new Error("BingeCat identity resolution is required for production catalogs");
       }
 
       const searchedRows = filterAiringRowsBySearch(uniqueEligibleRows, search);
@@ -992,9 +984,6 @@ export async function buildRollingCatalog(id, date, skip, search, {
             id: tmdbSelected.stremioId,
             extra: {
               ...baseMeta.extra,
-              bingecatProvider: null,
-              bingecatId: null,
-              bingecatEvidence: null,
               tmdbProvider: tmdbSelected.provider,
               tmdbId: tmdbSelected.id,
               tmdbEvidence: "tmdb-search",
@@ -1023,10 +1012,9 @@ export async function buildRollingCatalog(id, date, skip, search, {
               id: selected.stremioId,
               extra: {
                 ...baseMeta.extra,
-                bingecatProvider: selected.provider,
-                bingecatId: selected.id,
-                bingecatEvidence: "provider-id-fallback",
-                bingecatVerification: selected.bingecatVerified ? "verified" : "unverified-upstream",
+                identityProvider: selected.provider,
+                identityId: selected.id,
+                identityEvidence: "provider-id-fallback",
                 episode: row.episode,
                 airingAt: row.airingAt,
                 ...(futureOnly ? {
@@ -1046,9 +1034,9 @@ export async function buildRollingCatalog(id, date, skip, search, {
               id: `mal:${malId}`,
               extra: {
                 ...baseMeta.extra,
-                bingecatProvider: null,
-                bingecatId: null,
-                bingecatEvidence: "canonical-mal-id-fallback",
+                identityProvider: null,
+                identityId: null,
+                identityEvidence: "canonical-mal-id-fallback",
                 episode: row.episode,
                 airingAt: row.airingAt,
                 ...(futureOnly ? {
@@ -1068,10 +1056,9 @@ export async function buildRollingCatalog(id, date, skip, search, {
               id: selected.stremioId,
               extra: {
                 ...baseMeta.extra,
-                bingecatProvider: selected.provider,
-                bingecatId: selected.id,
-                bingecatEvidence: "provider-id-fallback",
-                bingecatVerification: selected.bingecatVerified ? "verified" : "unverified-upstream",
+                identityProvider: selected.provider,
+                identityId: selected.id,
+                identityEvidence: "provider-id-fallback",
                 episode: row.episode,
                 airingAt: row.airingAt,
                 ...(futureOnly ? {
@@ -1089,9 +1076,9 @@ export async function buildRollingCatalog(id, date, skip, search, {
             id: `anilist:${mediaId}`,
             extra: {
               ...baseMeta.extra,
-              bingecatProvider: null,
-              bingecatId: null,
-              bingecatEvidence: "anilist-id-fallback",
+              identityProvider: null,
+              identityId: null,
+              identityEvidence: "anilist-id-fallback",
               episode: row.episode,
               airingAt: row.airingAt,
               ...(futureOnly ? {
@@ -1111,9 +1098,9 @@ export async function buildRollingCatalog(id, date, skip, search, {
           id: selected.stremioId,
           extra: {
             ...baseMeta.extra,
-            bingecatProvider: selected.provider,
-            bingecatId: selected.id,
-            bingecatEvidence: selected.evidence,
+            identityProvider: selected.provider,
+            identityId: selected.id,
+            identityEvidence: selected.evidence,
           },
         };
 
@@ -1142,7 +1129,7 @@ export async function buildCatalog(id, info, skip, search) {
       filter,
       skip,
       search,
-      canonicalizePage: (rows) => canonicalizeCatalogPageWithBingeCat(rows),
+      canonicalizePage: (rows) => canonicalizeCatalogPage(rows),
     });
   }
   if (getRollingCatalogRange(id, new Date())) {
