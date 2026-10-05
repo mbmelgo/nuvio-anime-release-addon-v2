@@ -416,7 +416,7 @@ test("final verification mappings cannot bypass protected related provider IDs",
     relatedProviderIds: ["tvdb:81472"],
   };
   const verificationRecord = {
-    source: "bingecat-search",
+    source: "direct-provider-search",
     anilistId: 206814,
     type: "TV",
     imdbIds: [],
