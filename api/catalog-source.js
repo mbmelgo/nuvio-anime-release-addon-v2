@@ -143,20 +143,7 @@ async function resolveMappingsForRows(
   let mappings = new Map();
 
   try {
-    mappings = await resolveTMDBMappings(rows);
-  } catch (error) {
-    console.error("[identity] TMDB mapping failed; using existing identity sources", error);
-  }
-
-  const tmdbResolvedIds = new Set(rows
-    .filter((row) => selectTMDBIdentity(
-      { ...row, anilistId: Number(row.id) },
-      mappings.get(Number(row.id)) || [],
-    ))
-    .map((row) => Number(row.id)));
-
-  try {
-    mappings = mergeMappings(mappings, await resolveMappings(ids.filter((id) => !tmdbResolvedIds.has(id))));
+    mappings = await resolveMappings(ids);
   } catch (error) {
     console.error("[identity] ARM mapping failed; using secondary mapping sources", error);
   }
@@ -339,7 +326,21 @@ async function resolveMappingsForRows(
       const aniBridgeMappings = await resolveAniBridgeMappings(unresolvedRows);
       mappings = mergeMappings(mappings, aniBridgeMappings);
     } catch (error) {
-      console.error("[identity] AniBridge bulk mapping failed; trying AniMap", error);
+      console.error("[identity] AniBridge bulk mapping failed; trying TMDB", error);
+    }
+  }
+
+  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
+
+  if (unresolvedRows.length) {
+    try {
+      const tmdbMappings = await resolveTMDBMappings(unresolvedRows);
+      mappings = mergeMappings(mappings, tmdbMappings);
+    } catch (error) {
+      console.error("[identity] TMDB mapping failed; trying AniMap", error);
     }
   }
 
