@@ -164,13 +164,13 @@ Catalog names and season labels are generated dynamically.
 
 ## 🚀 Current release
 
-**Production:** `v1.42.0`  
-**Development:** `v1.43.0` — release candidate for TMDB resolver ordering fix
+**Production:** `v1.43.0`  
+**Development:** `v1.43.0` — release candidate validated
 **Major baseline:** `v1.0.0`
 
 The 1.42.0 release switches active identity resolution to TMDB-backed matching, upgrades strong TMDB matches to IMDb when available, and retains TMDB identities when IMDb is unavailable. Legacy BingeCat resolution remains available as a fallback.
 
-The 1.43.0 release candidate lets TMDB upgrade earlier non-IMDb provider mappings, such as TVDB-only mappings, to stronger IMDb identities when TMDB finds a strong match.
+The 1.43.0 release lets TMDB upgrade earlier non-IMDb provider mappings, such as TVDB-only mappings, to stronger IMDb identities when TMDB finds a strong match.
 
 
 The 1.23.0 development baseline hardens BingeCat identity selection so unverified provider mappings cannot inherit identities from explicit franchise-related anime.
