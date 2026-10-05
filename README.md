@@ -165,7 +165,7 @@ Catalog names and season labels are generated dynamically.
 ## 🚀 Current release
 
 **Production:** `v1.44.0`  
-**Development:** `v1.45.0` — release candidate for TMDB search matching improvements
+**Development:** `v1.45.0` — release candidate validated for TMDB search matching improvements
 **Major baseline:** `v1.0.0`
 
 The 1.42.0 release switches active identity resolution to TMDB-backed matching, upgrades strong TMDB matches to IMDb when available, and retains TMDB identities when IMDb is unavailable. Legacy BingeCat resolution remains available as a fallback.
