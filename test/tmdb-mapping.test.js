@@ -25,7 +25,7 @@ test.beforeEach(() => resetTMDBMappingCache());
 
 test("TMDB resolver accepts an exact TV title and upgrades to IMDb when available", async () => {
   const fetchImpl = mockFetch({
-    "/3/search/tv?first_air_date_year=2004&include_adult=false&language=en-US&page=1&query=Bleach": {
+    "/3/search/tv?include_adult=false&language=en-US&page=1&query=Bleach": {
       results: [{ id: 30984, name: "Bleach", original_name: "Bleach", first_air_date: "2004-10-05" }],
     },
     "/3/tv/30984/external_ids": { imdb_id: "tt0434665", tvdb_id: 74796 },
@@ -50,7 +50,7 @@ test("TMDB resolver accepts an exact TV title and upgrades to IMDb when availabl
 
 test("TMDB resolver returns TMDB identity when the matched title has no IMDb ID", async () => {
   const fetchImpl = mockFetch({
-    "/3/search/movie?include_adult=false&language=en-US&page=1&query=Example+Movie&year=2026": {
+    "/3/search/movie?include_adult=false&language=en-US&page=1&query=Example+Movie": {
       results: [{ id: 991234, title: "Example Movie", original_title: "Example Movie", release_date: "2026-04-01" }],
     },
     "/3/movie/991234/external_ids": { imdb_id: null, tvdb_id: null },
@@ -70,9 +70,31 @@ test("TMDB resolver returns TMDB identity when the matched title has no IMDb ID"
   assert.equal(record.tmdbMatchScore, 130);
 });
 
+test("TMDB resolver does not prefilter an exact title by AniList start year", async () => {
+  const fetchImpl = mockFetch({
+    "/3/search/tv?include_adult=false&language=en-US&page=1&query=Future+Example": {
+      results: [{ id: 777, name: "Future Example", original_name: "Future Example", first_air_date: "2026-01-01" }],
+    },
+    "/3/tv/777/external_ids": { imdb_id: "tt7777777", tvdb_id: 777777 },
+  });
+
+  const mappings = await resolveAniListMappingsByTMDB([{
+    id: 7777,
+    title: { english: "Future Example" },
+    format: "TV",
+    startDate: { year: 2027 },
+  }], { token: "test-token", fetchImpl });
+
+  const record = mappings.get(7777)?.[0];
+  assert.equal(record.tmdbTvId, 777);
+  assert.deepEqual(record.imdbIds, ["tt7777777"]);
+  assert.equal(record.tmdbMatchScore, 115);
+  assert.equal(fetchImpl.calls[0].url.includes("first_air_date_year"), false);
+});
+
 test("TMDB resolver does not accept an ambiguous close match", async () => {
   const fetchImpl = mockFetch({
-    "/3/search/tv?first_air_date_year=2026&include_adult=false&language=en-US&page=1&query=Example": {
+    "/3/search/tv?include_adult=false&language=en-US&page=1&query=Example": {
       results: [
         { id: 1, name: "Example", original_name: "Example", first_air_date: "2026-01-01" },
         { id: 2, name: "Example", original_name: "Example", first_air_date: "2026-01-02" },
@@ -93,8 +115,8 @@ test("TMDB resolver does not accept an ambiguous close match", async () => {
 
 test("TMDB resolver uses alternate AniList titles when the primary title is absent", async () => {
   const fetchImpl = mockFetch({
-    "/3/search/tv?first_air_date_year=2013&include_adult=false&language=en-US&page=1&query=Shingeki+no+Kyojin": { results: [] },
-    "/3/search/tv?first_air_date_year=2013&include_adult=false&language=en-US&page=1&query=Attack+on+Titan": {
+    "/3/search/tv?include_adult=false&language=en-US&page=1&query=Shingeki+no+Kyojin": { results: [] },
+    "/3/search/tv?include_adult=false&language=en-US&page=1&query=Attack+on+Titan": {
       results: [{ id: 1429, name: "Attack on Titan", original_name: "進撃の巨人", first_air_date: "2013-04-07" }],
     },
     "/3/tv/1429/external_ids": { imdb_id: "tt2560140", tvdb_id: 267440 },
@@ -127,7 +149,7 @@ test("TMDB resolver is a no-op when the application token is unavailable", async
 
 test("TMDB resolver reuses an AniList IMDb link instead of making an external-ID request", async () => {
   const fetchImpl = mockFetch({
-    "/3/search/tv?first_air_date_year=2020&include_adult=false&language=en-US&page=1&query=Example+Series": {
+    "/3/search/tv?include_adult=false&language=en-US&page=1&query=Example+Series": {
       results: [{ id: 700, name: "Example Series", original_name: "Example Series", first_air_date: "2020-01-01" }],
     },
   });
