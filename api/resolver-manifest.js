@@ -26,6 +26,6 @@ export function buildManifest(info) {
     ],
     types: ["anime"],
     catalogs: catalogDefinitions(info, "mal"),
-    identityMode: "bingecat",
+    identityMode: "provider",
   };
 }
