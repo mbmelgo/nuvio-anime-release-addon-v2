@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { canonicalizeCatalogPageWithBingeCat } from "../api/catalog-source.js";
+import { canonicalizeCatalogPage } from "../api/catalog-source.js";
 
 const empty = async () => new Map();
 
 test("catalog prefers TMDB resolver identity and does not invoke BingeCat for a strong TMDB match", async () => {
   let bingeCatCalls = 0;
-  const metas = await canonicalizeCatalogPageWithBingeCat([{
+  const metas = await canonicalizeCatalogPage([{
     id: 269,
     idMal: 269,
     title: { english: "Bleach", romaji: "Bleach" },
@@ -52,7 +52,7 @@ test("catalog prefers TMDB resolver identity and does not invoke BingeCat for a 
 });
 
 test("catalog returns TMDB ID when TMDB match has no IMDb identity", async () => {
-  const metas = await canonicalizeCatalogPageWithBingeCat([{
+  const metas = await canonicalizeCatalogPage([{
     id: 10001,
     title: { english: "Example Movie" },
     format: "MOVIE",
@@ -96,7 +96,7 @@ test("catalog lets TMDB upgrade non-IMDb mappings when BingeCat is unavailable",
   let tmdbCalls = 0;
   let bingeCatCalls = 0;
 
-  const metas = await canonicalizeCatalogPageWithBingeCat([{
+  const metas = await canonicalizeCatalogPage([{
     id: 269,
     idMal: 269,
     title: { english: "Bleach", romaji: "Bleach" },
@@ -167,7 +167,7 @@ test("catalog lets TMDB upgrade an earlier TVDB mapping to IMDb", async () => {
   let tmdbCalls = 0;
   let bingeCatCalls = 0;
 
-  const metas = await canonicalizeCatalogPageWithBingeCat([{
+  const metas = await canonicalizeCatalogPage([{
     id: 269,
     idMal: 269,
     title: { english: "Bleach", romaji: "Bleach" },
