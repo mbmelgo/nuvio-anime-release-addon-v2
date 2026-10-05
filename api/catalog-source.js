@@ -18,6 +18,7 @@ import { resolveAniListExternalMappings } from "../lib/external-provider-mapping
 import { resolveAniListMappingsAnimap } from "../lib/animap-mapping.js";
 import { resolveAniListMappingsIdMapper } from "../lib/idmapper-mapping.js";
 import { resolveAniListMappingsByBingeCatSearch } from "../lib/bingecat-search-mapping.js";
+import { resolveAniListMappingsByTMDB, selectTMDBIdentity } from "../lib/tmdb-mapping.js";
 import { resolveAniListMappingsByAnimeMapper, resolveAniListRelatedProviderIdsByAnimeMapper } from "../lib/anime-mapper-mapping.js";
 import { resolveAniListMappingsByAniBridge } from "../lib/anibridge-mapping.js";
 import { resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
@@ -126,6 +127,7 @@ async function resolveMappingsForRows(
     resolveAnimapMappings = resolveAniListMappingsAnimap,
     resolveIdMapperMappings = resolveAniListMappingsIdMapper,
     resolveBingeCatSearchMappings = resolveAniListMappingsByBingeCatSearch,
+    resolveTMDBMappings = resolveAniListMappingsByTMDB,
     resolveAnimeMapperMappings = resolveAniListMappingsByAnimeMapper,
     resolveAnimeMapperRelatedProviderIds = resolveAniListRelatedProviderIdsByAnimeMapper,
     resolveAniBridgeMappings = resolveAniListMappingsByAniBridge,
@@ -324,7 +326,21 @@ async function resolveMappingsForRows(
       const aniBridgeMappings = await resolveAniBridgeMappings(unresolvedRows);
       mappings = mergeMappings(mappings, aniBridgeMappings);
     } catch (error) {
-      console.error("[identity] AniBridge bulk mapping failed; trying AniMap", error);
+      console.error("[identity] AniBridge bulk mapping failed; trying TMDB", error);
+    }
+  }
+
+  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
+
+  if (unresolvedRows.length) {
+    try {
+      const tmdbMappings = await resolveTMDBMappings(unresolvedRows);
+      mappings = mergeMappings(mappings, tmdbMappings);
+    } catch (error) {
+      console.error("[identity] TMDB mapping failed; trying AniMap", error);
     }
   }
 
@@ -466,12 +482,16 @@ async function resolveMappingsForRows(
     }
   }
 
-  // Protect unverified identities that may belong to an explicit related
-  // AniList entry before authoritative BingeCat verification. This is a
+  // Protect unverified legacy identities that may belong to an explicit related
+  // AniList entry before the legacy BingeCat verification fallback. This is a
   // targeted bulk lookup: only rows that already have an unverified provider
   // candidate and explicit franchise relations are inspected, so normal rows
   // do not incur relation-resolution fan-out.
   const relationProtectedRows = rows.filter((row) => {
+    if (selectTMDBIdentity(
+      { ...row, anilistId: Number(row.id) },
+      mappings.get(Number(row.id)) || [],
+    )) return false;
     if (!hasExplicitProviderRelations(row)) return false;
     const records = mappings.get(Number(row.id)) || [];
     const candidates = getBingeCatCandidates(
@@ -494,11 +514,15 @@ async function resolveMappingsForRows(
     });
   }
 
-  // BingeCat is the authoritative support check. Any identity that was
-  // resolved by another source must still receive a direct BingeCat search
-  // before it can be returned. This preserves fallback coverage while
-  // ensuring external mappings cannot masquerade as BingeCat-supported.
+  // TMDB is the primary identity resolver. BingeCat remains a legacy
+  // verification/fallback path for rows that TMDB could not resolve.
   const unverifiedRows = rows.filter((row) => {
+    const tmdbSelected = selectTMDBIdentity(
+      { ...row, anilistId: Number(row.id) },
+      mappings.get(Number(row.id)) || [],
+    );
+    if (tmdbSelected) return false;
+
     const selected = selectBingeCatIdentity(
       { ...row, anilistId: Number(row.id) },
       getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
@@ -1011,6 +1035,30 @@ export async function canonicalizeCatalogPageWithBingeCat(
     }
 
     const meta = normalizeSeasonalCatalogMetaTypes([rawMeta])[0];
+    const tmdbSelected = selectTMDBIdentity(
+      { ...row, anilistId },
+      mappings.get(anilistId) || [],
+      { excludeIds: usedIdentities },
+    );
+
+    if (tmdbSelected && !requireBingeCatVerification) {
+      usedIdentities.add(tmdbSelected.stremioId);
+      metas.push({
+        ...meta,
+        id: tmdbSelected.stremioId,
+        extra: {
+          ...meta.extra,
+          bingecatProvider: null,
+          bingecatId: null,
+          bingecatEvidence: null,
+          tmdbProvider: tmdbSelected.provider,
+          tmdbId: tmdbSelected.id,
+          tmdbEvidence: "tmdb-search",
+        },
+      });
+      continue;
+    }
+
     const selected = selectBingeCatIdentity(
       { ...row, anilistId },
       getBingeCatCandidates({ ...row, anilistId }, mappings.get(anilistId) || []),
@@ -1167,6 +1215,36 @@ export async function buildRollingCatalog(id, date, skip, search, {
         const baseMeta = toCatalogIdentity(toMetaFromAniList(mediaId, media));
         if (!baseMeta) {
           unresolvedIds.push(mediaId);
+          continue;
+        }
+
+        const tmdbSelected = selectTMDBIdentity(
+          { ...media, anilistId: mediaId },
+          mappings.get(mediaId) || [],
+          { excludeIds: usedIdentities },
+        );
+        if (tmdbSelected && !requireBingeCatVerification) {
+          usedIdentities.add(tmdbSelected.stremioId);
+          metas.push({
+            ...baseMeta,
+            id: tmdbSelected.stremioId,
+            extra: {
+              ...baseMeta.extra,
+              bingecatProvider: null,
+              bingecatId: null,
+              bingecatEvidence: null,
+              tmdbProvider: tmdbSelected.provider,
+              tmdbId: tmdbSelected.id,
+              tmdbEvidence: "tmdb-search",
+              episode: row.episode,
+              airingAt: row.airingAt,
+              ...(futureOnly ? {
+                nextEpisode: row.episode,
+                nextAiringAt: row.airingAt,
+              } : {}),
+            },
+            type: "series",
+          });
           continue;
         }
 
