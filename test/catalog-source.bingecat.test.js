@@ -371,6 +371,43 @@ test("catalog identity resolution uses cached AniBridge bulk mappings before per
 });
 
 
+
+test("catalog identity resolution uses IMDb before the slower Anime Mapper fallback during BingeCat outages", async () => {
+  const rows = [row(904, 9904)];
+  let imdbCalls = 0;
+  let animeMapperCalls = 0;
+
+  const result = await canonicalizeCatalogPageWithBingeCat(rows, {
+    probeBingeCat: true,
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveBingeCatSearchMappings: async (_rows, options = {}) => {
+      options.onCircuitOpen?.();
+      return new Map();
+    },
+    resolveAniBridgeMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => {
+      imdbCalls += 1;
+      return new Map([[904, [mapping(904, "tt9900904")]]]);
+    },
+    resolveAnimeMapperMappings: async () => {
+      animeMapperCalls += 1;
+      return new Map([[904, [mapping(904, "tvdb:9900904")]]);
+    },
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0].id, "tt9900904");
+  assert.equal(imdbCalls, 1);
+  assert.equal(animeMapperCalls, 0);
+});
+
 test("catalog identity resolution keeps IMDb fallback coverage when BingeCat is rate-limited", async () => {
   const rows = [{
     id: 212888,
