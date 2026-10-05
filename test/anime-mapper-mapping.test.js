@@ -34,6 +34,26 @@ test("Anime Mapper normalizes a direct TVDB/TMDB mapping", async () => {
   assert.equal(record.source, "anime-mapper");
 });
 
+
+test("Anime Mapper bounds a stalled primary lookup", async () => {
+  clearAnimeMapperCache();
+  const started = Date.now();
+  const result = await resolveAniListMappingsByAnimeMapper([{
+    id: 300001,
+    idMal: 60001,
+    format: "TV",
+    titleRomaji: "Slow Test Anime",
+  }], {
+    baseUrl: "https://mapper.test",
+    fetchImpl: async (_url, { signal }) => await new Promise((resolve, reject) => {
+      signal.addEventListener("abort", () => reject(new Error("aborted")), { once: true });
+    }),
+  });
+
+  assert.equal(result.size, 0);
+  assert.ok(Date.now() - started < 1500);
+});
+
 test("Anime Mapper can use a related parent identity for a sequel", async () => {
   clearAnimeMapperCache();
   const result = await resolveAniListMappingsByAnimeMapper([{
