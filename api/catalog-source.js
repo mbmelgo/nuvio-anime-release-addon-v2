@@ -22,6 +22,7 @@ import { resolveAniListMappingsByAnimeMapper, resolveAniListRelatedProviderIdsBy
 import { resolveAniListMappingsByAniBridge } from "../lib/anibridge-mapping.js";
 import { resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
 import { resolveAniListMappingsFromAnimeApiTsv } from "../lib/animeapi-tsv-mapping.js";
+import { getProviderCandidates, selectProviderIdentity } from "../lib/provider-identity.js";
 import {
   resolveAniListMappingsSecondary,
   resolveAniListMappingsByMalIds,
@@ -772,123 +773,43 @@ function getCanonicalMalId(row, meta, mappingRecords) {
   return null;
 }
 
-export async function canonicalizeCatalogPage(
-  mediaRows,
-  {  = false, ...options } = {},
-) {
+export async function canonicalizeCatalogPage(mediaRows, options = {}) {
   const normalizedRows = Array.isArray(mediaRows)
-    ? mediaRows
-      .map((row) => (typeof row === "object" && row !== null ? row : { id: row }))
+    ? mediaRows.map((row) => (typeof row === "object" && row !== null ? row : { id: row }))
       .filter((row) => /^\d+$/.test(String(row.id ?? "").trim()))
     : [];
   if (!normalizedRows.length) return [];
-
   const mappings = await resolveMappingsForRows(normalizedRows, options);
   const metas = [];
   const usedIdentities = new Set();
   const unresolvedIds = [];
-
   for (const row of normalizedRows) {
     const anilistId = Number(row.id);
     const rawMeta = toCatalogIdentity(toMetaFromAniList(anilistId, row));
-    if (!rawMeta) {
-      unresolvedIds.push(anilistId);
-      continue;
-    }
-
+    if (!rawMeta) { unresolvedIds.push(anilistId); continue; }
     const meta = normalizeSeasonalCatalogMetaTypes([rawMeta])[0];
-    const tmdbSelected = selectTMDBIdentity(
-      { ...row, anilistId },
-      mappings.get(anilistId) || [],
-      { excludeIds: usedIdentities },
-    );
-
-    if (tmdbSelected && !) {
+    const tmdbSelected = selectTMDBIdentity({ ...row, anilistId }, mappings.get(anilistId) || [], { excludeIds: usedIdentities });
+    if (tmdbSelected) {
       usedIdentities.add(tmdbSelected.stremioId);
-      metas.push({
-        ...meta,
-        id: tmdbSelected.stremioId,
-        extra: {
-          ...meta.extra,
-          tmdbProvider: tmdbSelected.provider,
-          tmdbId: tmdbSelected.id,
-          tmdbEvidence: "tmdb-search",
-        },
-      });
+      metas.push({ ...meta, id: tmdbSelected.stremioId, extra: { ...meta.extra, tmdbProvider: tmdbSelected.provider, tmdbId: tmdbSelected.id, tmdbEvidence: "tmdb-search" } });
       continue;
     }
-
-    const selected = selectProviderIdentity(
-      { ...row, anilistId },
-      getProviderCandidates({ ...row, anilistId }, mappings.get(anilistId) || []),
-      { excludeIds: usedIdentities },
-    );
-
-    if (!selected) {
-      if (selected) {
-        usedIdentities.add(selected.stremioId);
-        metas.push({
-          ...meta,
-          id: selected.stremioId,
-          extra: {
-            ...meta.extra,
-            identityProvider: selected.provider,
-            identityId: selected.id,
-            identityEvidence: "provider-id-fallback",
-          },
-        });
-        continue;
-      }
-
-      const malId = getCanonicalMalId(row, meta, mappings.get(anilistId) || []);
-      if (Number.isInteger(malId) && malId > 0) {
-        metas.push({
-          ...meta,
-          id: `mal:${malId}`,
-          extra: {
-            ...meta.extra,
-            identityProvider: null,
-            identityId: null,
-            identityEvidence: "canonical-mal-id-fallback",
-          },
-        });
-        continue;
-      }
-      metas.push({
-        ...meta,
-        id: `anilist:${anilistId}`,
-        extra: {
-          ...meta.extra,
-          identityProvider: null,
-          identityId: null,
-          identityEvidence: "anilist-id-fallback",
-        },
-      });
+    const selected = selectProviderIdentity({ ...row, anilistId }, getProviderCandidates({ ...row, anilistId }, mappings.get(anilistId) || []), { excludeIds: usedIdentities });
+    if (selected) {
+      usedIdentities.add(selected.stremioId);
+      metas.push({ ...meta, id: selected.stremioId, extra: { ...meta.extra, identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence } });
       continue;
     }
-
-    usedIdentities.add(selected.stremioId);
-    metas.push({
-      ...meta,
-      id: selected.stremioId,
-      extra: {
-        ...meta.extra,
-        identityProvider: selected.provider,
-        identityId: selected.id,
-        identityEvidence: selected.evidence,
-      },
-    });
+    const malId = getCanonicalMalId(row, meta, mappings.get(anilistId) || []);
+    if (Number.isInteger(malId) && malId > 0) {
+      metas.push({ ...meta, id: "mal:" + malId, extra: { ...meta.extra, identityProvider: null, identityId: null, identityEvidence: "canonical-mal-id-fallback" } });
+      continue;
+    }
+    metas.push({ ...meta, id: "anilist:" + anilistId, extra: { ...meta.extra, identityProvider: null, identityId: null, identityEvidence: "anilist-id-fallback" } });
   }
-
-  if (unresolvedIds.length) {
-    throw new Error(
-      `Identity resolution exhausted; unresolved AniList IDs: ${unresolvedIds.join(",") || "unknown"}`,
-    );
-  }
-
+  if (unresolvedIds.length) throw new Error("Identity resolution exhausted; unresolved AniList IDs: " + (unresolvedIds.join(",") || "unknown"));
   return metas;
 }
-
 export async function fetchValidatedSeasonCatalogPage({
   filter,
   skip = 0,
@@ -922,206 +843,48 @@ export async function buildRollingCatalog(id, date, skip, search, {
   resolveMappings = resolveAniListMappings,
   resolveSecondaryMappings = resolveAniListMappingsSecondary,
   resolveAlternativeMappings = resolveAniListMappingsByMalIds,
-   = false,
 } = {}) {
   const range = getRollingCatalogRange(id, date);
   if (!range) return [];
-
   const futureOnly = id === "upcoming_5_days";
   const sort = futureOnly ? "TIME" : "TIME_DESC";
-
   return collectValidatedCatalogPage({
-    skip,
-    pageSize,
-    maxPages,
+    skip, pageSize, maxPages,
     fetchPage: (page) => fetchPage(range.start, range.end, futureOnly, page, sort),
     canonicalizePage: async (rows) => {
       const eligibleRows = (Array.isArray(rows) ? rows : []).filter((row) => {
         const media = row?.media;
-        return Number.isInteger(Number(media?.id))
-          && Number(media.id) > 0
-          && isEligibleRollingMedia(media);
+        return Number.isInteger(Number(media?.id)) && Number(media.id) > 0 && isEligibleRollingMedia(media);
       });
       const uniqueEligibleRows = [];
       const seenMediaIds = new Set();
-      for (const row of eligibleRows) {
-        const mediaId = Number(row.media.id);
-        if (seenMediaIds.has(mediaId)) continue;
-        seenMediaIds.add(mediaId);
-        uniqueEligibleRows.push(row);
-      }
-
+      for (const row of eligibleRows) { const mediaId = Number(row.media.id); if (seenMediaIds.has(mediaId)) continue; seenMediaIds.add(mediaId); uniqueEligibleRows.push(row); }
       const searchedRows = filterAiringRowsBySearch(uniqueEligibleRows, search);
-      const mediaRows = searchedRows.map((row) => row.media);
-      const mappings = await resolveMappingsForRows(mediaRows, {
-        resolveMappings,
-        resolveSecondaryMappings,
-        resolveAlternativeMappings,
-      });
-
+      const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), { resolveMappings, resolveSecondaryMappings, resolveAlternativeMappings });
       const metas = [];
       const usedIdentities = new Set();
-      const unresolvedIds = [];
-
       for (const row of searchedRows) {
-        const media = row.media;
-        const mediaId = Number(media.id);
+        const media = row.media; const mediaId = Number(media.id);
         const baseMeta = toCatalogIdentity(toMetaFromAniList(mediaId, media));
-        if (!baseMeta) {
-          unresolvedIds.push(mediaId);
-          continue;
+        if (!baseMeta) continue;
+        const tmdbSelected = selectTMDBIdentity({ ...media, anilistId: mediaId }, mappings.get(mediaId) || [], { excludeIds: usedIdentities });
+        const selected = tmdbSelected || selectProviderIdentity({ ...media, anilistId: mediaId }, getProviderCandidates(media, mappings.get(mediaId) || []), { excludeIds: usedIdentities });
+        const malId = getCanonicalMalId(media, baseMeta, mappings.get(mediaId) || []);
+        let meta;
+        if (selected) {
+          usedIdentities.add(selected.stremioId);
+          meta = { ...baseMeta, id: selected.stremioId, extra: { ...baseMeta.extra, ...(tmdbSelected ? { tmdbProvider: selected.provider, tmdbId: selected.id, tmdbEvidence: "tmdb-search" } : { identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence }), episode: row.episode, airingAt: row.airingAt, ...(futureOnly ? { nextEpisode: row.episode, nextAiringAt: row.airingAt } : {}) }, type: "series" };
+        } else if (Number.isInteger(malId) && malId > 0) {
+          meta = { ...baseMeta, id: "mal:" + malId, extra: { ...baseMeta.extra, identityProvider: null, identityId: null, identityEvidence: "canonical-mal-id-fallback", episode: row.episode, airingAt: row.airingAt, ...(futureOnly ? { nextEpisode: row.episode, nextAiringAt: row.airingAt } : {}) }, type: "series" };
+        } else {
+          meta = { ...baseMeta, id: "anilist:" + mediaId, extra: { ...baseMeta.extra, identityProvider: null, identityId: null, identityEvidence: "anilist-id-fallback", episode: row.episode, airingAt: row.airingAt, ...(futureOnly ? { nextEpisode: row.episode, nextAiringAt: row.airingAt } : {}) }, type: "series" };
         }
-
-        const tmdbSelected = selectTMDBIdentity(
-          { ...media, anilistId: mediaId },
-          mappings.get(mediaId) || [],
-          { excludeIds: usedIdentities },
-        );
-        if (tmdbSelected && !) {
-          usedIdentities.add(tmdbSelected.stremioId);
-          metas.push({
-            ...baseMeta,
-            id: tmdbSelected.stremioId,
-            extra: {
-              ...baseMeta.extra,
-              tmdbProvider: tmdbSelected.provider,
-              tmdbId: tmdbSelected.id,
-              tmdbEvidence: "tmdb-search",
-              episode: row.episode,
-              airingAt: row.airingAt,
-              ...(futureOnly ? {
-                nextEpisode: row.episode,
-                nextAiringAt: row.airingAt,
-              } : {}),
-            },
-            type: "series",
-          });
-          continue;
-        }
-
-        const selected = selectProviderIdentity(
-          { ...media, anilistId: mediaId },
-          getProviderCandidates(media, mappings.get(mediaId) || []),
-          { excludeIds: usedIdentities },
-        );
-        if (!selected) {
-          if (selected) {
-            usedIdentities.add(selected.stremioId);
-            const meta = {
-              ...baseMeta,
-              id: selected.stremioId,
-              extra: {
-                ...baseMeta.extra,
-                identityProvider: selected.provider,
-                identityId: selected.id,
-                identityEvidence: "provider-id-fallback",
-                episode: row.episode,
-                airingAt: row.airingAt,
-                ...(futureOnly ? {
-                  nextEpisode: row.episode,
-                  nextAiringAt: row.airingAt,
-                } : {}),
-              },
-              type: "series",
-            };
-            metas.push(meta);
-            continue;
-          }
-          const malId = getCanonicalMalId(media, baseMeta, mappings.get(mediaId) || []);
-          if (Number.isInteger(malId) && malId > 0) {
-            const meta = {
-              ...baseMeta,
-              id: `mal:${malId}`,
-              extra: {
-                ...baseMeta.extra,
-                identityProvider: null,
-                identityId: null,
-                identityEvidence: "canonical-mal-id-fallback",
-                episode: row.episode,
-                airingAt: row.airingAt,
-                ...(futureOnly ? {
-                  nextEpisode: row.episode,
-                  nextAiringAt: row.airingAt,
-                } : {}),
-              },
-              type: "series",
-            };
-            metas.push(meta);
-            continue;
-          }
-          if (selected) {
-            usedIdentities.add(selected.stremioId);
-            const meta = {
-              ...baseMeta,
-              id: selected.stremioId,
-              extra: {
-                ...baseMeta.extra,
-                identityProvider: selected.provider,
-                identityId: selected.id,
-                identityEvidence: "provider-id-fallback",
-                episode: row.episode,
-                airingAt: row.airingAt,
-                ...(futureOnly ? {
-                  nextEpisode: row.episode,
-                  nextAiringAt: row.airingAt,
-                } : {}),
-              },
-              type: "series",
-            };
-            metas.push(meta);
-            continue;
-          }
-          const meta = {
-            ...baseMeta,
-            id: `anilist:${mediaId}`,
-            extra: {
-              ...baseMeta.extra,
-              identityProvider: null,
-              identityId: null,
-              identityEvidence: "anilist-id-fallback",
-              episode: row.episode,
-              airingAt: row.airingAt,
-              ...(futureOnly ? {
-                nextEpisode: row.episode,
-                nextAiringAt: row.airingAt,
-              } : {}),
-            },
-            type: "series",
-          };
-          metas.push(meta);
-          continue;
-        }
-
-        usedIdentities.add(selected.stremioId);
-        const meta = {
-          ...baseMeta,
-          id: selected.stremioId,
-          extra: {
-            ...baseMeta.extra,
-            identityProvider: selected.provider,
-            identityId: selected.id,
-            identityEvidence: selected.evidence,
-          },
-        };
-
-        meta.type = "series";
-        meta.extra = {
-          ...meta.extra,
-          episode: row.episode,
-          airingAt: row.airingAt,
-          ...(futureOnly ? {
-            nextEpisode: row.episode,
-            nextAiringAt: row.airingAt,
-          } : {}),
-        };
         metas.push(meta);
       }
-
       return filterCatalogMetasBySearch(metas, search);
     },
   });
 }
-
 export async function buildCatalog(id, info, skip, search) {
   const filter = getCatalogFilter(id, info);
   if (filter) {
