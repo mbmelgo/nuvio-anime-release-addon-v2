@@ -168,7 +168,7 @@ test("rolling catalogs exclude adult and unsupported-format media", async () => 
 });
 
 
-test("rolling catalog preserves an entry with AniList fallback when no BingeCat or MAL identity exists", async () => {
+test("rolling catalog preserves an entry with AniList fallback when no provider or MAL identity exists", async () => {
   const now = new Date("2026-10-01T00:00:00.000Z");
   const rows = [schedule(900998, now.getTime() + 60_000, 1, "No Provider Rolling Example")];
   const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
@@ -190,5 +190,5 @@ test("rolling catalog preserves an entry with AniList fallback when no BingeCat 
 
   assert.equal(result.length, 1);
   assert.equal(result[0].id, "anilist:900998");
-  assert.equal(result[0].extra.bingecatEvidence, "anilist-id-fallback");
+  assert.equal(result[0].extra.identityEvidence, "anilist-id-fallback");
 });
