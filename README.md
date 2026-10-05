@@ -98,7 +98,7 @@ The production flow is:
 ```text
 AniList release discovery
         ↓
-validated BingeCat ID
+validated provider ID
         ↓
 Nuvio catalog
         ↓
@@ -117,7 +117,7 @@ configured metadata addon
 ┌──────────────────────┐
 │ Anime Releases       │
 │      for Nuvio       │
-│ BingeCat identities   │
+│ Provider identities  │
 └──────────┬───────────┘
            │
            ▼
@@ -301,7 +301,7 @@ This addon is responsible for:
 
 - seasonal anime release discovery
 - rolling upcoming/recent airing discovery
-- BingeCat-compatible catalog identities with ARM-backed and secondary cross-provider mapping
+- validated provider identities with ARM-backed and secondary cross-provider mapping
 - Nuvio-compatible catalog pagination
 - catalog search
 - dynamic seasonal organization
