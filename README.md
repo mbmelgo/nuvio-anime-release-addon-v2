@@ -166,7 +166,7 @@ Catalog names and season labels are generated dynamically.
 
 ## 🚀 Current release
 
-**Production:** `v1.47.0`  
+**Production:** `v1.46.0`  
 **Development:** `v1.47.0` — release candidate removing the unusable BingeCat API integration
 **Major baseline:** `v1.0.0`
 
