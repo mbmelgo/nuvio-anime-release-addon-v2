@@ -3,7 +3,7 @@
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
 [![MAL](https://img.shields.io/badge/MyAnimeList-identity-2e51a2.svg)](https://myanimelist.net)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
-[![Version](https://img.shields.io/badge/version-1.45.0-blue.svg)](https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases)
+[![Version](https://img.shields.io/badge/version-1.46.0-blue.svg)](https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases)
 
 > A lightweight, season-aware anime release catalog for Nuvio and Stremio-compatible clients.
 
@@ -165,7 +165,7 @@ Catalog names and season labels are generated dynamically.
 ## 🚀 Current release
 
 **Production:** `v1.45.0`  
-**Development:** `v1.45.0` — release candidate validated for TMDB search matching improvements
+**Development:** `v1.46.0` — release candidate for bounded TMDB concurrency
 **Major baseline:** `v1.0.0`
 
 The 1.42.0 release switches active identity resolution to TMDB-backed matching, upgrades strong TMDB matches to IMDb when available, and retains TMDB identities when IMDb is unavailable. Legacy BingeCat resolution remains available as a fallback.
@@ -175,6 +175,8 @@ The 1.43.0 release lets TMDB upgrade earlier non-IMDb provider mappings, such as
 The 1.44.0 release keeps that TMDB upgrade path active when BingeCat is unavailable, including production degraded-mode resolution.
 
 The 1.45.0 release removes TMDB's pre-search year filter so exact title matches can still resolve when AniList and TMDB record different start years.
+
+The 1.46.0 release resolves TMDB mappings with bounded concurrency to reduce catalog latency while respecting the provider's request-rate constraints.
 
 
 The 1.23.0 development baseline hardens BingeCat identity selection so unverified provider mappings cannot inherit identities from explicit franchise-related anime.
