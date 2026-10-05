@@ -255,13 +255,12 @@ async function resolveMappingsForRows(
 
     if (unresolvedRows.length) {
       try {
-        const animeMapperMappings = await resolveAnimeMapperMappings(unresolvedRows);
-        mappings = mergeMappings(mappings, animeMapperMappings);
+        const imdbMappings = await resolveImdbMappings(unresolvedRows);
+        mappings = mergeMappings(mappings, imdbMappings);
       } catch (error) {
-        console.error("[identity] degraded Anime Mapper mapping failed", error);
+        console.error("[identity] degraded IMDb mapping failed", error);
       }
     }
-
     unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
       { ...row, anilistId: Number(row.id) },
       getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
@@ -270,12 +269,13 @@ async function resolveMappingsForRows(
 
     if (unresolvedRows.length) {
       try {
-        const imdbMappings = await resolveImdbMappings(unresolvedRows);
-        mappings = mergeMappings(mappings, imdbMappings);
+        const animeMapperMappings = await resolveAnimeMapperMappings(unresolvedRows);
+        mappings = mergeMappings(mappings, animeMapperMappings);
       } catch (error) {
-        console.error("[identity] degraded IMDb mapping failed", error);
+        console.error("[identity] degraded Anime Mapper mapping failed", error);
       }
     }
+
 
     await applyRelatedProviderProtection(rows, mappings, {
       resolveMappings,
