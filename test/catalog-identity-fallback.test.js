@@ -30,7 +30,6 @@ test("catalog preserves an independent provider identity when later sources are 
     resolveTMDBMappings: empty,
     resolveAnimapMappings: empty,
     resolveIdMapperMappings: empty,
-    resolveAnimeMapperMappings: empty,
     resolveTsvMappings: empty,
     resolveImdbMappings: empty,
     resolveSecondaryMappings: empty,
@@ -66,8 +65,9 @@ test("later mapping sources supplement unsupported earlier records", async () =>
     resolveExternalMappings: () => new Map(),
     resolveAniBridgeMappings: empty,
     resolveTMDBMappings: empty,
-    resolveAnimapMappings: async () => new Map([[123, [{
-      source: "animap",
+    resolveAnimapMappings: empty,
+    resolveAnimeMapperMappings: async () => new Map([[123, [{
+      source: "anime-mapper",
       anilistId: 123,
       type: "TV",
       imdbIds: ["tt1234567"],
