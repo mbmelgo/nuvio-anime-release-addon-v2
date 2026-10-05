@@ -212,7 +212,7 @@ async function resolveMappingsForRows(
     // TMDB remains the active resolver even when BingeCat is unavailable.
     // Upgrade any row that still lacks an IMDb identity before falling back
     // through the remaining provider datasets.
-    const degradedTMDBRows = degradedRows.filter((row) => {
+    const degradedTMDBRows = rows.filter((row) => {
       const records = mappings.get(Number(row.id)) || [];
       return !hasIMDbMapping(records);
     });
