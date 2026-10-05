@@ -481,12 +481,16 @@ async function resolveMappingsForRows(
     }
   }
 
-  // Protect unverified identities that may belong to an explicit related
-  // AniList entry before authoritative BingeCat verification. This is a
+  // Protect unverified legacy identities that may belong to an explicit related
+  // AniList entry before the legacy BingeCat verification fallback. This is a
   // targeted bulk lookup: only rows that already have an unverified provider
   // candidate and explicit franchise relations are inspected, so normal rows
   // do not incur relation-resolution fan-out.
   const relationProtectedRows = rows.filter((row) => {
+    if (selectTMDBIdentity(
+      { ...row, anilistId: Number(row.id) },
+      mappings.get(Number(row.id)) || [],
+    )) return false;
     if (!hasExplicitProviderRelations(row)) return false;
     const records = mappings.get(Number(row.id)) || [];
     const candidates = getBingeCatCandidates(
@@ -509,10 +513,8 @@ async function resolveMappingsForRows(
     });
   }
 
-  // BingeCat is the authoritative support check. Any identity that was
-  // resolved by another source must still receive a direct BingeCat search
-  // before it can be returned. This preserves fallback coverage while
-  // ensuring external mappings cannot masquerade as BingeCat-supported.
+  // TMDB is the primary identity resolver. BingeCat remains a legacy
+  // verification/fallback path for rows that TMDB could not resolve.
   const unverifiedRows = rows.filter((row) => {
     const tmdbSelected = selectTMDBIdentity(
       { ...row, anilistId: Number(row.id) },
