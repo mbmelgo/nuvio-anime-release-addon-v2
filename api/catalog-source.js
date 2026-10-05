@@ -189,6 +189,17 @@ async function resolveMappingsForRows(
       console.error("[identity] degraded AniList external mapping failed", error);
     }
 
+    // AniBridge is a shared bulk mapping dataset. Run it before per-title
+    // fallback providers so an unavailable BingeCat does not turn a 50-row
+    // catalog page into avoidable request fan-out.
+    if (unresolvedRows.length) {
+      try {
+        const aniBridgeMappings = await resolveAniBridgeMappings(unresolvedRows);
+        mappings = mergeMappings(mappings, aniBridgeMappings);
+      } catch (error) {
+        console.error("[identity] degraded AniBridge mapping failed", error);
+      }
+    }
     unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
       { ...row, anilistId: Number(row.id) },
       getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
@@ -250,14 +261,6 @@ async function resolveMappingsForRows(
       getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
     ));
 
-    if (unresolvedRows.length) {
-      try {
-        const aniBridgeMappings = await resolveAniBridgeMappings(unresolvedRows);
-        mappings = mergeMappings(mappings, aniBridgeMappings);
-      } catch (error) {
-        console.error("[identity] degraded AniBridge mapping failed", error);
-      }
-    }
 
     if (unresolvedRows.length) {
       try {
