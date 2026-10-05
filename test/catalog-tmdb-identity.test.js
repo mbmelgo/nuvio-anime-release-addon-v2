@@ -40,6 +40,7 @@ test("catalog prefers TMDB resolver identity and does not invoke BingeCat for a 
     resolveImdbMappings: empty,
     resolveSecondaryMappings: empty,
     resolveAlternativeMappings: empty,
+    resolveAniBridgeMappings: empty,
   });
 
   assert.equal(metas[0].id, "tt0434665");
