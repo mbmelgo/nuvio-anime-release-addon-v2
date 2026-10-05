@@ -183,7 +183,10 @@ async function resolveMappingsForRows(
     }
   }
 
-  const tmdbRows = rows.filter((row) => !hasIMDbMapping(mappings.get(Number(row.id)) || []));
+  const tmdbRows = rows.filter((row) => !selectProviderIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
   if (tmdbRows.length) {
     try {
       mappings = mergeMappings(mappings, await resolveTMDBMappings(tmdbRows));
@@ -757,11 +760,6 @@ function mergeMappings(base, additional) {
   return merged;
 }
 
-function hasIMDbMapping(records) {
-  return (Array.isArray(records) ? records : [])
-    .some((record) => Array.isArray(record?.imdbIds)
-      && record.imdbIds.some((id) => /^tt\d+$/.test(String(id))));
-}
 
 function getCanonicalMalId(row, meta, mappingRecords) {
   const direct = Number(row?.idMal ?? meta?.extra?.malId);
