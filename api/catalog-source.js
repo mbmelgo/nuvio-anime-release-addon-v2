@@ -139,9 +139,21 @@ async function resolveMappingsForRows(
   // Preserve the documented resolver order; later independent sources only run after earlier candidates are unresolved.
   const ids = rows.map((row) => Number(row.id));
   let mappings = new Map();
+  const identityTimingEnabled = process.env.IDENTITY_TIMING === "1";
+  const identityStartedAt = Date.now();
+  const identityTiming = (stage, details = {}) => {
+    if (!identityTimingEnabled) return;
+    console.info("[identity-timing]", {
+      stage,
+      elapsedMs: Date.now() - identityStartedAt,
+      ...details,
+    });
+  };
+  identityTiming("start", { rowCount: rows.length });
 
   try {
     mappings = await resolveMappings(ids);
+    identityTiming("arm-complete", { mappedRows: mappings.size });
   } catch (error) {
     console.error("[identity] ARM mapping failed; using secondary mapping sources", error);
   }
@@ -155,12 +167,17 @@ async function resolveMappingsForRows(
   // upstream is access-denied/rate-limited, preserve the fast ARM mappings
   // and let canonical MAL identity remain the terminal fallback.
   let bingeCatUnavailable = false;
+  identityTiming("arm-unresolved", { unresolvedRows: unresolvedRows.length });
   if (probeBingeCat && unresolvedRows.length) {
     try {
       const probeMappings = await resolveBingeCatSearchMappings(unresolvedRows.slice(0, 1), {
         onCircuitOpen: () => { bingeCatUnavailable = true; },
       });
       mappings = mergeMappings(mappings, probeMappings);
+      identityTiming("bingecat-probe-complete", {
+        probeMappedRows: probeMappings.size,
+        circuitOpen: bingeCatUnavailable,
+      });
     } catch (error) {
       console.error("[identity] BingeCat availability probe failed", error);
     }
@@ -206,6 +223,11 @@ async function resolveMappingsForRows(
     } else {
       console.error("[identity] degraded AniBridge mapping failed", aniBridgeResult.reason);
     }
+    identityTiming("bulk-complete", {
+      fribb: fribbResult.status,
+      aniBridge: aniBridgeResult.status,
+      mappedRows: mappings.size,
+    });
     unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
       { ...row, anilistId: Number(row.id) },
       getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
@@ -215,6 +237,7 @@ async function resolveMappingsForRows(
       try {
         const animapMappings = await resolveAnimapMappings(unresolvedRows.map((row) => Number(row.id)));
         mappings = mergeMappings(mappings, animapMappings);
+        identityTiming("animap-complete", { mappedRows: animapMappings.size, unresolvedRows: unresolvedRows.length });
       } catch (error) {
         console.error("[identity] degraded AniMap mapping failed", error);
       }
@@ -229,6 +252,7 @@ async function resolveMappingsForRows(
       try {
         const idMapperMappings = await resolveIdMapperMappings(unresolvedRows.map((row) => Number(row.id)));
         mappings = mergeMappings(mappings, idMapperMappings);
+        identityTiming("idmapper-complete", { mappedRows: idMapperMappings.size, unresolvedRows: unresolvedRows.length });
       } catch (error) {
         console.error("[identity] degraded IDMapper mapping failed", error);
       }
@@ -243,6 +267,7 @@ async function resolveMappingsForRows(
       try {
         const tsvMappings = await resolveTsvMappings(unresolvedRows);
         mappings = mergeMappings(mappings, tsvMappings);
+        identityTiming("tsv-complete", { mappedRows: tsvMappings.size, unresolvedRows: unresolvedRows.length });
       } catch (error) {
         console.error("[identity] degraded AnimeAPI TSV mapping failed", error);
       }
@@ -257,6 +282,7 @@ async function resolveMappingsForRows(
       try {
         const animeMapperMappings = await resolveAnimeMapperMappings(unresolvedRows);
         mappings = mergeMappings(mappings, animeMapperMappings);
+        identityTiming("anime-mapper-complete", { mappedRows: animeMapperMappings.size, unresolvedRows: unresolvedRows.length });
       } catch (error) {
         console.error("[identity] degraded Anime Mapper mapping failed", error);
       }
@@ -272,6 +298,7 @@ async function resolveMappingsForRows(
       try {
         const imdbMappings = await resolveImdbMappings(unresolvedRows);
         mappings = mergeMappings(mappings, imdbMappings);
+        identityTiming("imdb-complete", { mappedRows: imdbMappings.size, unresolvedRows: unresolvedRows.length });
       } catch (error) {
         console.error("[identity] degraded IMDb mapping failed", error);
       }
@@ -285,6 +312,7 @@ async function resolveMappingsForRows(
       resolveAnimeMapperRelatedProviderIds,
     });
 
+    identityTiming("degraded-complete", { mappedRows: mappings.size, unresolvedRows: unresolvedRows.length });
     return mappings;
   }
 
