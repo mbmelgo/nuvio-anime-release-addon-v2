@@ -79,7 +79,6 @@ test("later mapping sources supplement unsupported earlier records", async () =>
       corroborated: true,
     }]]]),
     resolveIdMapperMappings: empty,
-    resolveAnimeMapperMappings: empty,
     resolveTsvMappings: empty,
     resolveImdbMappings: empty,
     resolveSecondaryMappings: empty,
