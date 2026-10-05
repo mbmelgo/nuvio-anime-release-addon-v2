@@ -149,6 +149,10 @@ async function resolveMappingsForRows(
       ...details,
     });
   };
+  const countUnresolved = () => rows.filter((row) => !selectBingeCatIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  )).length;
   identityTiming("start", { rowCount: rows.length });
 
   try {
@@ -237,7 +241,7 @@ async function resolveMappingsForRows(
       try {
         const animapMappings = await resolveAnimapMappings(unresolvedRows.map((row) => Number(row.id)));
         mappings = mergeMappings(mappings, animapMappings);
-        identityTiming("animap-complete", { mappedRows: animapMappings.size, unresolvedRows: unresolvedRows.length });
+        identityTiming("animap-complete", { mappedRows: animapMappings.size, unresolvedRows: identityTimingEnabled ? countUnresolved() : undefined });
       } catch (error) {
         console.error("[identity] degraded AniMap mapping failed", error);
       }
@@ -252,7 +256,7 @@ async function resolveMappingsForRows(
       try {
         const idMapperMappings = await resolveIdMapperMappings(unresolvedRows.map((row) => Number(row.id)));
         mappings = mergeMappings(mappings, idMapperMappings);
-        identityTiming("idmapper-complete", { mappedRows: idMapperMappings.size, unresolvedRows: unresolvedRows.length });
+        identityTiming("idmapper-complete", { mappedRows: idMapperMappings.size, unresolvedRows: identityTimingEnabled ? countUnresolved() : undefined });
       } catch (error) {
         console.error("[identity] degraded IDMapper mapping failed", error);
       }
@@ -267,7 +271,7 @@ async function resolveMappingsForRows(
       try {
         const tsvMappings = await resolveTsvMappings(unresolvedRows);
         mappings = mergeMappings(mappings, tsvMappings);
-        identityTiming("tsv-complete", { mappedRows: tsvMappings.size, unresolvedRows: unresolvedRows.length });
+        identityTiming("tsv-complete", { mappedRows: tsvMappings.size, unresolvedRows: identityTimingEnabled ? countUnresolved() : undefined });
       } catch (error) {
         console.error("[identity] degraded AnimeAPI TSV mapping failed", error);
       }
@@ -282,7 +286,7 @@ async function resolveMappingsForRows(
       try {
         const animeMapperMappings = await resolveAnimeMapperMappings(unresolvedRows);
         mappings = mergeMappings(mappings, animeMapperMappings);
-        identityTiming("anime-mapper-complete", { mappedRows: animeMapperMappings.size, unresolvedRows: unresolvedRows.length });
+        identityTiming("anime-mapper-complete", { mappedRows: animeMapperMappings.size, unresolvedRows: identityTimingEnabled ? countUnresolved() : undefined });
       } catch (error) {
         console.error("[identity] degraded Anime Mapper mapping failed", error);
       }
@@ -298,7 +302,7 @@ async function resolveMappingsForRows(
       try {
         const imdbMappings = await resolveImdbMappings(unresolvedRows);
         mappings = mergeMappings(mappings, imdbMappings);
-        identityTiming("imdb-complete", { mappedRows: imdbMappings.size, unresolvedRows: unresolvedRows.length });
+        identityTiming("imdb-complete", { mappedRows: imdbMappings.size, unresolvedRows: identityTimingEnabled ? countUnresolved() : undefined });
       } catch (error) {
         console.error("[identity] degraded IMDb mapping failed", error);
       }
@@ -312,7 +316,7 @@ async function resolveMappingsForRows(
       resolveAnimeMapperRelatedProviderIds,
     });
 
-    identityTiming("degraded-complete", { mappedRows: mappings.size, unresolvedRows: unresolvedRows.length });
+    identityTiming("degraded-complete", { mappedRows: mappings.size, unresolvedRows: identityTimingEnabled ? countUnresolved() : undefined });
     return mappings;
   }
 
