@@ -17,13 +17,11 @@ import { resolveAniListMappingsFribb } from "../lib/fribb-mapping.js";
 import { resolveAniListExternalMappings } from "../lib/external-provider-mapping.js";
 import { resolveAniListMappingsAnimap } from "../lib/animap-mapping.js";
 import { resolveAniListMappingsIdMapper } from "../lib/idmapper-mapping.js";
-import { resolveAniListMappingsByBingeCatSearch } from "../lib/bingecat-search-mapping.js";
 import { resolveAniListMappingsByTMDB, selectTMDBIdentity } from "../lib/tmdb-mapping.js";
 import { resolveAniListMappingsByAnimeMapper, resolveAniListRelatedProviderIdsByAnimeMapper } from "../lib/anime-mapper-mapping.js";
 import { resolveAniListMappingsByAniBridge } from "../lib/anibridge-mapping.js";
 import { resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
 import { resolveAniListMappingsFromAnimeApiTsv } from "../lib/animeapi-tsv-mapping.js";
-import { getBingeCatCandidates, selectBingeCatIdentity } from "../lib/bingecat-identity.js";
 import {
   resolveAniListMappingsSecondary,
   resolveAniListMappingsByMalIds,
@@ -126,7 +124,6 @@ async function resolveMappingsForRows(
     resolveExternalMappings = resolveAniListExternalMappings,
     resolveAnimapMappings = resolveAniListMappingsAnimap,
     resolveIdMapperMappings = resolveAniListMappingsIdMapper,
-    resolveBingeCatSearchMappings = resolveAniListMappingsByBingeCatSearch,
     resolveTMDBMappings = resolveAniListMappingsByTMDB,
     resolveAnimeMapperMappings = resolveAniListMappingsByAnimeMapper,
     resolveAnimeMapperRelatedProviderIds = resolveAniListRelatedProviderIdsByAnimeMapper,
@@ -135,10 +132,8 @@ async function resolveMappingsForRows(
     resolveImdbMappings = resolveAniListMappingsByImdbSearch,
     resolveSecondaryMappings = resolveAniListMappingsSecondary,
     resolveAlternativeMappings = resolveAniListMappingsByMalIds,
-    probeBingeCat = process.env.NODE_ENV === "production",
   } = {},
 ) {
-  // Preserve the documented resolver order; later independent sources only run after earlier candidates are unresolved.
   const ids = rows.map((row) => Number(row.id));
   let mappings = new Map();
 
@@ -148,347 +143,143 @@ async function resolveMappingsForRows(
     console.error("[identity] ARM mapping failed; using secondary mapping sources", error);
   }
 
-  let unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+  let unresolvedRows = rows.filter((row) => !selectProviderIdentity(
     { ...row, anilistId: Number(row.id) },
-    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
   ));
-
-  // Probe BingeCat before loading additional large mapping datasets. If the
-  // upstream is access-denied/rate-limited, preserve the fast ARM mappings
-  // and let canonical MAL identity remain the terminal fallback.
-  let bingeCatUnavailable = false;
-  if (probeBingeCat && unresolvedRows.length) {
-    try {
-      const probeMappings = await resolveBingeCatSearchMappings(unresolvedRows.slice(0, 1), {
-        onCircuitOpen: () => { bingeCatUnavailable = true; },
-      });
-      mappings = mergeMappings(mappings, probeMappings);
-    } catch (error) {
-      console.error("[identity] BingeCat availability probe failed", error);
-    }
-  }
-
-  if (bingeCatUnavailable) {
-    // BingeCat is unavailable, so skip additional BingeCat probes but keep
-    // deterministic/bulk provider sources alive. Previously this branch returned
-    // after AniBridge, unnecessarily downgrading resolvable titles to MAL/AniList.
-    // Fribb is a single shared dataset request, so it is still safe in
-    // degraded mode and can recover provider identities without reopening
-    // the per-title AniMap/IDMapper/IMDb/secondary fan-out.
-    // Fribb and AniBridge are independent shared bulk datasets. Load them
-    // concurrently so a cold serverless invocation pays the slower dataset
-    // fetch once rather than paying both fetch latencies sequentially.
-    const degradedRows = unresolvedRows;
-    const [fribbResult, aniBridgeResult] = await Promise.allSettled([
-      resolveFribbMappings(degradedRows.map((row) => Number(row.id))),
-      degradedRows.length ? resolveAniBridgeMappings(degradedRows) : Promise.resolve(new Map()),
-    ]);
-
-    if (fribbResult.status === "fulfilled") {
-      mappings = mergeMappings(mappings, fribbResult.value);
-    } else {
-      console.error("[identity] Fribb degraded-mode mapping failed", fribbResult.reason);
-    }
-
-    // Do not stop at Fribb during BingeCat outages. BingeCat is only the
-    // support verifier; independent provider mapping sources can still give
-    // us a usable provider identity while verification is unavailable.
-    try {
-      const externalMappings = resolveExternalMappings(degradedRows);
-      mappings = mergeMappings(mappings, externalMappings);
-    } catch (error) {
-      console.error("[identity] degraded AniList external mapping failed", error);
-    }
-
-    // AniBridge is a shared bulk mapping dataset. Run it before per-title
-    // fallback providers so an unavailable BingeCat does not turn a 50-row
-    // catalog page into avoidable request fan-out.
-    if (aniBridgeResult.status === "fulfilled") {
-      mappings = mergeMappings(mappings, aniBridgeResult.value);
-    } else {
-      console.error("[identity] degraded AniBridge mapping failed", aniBridgeResult.reason);
-    }
-
-    // TMDB remains the active resolver even when BingeCat is unavailable.
-    // Upgrade any row that still lacks an IMDb identity before falling back
-    // through the remaining provider datasets.
-    const degradedTMDBRows = rows.filter((row) => {
-      const records = mappings.get(Number(row.id)) || [];
-      return !hasIMDbMapping(records);
-    });
-    if (degradedTMDBRows.length) {
-      try {
-        const tmdbMappings = await resolveTMDBMappings(degradedTMDBRows);
-        mappings = mergeMappings(mappings, tmdbMappings);
-      } catch (error) {
-        console.error("[identity] degraded TMDB mapping failed; trying AniMap", error);
-      }
-    }
-
-    unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
-      { ...row, anilistId: Number(row.id) },
-      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-    ));
-
-    if (unresolvedRows.length) {
-      try {
-        const animapMappings = await resolveAnimapMappings(unresolvedRows.map((row) => Number(row.id)));
-        mappings = mergeMappings(mappings, animapMappings);
-      } catch (error) {
-        console.error("[identity] degraded AniMap mapping failed", error);
-      }
-    }
-
-    unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
-      { ...row, anilistId: Number(row.id) },
-      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-    ));
-
-    if (unresolvedRows.length) {
-      try {
-        const idMapperMappings = await resolveIdMapperMappings(unresolvedRows.map((row) => Number(row.id)));
-        mappings = mergeMappings(mappings, idMapperMappings);
-      } catch (error) {
-        console.error("[identity] degraded IDMapper mapping failed", error);
-      }
-    }
-
-    unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
-      { ...row, anilistId: Number(row.id) },
-      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-    ));
-
-    if (unresolvedRows.length) {
-      try {
-        const tsvMappings = await resolveTsvMappings(unresolvedRows);
-        mappings = mergeMappings(mappings, tsvMappings);
-      } catch (error) {
-        console.error("[identity] degraded AnimeAPI TSV mapping failed", error);
-      }
-    }
-
-    unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
-      { ...row, anilistId: Number(row.id) },
-      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-    ));
-
-    if (unresolvedRows.length) {
-      try {
-        const animeMapperMappings = await resolveAnimeMapperMappings(unresolvedRows);
-        mappings = mergeMappings(mappings, animeMapperMappings);
-      } catch (error) {
-        console.error("[identity] degraded Anime Mapper mapping failed", error);
-      }
-    }
-
-    unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
-      { ...row, anilistId: Number(row.id) },
-      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-    ));
-
-
-    if (unresolvedRows.length) {
-      try {
-        const imdbMappings = await resolveImdbMappings(unresolvedRows);
-        mappings = mergeMappings(mappings, imdbMappings);
-      } catch (error) {
-        console.error("[identity] degraded IMDb mapping failed", error);
-      }
-    }
-
-    await applyRelatedProviderProtection(rows, mappings, {
-      resolveMappings,
-      resolveFribbMappings,
-      resolveExternalMappings,
-      resolveAnimeMapperMappings,
-      resolveAnimeMapperRelatedProviderIds,
-    });
-
-    return mappings;
-  }
 
   if (unresolvedRows.length) {
     try {
-      const fribb = await resolveFribbMappings(unresolvedRows.map((row) => Number(row.id)));
-      mappings = mergeMappings(mappings, fribb);
+      mappings = mergeMappings(mappings, await resolveFribbMappings(unresolvedRows.map((row) => Number(row.id))));
     } catch (error) {
       console.error("[identity] Fribb mapping source failed; trying AniList external links", error);
     }
   }
 
-  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+  unresolvedRows = rows.filter((row) => !selectProviderIdentity(
     { ...row, anilistId: Number(row.id) },
-    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
   ));
 
   if (unresolvedRows.length) {
     try {
-      const externalMappings = resolveExternalMappings(unresolvedRows);
-      mappings = mergeMappings(mappings, externalMappings);
+      mappings = mergeMappings(mappings, resolveExternalMappings(unresolvedRows));
     } catch (error) {
-      console.error("[identity] AniList external mapping failed; trying AniMap", error);
+      console.error("[identity] AniList external mapping failed; trying AniBridge", error);
     }
   }
 
-  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+  unresolvedRows = rows.filter((row) => !selectProviderIdentity(
     { ...row, anilistId: Number(row.id) },
-    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
   ));
 
-  // AniBridge is a cached bulk mapping dataset. Consult it before per-title
-  // providers so a 50-item page can resolve from one shared lookup instead
-  // of opening dozens of individual upstream requests.
   if (unresolvedRows.length) {
     try {
-      const aniBridgeMappings = await resolveAniBridgeMappings(unresolvedRows);
-      mappings = mergeMappings(mappings, aniBridgeMappings);
+      mappings = mergeMappings(mappings, await resolveAniBridgeMappings(unresolvedRows));
     } catch (error) {
       console.error("[identity] AniBridge bulk mapping failed; trying TMDB", error);
     }
   }
 
-  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
-    { ...row, anilistId: Number(row.id) },
-    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-  ));
-
-  // TMDB is the active resolver for rows that do not already have a
-  // strong IMDb identity. Earlier bulk sources may have produced a valid
-  // TVDB/TMDB candidate, but that must not prevent TMDB from upgrading the
-  // row to its preferred IMDb identity when TMDB can validate one.
-  const tmdbRows = rows.filter((row) => {
-    const records = mappings.get(Number(row.id)) || [];
-    return !hasIMDbMapping(records);
-  });
-
+  const tmdbRows = rows.filter((row) => !hasIMDbMapping(mappings.get(Number(row.id)) || []));
   if (tmdbRows.length) {
     try {
-      const tmdbMappings = await resolveTMDBMappings(tmdbRows);
-      mappings = mergeMappings(mappings, tmdbMappings);
+      mappings = mergeMappings(mappings, await resolveTMDBMappings(tmdbRows));
     } catch (error) {
       console.error("[identity] TMDB mapping failed; trying AniMap", error);
     }
   }
 
-  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+  unresolvedRows = rows.filter((row) => !selectProviderIdentity(
     { ...row, anilistId: Number(row.id) },
-    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
   ));
 
   if (unresolvedRows.length) {
     try {
-      const animapMappings = await resolveAnimapMappings(unresolvedRows.map((row) => Number(row.id)));
-      mappings = mergeMappings(mappings, animapMappings);
+      mappings = mergeMappings(mappings, await resolveAnimapMappings(unresolvedRows.map((row) => Number(row.id))));
     } catch (error) {
       console.error("[identity] AniMap mapping failed; trying IDMapper", error);
     }
   }
 
-  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+  unresolvedRows = rows.filter((row) => !selectProviderIdentity(
     { ...row, anilistId: Number(row.id) },
-    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
   ));
 
   if (unresolvedRows.length) {
     try {
-      const idMapperMappings = await resolveIdMapperMappings(unresolvedRows.map((row) => Number(row.id)));
-      mappings = mergeMappings(mappings, idMapperMappings);
+      mappings = mergeMappings(mappings, await resolveIdMapperMappings(unresolvedRows.map((row) => Number(row.id))));
     } catch (error) {
-      console.error("[identity] IDMapper mapping failed; trying BingeCat search", error);
+      console.error("[identity] IDMapper mapping failed; trying Anime Mapper", error);
     }
   }
 
-  unresolvedRows = rows.filter((row) => {
-    const selected = selectBingeCatIdentity(
-      { ...row, anilistId: Number(row.id) },
-      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-    );
-    return !selected;
-  });
+  unresolvedRows = rows.filter((row) => !selectProviderIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
 
   if (unresolvedRows.length) {
     try {
-      const bingeCatSearchMappings = await resolveBingeCatSearchMappings(unresolvedRows);
-      mappings = mergeMappings(mappings, bingeCatSearchMappings);
+      mappings = mergeMappings(mappings, await resolveAnimeMapperMappings(unresolvedRows));
     } catch (error) {
-      console.error("[identity] BingeCat search mapping failed; trying AnimeAPI TSV", error);
+      console.error("[identity] Anime Mapper mapping source failed; trying AnimeAPI TSV", error);
     }
   }
 
-  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+  unresolvedRows = rows.filter((row) => !selectProviderIdentity(
     { ...row, anilistId: Number(row.id) },
-    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
   ));
 
   if (unresolvedRows.length) {
     try {
-      const animeMapperMappings = await resolveAnimeMapperMappings(unresolvedRows);
-      mappings = mergeMappings(mappings, animeMapperMappings);
-    } catch (error) {
-      console.error("[identity] Anime Mapper mapping source failed; trying AniBridge", error);
-    }
-  }
-
-  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
-    { ...row, anilistId: Number(row.id) },
-    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-  ));
-
-  // Do not re-run BingeCat immediately after Anime Mapper. Final authoritative
-  // verification below already checks every unverified identity; repeating the
-  // search here only increases upstream traffic without changing the resolver
-  // outcome when the same positive/negative cache entry is still active.
-
-  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
-    { ...row, anilistId: Number(row.id) },
-    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-  ));
-
-  if (unresolvedRows.length) {
-    try {
-      const tsvMappings = await resolveTsvMappings(unresolvedRows.map((row) => Number(row.id)));
-      mappings = mergeMappings(mappings, tsvMappings);
+      mappings = mergeMappings(mappings, await resolveTsvMappings(unresolvedRows));
     } catch (error) {
       console.error("[identity] AnimeAPI TSV mapping failed; trying IMDb search", error);
     }
   }
 
   unresolvedRows = rows.filter((row) => {
-    const selected = selectBingeCatIdentity(
+    const selected = selectProviderIdentity(
       { ...row, anilistId: Number(row.id) },
-      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+      getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
     );
     return !selected || selected.provider !== "imdb";
   });
 
   if (unresolvedRows.length) {
-    const imdbMappings = await resolveImdbMappings(unresolvedRows);
-    mappings = mergeMappings(mappings, imdbMappings);
+    try {
+      mappings = mergeMappings(mappings, await resolveImdbMappings(unresolvedRows));
+    } catch (error) {
+      console.error("[identity] IMDb mapping failed; trying secondary sources", error);
+    }
   }
 
-  unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+  unresolvedRows = rows.filter((row) => !selectProviderIdentity(
     { ...row, anilistId: Number(row.id) },
-    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
   ));
 
   if (unresolvedRows.length) {
     try {
-      const secondary = await resolveSecondaryMappings(unresolvedRows.map((row) => Number(row.id)));
-      mappings = mergeMappings(mappings, secondary);
+      mappings = mergeMappings(mappings, await resolveSecondaryMappings(unresolvedRows.map((row) => Number(row.id))));
     } catch (error) {
       console.error("[identity] secondary mapping source failed; trying MAL identity bridge", error);
     }
   }
 
-  const stillUnresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
+  const stillUnresolvedRows = rows.filter((row) => !selectProviderIdentity(
     { ...row, anilistId: Number(row.id) },
-    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
   ));
 
   if (stillUnresolvedRows.length) {
     try {
-      const alternative = await resolveAlternativeMappings(stillUnresolvedRows);
-      mappings = mergeMappings(mappings, alternative);
+      mappings = mergeMappings(mappings, await resolveAlternativeMappings(stillUnresolvedRows));
     } catch (error) {
       console.error("[identity] MAL identity bridge failed", error);
     }
@@ -508,74 +299,13 @@ async function resolveMappingsForRows(
     }
   }
 
-  // Protect unverified legacy identities that may belong to an explicit related
-  // AniList entry before the legacy BingeCat verification fallback. This is a
-  // targeted bulk lookup: only rows that already have an unverified provider
-  // candidate and explicit franchise relations are inspected, so normal rows
-  // do not incur relation-resolution fan-out.
-  const relationProtectedRows = rows.filter((row) => {
-    if (selectTMDBIdentity(
-      { ...row, anilistId: Number(row.id) },
-      mappings.get(Number(row.id)) || [],
-    )) return false;
-    if (!hasExplicitProviderRelations(row)) return false;
-    const records = mappings.get(Number(row.id)) || [];
-    const candidates = getBingeCatCandidates(
-      { ...row, anilistId: Number(row.id) },
-      records,
-    );
-    return candidates.some((candidate) => !candidate.evidence?.some(
-      (entry) => entry?.source === "bingecat-search",
-    ));
+  await applyRelatedProviderProtection(rows, mappings, {
+    resolveMappings,
+    resolveFribbMappings,
+    resolveExternalMappings,
+    resolveAnimeMapperMappings,
+    resolveAnimeMapperRelatedProviderIds,
   });
-
-  let protectedProviderIdsByRow = new Map();
-  if (relationProtectedRows.length) {
-    protectedProviderIdsByRow = await applyRelatedProviderProtection(rows, mappings, {
-      resolveMappings,
-      resolveFribbMappings,
-      resolveExternalMappings,
-      resolveAnimeMapperMappings,
-      resolveAnimeMapperRelatedProviderIds,
-    });
-  }
-
-  // TMDB is the primary identity resolver. BingeCat remains a legacy
-  // verification/fallback path for rows that TMDB could not resolve.
-  const unverifiedRows = rows.filter((row) => {
-    const tmdbSelected = selectTMDBIdentity(
-      { ...row, anilistId: Number(row.id) },
-      mappings.get(Number(row.id)) || [],
-    );
-    if (tmdbSelected) return false;
-
-    const selected = selectBingeCatIdentity(
-      { ...row, anilistId: Number(row.id) },
-      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-    );
-    return !selected?.bingecatVerified;
-  });
-
-  if (unverifiedRows.length) {
-    try {
-      const verificationMappings = await resolveBingeCatSearchMappings(unverifiedRows);
-      mappings = mergeMappings(mappings, verificationMappings);
-      for (const row of relationProtectedRows) {
-        const relatedProviderIds = protectedProviderIdsByRow.get(Number(row.id)) || [];
-        if (!relatedProviderIds.length) continue;
-        const records = mappings.get(Number(row.id)) || [];
-        mappings.set(Number(row.id), records.map((record) => ({
-          ...record,
-          relatedProviderIds: [...new Set([
-            ...(Array.isArray(record?.relatedProviderIds) ? record.relatedProviderIds : []),
-            ...relatedProviderIds,
-          ])],
-        })));
-      }
-    } catch (error) {
-      console.error("[identity] final BingeCat verification failed; preserving existing fallbacks", error);
-    }
-  }
 
   return mappings;
 }
@@ -583,7 +313,7 @@ async function resolveMappingsForRows(
 async function applyRelatedProviderProtection(rows, mappings, dependencies) {
   const relationProtectedRows = rows.filter((row) => {
     if (!hasExplicitProviderRelations(row)) return false;
-    const candidates = getBingeCatCandidates(
+    const candidates = getProviderCandidates(
       { ...row, anilistId: Number(row.id) },
       mappings.get(Number(row.id)) || [],
     );
@@ -1044,7 +774,7 @@ function getCanonicalMalId(row, meta, mappingRecords) {
 
 export async function canonicalizeCatalogPageWithBingeCat(
   mediaRows,
-  { requireBingeCatVerification = false, ...options } = {},
+  {  = false, ...options } = {},
 ) {
   const normalizedRows = Array.isArray(mediaRows)
     ? mediaRows
@@ -1073,7 +803,7 @@ export async function canonicalizeCatalogPageWithBingeCat(
       { excludeIds: usedIdentities },
     );
 
-    if (tmdbSelected && !requireBingeCatVerification) {
+    if (tmdbSelected && !) {
       usedIdentities.add(tmdbSelected.stremioId);
       metas.push({
         ...meta,
@@ -1091,13 +821,13 @@ export async function canonicalizeCatalogPageWithBingeCat(
       continue;
     }
 
-    const selected = selectBingeCatIdentity(
+    const selected = selectProviderIdentity(
       { ...row, anilistId },
-      getBingeCatCandidates({ ...row, anilistId }, mappings.get(anilistId) || []),
+      getProviderCandidates({ ...row, anilistId }, mappings.get(anilistId) || []),
       { excludeIds: usedIdentities },
     );
 
-    if (!selected || (requireBingeCatVerification && !selected.bingecatVerified)) {
+    if (!selected || ( && !selected.bingecatVerified)) {
       if (selected) {
         usedIdentities.add(selected.stremioId);
         metas.push({
@@ -1197,7 +927,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
   resolveMappings = resolveAniListMappings,
   resolveSecondaryMappings = resolveAniListMappingsSecondary,
   resolveAlternativeMappings = resolveAniListMappingsByMalIds,
-  requireBingeCatVerification = false,
+   = false,
 } = {}) {
   const range = getRollingCatalogRange(id, date);
   if (!range) return [];
@@ -1255,7 +985,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
           mappings.get(mediaId) || [],
           { excludeIds: usedIdentities },
         );
-        if (tmdbSelected && !requireBingeCatVerification) {
+        if (tmdbSelected && !) {
           usedIdentities.add(tmdbSelected.stremioId);
           metas.push({
             ...baseMeta,
@@ -1280,12 +1010,12 @@ export async function buildRollingCatalog(id, date, skip, search, {
           continue;
         }
 
-        const selected = selectBingeCatIdentity(
+        const selected = selectProviderIdentity(
           { ...media, anilistId: mediaId },
-          getBingeCatCandidates(media, mappings.get(mediaId) || []),
+          getProviderCandidates(media, mappings.get(mediaId) || []),
           { excludeIds: usedIdentities },
         );
-        if (!selected || (requireBingeCatVerification && !selected.bingecatVerified)) {
+        if (!selected || ( && !selected.bingecatVerified)) {
           if (selected) {
             usedIdentities.add(selected.stremioId);
             const meta = {
@@ -1412,11 +1142,11 @@ export async function buildCatalog(id, info, skip, search) {
       filter,
       skip,
       search,
-      canonicalizePage: (rows) => canonicalizeCatalogPageWithBingeCat(rows, { requireBingeCatVerification: true }),
+      canonicalizePage: (rows) => canonicalizeCatalogPageWithBingeCat(rows, { : true }),
     });
   }
   if (getRollingCatalogRange(id, new Date())) {
-    return buildRollingCatalog(id, new Date(), skip, search, { useBingeCatIdentity: true, requireBingeCatVerification: true });
+    return buildRollingCatalog(id, new Date(), skip, search, { useBingeCatIdentity: true, : true });
   }
   return [];
 }
