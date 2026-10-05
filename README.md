@@ -7,7 +7,7 @@
 
 > A lightweight, season-aware anime release catalog for Nuvio and Stremio-compatible clients.
 
-**Anime Releases for Nuvio** discovers anime releases from **AniList**, resolves each catalog item to a BingeCat-compatible identity through the ARM cross-provider mapping service, and delegates detailed metadata to the metadata addon configured in the client.
+**Anime Releases for Nuvio** discovers anime releases from **AniList**, resolves each catalog item to a validated provider identity through ARM and independent cross-provider mapping services, and delegates detailed metadata to the metadata addon configured in the client.
 
 ## ✨ Features
 
@@ -30,9 +30,9 @@ Two rolling catalogs complement the seasonal views:
 
 Rolling catalogs use AniList airing schedules, deduplicate by anime, and paginate the resulting unique catalog for Nuvio.
 
-### 🔑 BingeCat-compatible catalog identity
+### 🔑 Cross-provider catalog identity
 
-Catalog items normally use one validated BingeCat-compatible identity:
+Catalog items normally use one validated provider identity:
 
 ```text
 IMDb: tt<id>
@@ -40,7 +40,9 @@ TVDB: tvdb:<id>
 TMDB: tmdb:<id>
 ```
 
-The resolver prefers a validated IMDb candidate, then TVDB, then TMDB. ARM supplies the primary cross-provider mapping in a batched request. Later mapping sources supplement earlier candidates rather than being discarded when an earlier source returned only unsupported identities. ARM misses are retried through Fribb, AniList external provider links, the cached AniBridge bulk dataset, AniMap, IDMapper, BingeCat exact search, the MAL-keyed Anime Mapper dataset, the AnimeAPI TSV dataset, IMDb title search, AnimeAPI by AniList ID, and, when the AniList entry exposes a MAL ID, the independent MAL identity bridge. Anime Mapper validates the requested AniList ID, can use direct TVDB/TMDB mappings, can use explicit episode TVDB show identities, and can follow explicit related-media mappings when the entry itself has no provider identity. AniList relation titles are also available to the BingeCat and IMDb fallbacks for sequel/spin-off entries whose provider uses the parent title. Relation provider links from explicit AniList relations are reused under the current AniList identity after provider validation. BingeCat title search also derives strictly validated File/Part/Episode installment variants. Rolling AniList schedules request the same relation provider links so rolling identity fallbacks remain consistent with seasonal catalogs. Related AniList identities can also be resolved through the same provider mapping sources when direct mapping is unavailable. Resolution first uses validated BingeCat-supported identities. After every legitimate provider mapping strategy is exhausted, the canonical AniList MAL ID is used as the final fallback (`mal:<id>`); no Japan/Korea or origin-based dropping rule is applied. If an entry has neither a validated provider identity nor a MAL ID, the catalog request fails explicitly rather than emitting an AniList ID.
+TMDB is the active primary resolver: strong title/year matches are upgraded to IMDb when TMDB exposes an IMDb identity, or retained as TMDB when it does not. ARM supplies the primary cross-provider mapping in a batched request. Later independent sources supplement unresolved rows through Fribb, AniList external links, AniBridge, AniMap, IDMapper, Anime Mapper, AnimeAPI TSV data, IMDb title search, secondary mappings, relation-aware provider resolution, and the MAL identity bridge. Provider validation checks title, year, format, source identity, and explicit related-entry collisions before an identity is accepted.
+
+If no validated provider identity is available, the canonical AniList MAL ID is used as the final fallback (`mal:<id>`); if neither a provider identity nor a MAL ID exists, the catalog emits an AniList identity fallback rather than dropping the row.
 
 The catalog keeps the AniList source id in the item's extra metadata so downstream systems can correlate the entry when needed.
 
