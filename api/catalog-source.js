@@ -157,7 +157,6 @@ async function resolveMappingsForRows(
 
   try {
     mappings = mergeMappings(mappings, await resolveMappings(ids.filter((id) => !tmdbResolvedIds.has(id))));
-  }
   } catch (error) {
     console.error("[identity] ARM mapping failed; using secondary mapping sources", error);
   }
@@ -1033,6 +1032,30 @@ export async function canonicalizeCatalogPageWithBingeCat(
     }
 
     const meta = normalizeSeasonalCatalogMetaTypes([rawMeta])[0];
+    const tmdbSelected = selectTMDBIdentity(
+      { ...row, anilistId },
+      mappings.get(anilistId) || [],
+      { excludeIds: usedIdentities },
+    );
+
+    if (tmdbSelected && !requireBingeCatVerification) {
+      usedIdentities.add(tmdbSelected.stremioId);
+      metas.push({
+        ...meta,
+        id: tmdbSelected.stremioId,
+        extra: {
+          ...meta.extra,
+          bingecatProvider: null,
+          bingecatId: null,
+          bingecatEvidence: null,
+          tmdbProvider: tmdbSelected.provider,
+          tmdbId: tmdbSelected.id,
+          tmdbEvidence: "tmdb-search",
+        },
+      });
+      continue;
+    }
+
     const selected = selectBingeCatIdentity(
       { ...row, anilistId },
       getBingeCatCandidates({ ...row, anilistId }, mappings.get(anilistId) || []),
