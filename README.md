@@ -168,6 +168,9 @@ Catalog names and season labels are generated dynamically.
 **Development:** `v1.42.0` — release candidate validated
 **Major baseline:** `v1.0.0`
 
+The 1.42.0 release candidate switches active identity resolution to TMDB-backed matching, upgrades strong TMDB matches to IMDb when available, and retains TMDB identities when IMDb is unavailable. Legacy BingeCat resolution remains available as a fallback.
+
+
 The 1.23.0 development baseline hardens BingeCat identity selection so unverified provider mappings cannot inherit identities from explicit franchise-related anime.
 
 The 1.24.0 development baseline protects unverified provider identities that belong to explicit AniList-related anime before final BingeCat verification, using targeted, cached bulk relation checks before terminal fallback.
