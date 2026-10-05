@@ -195,3 +195,103 @@ test("catalog lets TMDB upgrade an earlier TVDB mapping to IMDb", async () => {
   assert.equal(metas[0].extra.tmdbProvider, "imdb");
   assert.equal(tmdbCalls, 1);
 });
+
+
+test("catalog retries TMDB when an earlier IMDb mapping is invalid", async () => {
+  let tmdbCalls = 0;
+
+  const metas = await canonicalizeCatalogPage([{
+    id: 12345,
+    idMal: 12345,
+    title: { english: "Correct Anime", romaji: "Correct Anime" },
+    format: "TV",
+    startDate: { year: 2026 },
+  }], {
+    resolveMappings: async () => new Map([[12345, [{
+      source: "arm",
+      anilistId: 12345,
+      type: "TV",
+      imdbIds: ["tt9999999"],
+      tvdbId: null,
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+      title: "Wrong Anime",
+      titles: ["Wrong Anime"],
+      year: 2026,
+    }]]]),
+    resolveFribbMappings: empty,
+    resolveExternalMappings: () => new Map(),
+    resolveAniBridgeMappings: empty,
+    resolveTMDBMappings: async () => {
+      tmdbCalls += 1;
+      return new Map([[12345, [{
+        source: "tmdb-search",
+        anilistId: 12345,
+        type: "TV",
+        imdbIds: ["tt1234567"],
+        tmdbTvId: 765432,
+        tmdbMovieIds: [],
+        title: "Correct Anime",
+        titles: ["Correct Anime"],
+        year: 2026,
+        tmdbAuthoritative: true,
+        tmdbMatchScore: 130,
+      }]]]);
+    },
+    resolveAnimapMappings: empty,
+    resolveIdMapperMappings: empty,
+    resolveAnimeMapperMappings: empty,
+    resolveTsvMappings: empty,
+    resolveImdbMappings: empty,
+    resolveSecondaryMappings: empty,
+    resolveAlternativeMappings: empty,
+  });
+
+  assert.equal(metas[0].id, "tt1234567");
+  assert.equal(metas[0].extra.tmdbProvider, "imdb");
+  assert.equal(metas[0].extra.tmdbId, "tt1234567");
+  assert.equal(tmdbCalls, 1);
+});
+
+test("catalog skips TMDB when an earlier IMDb mapping is already valid", async () => {
+  let tmdbCalls = 0;
+
+  const metas = await canonicalizeCatalogPage([{
+    id: 12346,
+    idMal: 12346,
+    title: { english: "Correct Anime", romaji: "Correct Anime" },
+    format: "TV",
+    startDate: { year: 2026 },
+  }], {
+    resolveMappings: async () => new Map([[12346, [{
+      source: "arm",
+      anilistId: 12346,
+      type: "TV",
+      imdbIds: ["tt1234567"],
+      tvdbId: null,
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+      title: "Correct Anime",
+      titles: ["Correct Anime"],
+      year: 2026,
+    }]]]),
+    resolveFribbMappings: empty,
+    resolveExternalMappings: () => new Map(),
+    resolveAniBridgeMappings: empty,
+    resolveTMDBMappings: async () => {
+      tmdbCalls += 1;
+      return new Map();
+    },
+    resolveAnimapMappings: empty,
+    resolveIdMapperMappings: empty,
+    resolveAnimeMapperMappings: empty,
+    resolveTsvMappings: empty,
+    resolveImdbMappings: empty,
+    resolveSecondaryMappings: empty,
+    resolveAlternativeMappings: empty,
+  });
+
+  assert.equal(metas[0].id, "tt1234567");
+  assert.equal(metas[0].extra.identityProvider, "imdb");
+  assert.equal(tmdbCalls, 0);
+});
