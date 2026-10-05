@@ -335,9 +335,18 @@ async function resolveMappingsForRows(
     getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
   ));
 
-  if (unresolvedRows.length) {
+  // TMDB is the active resolver for rows that do not already have a
+  // strong IMDb identity. Earlier bulk sources may have produced a valid
+  // TVDB/TMDB candidate, but that must not prevent TMDB from upgrading the
+  // row to its preferred IMDb identity when TMDB can validate one.
+  const tmdbRows = rows.filter((row) => {
+    const records = mappings.get(Number(row.id)) || [];
+    return !hasIMDbMapping(records);
+  });
+
+  if (tmdbRows.length) {
     try {
-      const tmdbMappings = await resolveTMDBMappings(unresolvedRows);
+      const tmdbMappings = await resolveTMDBMappings(tmdbRows);
       mappings = mergeMappings(mappings, tmdbMappings);
     } catch (error) {
       console.error("[identity] TMDB mapping failed; trying AniMap", error);
@@ -998,6 +1007,12 @@ function mergeMappings(base, additional) {
     merged.set(id, [...existing, ...(Array.isArray(records) ? records : [])]);
   }
   return merged;
+}
+
+function hasIMDbMapping(records) {
+  return (Array.isArray(records) ? records : [])
+    .some((record) => Array.isArray(record?.imdbIds)
+      && record.imdbIds.some((id) => /^tt\d+$/.test(String(id))));
 }
 
 function getCanonicalMalId(row, meta, mappingRecords) {
