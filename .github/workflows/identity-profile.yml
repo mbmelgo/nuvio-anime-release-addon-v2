@@ -1,9 +1,8 @@
 name: Identity Resolution Profile
 
 on:
-  push:
-    branches:
-      - investigate/identity-stage-timing
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
