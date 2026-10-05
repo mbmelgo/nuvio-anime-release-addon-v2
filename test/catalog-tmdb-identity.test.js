@@ -82,7 +82,7 @@ test("catalog returns TMDB ID when TMDB match has no IMDb identity", async () =>
 
 
 
-test("catalog lets TMDB upgrade non-IMDb mappings when BingeCat is unavailable", async () => {
+test("catalog lets TMDB upgrade non-IMDb mappings", async () => {
   let tmdbCalls = 0;
   
   const metas = await canonicalizeCatalogPage([{
