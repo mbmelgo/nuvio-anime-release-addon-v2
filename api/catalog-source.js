@@ -119,15 +119,38 @@ async function resolveMappingsForRows(
   let mappings = new Map();
 
   try {
-    mappings = await resolveMappings(ids);
+    mappings = await resolveTMDBMappings(rows);
+  } catch (error) {
+    console.error("[identity] TMDB mapping failed; using existing identity sources", error);
+  }
+
+  let tmdbResolvedRows = rows.filter((row) => selectTMDBIdentity(
+    { ...row, anilistId: Number(row.id) },
+    mappings.get(Number(row.id)) || [],
+  ));
+
+  const idsNeedingLegacyResolution = rows
+    .filter((row) => !tmdbResolvedRows.includes(row))
+    .map((row) => Number(row.id));
+
+  try {
+    const armMappings = await resolveMappings(idsNeedingLegacyResolution);
+    mappings = mergeMappings(mappings, armMappings);
   } catch (error) {
     console.error("[identity] ARM mapping failed; using secondary mapping sources", error);
   }
 
-  let unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
-    { ...row, anilistId: Number(row.id) },
-    getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-  ));
+  let unresolvedRows = rows.filter((row) => {
+    const tmdbSelected = selectTMDBIdentity(
+      { ...row, anilistId: Number(row.id) },
+      mappings.get(Number(row.id)) || [],
+    );
+    if (tmdbSelected) return false;
+    return !selectBingeCatIdentity(
+      { ...row, anilistId: Number(row.id) },
+      getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+    );
+  });
 
   if (unresolvedRows.length) {
     try {
