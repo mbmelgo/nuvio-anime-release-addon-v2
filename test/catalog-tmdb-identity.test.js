@@ -4,9 +4,8 @@ import { canonicalizeCatalogPage } from "../api/catalog-source.js";
 
 const empty = async () => new Map();
 
-test("catalog prefers TMDB resolver identity and does not invoke BingeCat for a strong TMDB match", async () => {
-  let bingeCatCalls = 0;
-  const metas = await canonicalizeCatalogPage([{
+test("catalog prefers TMDB resolver identity", async () => {
+    const metas = await canonicalizeCatalogPage([{
     id: 269,
     idMal: 269,
     title: { english: "Bleach", romaji: "Bleach" },
@@ -27,10 +26,6 @@ test("catalog prefers TMDB resolver identity and does not invoke BingeCat for a 
       tmdbMatchScore: 130,
     }]]]),
     resolveMappings: empty,
-    resolveBingeCatSearchMappings: async () => {
-      bingeCatCalls += 1;
-      return new Map();
-    },
     resolveFribbMappings: empty,
     resolveExternalMappings: () => new Map(),
     resolveAnimapMappings: empty,
@@ -43,13 +38,9 @@ test("catalog prefers TMDB resolver identity and does not invoke BingeCat for a 
     resolveAniBridgeMappings: empty,
   });
 
-  assert.equal(metas[0].id, "tt0434665");
-  assert.equal(metas[0].extra.bingecatProvider, null);
-  assert.equal(metas[0].extra.tmdbProvider, "imdb");
+  assert.equal(metas[0].id, "tt0434665");  assert.equal(metas[0].extra.tmdbProvider, "imdb");
   assert.equal(metas[0].extra.tmdbId, "tt0434665");
-  assert.equal(metas[0].extra.tmdbEvidence, "tmdb-search");
-  assert.equal(bingeCatCalls, 0);
-});
+  assert.equal(metas[0].extra.tmdbEvidence, "tmdb-search");});
 
 test("catalog returns TMDB ID when TMDB match has no IMDb identity", async () => {
   const metas = await canonicalizeCatalogPage([{
@@ -72,7 +63,6 @@ test("catalog returns TMDB ID when TMDB match has no IMDb identity", async () =>
       tmdbMatchScore: 130,
     }]]]),
     resolveMappings: empty,
-    resolveBingeCatSearchMappings: async () => new Map(),
     resolveFribbMappings: empty,
     resolveExternalMappings: () => new Map(),
     resolveAnimapMappings: empty,
@@ -94,8 +84,7 @@ test("catalog returns TMDB ID when TMDB match has no IMDb identity", async () =>
 
 test("catalog lets TMDB upgrade non-IMDb mappings when BingeCat is unavailable", async () => {
   let tmdbCalls = 0;
-  let bingeCatCalls = 0;
-
+  
   const metas = await canonicalizeCatalogPage([{
     id: 269,
     idMal: 269,
@@ -109,7 +98,6 @@ test("catalog lets TMDB upgrade non-IMDb mappings when BingeCat is unavailable",
     format: "TV",
     startDate: { year: 2026 },
   }], {
-    probeBingeCat: true,
     resolveMappings: async () => new Map([[269, [{
       source: "arm",
       anilistId: 269,
@@ -120,12 +108,6 @@ test("catalog lets TMDB upgrade non-IMDb mappings when BingeCat is unavailable",
       titles: ["Bleach"],
       year: 2004,
     }]]]),
-    resolveBingeCatSearchMappings: async (rows, options = {}) => {
-      bingeCatCalls += 1;
-      assert.deepEqual(rows.map((row) => row.id), [270]);
-      options.onCircuitOpen?.();
-      return new Map();
-    },
     resolveFribbMappings: empty,
     resolveExternalMappings: () => new Map(),
     resolveAniBridgeMappings: empty,
@@ -159,14 +141,11 @@ test("catalog lets TMDB upgrade non-IMDb mappings when BingeCat is unavailable",
   assert.equal(metas[0].id, "tt0434665");
   assert.equal(metas[0].extra.tmdbProvider, "imdb");
   assert.equal(metas[0].extra.tmdbEvidence, "tmdb-search");
-  assert.equal(tmdbCalls, 1);
-  assert.equal(bingeCatCalls, 1);
-});
+  assert.equal(tmdbCalls, 1);});
 
 test("catalog lets TMDB upgrade an earlier TVDB mapping to IMDb", async () => {
   let tmdbCalls = 0;
-  let bingeCatCalls = 0;
-
+  
   const metas = await canonicalizeCatalogPage([{
     id: 269,
     idMal: 269,
@@ -199,10 +178,6 @@ test("catalog lets TMDB upgrade an earlier TVDB mapping to IMDb", async () => {
         tmdbAuthoritative: true,
         tmdbMatchScore: 130,
       }]]]);
-    },
-    resolveBingeCatSearchMappings: async () => {
-      bingeCatCalls += 1;
-      return new Map();
     },
     resolveFribbMappings: empty,
     resolveExternalMappings: () => new Map(),
