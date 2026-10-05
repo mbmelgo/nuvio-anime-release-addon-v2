@@ -208,6 +208,23 @@ async function resolveMappingsForRows(
     } else {
       console.error("[identity] degraded AniBridge mapping failed", aniBridgeResult.reason);
     }
+
+    // TMDB remains the active resolver even when BingeCat is unavailable.
+    // Upgrade any row that still lacks an IMDb identity before falling back
+    // through the remaining provider datasets.
+    const degradedTMDBRows = degradedRows.filter((row) => {
+      const records = mappings.get(Number(row.id)) || [];
+      return !hasIMDbMapping(records);
+    });
+    if (degradedTMDBRows.length) {
+      try {
+        const tmdbMappings = await resolveTMDBMappings(degradedTMDBRows);
+        mappings = mergeMappings(mappings, tmdbMappings);
+      } catch (error) {
+        console.error("[identity] degraded TMDB mapping failed; trying AniMap", error);
+      }
+    }
+
     unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
       { ...row, anilistId: Number(row.id) },
       getBingeCatCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
