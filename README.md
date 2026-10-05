@@ -164,7 +164,7 @@ Catalog names and season labels are generated dynamically.
 
 ## 🚀 Current release
 
-**Production:** `v1.43.0`  
+**Production:** `v1.44.0`  
 **Development:** `v1.44.0` — release candidate validated for degraded-mode TMDB resolution
 **Major baseline:** `v1.0.0`
 
