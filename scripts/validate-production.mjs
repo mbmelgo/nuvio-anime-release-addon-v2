@@ -12,7 +12,7 @@ export function validateManifest(manifest, expectedVersion) {
   if (!manifest || typeof manifest !== "object") throw new Error("Manifest is not an object.");
   if (manifest.version !== expectedVersion) throw new Error(`Manifest version ${manifest.version} does not match expected ${expectedVersion}.`);
   if (manifest.id !== "com.marki.nuvio.anime-releases") throw new Error("Manifest addon id is invalid.");
-  if (manifest.identityMode !== "bingecat") throw new Error("Manifest identity mode must be bingecat.");
+  if (manifest.identityMode !== "provider") throw new Error("Manifest identity mode must be provider.");
   if (JSON.stringify(manifest.resources) !== JSON.stringify([{ name: "catalog", types: ["anime"] }])) {
     throw new Error("Manifest resources do not match the Nuvio catalog contract.");
   }
