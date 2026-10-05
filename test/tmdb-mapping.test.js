@@ -67,8 +67,8 @@ test("TMDB resolver caps concurrent row resolution", async () => {
         return {
           results: [{
             id,
-            name: `Anime ${id}`,
-            original_name: `Anime ${id}`,
+            name: `Anime-${id}`,
+            original_name: `Anime-${id}`,
             first_air_date: "2026-01-01",
           }],
         };
@@ -78,7 +78,7 @@ test("TMDB resolver caps concurrent row resolution", async () => {
 
   const rows = Array.from({ length: 12 }, (_, index) => ({
     id: 9000 + index,
-    title: { english: `Anime ${9000 + index}` },
+    title: { english: `Anime-${9000 + index}` },
     format: "TV",
     startDate: { year: 2026 },
     externalLinks: [{ site: "IMDb", url: `https://www.imdb.com/title/tt${9000000 + index}/` }],
