@@ -192,7 +192,7 @@ jobs:
 
           assert root.get("version") == expected
           assert root.get("id") == "com.marki.nuvio.anime-releases"
-          assert root.get("identityMode") == "bingecat"
+          assert root.get("identityMode") == "provider"
           assert root.get("resources") == [{"name": "catalog", "types": ["anime"]}]
           assert root.get("types") == ["anime"]
           assert root.get("catalogs") and all(c.get("type") == "anime" for c in root["catalogs"])
