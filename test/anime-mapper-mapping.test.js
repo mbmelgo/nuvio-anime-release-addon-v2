@@ -101,7 +101,7 @@ test("Anime Mapper uses bounded parallel lookups for unresolved rows", async () 
       maxActive = Math.max(maxActive, active);
       await new Promise((resolve) => setTimeout(resolve, 10));
       active -= 1;
-      return response({ mappings: { anilist: Number(url.match(/\/(\d+)\.json$/)?.[1] || 0), tmdb: 123 } });
+      return response({ mappings: { anilist: 60000 + Number(url.match(/\/(\d+)\.json$/)?.[1] || 0) - 60000, tmdb: 123 } });
     },
   });
 
