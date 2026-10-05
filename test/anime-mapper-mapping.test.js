@@ -82,6 +82,33 @@ test("Anime Mapper rejects a record whose AniList identity does not match", asyn
   assert.equal(result.has(214260), false);
 });
 
+
+test("Anime Mapper uses bounded parallel lookups for unresolved rows", async () => {
+  clearAnimeMapperCache();
+  let active = 0;
+  let maxActive = 0;
+  const rows = Array.from({ length: 16 }, (_, index) => ({
+    id: 300000 + index,
+    idMal: 60000 + index,
+    format: "TV",
+    titleRomaji: `Test Anime ${index}`,
+  }));
+
+  const result = await resolveAniListMappingsByAnimeMapper(rows, {
+    baseUrl: "https://mapper.test",
+    fetchImpl: async (url) => {
+      active += 1;
+      maxActive = Math.max(maxActive, active);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      active -= 1;
+      return response({ mappings: { anilist: Number(url.match(/\/(\d+)\.json$/)?.[1] || 0), tmdb: 123 } });
+    },
+  });
+
+  assert.equal(result.size, 16);
+  assert.equal(maxActive, 8);
+});
+
 test("Anime Mapper caches negative records", async () => {
   clearAnimeMapperCache();
   let calls = 0;
