@@ -2,70 +2,39 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { canonicalizeCatalogPage } from "../api/catalog-source.js";
 
-const emptyMappings = async () => new Map();
+const empty = async () => new Map();
 
-test("BingeCat retry supersedes an Anime Mapper identity for the same unresolved row", async () => {
+test("catalog preserves an independent provider identity when later sources are unavailable", async () => {
   const metas = await canonicalizeCatalogPage([{
     id: 195604,
     idMal: 61967,
-    title: {
-      english: "Black Clover Season 2",
-      romaji: "Black Clover 2nd Season",
-      native: "ブラッククローバー 第2期",
-    },
-    synonyms: [],
+    title: { english: "Black Clover Season 2", romaji: "Black Clover 2nd Season", native: "ブラッククローバー 第2期" },
     format: "TV",
     startDate: { year: 2026 },
-    status: "NOT_YET_RELEASED",
     isAdult: false,
-    relations: {
-      edges: [{
-        relationType: "PREQUEL",
-        node: {
-          id: 97940,
-          title: { english: "Black Clover", romaji: "Black Clover", native: "ブラッククローバー" },
-          format: "TV",
-          startDate: { year: 2017 },
-        },
-      }],
-    },
   }], {
-    resolveMappings: async () => new Map(),
-    resolveFribbMappings: async () => new Map(),
-    resolveExternalMappings: () => new Map(),
-    resolveAnimapMappings: async () => new Map(),
-    resolveIdMapperMappings: async () => new Map(),
-    resolveLegacySearchMappings: async (rows) => {
-      const row = rows[0];
-      if (row.id !== 195604) return new Map();
-      return new Map([[195604, [{
-        source: "bingecat-search",
-        anilistId: 195604,
-        type: "TV",
-        imdbIds: ["tt22868844"],
-        tvdbId: null,
-        tmdbTvId: null,
-        tmdbMovieIds: [],
-        title: "Black Clover",
-        year: null,
-        derivedTitle: true,
-      }]]]);
-    },
-    resolveAnimeMapperMappings: async () => new Map([[195604, [{
-      source: "anime-mapper-relation",
+    resolveMappings: async () => new Map([[195604, [{
+      source: "anime-mapper",
       anilistId: 195604,
       type: "TV",
-      imdbIds: [],
-      tvdbId: 331753,
+      imdbIds: ["tt22868844"],
+      tvdbId: null,
       tmdbTvId: null,
       tmdbMovieIds: [],
       title: "Black Clover Season 2",
       year: 2026,
     }]]]),
-    resolveTsvMappings: async () => new Map(),
-    resolveImdbMappings: async () => new Map(),
-    resolveSecondaryMappings: async () => new Map(),
-    resolveAlternativeMappings: async () => new Map(),
+    resolveFribbMappings: empty,
+    resolveExternalMappings: () => new Map(),
+    resolveAniBridgeMappings: empty,
+    resolveTMDBMappings: empty,
+    resolveAnimapMappings: empty,
+    resolveIdMapperMappings: empty,
+    resolveAnimeMapperMappings: empty,
+    resolveTsvMappings: empty,
+    resolveImdbMappings: empty,
+    resolveSecondaryMappings: empty,
+    resolveAlternativeMappings: empty,
   });
 
   assert.equal(metas.length, 1);
@@ -76,52 +45,45 @@ test("BingeCat retry supersedes an Anime Mapper identity for the same unresolved
 test("later mapping sources supplement unsupported earlier records", async () => {
   const metas = await canonicalizeCatalogPage([{
     id: 123,
-    title: {
-      english: "Example Anime",
-      romaji: "Example Anime",
-      native: "例",
-    },
+    title: { english: "Example Anime", romaji: "Example Anime", native: "例" },
     format: "TV",
     startDate: { year: 2026 },
-    status: "RELEASING",
     isAdult: false,
   }], {
-    resolveMappings: async () => new Map([[
-      123,
-      [{
-        source: "arm",
-        anilistId: 123,
-        type: "TV",
-        imdbIds: ["tt1234567"],
-        tvdbId: null,
-        tmdbTvId: null,
-        tmdbMovieIds: [],
-        malId: 456,
-        title: "Example Anime",
-      }],
-    ]]),
-    resolveFribbMappings: emptyMappings,
+    resolveMappings: async () => new Map([[123, [{
+      source: "arm",
+      anilistId: 123,
+      type: "TV",
+      imdbIds: [],
+      tvdbId: 123,
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+      malId: 456,
+      title: "Wrong Parent",
+      year: 2019,
+    }]]]),
+    resolveFribbMappings: empty,
     resolveExternalMappings: () => new Map(),
-    resolveLegacySearchMappings: emptyMappings,
-    resolveAnimapMappings: async () => new Map([[
-      123,
-      [{
-        source: "animap",
-        anilistId: 123,
-        type: "TV",
-        imdbIds: ["tt1234567"],
-        tvdbId: null,
-        tmdbTvId: null,
-        tmdbMovieIds: [],
-        malId: null,
-        title: "Example Anime",
-        year: 2026,
-      }],
-    ]]),
-    resolveTsvMappings: emptyMappings,
-    resolveImdbMappings: async () => new Map(),
-    resolveSecondaryMappings: emptyMappings,
-    resolveAlternativeMappings: emptyMappings,
+    resolveAniBridgeMappings: empty,
+    resolveTMDBMappings: empty,
+    resolveAnimapMappings: async () => new Map([[123, [{
+      source: "animap",
+      anilistId: 123,
+      type: "TV",
+      imdbIds: ["tt1234567"],
+      tvdbId: null,
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+      title: "Example Anime",
+      year: 2026,
+      corroborated: true,
+    }]]]),
+    resolveIdMapperMappings: empty,
+    resolveAnimeMapperMappings: empty,
+    resolveTsvMappings: empty,
+    resolveImdbMappings: empty,
+    resolveSecondaryMappings: empty,
+    resolveAlternativeMappings: empty,
   });
 
   assert.equal(metas.length, 1);
