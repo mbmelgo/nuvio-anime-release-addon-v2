@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { canonicalizeCatalogPageWithBingeCat } from "../api/catalog-source.js";
+import { canonicalizeCatalogPage } from "../api/catalog-source.js";
 
 const emptyMappings = async () => new Map();
 
 test("BingeCat retry supersedes an Anime Mapper identity for the same unresolved row", async () => {
-  const metas = await canonicalizeCatalogPageWithBingeCat([{
+  const metas = await canonicalizeCatalogPage([{
     id: 195604,
     idMal: 61967,
     title: {
@@ -35,7 +35,7 @@ test("BingeCat retry supersedes an Anime Mapper identity for the same unresolved
     resolveExternalMappings: () => new Map(),
     resolveAnimapMappings: async () => new Map(),
     resolveIdMapperMappings: async () => new Map(),
-    resolveBingeCatSearchMappings: async (rows) => {
+    resolveLegacySearchMappings: async (rows) => {
       const row = rows[0];
       if (row.id !== 195604) return new Map();
       return new Map([[195604, [{
@@ -70,11 +70,11 @@ test("BingeCat retry supersedes an Anime Mapper identity for the same unresolved
 
   assert.equal(metas.length, 1);
   assert.equal(metas[0].id, "tt22868844");
-  assert.equal(metas[0].extra.bingecatProvider, "imdb");
+  assert.equal(metas[0].extra.identityProvider, "imdb");
 });
 
 test("later mapping sources supplement unsupported earlier records", async () => {
-  const metas = await canonicalizeCatalogPageWithBingeCat([{
+  const metas = await canonicalizeCatalogPage([{
     id: 123,
     title: {
       english: "Example Anime",
@@ -102,7 +102,7 @@ test("later mapping sources supplement unsupported earlier records", async () =>
     ]]),
     resolveFribbMappings: emptyMappings,
     resolveExternalMappings: () => new Map(),
-    resolveBingeCatSearchMappings: emptyMappings,
+    resolveLegacySearchMappings: emptyMappings,
     resolveAnimapMappings: async () => new Map([[
       123,
       [{
@@ -126,5 +126,5 @@ test("later mapping sources supplement unsupported earlier records", async () =>
 
   assert.equal(metas.length, 1);
   assert.equal(metas[0].id, "tt1234567");
-  assert.equal(metas[0].extra.bingecatProvider, "imdb");
+  assert.equal(metas[0].extra.identityProvider, "imdb");
 });
