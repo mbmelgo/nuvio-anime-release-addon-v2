@@ -1,0 +1,39 @@
+name: Identity Resolution Profile
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Profile seasonal identity resolution
+        env:
+          NODE_ENV: production
+          IDENTITY_TIMING: "1"
+        run: |
+          node --input-type=module <<'NODE'
+          import { queryAnime } from "./lib/catalog-anilist.js";
+          import { canonicalizeCatalogPageWithBingeCat, getSeasonInfo, getCatalogFilter } from "./api/catalog-source.js";
+
+          const filter = getCatalogFilter("current_season", getSeasonInfo(new Date()));
+
+          for (const page of [1, 2]) {
+            const started = Date.now();
+            const rows = await queryAnime(filter, page, "", { includeMalId: true });
+            console.log(JSON.stringify({ phase: "anilist-page", page, rows: rows.length, elapsedMs: Date.now() - started }));
+
+            const canonicalStarted = Date.now();
+            const metas = await canonicalizeCatalogPageWithBingeCat(rows, { requireBingeCatVerification: true });
+            console.log(JSON.stringify({ phase: "canonicalize-page", page, metas: metas.length, elapsedMs: Date.now() - canonicalStarted }));
+          }
+          NODE
