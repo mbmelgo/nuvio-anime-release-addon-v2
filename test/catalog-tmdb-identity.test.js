@@ -102,6 +102,12 @@ test("catalog lets TMDB upgrade non-IMDb mappings when BingeCat is unavailable",
     title: { english: "Bleach", romaji: "Bleach" },
     format: "TV",
     startDate: { year: 2004 },
+  }, {
+    id: 270,
+    idMal: 270,
+    title: { english: "Probe Trigger", romaji: "Probe Trigger" },
+    format: "TV",
+    startDate: { year: 2026 },
   }], {
     probeBingeCat: true,
     resolveMappings: async () => new Map([[269, [{
@@ -114,16 +120,18 @@ test("catalog lets TMDB upgrade non-IMDb mappings when BingeCat is unavailable",
       titles: ["Bleach"],
       year: 2004,
     }]]]),
-    resolveBingeCatSearchMappings: async (_rows, options = {}) => {
+    resolveBingeCatSearchMappings: async (rows, options = {}) => {
       bingeCatCalls += 1;
+      assert.deepEqual(rows.map((row) => row.id), [270]);
       options.onCircuitOpen?.();
       return new Map();
     },
     resolveFribbMappings: empty,
     resolveExternalMappings: () => new Map(),
     resolveAniBridgeMappings: empty,
-    resolveTMDBMappings: async () => {
+    resolveTMDBMappings: async (rows) => {
       tmdbCalls += 1;
+      assert.deepEqual(rows.map((row) => row.id), [269, 270]);
       return new Map([[269, [{
         source: "tmdb-search",
         anilistId: 269,
@@ -147,6 +155,7 @@ test("catalog lets TMDB upgrade non-IMDb mappings when BingeCat is unavailable",
     resolveAlternativeMappings: empty,
   });
 
+  assert.equal(metas.length, 2);
   assert.equal(metas[0].id, "tt0434665");
   assert.equal(metas[0].extra.tmdbProvider, "imdb");
   assert.equal(metas[0].extra.tmdbEvidence, "tmdb-search");
