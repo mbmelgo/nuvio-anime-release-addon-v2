@@ -36,12 +36,12 @@ export default function handler(req, res) {
   <header class="wrap">
     <div class="eyebrow">Nuvio anime catalog addon · v${ADDON_VERSION}</div>
     <h1>Anime Releases for Nuvio</h1>
-    <p class="lead">Dynamic seasonal and rolling anime release catalogs. AniList supplies release and airing data; the addon resolves BingeCat-compatible identities through ARM, with the legacy identity retained only when mapping is unavailable.</p>
+    <p class="lead">Dynamic seasonal and rolling anime release catalogs. AniList supplies release and airing data; the addon resolves validated provider identities through ARM and secondary cross-provider mapping sources.</p>
   </header>
   <main class="wrap">
     <section class="panel">
       <h2>Install the addon</h2>
-      <p>The production addon resolves a BingeCat-compatible identity, preferring IMDb and falling back to TVDB or TMDB when validated. Detailed metadata is delegated to the metadata addon configured in Nuvio.</p>
+      <p>The production addon resolves a validated provider identity, preferring IMDb and falling back to TVDB or TMDB when validated. Detailed metadata is delegated to the metadata addon configured in Nuvio.</p>
       <div class="url"><code>${manifest}</code></div>
       <a class="button" href="${manifest}">Install addon</a>
       <a class="button secondary" href="${GITHUB_URL}">GitHub</a>
@@ -73,7 +73,7 @@ export default function handler(req, res) {
 
     <section class="panel">
       <h2>Identity and metadata flow</h2>
-      <p class="note"><code>AniList → ARM mapping → validated BingeCat ID → Nuvio → configured metadata addon</code></p>
+      <p class="note"><code>AniList → ARM mapping → validated provider ID → Nuvio → configured metadata addon</code></p>
       <p class="note">This addon is catalog-focused. It does not duplicate detailed metadata, provider mapping, or playback resolution.</p>
     </section>
   </main>
