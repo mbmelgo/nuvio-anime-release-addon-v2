@@ -900,6 +900,124 @@ test("BingeCat search opens a batch circuit after sustained 429s", async () => {
 });
 
 
+test("BingeCat opens the batch circuit when the API returns an explicit access error payload", async () => {
+  clearBingeCatSearchCache();
+  let calls = 0;
+  const rows = Array.from({ length: 10 }, (_, index) => ({
+    anilistId: 925000 + index,
+    type: "TV",
+    year: 2026,
+    titleEnglish: `Explicit Access Error Anime ${index}`,
+  }));
+
+  const result = await resolveAniListMappingsByBingeCatSearch(rows, {
+    concurrency: 3,
+    fetchImpl: async () => {
+      calls += 1;
+      return {
+        ok: true,
+        async json() {
+          return {
+            error: "Public API is only available from the web UI.",
+            movies: [],
+            series: [],
+          };
+        },
+      };
+    },
+  });
+
+  assert.equal(result.size, 0);
+  assert.ok(calls <= 3, `expected the explicit access error to open the batch circuit immediately, got ${calls} calls`);
+});
+
+test("BingeCat persists an explicit API access error circuit across catalog calls", async () => {
+  clearBingeCatSearchCache();
+  let calls = 0;
+  const fetchImpl = async () => {
+    calls += 1;
+    return {
+      ok: true,
+      async json() {
+        return {
+          error: "Public API is only available from the web UI.",
+          movies: [],
+          series: [],
+        };
+      },
+    };
+  };
+
+  const first = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 926001,
+    type: "TV",
+    year: 2026,
+    titleEnglish: "First Explicit Access Error Anime",
+  }], { fetchImpl, persistCircuit: true });
+
+  assert.equal(first.size, 0);
+  const callsAfterFirst = calls;
+
+  const second = await resolveAniListMappingsByBingeCatSearch([{
+    anilistId: 926002,
+    type: "TV",
+    year: 2026,
+    titleEnglish: "Second Explicit Access Error Anime",
+  }], { fetchImpl, persistCircuit: true });
+
+  assert.equal(second.size, 0);
+  assert.equal(calls, callsAfterFirst);
+});
+
+test("BingeCat keeps legitimate empty search responses retryable", async () => {
+  clearBingeCatSearchCache();
+  let calls = 0;
+  const fetchImpl = async () => {
+    calls += 1;
+    return {
+      ok: true,
+      async json() {
+        return { movies: [], series: [] };
+      },
+    };
+  };
+
+  const row = [{
+    anilistId: 927001,
+    type: "TV",
+    year: 2026,
+    titleEnglish: "Legitimate Empty Search",
+  }];
+
+  await resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
+  await resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
+
+  assert.equal(calls, 8);
+});
+
+test("BingeCat opens the circuit on a request timeout", async () => {
+  clearBingeCatSearchCache();
+  let calls = 0;
+  const rows = Array.from({ length: 10 }, (_, index) => ({
+    anilistId: 928000 + index,
+    type: "TV",
+    year: 2026,
+    titleEnglish: `Timed Out Anime ${index}`,
+  }));
+
+  const result = await resolveAniListMappingsByBingeCatSearch(rows, {
+    concurrency: 3,
+    requestTimeoutMs: 5,
+    fetchImpl: async () => {
+      calls += 1;
+      return new Promise(() => {});
+    },
+  });
+
+  assert.equal(result.size, 0);
+  assert.ok(calls <= 3, `expected the first timeout to open the batch circuit, got ${calls} calls`);
+});
+
 test("BingeCat access denial circuit suppresses repeated requests across catalog calls", async () => {
   clearBingeCatSearchCache();
   let calls = 0;
