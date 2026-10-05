@@ -110,7 +110,7 @@ test("TMDB resolver uses alternate AniList titles when the primary title is abse
   const record = mappings.get(16498)?.[0];
   assert.equal(record.tmdbTvId, 1429);
   assert.deepEqual(record.imdbIds, ["tt2560140"]);
-  assert.equal(fetchImpl.calls.length, 3);
+  assert.equal(fetchImpl.calls.length, 2);
 });
 
 test("TMDB resolver is a no-op when the application token is unavailable", async () => {
