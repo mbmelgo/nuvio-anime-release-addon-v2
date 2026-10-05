@@ -124,3 +124,22 @@ test("TMDB resolver is a no-op when the application token is unavailable", async
   assert.equal(mappings.size, 0);
   assert.equal(calls, 0);
 });
+
+test("TMDB resolver reuses an AniList IMDb link instead of making an external-ID request", async () => {
+  const fetchImpl = mockFetch({
+    "/3/search/tv?first_air_date_year=2020&include_adult=false&language=en-US&page=1&query=Example+Series": {
+      results: [{ id: 700, name: "Example Series", original_name: "Example Series", first_air_date: "2020-01-01" }],
+    },
+  });
+
+  const mappings = await resolveAniListMappingsByTMDB([{
+    id: 7000,
+    title: { english: "Example Series" },
+    format: "TV",
+    startDate: { year: 2020 },
+    externalLinks: [{ site: "IMDb", url: "https://www.imdb.com/title/tt1234567/" }],
+  }], { token: "test-token", fetchImpl });
+
+  assert.deepEqual(mappings.get(7000)?.[0]?.imdbIds, ["tt1234567"]);
+  assert.equal(fetchImpl.calls.length, 1);
+});
