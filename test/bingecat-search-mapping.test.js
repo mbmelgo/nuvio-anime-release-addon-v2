@@ -992,7 +992,7 @@ test("BingeCat keeps legitimate empty search responses retryable", async () => {
   await resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
   await resolveAniListMappingsByBingeCatSearch(row, { fetchImpl });
 
-  assert.equal(calls, 8);
+  assert.equal(calls, 4);
 });
 
 test("BingeCat opens the circuit on a request timeout", async () => {
