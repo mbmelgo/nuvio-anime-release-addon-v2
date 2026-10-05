@@ -827,7 +827,7 @@ export async function canonicalizeCatalogPageWithBingeCat(
       { excludeIds: usedIdentities },
     );
 
-    if (!selected || ( && !selected.bingecatVerified)) {
+    if (!selected) {
       if (selected) {
         usedIdentities.add(selected.stremioId);
         metas.push({
@@ -886,7 +886,7 @@ export async function canonicalizeCatalogPageWithBingeCat(
 
   if (unresolvedIds.length) {
     throw new Error(
-      `BingeCat identity resolution exhausted; unresolved AniList IDs: ${unresolvedIds.join(",") || "unknown"}`,
+      `Identity resolution exhausted; unresolved AniList IDs: ${unresolvedIds.join(",") || "unknown"}`,
     );
   }
 
@@ -1015,7 +1015,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
           getProviderCandidates(media, mappings.get(mediaId) || []),
           { excludeIds: usedIdentities },
         );
-        if (!selected || ( && !selected.bingecatVerified)) {
+        if (!selected) {
           if (selected) {
             usedIdentities.add(selected.stremioId);
             const meta = {
@@ -1142,11 +1142,11 @@ export async function buildCatalog(id, info, skip, search) {
       filter,
       skip,
       search,
-      canonicalizePage: (rows) => canonicalizeCatalogPageWithBingeCat(rows, { : true }),
+      canonicalizePage: (rows) => canonicalizeCatalogPageWithBingeCat(rows),
     });
   }
   if (getRollingCatalogRange(id, new Date())) {
-    return buildRollingCatalog(id, new Date(), skip, search, { useBingeCatIdentity: true, : true });
+    return buildRollingCatalog(id, new Date(), skip, search);
   }
   return [];
 }
