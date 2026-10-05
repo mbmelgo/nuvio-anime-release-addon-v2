@@ -314,11 +314,19 @@ test("catalog identity resolution performs only one BingeCat verification after 
 test("catalog identity resolution uses cached AniBridge bulk mappings before per-title fallbacks", async () => {
   const rows = [row(901, 9901), row(902, 9902)];
   let aniBridgeCalls = 0;
+  let aniBridgeStarted = false;
+  let fribbObservedAniBridge = false;
 
   const result = await canonicalizeCatalogPageWithBingeCat(rows, {
     probeBingeCat: true,
     resolveMappings: async () => new Map(),
-    resolveFribbMappings: async () => new Map(),
+    resolveFribbMappings: async () => {
+      if (!aniBridgeStarted) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+      fribbObservedAniBridge = aniBridgeStarted;
+      return new Map();
+    },
     resolveExternalMappings: () => new Map(),
     resolveAnimapMappings: async (ids) => {
       throw new Error(`AniMap should not run before AniBridge: ${ids.join(",")}`);
@@ -335,6 +343,7 @@ test("catalog identity resolution uses cached AniBridge bulk mappings before per
       throw new Error("Anime Mapper should not run before AniBridge");
     },
     resolveAniBridgeMappings: async (unresolvedRows) => {
+      aniBridgeStarted = true;
       aniBridgeCalls += 1;
       assert.deepEqual(unresolvedRows.map((item) => item.id), [901, 902]);
       return new Map([
@@ -358,6 +367,7 @@ test("catalog identity resolution uses cached AniBridge bulk mappings before per
   assert.equal(result.length, 2);
   assert.deepEqual(result.map((meta) => meta.id), ["tt9900901", "tvdb:470902"]);
   assert.equal(aniBridgeCalls, 1);
+  assert.equal(fribbObservedAniBridge, true);
 });
 
 

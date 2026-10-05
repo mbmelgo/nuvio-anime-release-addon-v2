@@ -173,17 +173,26 @@ async function resolveMappingsForRows(
     // Fribb is a single shared dataset request, so it is still safe in
     // degraded mode and can recover provider identities without reopening
     // the per-title AniMap/IDMapper/IMDb/secondary fan-out.
-    try {
-      const fribb = await resolveFribbMappings(unresolvedRows.map((row) => Number(row.id)));
-      mappings = mergeMappings(mappings, fribb);
-    } catch (error) {
-      console.error("[identity] Fribb degraded-mode mapping failed", error);
+    // Fribb and AniBridge are independent shared bulk datasets. Load them
+    // concurrently so a cold serverless invocation pays the slower dataset
+    // fetch once rather than paying both fetch latencies sequentially.
+    const degradedRows = unresolvedRows;
+    const [fribbResult, aniBridgeResult] = await Promise.allSettled([
+      resolveFribbMappings(degradedRows.map((row) => Number(row.id))),
+      degradedRows.length ? resolveAniBridgeMappings(degradedRows) : Promise.resolve(new Map()),
+    ]);
+
+    if (fribbResult.status === "fulfilled") {
+      mappings = mergeMappings(mappings, fribbResult.value);
+    } else {
+      console.error("[identity] Fribb degraded-mode mapping failed", fribbResult.reason);
     }
+
     // Do not stop at Fribb during BingeCat outages. BingeCat is only the
     // support verifier; independent provider mapping sources can still give
     // us a usable provider identity while verification is unavailable.
     try {
-      const externalMappings = resolveExternalMappings(unresolvedRows);
+      const externalMappings = resolveExternalMappings(degradedRows);
       mappings = mergeMappings(mappings, externalMappings);
     } catch (error) {
       console.error("[identity] degraded AniList external mapping failed", error);
@@ -192,13 +201,10 @@ async function resolveMappingsForRows(
     // AniBridge is a shared bulk mapping dataset. Run it before per-title
     // fallback providers so an unavailable BingeCat does not turn a 50-row
     // catalog page into avoidable request fan-out.
-    if (unresolvedRows.length) {
-      try {
-        const aniBridgeMappings = await resolveAniBridgeMappings(unresolvedRows);
-        mappings = mergeMappings(mappings, aniBridgeMappings);
-      } catch (error) {
-        console.error("[identity] degraded AniBridge mapping failed", error);
-      }
+    if (aniBridgeResult.status === "fulfilled") {
+      mappings = mergeMappings(mappings, aniBridgeResult.value);
+    } else {
+      console.error("[identity] degraded AniBridge mapping failed", aniBridgeResult.reason);
     }
     unresolvedRows = rows.filter((row) => !selectBingeCatIdentity(
       { ...row, anilistId: Number(row.id) },
