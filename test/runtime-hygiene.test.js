@@ -59,7 +59,7 @@ test("every retained Vercel runtime module has a serverless default export", asy
   }
 });
 
-test("README and home page describe the current BingeCat identity release", async () => {
+test("README and home page describe the current provider identity release", async () => {
   const readme = await readFile("README.md", "utf8");
   const home = await readFile("api/home-selector.js", "utf8");
   const versionSource = await readFile("api/version.js", "utf8");
@@ -68,11 +68,11 @@ test("README and home page describe the current BingeCat identity release", asyn
   assert.ok(addonVersion);
   assert.match(readme, /\[!\[MAL\]\(https:\/\/img\.shields\.io\/badge\/MyAnimeList-identity-2e51a2\.svg\)\]\(https:\/\/myanimelist\.net\)/);
   assert.ok(readme.includes("version-" + addonVersion + "-blue"));
-  assert.match(readme, /BingeCat-compatible identity/);
+  assert.match(readme, /validated provider identity/);
   assert.ok(readme.includes("**Production:** `v" + releaseState.lastDeploymentVersion + "`"));
   assert.ok(readme.includes("**Development:** `v" + addonVersion + "`"));
   assert.doesNotMatch(readme, /AniList-only/);
-  assert.match(home, /BingeCat-compatible identity/);
+  assert.match(home, /validated provider identity/);
   assert.doesNotMatch(home, /AniList-only/);
 });
 
@@ -161,7 +161,7 @@ test("production manifest validator enforces the exact five-catalog contract", (
   const manifest = {
     id: "com.marki.nuvio.anime-releases",
     version: "5.5.3",
-    identityMode: "bingecat",
+    identityMode: "provider",
     resources: [{ name: "catalog", types: ["anime"] }],
     types: ["anime"],
     catalogs: PRODUCTION_CATALOG_IDS.map((id) => ({ id, type: "anime" })),
@@ -245,7 +245,7 @@ test("release workflow keeps dry runs non-mutating and deploys idempotently", as
   assert.ok(workflow.includes("inputs.dry_run != true"));
   assert.match(workflow, /Create annotated release tag, GitHub Release, and update release state[\s\S]*inputs\.dry_run != true/);
   assert.ok(workflow.includes('re.match(r"^(tt\\d+|tvdb:[1-9]\\d*|tmdb:[1-9]\\d*|mal:[1-9]\\d*)$"'));
-  assert.ok(workflow.includes('root.get("identityMode") == "bingecat"'));
+  assert.ok(workflow.includes('root.get("identityMode") == "provider"'));
   assert.match(workflow, /Check for an existing Vercel deployment/);
   assert.match(workflow, /state\["lastDeployment"\] = \{/);
   assert.ok(workflow.includes("git add ops/release-state.json README.md"));

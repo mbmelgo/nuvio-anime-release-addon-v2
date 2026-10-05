@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { canonicalizeCatalogPageWithBingeCat } from "../api/catalog-source.js";
-import { getBingeCatCandidates, selectBingeCatIdentity } from "../lib/bingecat-identity.js";
+import { canonicalizeCatalogPage } from "../api/catalog-source.js";
+import { getProviderCandidates, selectProviderIdentity } from "../lib/provider-identity.js";
 
 const emptyMap = () => new Map();
 
 test("relation-derived provider mappings are not reused as the current identity without corroboration", async () => {
   const searchedTitles = [];
-  const metas = await canonicalizeCatalogPageWithBingeCat([{
+  const metas = await canonicalizeCatalogPage([{
     id: 155723,
     idMal: 64999,
     title: {
@@ -59,7 +59,7 @@ test("relation-derived provider mappings are not reused as the current identity 
     resolveExternalMappings: emptyMap,
     resolveAnimapMappings: async () => new Map(),
     resolveIdMapperMappings: async () => new Map(),
-    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveLegacySearchMappings: async () => new Map(),
     resolveAnimeMapperMappings: async (rows) => rows.some((row) => Number(row.id) === 206814)
       ? new Map([[206814, [{
         source: "anime-mapper-relation",
@@ -82,14 +82,14 @@ test("relation-derived provider mappings are not reused as the current identity 
   assert.equal(metas.length, 1);
   assert.equal(metas[0].id, "mal:64999");
   assert.equal(metas[0].extra.anilistId, 155723);
-  assert.equal(metas[0].extra.bingecatProvider, null);
-  assert.equal(metas[0].extra.bingecatId, null);
-  assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
+  assert.equal(metas[0].extra.identityProvider, null);
+  assert.equal(metas[0].extra.identityId, null);
+  assert.equal(metas[0].extra.identityEvidence, "canonical-mal-id-fallback");
 });
 
 
 test("relation provider mappings are rejected when the related title does not match the current entry", async () => {
-  const metas = await canonicalizeCatalogPageWithBingeCat([{
+  const metas = await canonicalizeCatalogPage([{
     id: 155723,
     title: {
       english: null,
@@ -125,7 +125,7 @@ test("relation provider mappings are rejected when the related title does not ma
     resolveExternalMappings: emptyMap,
     resolveAnimapMappings: async () => new Map(),
     resolveIdMapperMappings: async () => new Map(),
-    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveLegacySearchMappings: async () => new Map(),
     resolveAnimeMapperMappings: async () => new Map(),
     resolveTsvMappings: async () => new Map(),
     resolveImdbMappings: async () => new Map([[117168, [{
@@ -147,11 +147,11 @@ test("relation provider mappings are rejected when the related title does not ma
 
   assert.equal(metas.length, 1);
   assert.equal(metas[0].id, "anilist:155723");
-  assert.equal(metas[0].extra.bingecatEvidence, "anilist-id-fallback");
+  assert.equal(metas[0].extra.identityEvidence, "anilist-id-fallback");
 });
 
 test("relation external provider mappings are validated against the current title", async () => {
-  const metas = await canonicalizeCatalogPageWithBingeCat([{
+  const metas = await canonicalizeCatalogPage([{
     id: 5000,
     idMal: 5000,
     title: { english: "Example Series Season 2", romaji: "Example Series Season 2", native: null },
@@ -194,7 +194,7 @@ test("relation external provider mappings are validated against the current titl
     },
     resolveAnimapMappings: async () => new Map(),
     resolveIdMapperMappings: async () => new Map(),
-    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveLegacySearchMappings: async () => new Map(),
     resolveAnimeMapperMappings: async () => new Map(),
     resolveTsvMappings: async () => new Map(),
     resolveImdbMappings: async () => new Map(),
@@ -204,7 +204,7 @@ test("relation external provider mappings are validated against the current titl
 
   assert.equal(metas.length, 1);
   assert.equal(metas[0].id, "mal:5000");
-  assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
+  assert.equal(metas[0].extra.identityEvidence, "canonical-mal-id-fallback");
 });
 
 test("relation identity resolution derives provider installment titles", async () => {
@@ -224,13 +224,13 @@ test("relation identity resolution derives provider installment titles", async (
     year: 2027,
     derivedTitle: true,
   };
-  assert.equal(selectBingeCatIdentity(
+  assert.equal(selectProviderIdentity(
     validationMedia,
-    getBingeCatCandidates(validationMedia, [validationRecord]),
+    getProviderCandidates(validationMedia, [validationRecord]),
   )?.id, "tt39382762");
 
   const searchedTitles = [];
-  const metas = await canonicalizeCatalogPageWithBingeCat([{
+  const metas = await canonicalizeCatalogPage([{
     id: 212653,
     title: {
       english: null,
@@ -280,7 +280,7 @@ test("relation identity resolution derives provider installment titles", async (
     resolveExternalMappings: emptyMap,
     resolveAnimapMappings: async () => new Map(),
     resolveIdMapperMappings: async () => new Map(),
-    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveLegacySearchMappings: async () => new Map(),
     resolveAnimeMapperMappings: async () => new Map(),
     resolveTsvMappings: async () => new Map(),
     resolveImdbMappings: async (rows) => {
@@ -312,7 +312,7 @@ test("relation identity resolution derives provider installment titles", async (
 
 
 test("current mappings cannot inherit a provider ID owned by an explicit related anime", async () => {
-  const metas = await canonicalizeCatalogPageWithBingeCat([{
+  const metas = await canonicalizeCatalogPage([{
     id: 206814,
     idMal: 63367,
     title: {
@@ -373,7 +373,7 @@ test("current mappings cannot inherit a provider ID owned by an explicit related
     resolveExternalMappings: () => new Map(),
     resolveAnimapMappings: async () => new Map(),
     resolveIdMapperMappings: async () => new Map(),
-    resolveBingeCatSearchMappings: async () => new Map(),
+    resolveLegacySearchMappings: async () => new Map(),
     resolveAnimeMapperMappings: async () => new Map(),
     resolveTsvMappings: async () => new Map(),
     resolveImdbMappings: async () => new Map(),
@@ -383,8 +383,8 @@ test("current mappings cannot inherit a provider ID owned by an explicit related
 
   assert.equal(metas.length, 1);
   assert.equal(metas[0].id, "mal:63367");
-  assert.equal(metas[0].extra.bingecatProvider, null);
-  assert.equal(metas[0].extra.bingecatEvidence, "canonical-mal-id-fallback");
+  assert.equal(metas[0].extra.identityProvider, null);
+  assert.equal(metas[0].extra.identityEvidence, "canonical-mal-id-fallback");
 });
 
 
@@ -401,8 +401,8 @@ test("related provider protection is carried by mapping records before final can
     relations: { edges: [{ relationType: "PREQUEL", node: { id: 813, title: { english: "Dragon Ball Z" } } }] },
     relatedProviderIds: ["tvdb:81472"],
   };
-  const candidates = getBingeCatCandidates(media, mappings.get(206814));
-  assert.equal(selectBingeCatIdentity(media, candidates), null);
+  const candidates = getProviderCandidates(media, mappings.get(206814));
+  assert.equal(selectProviderIdentity(media, candidates), null);
 });
 
 
@@ -416,7 +416,7 @@ test("final verification mappings cannot bypass protected related provider IDs",
     relatedProviderIds: ["tvdb:81472"],
   };
   const verificationRecord = {
-    source: "bingecat-search",
+    source: "direct-provider-search",
     anilistId: 206814,
     type: "TV",
     imdbIds: [],
@@ -425,8 +425,8 @@ test("final verification mappings cannot bypass protected related provider IDs",
     tmdbMovieIds: [],
     title: "Dragon Ball Super: Beerus",
   };
-  const candidates = getBingeCatCandidates(media, [{ ...verificationRecord, relatedProviderIds: media.relatedProviderIds }]);
-  assert.equal(selectBingeCatIdentity(media, candidates), null);
+  const candidates = getProviderCandidates(media, [{ ...verificationRecord, relatedProviderIds: media.relatedProviderIds }]);
+  assert.equal(selectProviderIdentity(media, candidates), null);
 });
 test("shared provider IDs are accepted for compatible related installments", () => {
   const media = {
@@ -455,10 +455,10 @@ test("shared provider IDs are accepted for compatible related installments", () 
     year: null,
   };
 
-  const candidate = getBingeCatCandidates(media, [record]).find(
+  const candidate = getProviderCandidates(media, [record]).find(
     (item) => item.provider === "tvdb" && item.id === "407840",
   );
-  assert.equal(selectBingeCatIdentity(media, [candidate])?.id, "407840");
+  assert.equal(selectProviderIdentity(media, [candidate])?.id, "407840");
 });
 
 test("shared provider protection still rejects an unrelated provider collision", () => {
@@ -488,9 +488,9 @@ test("shared provider protection still rejects an unrelated provider collision",
     year: 2026,
   };
 
-  const candidate = getBingeCatCandidates(media, [record]).find(
+  const candidate = getProviderCandidates(media, [record]).find(
     (item) => item.provider === "tvdb" && item.id === "81472",
   );
-  assert.equal(selectBingeCatIdentity(media, [candidate]), null);
+  assert.equal(selectProviderIdentity(media, [candidate]), null);
 });
 
