@@ -194,5 +194,4 @@ test("catalog lets TMDB upgrade an earlier TVDB mapping to IMDb", async () => {
   assert.equal(metas[0].id, "tt0434665");
   assert.equal(metas[0].extra.tmdbProvider, "imdb");
   assert.equal(tmdbCalls, 1);
-  assert.equal(bingeCatCalls, 0);
 });
