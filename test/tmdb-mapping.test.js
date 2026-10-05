@@ -48,6 +48,53 @@ test("TMDB resolver accepts an exact TV title and upgrades to IMDb when availabl
   assert.equal(fetchImpl.calls[0].options.headers.Authorization, "Bearer test-token");
 });
 
+test("TMDB resolver caps concurrent row resolution", async () => {
+  let active = 0;
+  let maxActive = 0;
+
+  const fetchImpl = async (url) => {
+    const parsed = new URL(url);
+    active += 1;
+    maxActive = Math.max(maxActive, active);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    active -= 1;
+
+    const id = Number(parsed.searchParams.get("query").split("-").at(-1));
+    return {
+      ok: true,
+      status: 200,
+      async json() {
+        return {
+          results: [{
+            id,
+            name: `Anime-${id}`,
+            original_name: `Anime-${id}`,
+            first_air_date: "2026-01-01",
+          }],
+        };
+      },
+    };
+  };
+
+  const rows = Array.from({ length: 12 }, (_, index) => ({
+    id: 9000 + index,
+    title: { english: `Anime-${9000 + index}` },
+    format: "TV",
+    startDate: { year: 2026 },
+    externalLinks: [{ site: "IMDb", url: `https://www.imdb.com/title/tt${9000000 + index}/` }],
+  }));
+
+  const mappings = await resolveAniListMappingsByTMDB(rows, {
+    token: "test-token",
+    fetchImpl,
+    concurrency: 4,
+  });
+
+  assert.equal(mappings.size, rows.length);
+  assert.ok(maxActive <= 4);
+  assert.equal(maxActive, 4);
+});
+
 test("TMDB resolver returns TMDB identity when the matched title has no IMDb ID", async () => {
   const fetchImpl = mockFetch({
     "/3/search/movie?include_adult=false&language=en-US&page=1&query=Example+Movie": {
