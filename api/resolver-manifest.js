@@ -22,7 +22,7 @@ export function buildManifest(info) {
     name: "Anime Releases for Nuvio",
     description: "Season-aware anime release catalogs using validated provider identities, with ARM-first cross-provider mapping and secondary identity resolution. Detailed metadata is delegated to the user's preferred metadata addon.",
     resources: [
-      { name: "catalog", types: ["anime"] },
+      { name: "catalog", types: ["series"] },
     ],
     types: ["anime"],
     catalogs: catalogDefinitions(info, "mal"),
