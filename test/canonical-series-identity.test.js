@@ -18,9 +18,9 @@ function createFetch(records) {
   };
 }
 
-function record(mal, anilist, title, sequence = [], year = 2026, type = "TV") {
+function record(mal, anilist, title, sequence = [], year = 2026, type = "TV", mappings = {}) {
   return {
-    mappings: { mal, anilist },
+    mappings: { mal, anilist, ...mappings },
     title: { english: title, romaji: title, native: title },
     type,
     year,
@@ -33,7 +33,7 @@ test("canonical series resolver follows prequel chains to the original series", 
   const fetchImpl = createFetch({
     61469: record(61469, 210482, "Steel Ball Run", [
       { malId: 51367, title: { english: "Stone Ocean Part 2" }, format: "ONA", seasonYear: 2022, relationType: "PREQUEL" },
-    ]),
+    ], 2026, "ONA", { tmdb: 45790, tvdb: 262954, trakt: 45537 }),
     51367: record(51367, 146722, "Stone Ocean Part 2", [
       { malId: 48661, title: { english: "Stone Ocean" }, format: "ONA", seasonYear: 2021, relationType: "PREQUEL" },
     ]),
@@ -43,7 +43,7 @@ test("canonical series resolver follows prequel chains to the original series", 
     20899: record(20899, 20474, "Stardust Crusaders", [
       { malId: 14719, title: { english: "JoJo's Bizarre Adventure" }, format: "TV", seasonYear: 2012, relationType: "PREQUEL" },
     ]),
-    14719: record(14719, 14719, "JoJo's Bizarre Adventure", []),
+    14719: record(14719, 14719, "JoJo's Bizarre Adventure", [], 2012, "TV", { tmdb: 45790, tvdb: 262954, trakt: 45537 }),
   });
 
   const result = await resolveAniListCanonicalSeriesByAnimeMapper([
@@ -63,7 +63,7 @@ test("canonical series resolver follows prequel chains to the original series", 
   assert.equal(root?.canonicalTitle, "JoJo's Bizarre Adventure");
 });
 
-test("canonical series resolver prefers a TV parent over unrelated prequel entries", async () => {
+test("canonical series resolver does not collapse an enhanced re-edition without shared series identity", async () => {
   clearAnimeMapperCache();
   const fetchImpl = createFetch({
     63367: record(63367, 206814, "Dragon Ball Super: Beerus", [
@@ -87,13 +87,11 @@ test("canonical series resolver prefers a TV parent over unrelated prequel entri
     },
   ], { fetchImpl });
 
-  assert.equal(result.get(206814)?.canonicalMalId, 30694);
-  assert.equal(result.get(206814)?.canonicalAnilistId, 21175);
-  assert.equal(result.get(206814)?.canonicalTitle, "Dragon Ball Super");
+  assert.equal(result.has(206814), false);
 });
 
 
-test("canonical series resolver crosses non-series prequel bridges to the original anime", async () => {
+test("canonical series resolver does not collapse a sequel franchise without shared series identity", async () => {
   clearAnimeMapperCache();
   const fetchImpl = createFetch({
     62534: record(62534, 199068, "Final Member Selection Match", [
@@ -134,8 +132,5 @@ test("canonical series resolver crosses non-series prequel bridges to the origin
     },
   ], { fetchImpl });
 
-  const root = result.get(199068);
-  assert.equal(root?.canonicalMalId, 22);
-  assert.equal(root?.canonicalAnilistId, 22);
-  assert.equal(root?.canonicalTitle, "The Prince of Tennis");
+  assert.equal(result.has(199068), false);
 });
