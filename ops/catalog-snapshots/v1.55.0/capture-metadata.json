@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 2,
+  "releaseVersion": "1.55.0",
+  "capturedAt": "2026-10-06T09:33:37.882018Z",
+  "productionBaseUrl": "https://nuvio-anime-release-addon-v2.vercel.app",
+  "pagination": {
+    "pageSize": 50,
+    "queryParameter": "skip",
+    "termination": "empty-page",
+    "maxPages": 1000
+  },
+  "catalogs": [
+    "current_season",
+    "previous_season",
+    "upcoming_season",
+    "upcoming_5_days",
+    "previous_7_days"
+  ],
+  "itemCounts": {
+    "current_season": 96,
+    "previous_season": 107,
+    "upcoming_season": 54,
+    "upcoming_5_days": 84,
+    "previous_7_days": 93
+  },
+  "pageCounts": {
+    "current_season": 2,
+    "previous_season": 3,
+    "upcoming_season": 2,
+    "upcoming_5_days": 2,
+    "previous_7_days": 2
+  },
+  "sha256": {
+    "current_season": "1a660daf2422afcaca776abadee5fadc00104624e3bc423ff16e7a979487bcca",
+    "previous_season": "f809037547acc67384ae57aaaa8d3e15b5777dc6c13af96bf283bd94afd43a28",
+    "upcoming_season": "a8163583a8d864929cbc16dcd349c8a4341d3ee3633a6f95ca4cfc6acc93907b",
+    "upcoming_5_days": "09d3172376b1a07ee2f94cfb679d0d5c4c381fde4dea711f140288c80ae854cc",
+    "previous_7_days": "5594780065555022e16f11f395f87354121f44edb0cc815857454e5a1fcbc975",
+    "manifest": "9be3ae616b067fdb08514b997849afbfec0556f8837313b4904c1115b0abfdbe"
+  },
+  "pageSha256": {
+    "current_season": {
+      "page-0001.json": "4fe4b6803b303d67ce4cd23fb69d3edcaa970f81af175cea0187a082e9674fa1",
+      "page-0002.json": "8f780817f4666c84e7d8408e17944c8dc445069169ba12ed60512a467fefea60"
+    },
+    "previous_season": {
+      "page-0001.json": "3a7f0fc69dd31ce95b248692aa4900d5890fda7e09a0add8089b134df4333b1d",
+      "page-0002.json": "10cd8cf98d65ed5e430c60c03cc027e7e3a02009f5992cc2e5f9eb2909d78e07",
+      "page-0003.json": "dbb74457fcbc15a3f20d9967045efd6ad7b44314f9b04fc7d5f67b741c328a1b"
+    },
+    "upcoming_season": {
+      "page-0001.json": "ddc4052a73554c3a5fe920965b7d0faea5b963cc7500ba2c2937e47a0b15b916",
+      "page-0002.json": "5a9825f4c7cc07dc2b21338e2df81eded8d89b0a976fbf0fd99526835d1613ca"
+    },
+    "upcoming_5_days": {
+      "page-0001.json": "c3bbafc21af82a57304d0a7f2c9a148d3f63ca3efee428956966ca54602fbbc5",
+      "page-0002.json": "351556152e0145683e0bf574750c04b3ecd8dfdc9ec211bd21dd7ae675d73bc0"
+    },
+    "previous_7_days": {
+      "page-0001.json": "36f8f14491d5e56ed1664da58f21b6a906272cfc16cb619b5fe83a4963b88317",
+      "page-0002.json": "db4107119d35b4823631f011bf231319407b87ee6463efa3532a69ed6e603dd5"
+    }
+  }
+}
