@@ -288,8 +288,9 @@ jobs:
           before_version="$(python - <<'PY'
           import re
           import subprocess
+          import os
 
-          current = "$RELEASE_VERSION"
+          current = os.environ["RELEASE_VERSION"]
           current_tuple = tuple(map(int, current.split(".")))
           raw_refs = subprocess.check_output(
               ["git", "ls-remote", "--heads", "origin", "refs/heads/catalog-snapshots/v*"],
