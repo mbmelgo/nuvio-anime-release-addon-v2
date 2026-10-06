@@ -177,3 +177,55 @@ test("aggregated current-title evidence overrides a related-provider collision",
   console.log(JSON.stringify({ candidate, selected: selectProviderIdentity(media, [candidate]) }));
   assert.equal(selectProviderIdentity(media, [candidate])?.id, "tt14976292");
 });
+
+test("catalog verifies IMDb after a TMDB-only match before accepting TMDB identity", async () => {
+  const metas = await canonicalizeCatalogPage([{
+    ...row(217787, 64211),
+    title: { english: "Pop Pap Polters", romaji: "Pop Pap Polters" },
+    startDate: { year: 2026 },
+  }], {
+    resolveMappings: empty,
+    resolveFribbMappings: empty,
+    resolveExternalMappings: () => new Map(),
+    resolveAniBridgeMappings: empty,
+    resolveTMDBMappings: async () => new Map([[217787, [{
+      source: "tmdb-search",
+      anilistId: 217787,
+      type: "TV",
+      imdbIds: [],
+      tvdbId: null,
+      tmdbTvId: 315682,
+      tmdbMovieIds: [],
+      title: "Pop Pap Polters",
+      titles: ["Pop Pap Polters"],
+      year: 2026,
+      tmdbAuthoritative: true,
+      tmdbMatchScore: 130,
+    }]]]),
+    resolveAnimapMappings: empty,
+    resolveIdMapperMappings: empty,
+    resolveAnimeMapperMappings: empty,
+    resolveTsvMappings: empty,
+    resolveImdbMappings: async (rows) => rows.some((candidate) => Number(candidate.id) === 217787)
+      ? new Map([[217787, [{
+        source: "imdb-search",
+        anilistId: 217787,
+        type: "TV",
+        imdbIds: ["tt44923712"],
+        tvdbId: null,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: "Pop Pap Polters",
+        titles: ["Pop Pap Polters"],
+        year: 2026,
+        relation: false,
+      }]]])
+      : new Map(),
+    resolveSecondaryMappings: empty,
+    resolveAlternativeMappings: empty,
+  });
+
+  assert.equal(metas[0].id, "tt44923712");
+  assert.equal(metas[0].extra.identityProvider, "imdb");
+});
+\n
