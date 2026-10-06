@@ -163,7 +163,7 @@ test("production manifest validator enforces the exact five-catalog contract", (
     version: "5.5.3",
     identityMode: "provider",
     resources: [{ name: "catalog", types: ["series"] }],
-    types: ["anime"],
+    types: ["series"],
     catalogs: PRODUCTION_CATALOG_IDS.map((id) => ({ id, type: "anime" })),
   };
   assert.equal(validateManifest(manifest, "5.5.3"), true);
