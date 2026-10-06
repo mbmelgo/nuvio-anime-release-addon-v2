@@ -55,5 +55,5 @@ test("seasonal page 2 requests only AniList page 2 and does not fill from page 3
 });
 
 function meta(id) {
-  return { id: `tmdb:${id}`, type: "anime", name: `Anime ${id}` };
+  return { id: `tmdb:${id}`, type: "series", name: `Anime ${id}` };
 }
