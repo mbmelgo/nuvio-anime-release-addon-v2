@@ -178,6 +178,41 @@ test("aggregated current-title evidence overrides a related-provider collision",
   assert.equal(selectProviderIdentity(media, [candidate])?.id, "tt14976292");
 });
 
+test("catalog rejects a TMDB IMDb external ID when its title does not match the AniList title", async () => {
+  const metas = await canonicalizeCatalogPage([{
+    ...row(206814, 63367),
+    title: { english: "Dragon Ball Super: Beerus", romaji: "Dragon Ball Super: Beerus" },
+    startDate: { year: 2026 },
+  }], {
+    resolveMappings: empty,
+    resolveFribbMappings: empty,
+    resolveExternalMappings: () => new Map(),
+    resolveAniBridgeMappings: empty,
+    resolveTMDBMappings: async () => new Map([[206814, [{
+      source: "tmdb-search",
+      anilistId: 206814,
+      type: "TV",
+      imdbIds: ["tt8433216"],
+      tvdbId: 347734,
+      tmdbTvId: 80020,
+      tmdbMovieIds: [],
+      title: "Super Dragon Ball Heroes",
+      titles: ["Super Dragon Ball Heroes"],
+      year: 2018,
+      tmdbAuthoritative: true,
+      tmdbMatchScore: 130,
+    }]]]),
+    resolveAnimapMappings: empty,
+    resolveIdMapperMappings: empty,
+    resolveAnimeMapperMappings: empty,
+    resolveTsvMappings: empty,
+    resolveImdbMappings: empty,
+    resolveSecondaryMappings: empty,
+    resolveAlternativeMappings: empty,
+  });
+  assert.equal(metas[0].id, "mal:63367");
+});
+
 test("catalog verifies IMDb after a TMDB-only match before accepting TMDB identity", async () => {
   const metas = await canonicalizeCatalogPage([{
     ...row(217787, 64211),
