@@ -16,7 +16,7 @@ export function validateManifest(manifest, expectedVersion) {
   if (JSON.stringify(manifest.resources) !== JSON.stringify([{ name: "catalog", types: ["series"] }])) {
     throw new Error("Manifest resources do not match the Nuvio catalog contract.");
   }
-  if (JSON.stringify(manifest.types) !== JSON.stringify(["anime"])) throw new Error("Manifest types do not match the Nuvio catalog contract.");
+  if (JSON.stringify(manifest.types) !== JSON.stringify(["series"])) throw new Error("Manifest types do not match the Nuvio catalog contract.");
   const ids = (manifest.catalogs || []).map((catalog) => catalog.id);
   if (JSON.stringify(ids) !== JSON.stringify(PRODUCTION_CATALOG_IDS)) throw new Error("Manifest catalogs do not match the five supported catalogs.");
   if ((manifest.catalogs || []).some((catalog) => catalog.type !== "series")) throw new Error("Manifest contains a non-anime catalog.");
