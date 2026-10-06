@@ -166,7 +166,7 @@ Catalog names and season labels are generated dynamically.
 
 ## 🚀 Current release
 
-**Production:** `v1.50.0`  
+**Production:** `v1.51.0`  
 **Development:** `v1.51.0` — release candidate with post-protection IMDb re-verification for related provider collisions
 **Major baseline:** `v1.0.0`
 
