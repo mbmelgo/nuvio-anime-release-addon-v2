@@ -207,14 +207,14 @@ async function resolveMappingsForRows(
   // through the independent IMDb title search before allowing the TMDB
   // fallback to become terminal. Existing relation/title validation still
   // applies when the candidate is selected.
-  const tmdbOnlyRows = rows.filter((row) => {
+  const tmdbImdbVerificationRows = rows.filter((row) => {
     const media = { ...row, anilistId: Number(row.id) };
     const tmdbSelected = selectTMDBIdentity(media, mappings.get(Number(row.id)) || []);
-    return tmdbSelected?.provider === "tmdb";
+    return tmdbSelected?.provider === "tmdb" || tmdbSelected?.provider === "imdb";
   });
-  if (tmdbOnlyRows.length) {
+  if (tmdbImdbVerificationRows.length) {
     try {
-      mappings = mergeMappings(mappings, await resolveImdbMappings(tmdbOnlyRows));
+      mappings = mergeMappings(mappings, await resolveImdbMappings(tmdbImdbVerificationRows));
     } catch (error) {
       console.error("[identity] post-TMDB IMDb verification failed", error);
     }
