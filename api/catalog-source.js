@@ -331,10 +331,14 @@ async function resolveMappingsForRows(
   });
   if (relationRetryRows.length) {
     try {
-      mappings = mergeMappings(
-        mappings,
-        await resolveImdbMappings(relationRetryRows),
-      );
+      const retryMappings = await resolveImdbMappings(relationRetryRows);
+      for (const [id, records] of retryMappings instanceof Map ? retryMappings : []) {
+        const existing = mappings.get(id) || [];
+        mappings.set(id, [
+          ...(Array.isArray(records) ? records : []),
+          ...existing,
+        ]);
+      }
     } catch (error) {
       console.error("[identity] post-protection IMDb verification failed", error);
     }
