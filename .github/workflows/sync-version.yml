@@ -408,5 +408,5 @@ jobs:
           readme_path.write_text(readme)
           PY
           git add ops/release-state.json README.md
-          git commit -m "chore: record $tag production release [skip-release-pipeline]"
+          git commit -m "chore: record $tag production release [skip-release-pipeline] [capture-catalog]"
           git push origin HEAD:main
