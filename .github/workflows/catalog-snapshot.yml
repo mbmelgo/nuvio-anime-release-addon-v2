@@ -65,7 +65,7 @@ jobs:
           print(f"tag=v{version}")
           PY
 
-      - name: Capture production payloads
+      - name: Capture all production catalog pages
         env:
           RELEASE_VERSION: ${{ steps.release.outputs.version }}
           PRODUCTION_BASE_URL: https://nuvio-anime-release-addon-v2.vercel.app
@@ -73,15 +73,92 @@ jobs:
           set -euo pipefail
           snapshot_dir="/tmp/catalog-snapshot"
           rm -rf "$snapshot_dir"
-          mkdir -p "$snapshot_dir"
+          mkdir -p "$snapshot_dir/pages"
 
           curl_args=(--fail --silent --show-error --location --retry 5 --retry-delay 2 --retry-all-errors)
           curl "${curl_args[@]}" "$PRODUCTION_BASE_URL/manifest.json" -o "$snapshot_dir/manifest.json"
 
+          python - "$snapshot_dir/manifest.json" <<'PY'
+          import json
+          import sys
+
+          manifest = json.load(open(sys.argv[1]))
+          expected = [
+              "current_season",
+              "previous_season",
+              "upcoming_season",
+              "upcoming_5_days",
+              "previous_7_days",
+          ]
+          actual = [entry.get("id") for entry in manifest.get("catalogs", [])]
+          if actual != expected:
+              raise SystemExit(f"Unexpected production catalog contract: {actual!r}")
+          PY
+
           for catalog in current_season previous_season upcoming_season upcoming_5_days previous_7_days; do
-            curl "${curl_args[@]}" \
-              "$PRODUCTION_BASE_URL/catalog/anime/${catalog}.json" \
-              -o "$snapshot_dir/${catalog}.json"
+            mkdir -p "$snapshot_dir/pages/$catalog"
+            page=1
+            skip=0
+            total=0
+
+            while true; do
+              output="$snapshot_dir/pages/$catalog/page-$(printf '%04d' "$page").json"
+              echo "Capturing $catalog page $page (skip=$skip)"
+              curl "${curl_args[@]}" \
+                "$PRODUCTION_BASE_URL/catalog/anime/$catalog.json?skip=$skip" \
+                -o "$output"
+
+              count="$(python - "$output" <<'PY'
+          import json
+          import sys
+          payload = json.load(open(sys.argv[1]))
+          metas = payload.get("metas")
+          if not isinstance(metas, list):
+              raise SystemExit("Response is missing a metas array")
+          print(len(metas))
+          PY
+              )"
+
+              total=$((total + count))
+              if [ "$count" -eq 0 ]; then
+                rm "$output"
+                break
+              fi
+
+              if [ "$count" -gt 50 ]; then
+                echo "$catalog page $page returned $count items; expected at most 50" >&2
+                exit 1
+              fi
+
+              page=$((page + 1))
+              skip=$((skip + 50))
+
+              if [ "$page" -gt 1000 ]; then
+                echo "$catalog exceeded 1000 pages; refusing an unbounded capture" >&2
+                exit 1
+              fi
+            done
+
+            python - "$snapshot_dir/pages/$catalog" "$snapshot_dir/$catalog.json" "$catalog" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          pages_dir = Path(sys.argv[1])
+          output = Path(sys.argv[2])
+          catalog = sys.argv[3]
+          metas = []
+
+          for page in sorted(pages_dir.glob("page-*.json")):
+              payload = json.loads(page.read_text())
+              page_metas = payload.get("metas")
+              if not isinstance(page_metas, list):
+                  raise SystemExit(f"{page}: missing metas array")
+              metas.extend(page_metas)
+
+          output.write_text(json.dumps({"metas": metas}, ensure_ascii=False, separators=(",", ":")) + "\n")
+          print(f"{catalog}: captured {len(metas)} results across {len(list(pages_dir.glob('page-*.json')))} pages")
+          PY
           done
 
           python - "$snapshot_dir" "$RELEASE_VERSION" "$PRODUCTION_BASE_URL" <<'PY'
@@ -101,7 +178,7 @@ jobs:
                   f"Production manifest version {manifest.get('version')!r} does not match release {release_version!r}"
               )
 
-          expected = [
+          catalogs = [
               "current_season",
               "previous_season",
               "upcoming_season",
@@ -109,44 +186,65 @@ jobs:
               "previous_7_days",
           ]
           hashes = {}
-          counts = {}
-          for name in expected:
-              path = directory / f"{name}.json"
-              payload = json.loads(path.read_text())
+          item_counts = {}
+          page_counts = {}
+          page_hashes = {}
+
+          for name in catalogs:
+              aggregate = directory / f"{name}.json"
+              payload = json.loads(aggregate.read_text())
               metas = payload.get("metas")
               if not isinstance(metas, list):
                   raise SystemExit(f"{name}: missing metas array")
-              counts[name] = len(metas)
-              hashes[name] = hashlib.sha256(path.read_bytes()).hexdigest()
+              item_counts[name] = len(metas)
+              hashes[name] = hashlib.sha256(aggregate.read_bytes()).hexdigest()
+
+              pages = sorted((directory / "pages" / name).glob("page-*.json"))
+              page_counts[name] = len(pages)
+              page_hashes[name] = {
+                  page.name: hashlib.sha256(page.read_bytes()).hexdigest()
+                  for page in pages
+              }
 
           hashes["manifest"] = hashlib.sha256((directory / "manifest.json").read_bytes()).hexdigest()
+
           metadata = {
-              "schemaVersion": 1,
+              "schemaVersion": 2,
               "releaseVersion": release_version,
               "capturedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
               "productionBaseUrl": base_url,
-              "catalogs": expected,
-              "itemCounts": counts,
+              "pagination": {
+                  "pageSize": 50,
+                  "queryParameter": "skip",
+                  "termination": "empty-page",
+                  "maxPages": 1000,
+              },
+              "catalogs": catalogs,
+              "itemCounts": item_counts,
+              "pageCounts": page_counts,
               "sha256": hashes,
+              "pageSha256": page_hashes,
           }
-          (directory / "capture-metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
+          (directory / "capture-metadata.json").write_text(json.dumps(metadata, indent=2, ensure_ascii=False) + "\n")
           PY
 
-      - name: Persist immutable snapshot branch
+      - name: Persist release snapshot branch
         env:
           RELEASE_SHA: ${{ steps.release.outputs.sha }}
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
         run: |
           set -euo pipefail
           branch="catalog-snapshots/$RELEASE_TAG"
-          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
-            echo "Snapshot branch already exists: $branch"
-            exit 1
-          fi
-
           git fetch --quiet origin "$RELEASE_SHA"
           git switch --detach "$RELEASE_SHA"
-          git switch -c "$branch"
+
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            git fetch --quiet origin "$branch"
+            git switch -C "$branch" "origin/$branch"
+            git merge --ff-only "$RELEASE_SHA"
+          else
+            git switch -c "$branch"
+          fi
           mkdir -p "ops/catalog-snapshots/$RELEASE_TAG"
           cp /tmp/catalog-snapshot/*.json "ops/catalog-snapshots/$RELEASE_TAG/"
 
