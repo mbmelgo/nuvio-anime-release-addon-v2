@@ -68,7 +68,7 @@ jobs:
       - name: Capture production payloads
         env:
           RELEASE_VERSION: ${{ steps.release.outputs.version }}
-          PRODUCTION_BASE_URL: ${{ steps.production.outputs.url }}
+          PRODUCTION_BASE_URL: https://nuvio-anime-release-addon-v2-ge4f9ql2h-personal-bcb9.vercel.app
         run: |
           set -euo pipefail
           snapshot_dir="/tmp/catalog-snapshot"
