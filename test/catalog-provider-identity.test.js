@@ -157,3 +157,23 @@ test("catalog retries IMDb after relation protection invalidates an early provid
   assert.equal(metas[0].extra.identityProvider, "imdb");
   assert.ok(metas[0].extra.identityEvidence.some((entry) => entry.source === "imdb-search"));
 });
+
+test("aggregated current-title evidence overrides a related-provider collision", async () => {
+  const { getProviderCandidates, selectProviderIdentity } = await import("../lib/provider-identity.js");
+  const media = {
+    anilistId: 272,
+    format: "TV",
+    startDate: { year: 2026 },
+    title: { english: "Link Click Season 3", romaji: "Shiguang Dailiren III" },
+    synonyms: [],
+    relatedProviderIds: ["imdb:tt14976292"],
+    relations: { edges: [] },
+  };
+  const records = [
+    { source: "arm", anilistId: 272, type: "TV", imdbIds: ["tt14976292"], title: "Link Click" },
+    { source: "imdb-search", anilistId: 272, type: "TV", imdbIds: ["tt14976292"], title: "Link Click Season 3", titles: ["Link Click"], derivedTitle: true, derivedInstallmentTitle: true, derivedSearchTitle: "Link Click" },
+  ];
+  const candidate = getProviderCandidates(media, records)[0];
+  console.log(JSON.stringify({ candidate, selected: selectProviderIdentity(media, [candidate]) }));
+  assert.equal(selectProviderIdentity(media, [candidate])?.id, "tt14976292");
+});
