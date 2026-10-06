@@ -838,19 +838,27 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
     if (!rawMeta) { unresolvedIds.push(anilistId); continue; }
     const meta = normalizeSeasonalCatalogMetaTypes([rawMeta])[0];
     const tmdbSelected = selectTMDBIdentity({ ...row, anilistId }, mappings.get(anilistId) || [], { excludeIds: usedIdentities });
+    const providerCandidates = getProviderCandidates(
+      { ...row, anilistId },
+      mappings.get(anilistId) || [],
+    );
     const providerSelected = selectProviderIdentity(
       { ...row, anilistId },
-      getProviderCandidates({ ...row, anilistId }, mappings.get(anilistId) || []),
+      providerCandidates,
+      { excludeIds: usedIdentities },
+    );
+    const independentlyVerifiedImdb = selectProviderIdentity(
+      { ...row, anilistId },
+      providerCandidates.filter((candidate) =>
+        candidate.provider === "imdb"
+        && candidate.evidence?.some((entry) =>
+          ["imdb-search", "imdb-search-relation"].includes(entry?.source)),
+      ),
       { excludeIds: usedIdentities },
     );
     if (tmdbSelected?.provider === "imdb" || providerSelected?.provider === "imdb") {
-      const independentlyVerifiedImdb = providerSelected?.provider === "imdb"
-        && providerSelected.evidence?.some((entry) => ["imdb-search", "imdb-search-relation"].includes(entry?.source));
       const selected = independentlyVerifiedImdb
-        ? providerSelected
-        : tmdbSelected?.provider === "imdb"
-          ? tmdbSelected
-          : providerSelected;
+        || (tmdbSelected?.provider === "imdb" ? tmdbSelected : providerSelected);
       usedIdentities.add(selected.stremioId);
       if (tmdbSelected?.provider === "imdb") {
         metas.push({ ...meta, id: tmdbSelected.stremioId, extra: { ...meta.extra, tmdbProvider: tmdbSelected.provider, tmdbId: tmdbSelected.id, tmdbEvidence: "tmdb-search" } });
