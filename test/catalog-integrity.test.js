@@ -71,7 +71,7 @@ test("catalog definitions expose exactly the supported five catalogs with one co
   assert.equal(new Set(definitions.map(({ id }) => id)).size, definitions.length);
 
   for (const definition of definitions) {
-    assert.equal(definition.type, "anime");
+    assert.equal(definition.type, "series");
     assert.equal(definition.pageSize, NUVIO_PAGE_SIZE);
     assert.deepEqual(definition.extra.map(({ name }) => name), ["search", "skip"]);
   }
