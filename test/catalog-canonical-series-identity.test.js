@@ -89,3 +89,80 @@ test("catalog anchors Bleach TYBW and Steel Ball Run to canonical series roots",
   assert.equal(result[0].extra.identityCanonicalSeries, true);
   assert.equal(result[1].extra.identityCanonicalSeries, true);
 });
+
+
+test("catalog preserves an independently verified current IMDb series over a different canonical ancestor", async () => {
+  const rows = [{
+    id: 210482,
+    idMal: 61469,
+    format: "ONA",
+    title: {
+      english: "STEEL BALL RUN JoJo's Bizarre Adventure 2nd - 3rd STAGE",
+      romaji: "JoJo no Kimyou na Bouken: Steel Ball Run - 2nd & 3rd STAGE",
+      native: "ジョジョの奇妙な冒険 スティール・ボール・ラン 2nd＆3rd STAGE",
+    },
+    synonyms: ["JoJo's Bizarre Adventure: Part 7–Steel Ball Run"],
+    startDate: { year: 2026 },
+    relations: { edges: [] },
+    coverImage: { large: "sbr-poster" },
+  }];
+
+  const canonicalRoots = new Map([[
+    210482,
+    {
+      canonicalAnilistId: 14719,
+      canonicalMalId: 14719,
+      canonicalTitle: "JoJo's Bizarre Adventure",
+      canonicalYear: 2012,
+    },
+  ]]);
+
+  const directMappings = new Map([[
+    210482,
+    [{
+      source: "imdb-search",
+      anilistId: 210482,
+      type: "TV",
+      imdbIds: ["tt38268282"],
+      title: "Steel Ball Run: JoJo's Bizarre Adventure",
+      titles: ["Steel Ball Run: JoJo's Bizarre Adventure"],
+      year: 2026,
+    }],
+  ]]);
+
+  const resolveImdbMappings = async (canonicalRows) => new Map(
+    canonicalRows.map((row) => [
+      Number(row.id),
+      [{
+        source: "imdb-search-canonical-series",
+        anilistId: Number(row.id),
+        type: "TV",
+        imdbIds: ["tt2359704"],
+        title: "JoJo's Bizarre Adventure",
+        titles: ["JoJo's Bizarre Adventure"],
+        year: 2012,
+      }],
+    ]),
+  );
+
+  const result = await canonicalizeCatalogPage(rows, {
+    resolveMappings: async () => directMappings,
+    resolveFribbMappings: empty,
+    resolveExternalMappings: empty,
+    resolveAnimapMappings: empty,
+    resolveIdMapperMappings: empty,
+    resolveTMDBMappings: empty,
+    resolveAnimeMapperMappings: empty,
+    resolveAnimeMapperRelatedProviderIds: empty,
+    resolveCanonicalSeriesMappings: async () => canonicalRoots,
+    resolveAniBridgeMappings: empty,
+    resolveTsvMappings: empty,
+    resolveImdbMappings,
+    resolveSecondaryMappings: empty,
+    resolveAlternativeMappings: empty,
+  });
+
+  assert.equal(result[0].id, "tt38268282");
+  assert.equal(result[0].extra.identityId, "tt38268282");
+  assert.equal(result[0].extra.identityCanonicalSeries, undefined);
+});
