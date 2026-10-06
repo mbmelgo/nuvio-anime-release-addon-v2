@@ -63,3 +63,11 @@ test("manifest cache is short enough to pick up seasonal catalog changes promptl
   assert.ok(match);
   assert.ok(Number(match[1]) <= 60);
 });
+
+
+test("manifest advertises only the series protocol while catalog routing preserves anime compatibility", () => {
+  assert.match(manifestSource, /resources:\s*\[\{ name: "catalog", types: \["series"\] \}\]/);
+  assert.match(manifestSource, /types:\s*\["series"\]/);
+  assert.doesNotMatch(manifestSource, /types:\s*\["anime"\]/);
+  assert.match(catalogSource, /resource === "catalog" && \["series", "anime"\]\.includes/);
+});
