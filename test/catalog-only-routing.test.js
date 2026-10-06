@@ -78,3 +78,14 @@ test("catalog snapshot aggregation selects response pages without request metada
   assert.match(workflow, /glob\("page-\[0-9\]\[0-9\]\[0-9\]\[0-9\]\.json"\)/);
   assert.doesNotMatch(workflow, /glob\("page-\*\.json"\)/);
 });
+
+test("catalog snapshot workflow compares against the previous snapshot and publishes the diff", () => {
+  const workflow = fs.readFileSync(new URL("../.github/workflows/catalog-snapshot.yml", import.meta.url), "utf8");
+  assert.match(workflow, /name: Compare against previous production snapshot/);
+  assert.match(workflow, /\["git", "ls-remote", "--heads", "origin"/);
+  assert.match(workflow, /refs\/heads\/catalog-snapshots\/v\\*/);
+  assert.match(workflow, /git archive "origin\/catalog-snapshots\/v\$before_version"/);
+  assert.match(workflow, /scripts\/compare-catalog-snapshots\.js/);
+  assert.match(workflow, /uses: actions\/upload-artifact@v4/);
+  assert.match(workflow, /name: catalog-diff-v\$\{\{ steps\.diff\.outputs\.before_version \}\}-to-v\$\{\{ steps\.release\.outputs\.version \}\}/);
+});

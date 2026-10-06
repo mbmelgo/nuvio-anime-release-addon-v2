@@ -278,6 +278,70 @@ jobs:
           (directory / "capture-metadata.json").write_text(json.dumps(metadata, indent=2, ensure_ascii=False) + "\n")
           PY
 
+      - name: Compare against previous production snapshot
+        id: diff
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          set -euo pipefail
+          before_version="$(python - <<'PY'
+          import re
+          import subprocess
+          import os
+
+          current = os.environ["RELEASE_VERSION"]
+          current_tuple = tuple(map(int, current.split(".")))
+          raw_refs = subprocess.check_output(
+              ["git", "ls-remote", "--heads", "origin", "refs/heads/catalog-snapshots/v*"],
+              text=True,
+          )
+          versions = []
+          for line in raw_refs.splitlines():
+              ref = line.split("\t", 1)[-1].removeprefix("refs/heads/catalog-snapshots/")
+              match = re.fullmatch(r"v(\d+)\.(\d+)\.(\d+)", ref)
+              if match:
+                  versions.append(tuple(map(int, match.groups())))
+
+          candidates = [version for version in versions if version < current_tuple]
+          if not candidates:
+              print("")
+          else:
+              print(".".join(map(str, max(candidates))))
+          PY
+          )"
+
+          if [ -z "$before_version" ]; then
+            echo "No previous catalog snapshot exists; skipping release diff."
+            echo "has_previous=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          rm -rf /tmp/catalog-diff
+          mkdir -p /tmp/catalog-diff/before /tmp/catalog-diff/after /tmp/catalog-diff/output
+
+          git fetch --quiet origin "catalog-snapshots/v$before_version"
+          git archive "origin/catalog-snapshots/v$before_version" "ops/catalog-snapshots/v$before_version" |
+            tar -x --strip-components=3 -C /tmp/catalog-diff/before
+
+          cp /tmp/catalog-snapshot/*.json /tmp/catalog-diff/after/
+          cp -R /tmp/catalog-snapshot/pages /tmp/catalog-diff/after/
+
+          node scripts/compare-catalog-snapshots.js \
+            /tmp/catalog-diff/before \
+            /tmp/catalog-diff/after \
+            /tmp/catalog-diff/output
+
+          echo "has_previous=true" >> "$GITHUB_OUTPUT"
+          echo "before_version=$before_version" >> "$GITHUB_OUTPUT"
+
+      - name: Publish release diff artifact
+        if: ${{ steps.diff.outputs.has_previous == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-diff-v${{ steps.diff.outputs.before_version }}-to-v${{ steps.release.outputs.version }}
+          path: /tmp/catalog-diff/output/
+          if-no-files-found: error
       - name: Persist release snapshot branch
         env:
           RELEASE_SHA: ${{ steps.release.outputs.sha }}
