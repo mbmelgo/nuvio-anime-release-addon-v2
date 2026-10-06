@@ -157,3 +157,5 @@ jobs:
           git push origin "HEAD:refs/heads/$branch"
 
           echo "Snapshot persisted to $branch"
+
+# Baseline capture trigger is intentionally driven by a release-state commit.
