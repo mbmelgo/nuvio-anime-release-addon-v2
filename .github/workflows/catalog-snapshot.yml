@@ -158,4 +158,4 @@ jobs:
 
           echo "Snapshot persisted to $branch"
 
-# Baseline capture trigger is intentionally driven by a release-state commit.
+# Release-state commits carry [capture-catalog] so each successful release is snapshotted automatically.
