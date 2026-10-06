@@ -1016,7 +1016,9 @@ export async function buildRollingCatalog(id, date, skip, search, {
   resolveMappings = resolveAniListMappings,
   resolveSecondaryMappings = resolveAniListMappingsSecondary,
   resolveAlternativeMappings = resolveAniListMappingsByMalIds,
-} = {}) {
+    resolveCanonicalSeriesMappings = resolveAniListCanonicalSeriesByAnimeMapper,
+    resolveImdbMappings = resolveAniListMappingsByImdbSearch,
+  } = {}) {
   const range = getRollingCatalogRange(id, date);
   if (!range) return [];
   const futureOnly = id === "upcoming_5_days";
@@ -1033,7 +1035,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
       const seenMediaIds = new Set();
       for (const row of eligibleRows) { const mediaId = Number(row.media.id); if (seenMediaIds.has(mediaId)) continue; seenMediaIds.add(mediaId); uniqueEligibleRows.push(row); }
       const searchedRows = filterAiringRowsBySearch(uniqueEligibleRows, search);
-      const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), { resolveMappings, resolveSecondaryMappings, resolveAlternativeMappings, resolveCanonicalSeriesMappings: async () => new Map() });
+      const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), { resolveMappings, resolveSecondaryMappings, resolveAlternativeMappings, resolveCanonicalSeriesMappings, resolveImdbMappings });
       const metas = [];
       const usedIdentities = new Set();
       for (const row of searchedRows) {
