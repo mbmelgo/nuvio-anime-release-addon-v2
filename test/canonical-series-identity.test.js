@@ -93,6 +93,32 @@ test("canonical series resolver stops at a franchise sequel with a different ser
   assert.equal(root?.canonicalTitle, "Steel Ball Run: JoJo's Bizarre Adventure");
 });
 
+test("canonical series resolver still follows genuine JoJo season continuity", async () => {
+  clearAnimeMapperCache();
+  const fetchImpl = createFetch({
+    20899: record(20899, 20474, "JoJo's Bizarre Adventure: Stardust Crusaders", [
+      { malId: 14719, title: { english: "JoJo's Bizarre Adventure" }, format: "TV", seasonYear: 2012, relationType: "PREQUEL" },
+    ], 2014, "TV", { tmdb: 45790, tvdb: 262954, trakt: 45537 }),
+    14719: record(14719, 14719, "JoJo's Bizarre Adventure", [], 2012, "TV", { tmdb: 45790, tvdb: 262954, trakt: 45537 }),
+  });
+
+  const result = await resolveAniListCanonicalSeriesByAnimeMapper([
+    {
+      id: 20474,
+      idMal: 20899,
+      format: "TV",
+      title: { english: "JoJo's Bizarre Adventure: Stardust Crusaders" },
+      synonyms: [],
+      startDate: { year: 2014 },
+    },
+  ], { fetchImpl });
+
+  const root = result.get(20474);
+  assert.equal(root?.canonicalMalId, 14719);
+  assert.equal(root?.canonicalAnilistId, 14719);
+  assert.equal(root?.canonicalTitle, "JoJo's Bizarre Adventure");
+});
+
 test("canonical series resolver does not collapse an enhanced re-edition without shared series identity", async () => {
   clearAnimeMapperCache();
   const fetchImpl = createFetch({
