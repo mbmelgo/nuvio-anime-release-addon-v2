@@ -30,3 +30,16 @@ test("source diagnostics",async()=>{
  ];
  for(const [name,run] of sources){try{const m=await run();console.log(JSON.stringify({source:name,records:rows.map(x=>({id:x.id,records:(m.get(x.id)||[]).map(r=>({source:r.source,imdbIds:r.imdbIds,title:r.title,titles:r.titles,year:r.year,derivedTitle:r.derivedTitle,derivedSearchTitle:r.derivedSearchTitle,relation:r.relation}))}))}));}catch(e){console.log(JSON.stringify({source:name,error:String(e.message||e)}));}}
 });
+
+test("provider candidate validation diagnostics",async()=>{
+ const q=`query($id:Int){Media(id:$id,type:ANIME){id format title{english romaji native} synonyms startDate{year} relations{edges{relationType node{id title{english romaji native} externalLinks{site url}}}}}}`;
+ for(const id of [235,191832]){
+  const rr=await fetch("https://graphql.anilist.co",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({query:q,variables:{id}})});
+  const media=(await rr.json()).data.Media;
+  const sources=[["arm",()=>arm([id])],["fribb",()=>fribb([id])],["idmapper",()=>idmapper([id])],["tsv",()=>tsv([media])],["imdb",()=>resolveAniListMappingsByImdbSearch([media])]];
+  const records=[]; for(const [n,run] of sources){try{const m=await run(); records.push(...(m.get(id)||[]));}catch{}}
+  const {getProviderCandidates,selectProviderIdentity}=await import("../lib/provider-identity.js");
+  const candidates=getProviderCandidates(media,records);
+  console.log(JSON.stringify({id,title:media.title,candidates:candidates.map(x=>({provider:x.provider,id:x.id,sources:x.evidence?.map(e=>e.source),related:x.relatedProviderIds,relatedTitles:x.relatedProviderTitles,corroborated:x.corroborated,direct:x.directlyCorroborated,semantic:x.semanticCompatibleEvidence,validation:selectProviderIdentity(media,[x])?.validation||null}))}));
+ }
+});
