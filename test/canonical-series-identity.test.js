@@ -91,3 +91,51 @@ test("canonical series resolver prefers a TV parent over unrelated prequel entri
   assert.equal(result.get(206814)?.canonicalAnilistId, 21175);
   assert.equal(result.get(206814)?.canonicalTitle, "Dragon Ball Super");
 });
+
+
+test("canonical series resolver crosses non-series prequel bridges to the original anime", async () => {
+  clearAnimeMapperCache();
+  const fetchImpl = createFetch({
+    62534: record(62534, 199068, "Final Member Selection Match", [
+      { malId: 55570, title: { english: "U-17 World Cup Semifinal" }, format: "TV", seasonYear: 2024, relationType: "PREQUEL" },
+    ]),
+    55570: record(55570, 165810, "U-17 World Cup Semifinal", [
+      { malId: 50099, title: { english: "U-17 World Cup" }, format: "TV", seasonYear: 2022, relationType: "PREQUEL" },
+    ]),
+    50099: record(50099, 140187, "The Prince of Tennis II: U-17 World Cup", [
+      { malId: 11371, title: { english: "The Prince of Tennis II" }, format: "TV", seasonYear: 2012, relationType: "PREQUEL" },
+    ]),
+    11371: record(11371, 11371, "The Prince of Tennis II", [
+      { malId: 38882, title: { english: "Ryoma! The Prince of Tennis" }, format: "MOVIE", seasonYear: 2019, relationType: "PREQUEL" },
+    ]),
+    38882: record(38882, 113254, "Ryoma! The Prince of Tennis", [
+      { malId: 4053, title: { english: "The Prince of Tennis: National Tournament Final" }, format: "OVA", seasonYear: 2008, relationType: "PREQUEL" },
+    ]),
+    4053: record(4053, 4053, "The Prince of Tennis: National Tournament Final", [
+      { malId: 2752, title: { english: "The Prince of Tennis: National Tournament Semifinal" }, format: "OVA", seasonYear: 2007, relationType: "PREQUEL" },
+    ]),
+    2752: record(2752, 2752, "The Prince of Tennis: National Tournament Semifinal", [
+      { malId: 995, title: { english: "The Prince of Tennis: National Tournament" }, format: "OVA", seasonYear: 2006, relationType: "PREQUEL" },
+    ]),
+    995: record(995, 995, "The Prince of Tennis: National Tournament", [
+      { malId: 22, title: { english: "The Prince of Tennis" }, format: "TV", seasonYear: 2001, relationType: "PREQUEL" },
+    ]),
+    22: record(22, 22, "The Prince of Tennis", []),
+  });
+
+  const result = await resolveAniListCanonicalSeriesByAnimeMapper([
+    {
+      id: 199068,
+      idMal: 62534,
+      format: "TV",
+      title: { english: "The Prince of Tennis II U-17 WORLD CUP: Final Member Selection Match" },
+      synonyms: [],
+      startDate: { year: 2026 },
+    },
+  ], { fetchImpl });
+
+  const root = result.get(199068);
+  assert.equal(root?.canonicalMalId, 22);
+  assert.equal(root?.canonicalAnilistId, 22);
+  assert.equal(root?.canonicalTitle, "The Prince of Tennis");
+});
