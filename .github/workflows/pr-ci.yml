@@ -25,4 +25,15 @@ jobs:
           node-version: 24
           package-manager-cache: false
       - name: Run full CI
-        run: npm test
+        shell: bash
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee test-output.log
+
+      - name: Upload test output on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-ci-test-output
+          path: test-output.log
+          if-no-files-found: error
