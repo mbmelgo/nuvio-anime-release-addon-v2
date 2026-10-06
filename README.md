@@ -167,7 +167,7 @@ Catalog names and season labels are generated dynamically.
 ## 🚀 Current release
 
 **Production:** `v1.49.0`  
-**Development:** `v1.49.1` — release candidate with validated IMDb retry behavior and no BingeCat API dependency
+**Development:** `v1.50.0` — release candidate with corroborated provider identity validation for related mappings
 **Major baseline:** `v1.0.0`
 
 The 1.42.0 release switches active identity resolution to TMDB-backed matching, upgrades strong TMDB matches to IMDb when available, and retains TMDB identities when IMDb is unavailable. BingeCat API integration was later removed because its public endpoint is not usable by the addon and its private endpoint requires authenticated session access.
