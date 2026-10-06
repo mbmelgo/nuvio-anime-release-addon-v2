@@ -43,3 +43,11 @@ test("provider candidate validation diagnostics",async()=>{
   console.log(JSON.stringify({id,title:media.title,candidates:candidates.map(x=>({provider:x.provider,id:x.id,sources:x.evidence?.map(e=>e.source),related:x.relatedProviderIds,relatedTitles:x.relatedProviderTitles,corroborated:x.corroborated,direct:x.directlyCorroborated,semantic:x.semanticCompatibleEvidence,validation:selectProviderIdentity(media,[x])?.validation||null}))}));
  }
 });
+
+test("full canonical production replay",async()=>{
+ const q=`query($id:Int){Media(id:$id,type:ANIME){id idMal format title{english romaji native} synonyms startDate{year} status relations{edges{relationType node{id format title{english romaji native} synonyms startDate{year} externalLinks{site url}}}}}}`;
+ const media=[]; for(const id of [217282,216625,235,191832]){const rr=await fetch("https://graphql.anilist.co",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({query:q,variables:{id}})});media.push((await rr.json()).data.Media);}
+ const {canonicalizeCatalogPage}=await import("../api/catalog-source.js");
+ const metas=await canonicalizeCatalogPage(media);
+ console.log(JSON.stringify(metas.map(m=>({id:m.id,anilistId:m.extra?.anilistId,identityProvider:m.extra?.identityProvider,identityId:m.extra?.identityId,identityEvidence:m.extra?.identityEvidence}))));
+});
