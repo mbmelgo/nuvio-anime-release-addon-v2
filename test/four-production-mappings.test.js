@@ -61,3 +61,13 @@ test("relation protection differential",async()=>{
   console.log(JSON.stringify({id,withRelations:{id:withRelations.id,evidence:withRelations.extra?.identityEvidence},withoutRelations:{id:withoutRelations.id,evidence:withoutRelations.extra?.identityEvidence}}));
  }
 });
+
+test("all provider candidates for GelPiyo 2 and PokéOki",async()=>{
+ const q=`query($id:Int){Media(id:$id,type:ANIME){id format title{english romaji native} synonyms startDate{year} relations{edges{relationType node{id format title{english romaji native} synonyms startDate{year} externalLinks{site url}}}}}}`;
+ for(const id of [217282,216625]){const rr=await fetch("https://graphql.anilist.co",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({query:q,variables:{id}})});const media=(await rr.json()).data.Media;
+  const runs=[["arm",()=>arm([id])],["fribb",()=>fribb([id])],["animap",()=>animap([id])],["idmapper",()=>idmapper([id])],["tsv",()=>tsv([media])],["imdb",()=>resolveAniListMappingsByImdbSearch([media])]];
+  const records=[];for(const [n,run] of runs){try{records.push(...((await run()).get(id)||[]));}catch{}}
+  const {getProviderCandidates}=await import("../lib/provider-identity.js");
+  console.log(JSON.stringify({id,candidates:getProviderCandidates(media,records).map(x=>({provider:x.provider,id:x.id,title:x.title,titles:x.titles,sources:x.evidence?.map(e=>e.source),corroborated:x.corroborated}))}));
+ }
+});
