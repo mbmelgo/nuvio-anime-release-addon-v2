@@ -66,3 +66,42 @@ test("investigation: full production mapping pipeline for Link Click Season 3 an
   const metas = await canonicalizeCatalogPage(rows);
   console.log(JSON.stringify(metas.map((meta) => ({ id: meta.id, anilistId: meta.extra?.anilistId, identityProvider: meta.extra?.identityProvider, identityId: meta.extra?.identityId, identityEvidence: meta.extra?.identityEvidence, tmdbProvider: meta.extra?.tmdbProvider, tmdbId: meta.extra?.tmdbId }))));
 });
+
+
+import { resolveAniListMappings as arm } from "../lib/arm-mapping.js";
+import { resolveAniListMappingsFribb as fribb } from "../lib/fribb-mapping.js";
+import { resolveAniListExternalMappings as external } from "../lib/external-provider-mapping.js";
+import { resolveAniListMappingsByAniBridge as anibridge } from "../lib/anibridge-mapping.js";
+import { resolveAniListMappingsAnimap as animap } from "../lib/animap-mapping.js";
+import { resolveAniListMappingsIdMapper as idmapper } from "../lib/idmapper-mapping.js";
+import { resolveAniListMappingsByAnimeMapper as animeMapper } from "../lib/anime-mapper-mapping.js";
+import { resolveAniListMappingsFromAnimeApiTsv as tsv } from "../lib/animeapi-tsv-mapping.js";
+import { resolveAniListMappingsSecondary as secondary } from "../lib/secondary-mapping.js";
+import { resolveAniListMappingsByMalIds as malBridge } from "../lib/secondary-mapping.js";
+import { getProviderCandidates, selectProviderIdentity } from "../lib/provider-identity.js";
+
+
+test("investigation: source-by-source provider candidates", async () => {
+  const rows = await fetchAniListMedia([191832, 235]);
+  const sources = [
+    ["arm", () => arm(rows.map((r) => Number(r.id)))],
+    ["fribb", () => fribb(rows.map((r) => Number(r.id)))],
+    ["external", () => external(rows)],
+    ["anibridge", () => anibridge(rows)],
+    ["animap", () => animap(rows.map((r) => Number(r.id)))],
+    ["idmapper", () => idmapper(rows.map((r) => Number(r.id)))],
+    ["anime-mapper", () => animeMapper(rows)],
+    ["tsv", () => tsv(rows)],
+    ["imdb", () => resolveAniListMappingsByImdbSearch(rows)],
+    ["secondary", () => secondary(rows.map((r) => Number(r.id)))],
+    ["mal-bridge", () => malBridge(rows)],
+  ];
+  for (const [name, run] of sources) {
+    try {
+      const map = await run();
+      console.log(JSON.stringify({ source: name, records: rows.map((row) => ({ id: row.id, records: (map.get(Number(row.id)) || []).map((record) => ({ source: record.source, imdbIds: record.imdbIds, tvdbId: record.tvdbId, tmdbTvId: record.tmdbTvId, title: record.title, titles: record.titles, year: record.year, derivedTitle: record.derivedTitle })) })) }));
+    } catch (error) {
+      console.log(JSON.stringify({ source: name, error: String(error?.message || error) }));
+    }
+  }
+});
