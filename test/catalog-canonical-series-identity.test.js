@@ -38,16 +38,16 @@ test("catalog anchors Bleach TYBW and Steel Ball Run to canonical series roots",
 
   const canonicalRoots = new Map([
     [185874, {
-      canonicalAnilistId: 269,
-      canonicalMalId: 269,
-      canonicalTitle: "Bleach",
-      canonicalYear: 2004,
+      canonicalAnilistId: 116674,
+      canonicalMalId: 41467,
+      canonicalTitle: "Bleach: Thousand-Year Blood War",
+      canonicalYear: 2022,
     }],
     [210482, {
-      canonicalAnilistId: 14719,
-      canonicalMalId: 14719,
-      canonicalTitle: "JoJo's Bizarre Adventure",
-      canonicalYear: 2012,
+      canonicalAnilistId: 210482,
+      canonicalMalId: 61469,
+      canonicalTitle: "Steel Ball Run: JoJo's Bizarre Adventure",
+      canonicalYear: 2026,
     }],
   ]);
 
@@ -58,10 +58,10 @@ test("catalog anchors Bleach TYBW and Steel Ball Run to canonical series roots",
         source: "imdb-search",
         anilistId: Number(row.id),
         type: "TV",
-        imdbIds: [row.idMal === 269 ? "tt0434665" : "tt2359704"],
-        title: row.idMal === 269 ? "Bleach" : "JoJo's Bizarre Adventure",
-        titles: [row.idMal === 269 ? "Bleach" : "JoJo's Bizarre Adventure"],
-        year: row.idMal === 269 ? 2004 : 2012,
+        imdbIds: [row.idMal === 41467 ? "tt14986406" : "tt38268282"],
+        title: row.idMal === 41467 ? "Bleach: Thousand-Year Blood War" : "Steel Ball Run: JoJo's Bizarre Adventure",
+        titles: [row.idMal === 41467 ? "Bleach: Thousand-Year Blood War" : "Steel Ball Run: JoJo's Bizarre Adventure"],
+        year: row.idMal === 41467 ? 2022 : 2026,
       }],
     ]),
   );
@@ -83,7 +83,7 @@ test("catalog anchors Bleach TYBW and Steel Ball Run to canonical series roots",
     resolveAlternativeMappings: empty,
   });
 
-  assert.deepEqual(result.map((meta) => meta.id), ["tt0434665", "tt2359704"]);
+  assert.deepEqual(result.map((meta) => meta.id), ["tt14986406", "tt38268282"]);
   assert.equal(result[0].name, "BLEACH: Thousand-Year Blood War - The Calamity");
   assert.equal(result[1].name, "STEEL BALL RUN JoJo's Bizarre Adventure 2nd - 3rd STAGE");
   assert.equal(result[0].extra.identityCanonicalSeries, true);
