@@ -935,6 +935,14 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
       continue;
     }
     const tmdbSelected = selectTMDBIdentity({ ...row, anilistId }, mappings.get(anilistId) || [], { excludeIds: usedIdentities });
+    const tmdbImdbValidated = tmdbSelected?.provider === "imdb"
+      ? selectProviderIdentity(
+        { ...row, anilistId },
+        providerCandidates.filter((candidate) =>
+          candidate.provider === "imdb" && candidate.id === tmdbSelected.id),
+        { excludeIds: usedIdentities },
+      )
+      : null;
     const providerSelected = selectProviderIdentity(
       { ...row, anilistId },
       providerCandidates,
@@ -951,7 +959,8 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
     );
     if (tmdbSelected?.provider === "imdb" || providerSelected?.provider === "imdb") {
       const selected = independentlyVerifiedImdb
-        || (tmdbSelected?.provider === "imdb" ? tmdbSelected : providerSelected);
+        || tmdbImdbValidated
+        || providerSelected;
       usedIdentities.add(selected.stremioId);
       if (independentlyVerifiedImdb) {
         metas.push({ ...meta, id: selected.stremioId, extra: { ...meta.extra, identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence } });
