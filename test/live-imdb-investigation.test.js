@@ -59,3 +59,10 @@ test("investigation: actual AniList relations do not suppress Link Click Season 
   assert.equal(metas.find((meta) => meta.extra?.anilistId === 191832)?.id, "tt14976292");
   assert.equal(metas.find((meta) => meta.extra?.anilistId === 235)?.id, "tt0131179");
 });
+
+
+test("investigation: full production mapping pipeline for Link Click Season 3 and Detective Conan", async () => {
+  const rows = await fetchAniListMedia([191832, 235]);
+  const metas = await canonicalizeCatalogPage(rows);
+  console.log(JSON.stringify(metas.map((meta) => ({ id: meta.id, anilistId: meta.extra?.anilistId, identityProvider: meta.extra?.identityProvider, identityId: meta.extra?.identityId, identityEvidence: meta.extra?.identityEvidence, tmdbProvider: meta.extra?.tmdbProvider, tmdbId: meta.extra?.tmdbId }))));
+});
