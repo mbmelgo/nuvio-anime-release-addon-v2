@@ -7,7 +7,26 @@ const rows = [
  {id:235,format:"TV",startDate:{year:1996},title:{english:"Detective Conan",romaji:"Meitantei Conan",native:"名探偵コナン"},synonyms:["Case Closed"]},
  {id:191832,format:"ONA",startDate:{year:2026},title:{english:"Link Click Season 3",romaji:"Shiguang Dailiren III",native:"时光代理人 第三季"},synonyms:[]},
 ];
+import { resolveAniListMappings as arm } from "../lib/arm-mapping.js";
+import { resolveAniListMappingsFribb as fribb } from "../lib/fribb-mapping.js";
+import { resolveAniListExternalMappings as external } from "../lib/external-provider-mapping.js";
+import { resolveAniListMappingsByAniBridge as anibridge } from "../lib/anibridge-mapping.js";
+import { resolveAniListMappingsAnimap as animap } from "../lib/animap-mapping.js";
+import { resolveAniListMappingsIdMapper as idmapper } from "../lib/idmapper-mapping.js";
+import { resolveAniListMappingsByAnimeMapper as animeMapper } from "../lib/anime-mapper-mapping.js";
+import { resolveAniListMappingsFromAnimeApiTsv as tsv } from "../lib/animeapi-tsv-mapping.js";
+import { resolveAniListMappingsSecondary as secondary } from "../lib/secondary-mapping.js";
+
 test("current main IMDb resolver investigation",async()=>{
  const r=await resolveAniListMappingsByImdbSearch(rows);
  for(const x of rows) console.log(JSON.stringify({id:x.id,title:x.title,result:r.get(x.id)||null}));
+});
+
+test("source diagnostics",async()=>{
+ const sources=[
+ ["arm",()=>arm(rows.map(x=>x.id))],["fribb",()=>fribb(rows.map(x=>x.id))],["external",()=>external(rows)],
+ ["anibridge",()=>anibridge(rows)],["animap",()=>animap(rows.map(x=>x.id))],["idmapper",()=>idmapper(rows.map(x=>x.id))],
+ ["anime-mapper",()=>animeMapper(rows)],["tsv",()=>tsv(rows)],["imdb",()=>resolveAniListMappingsByImdbSearch(rows)],["secondary",()=>secondary(rows.map(x=>x.id))]
+ ];
+ for(const [name,run] of sources){try{const m=await run();console.log(JSON.stringify({source:name,records:rows.map(x=>({id:x.id,records:(m.get(x.id)||[]).map(r=>({source:r.source,imdbIds:r.imdbIds,title:r.title,titles:r.titles,year:r.year,derivedTitle:r.derivedTitle,derivedSearchTitle:r.derivedSearchTitle,relation:r.relation}))}))}));}catch(e){console.log(JSON.stringify({source:name,error:String(e.message||e)}));}}
 });
