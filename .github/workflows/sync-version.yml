@@ -179,9 +179,10 @@ jobs:
           fi
           for attempt in $(seq 1 30); do
             root_manifest="$(curl --fail --silent --show-error https://nuvio-anime-release-addon-v2.vercel.app/manifest.json || true)"
-            catalog="$(curl --fail --silent --show-error https://nuvio-anime-release-addon-v2.vercel.app/catalog/anime/current_season.json || true)"
+            catalog="$(curl --fail --silent --show-error https://nuvio-anime-release-addon-v2.vercel.app/catalog/series/current_season.json || true)"
+            legacy_catalog_status="$(curl --silent --output /dev/null --write-out '%{http_code}' https://nuvio-anime-release-addon-v2.vercel.app/catalog/anime/current_season.json || true)"
             meta_status="$(curl --silent --output /dev/null --write-out '%{http_code}' https://nuvio-anime-release-addon-v2.vercel.app/meta/series/mal%3A39535.json || true)"
-            if EXPECTED="$production_expected" TARGET="$expected" ROOT="$root_manifest" CATALOG="$catalog" META_STATUS="$meta_status" python - <<'PY'
+            if EXPECTED="$production_expected" TARGET="$expected" ROOT="$root_manifest" CATALOG="$catalog" LEGACY_CATALOG_STATUS="$legacy_catalog_status" META_STATUS="$meta_status" python - <<'PY'
           import json
           import os
           import re
@@ -193,9 +194,10 @@ jobs:
           assert root.get("version") == expected
           assert root.get("id") == "com.marki.nuvio.anime-releases"
           assert root.get("identityMode") == "provider"
-          assert root.get("resources") == [{"name": "catalog", "types": ["anime"]}]
-          assert root.get("types") == ["anime"]
-          assert root.get("catalogs") and all(c.get("type") == "anime" for c in root["catalogs"])
+          assert root.get("resources") == [{"name": "catalog", "types": ["series"]}]
+          assert root.get("types") == ["series"]
+          assert root.get("catalogs") and all(c.get("type") == "series" for c in root["catalogs"])
+          assert os.environ["LEGACY_CATALOG_STATUS"] == "200"
           assert os.environ["META_STATUS"] == "404"
 
           metas = catalog.get("metas", [])
