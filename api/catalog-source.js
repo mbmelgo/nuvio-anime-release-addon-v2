@@ -207,14 +207,14 @@ async function resolveMappingsForRows(
   // through the independent IMDb title search before allowing the TMDB
   // fallback to become terminal. Existing relation/title validation still
   // applies when the candidate is selected.
-  const tmdbOnlyRows = rows.filter((row) => {
+  const tmdbImdbVerificationRows = rows.filter((row) => {
     const media = { ...row, anilistId: Number(row.id) };
     const tmdbSelected = selectTMDBIdentity(media, mappings.get(Number(row.id)) || []);
-    return tmdbSelected?.provider === "tmdb";
+    return tmdbSelected?.provider === "tmdb" || tmdbSelected?.provider === "imdb";
   });
-  if (tmdbOnlyRows.length) {
+  if (tmdbImdbVerificationRows.length) {
     try {
-      mappings = mergeMappings(mappings, await resolveImdbMappings(tmdbOnlyRows));
+      mappings = mergeMappings(mappings, await resolveImdbMappings(tmdbImdbVerificationRows));
     } catch (error) {
       console.error("[identity] post-TMDB IMDb verification failed", error);
     }
@@ -838,15 +838,31 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
     if (!rawMeta) { unresolvedIds.push(anilistId); continue; }
     const meta = normalizeSeasonalCatalogMetaTypes([rawMeta])[0];
     const tmdbSelected = selectTMDBIdentity({ ...row, anilistId }, mappings.get(anilistId) || [], { excludeIds: usedIdentities });
+    const providerCandidates = getProviderCandidates(
+      { ...row, anilistId },
+      mappings.get(anilistId) || [],
+    );
     const providerSelected = selectProviderIdentity(
       { ...row, anilistId },
-      getProviderCandidates({ ...row, anilistId }, mappings.get(anilistId) || []),
+      providerCandidates,
+      { excludeIds: usedIdentities },
+    );
+    const independentlyVerifiedImdb = selectProviderIdentity(
+      { ...row, anilistId },
+      providerCandidates.filter((candidate) =>
+        candidate.provider === "imdb"
+        && candidate.evidence?.some((entry) =>
+          ["imdb-search", "imdb-search-relation"].includes(entry?.source)),
+      ),
       { excludeIds: usedIdentities },
     );
     if (tmdbSelected?.provider === "imdb" || providerSelected?.provider === "imdb") {
-      const selected = tmdbSelected?.provider === "imdb" ? tmdbSelected : providerSelected;
+      const selected = independentlyVerifiedImdb
+        || (tmdbSelected?.provider === "imdb" ? tmdbSelected : providerSelected);
       usedIdentities.add(selected.stremioId);
-      if (tmdbSelected?.provider === "imdb") {
+      if (independentlyVerifiedImdb) {
+        metas.push({ ...meta, id: selected.stremioId, extra: { ...meta.extra, identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence } });
+      } else if (tmdbSelected?.provider === "imdb") {
         metas.push({ ...meta, id: tmdbSelected.stremioId, extra: { ...meta.extra, tmdbProvider: tmdbSelected.provider, tmdbId: tmdbSelected.id, tmdbEvidence: "tmdb-search" } });
       } else {
         metas.push({ ...meta, id: selected.stremioId, extra: { ...meta.extra, identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence } });
