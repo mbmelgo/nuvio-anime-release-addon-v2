@@ -76,7 +76,7 @@ The command writes:
 - `release-diff.json` — machine-readable comparison
 - `release-diff.md` — human-readable summary
 
-The `Compare catalog snapshots` GitHub Actions workflow automatically performs the same comparison when a new `catalog-snapshots/vX.Y.Z` branch is updated and uploads both files as an artifact. No production deployment or credentials are required.
+The `Compare catalog snapshots` GitHub Actions workflow automatically performs the same comparison when a new `catalog-snapshots/vX.Y.Z` branch is updated and uploads both files as an artifact. No production deployment or credentials are required. Production releases also trigger a full snapshot of all five catalogs and all paginated results.
 
 ### 🎞️ Supported anime formats
 
