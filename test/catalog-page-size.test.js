@@ -15,7 +15,7 @@ test("catalog pagination uses 50 upstream records and 50 Nuvio records for all c
 
   assert.equal(definitions.length, 5);
   for (const definition of definitions) {
-    assert.equal(definition.type, "anime");
+    assert.equal(definition.type, "series");
     assert.equal(definition.pageSize, 50);
   }
 });
