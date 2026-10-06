@@ -160,6 +160,43 @@ test("upcoming rolling catalog returns unique contract-valid anime and coherent 
   }
 });
 
+test("rolling catalogs apply the same canonical series identity as seasonal catalogs", async () => {
+  const now = new Date("2026-10-01T00:00:00.000Z");
+  const rows = [schedule(210482, now.getTime() + 60_000, 1, {
+    malId: 61469,
+    title: "STEEL BALL RUN JoJo's Bizarre Adventure 2nd - 3rd STAGE",
+    format: "ONA",
+  })];
+  const canonicalRoot = new Map([[210482, {
+    canonicalAnilistId: 14719,
+    canonicalMalId: 14719,
+    canonicalTitle: "JoJo's Bizarre Adventure",
+    canonicalYear: 2012,
+  }]]);
+  const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+    fetchPage: async () => rows,
+    maxPages: 1,
+    resolveMappings: async () => new Map(),
+    resolveCanonicalSeriesMappings: async () => canonicalRoot,
+    resolveImdbMappings: async (canonicalRows) => new Map(
+      canonicalRows.map((row) => [Number(row.id), [{
+        source: "imdb-search",
+        anilistId: Number(row.id),
+        type: "TV",
+        imdbIds: ["tt2359704"],
+        title: "JoJo's Bizarre Adventure",
+        titles: ["JoJo's Bizarre Adventure"],
+        year: 2012,
+      }]]),
+    ),
+  });
+  assert.equal(result.length, 1);
+  assert.equal(result[0].id, "tt2359704");
+  assert.equal(result[0].extra.identityCanonicalSeries, true);
+  assert.equal(result[0].extra.anilistId, 210482);
+  assert.equal(result[0].extra.episode, 1);
+});
+
 test("previous rolling catalog returns unique contract-valid anime without future-only fields", async () => {
   const now = new Date("2026-10-01T00:00:00.000Z");
   const rows = [

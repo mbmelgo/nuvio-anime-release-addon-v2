@@ -179,6 +179,25 @@ test("provider identity rejects fuzzy derived-title collision with another franc
   assert.equal(selectProviderIdentity(row, getProviderCandidates(row, records)), null);
 });
 
+test("provider identity rejects a direct mapping with the right AniList ID but an unrelated provider title", () => {
+  const row = media({
+    anilistId: 206814,
+    title: { english: "Dragon Ball Super: Beerus", romaji: "Dragon Ball Super: Beerus" },
+    startDate: { year: 2026 },
+  });
+  const records = [{
+    source: "anime-mapper",
+    anilistId: 206814,
+    type: "TV",
+    imdbIds: ["tt8433216"],
+    title: "Super Dragon Ball Heroes",
+    titles: ["Super Dragon Ball Heroes"],
+    year: 2018,
+  }];
+
+  assert.equal(selectProviderIdentity(row, getProviderCandidates(row, records)), null);
+});
+
 test("provider identity accepts the dedicated Dragon Ball Super: Beerus IMDb title", () => {
   const row = media({
     anilistId: 206814,
