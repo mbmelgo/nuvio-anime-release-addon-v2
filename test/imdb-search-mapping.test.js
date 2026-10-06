@@ -187,7 +187,7 @@ test("IMDb fallback rejects a canonical ID whose title no longer matches Now Tha
 });
 
 
-test("IMDb fallback prefers the TV series over a same-title theatrical compilation for a TV anime", async () => {
+test("IMDb fallback rejects a feature identity for a TV anime and can fall back to its TV-series relation", async () => {
   clearImdbSearchCache();
   const result = await resolveAniListMappingsByImdbSearch([{
     id: 185874,
@@ -200,26 +200,23 @@ test("IMDb fallback prefers the TV series over a same-title theatrical compilati
       native: "BLEACH 千年血戦篇-禍進譚-",
     },
     synonyms: [],
+    relations: {
+      edges: [{
+        relationType: "PREQUEL",
+        node: {
+          id: 169755,
+          title: {
+            english: "BLEACH: Thousand-Year Blood War - The Conflict",
+            romaji: "BLEACH: Sennen Kessen-hen - Soukoku-tan",
+            native: "BLEACH 千年血戦篇-相剋譚-",
+          },
+        },
+      }],
+    },
   }], {
     endpoint: "https://example.test/suggestion/x/",
     fetchImpl: async (url) => {
       const title = decodeURIComponent(url.split("/").pop().replace(/\.json$/, ""));
-      const payload = title === "BLEACH: Thousand-Year Blood War - The Calamity"
-        ? [{
-          id: "tt43383343",
-          l: "BLEACH: Thousand-Year Blood War - The Calamity",
-          y: 2026,
-          q: "feature",
-        }]
-        : title === "BLEACH"
-          ? [{
-            id: "tt14986406",
-            l: "Bleach: Thousand-Year Blood War",
-            y: 2022,
-            q: "tvSeries",
-          }]
-          : [];
-
       if (title.startsWith("tt")) {
         const canonical = title === "tt43383343"
           ? {
@@ -236,6 +233,22 @@ test("IMDb fallback prefers the TV series over a same-title theatrical compilati
           };
         return new Response(JSON.stringify({ d: [canonical] }), { status: 200 });
       }
+
+      const payload = title === "BLEACH: Thousand-Year Blood War - The Calamity"
+        ? [{
+          id: "tt43383343",
+          l: "BLEACH: Thousand-Year Blood War - The Calamity",
+          y: 2026,
+          q: "feature",
+        }]
+        : title === "BLEACH: Thousand-Year Blood War - The Conflict"
+          ? [{
+            id: "tt14986406",
+            l: "Bleach: Thousand-Year Blood War",
+            y: 2022,
+            q: "tvSeries",
+          }]
+          : [];
 
       return new Response(JSON.stringify({ d: payload }), { status: 200 });
     },
