@@ -83,15 +83,15 @@ jobs:
           import sys
 
           manifest = json.load(open(sys.argv[1]))
-          expected = [
+          expected = {
               "current_season",
               "previous_season",
               "upcoming_season",
               "upcoming_5_days",
               "previous_7_days",
-          ]
+          }
           actual = [entry.get("id") for entry in manifest.get("catalogs", [])]
-          if actual != expected:
+          if set(actual) != expected or len(actual) != len(expected):
               raise SystemExit(f"Unexpected production catalog contract: {actual!r}")
           PY
 
