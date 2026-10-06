@@ -91,8 +91,13 @@ jobs:
               "previous_7_days",
           }
           actual = [entry.get("id") for entry in manifest.get("catalogs", [])]
+          types = [entry.get("type") for entry in manifest.get("catalogs", [])]
           if set(actual) != expected or len(actual) != len(expected):
               raise SystemExit(f"Unexpected production catalog contract: {actual!r}")
+          if manifest.get("types") != ["series"] or manifest.get("resources") != [{"name": "catalog", "types": ["series"]}]:
+              raise SystemExit("Unexpected production series protocol contract")
+          if any(value != "series" for value in types):
+              raise SystemExit(f"Unexpected catalog protocol types: {types!r}")
           PY
 
           for catalog in current_season previous_season upcoming_season upcoming_5_days previous_7_days; do
@@ -104,9 +109,44 @@ jobs:
             while true; do
               output="$snapshot_dir/pages/$catalog/page-$(printf '%04d' "$page").json"
               echo "Capturing $catalog page $page (skip=$skip)"
-              curl "${curl_args[@]}" \
-                "$PRODUCTION_BASE_URL/catalog/anime/$catalog.json?skip=$skip" \
-                -o "$output"
+              request_url="$PRODUCTION_BASE_URL/catalog/series/$catalog.json?skip=$skip"
+              http_status="$(curl --silent --show-error --location --retry 5 --retry-delay 2 --retry-all-errors \
+                --write-out '%{http_code}' \
+                -o "$output" \
+                "$request_url")"
+              if [ "$http_status" != "200" ]; then
+                echo "$catalog page $page returned HTTP $http_status" >&2
+                exit 1
+              fi
+
+              python - "$snapshot_dir/pages/$catalog/page-$(printf '%04d' "$page").request.json" "$request_url" "$http_status" "$catalog" "$page" "$skip" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          output = Path(sys.argv[1])
+          request_url = sys.argv[2]
+          http_status = int(sys.argv[3])
+          catalog = sys.argv[4]
+          page = int(sys.argv[5])
+          skip = int(sys.argv[6])
+
+          output.write_text(json.dumps({
+              "request": {
+                  "method": "GET",
+                  "url": request_url,
+                  "catalog": catalog,
+                  "page": page,
+                  "query": {"skip": skip},
+                  "body": None,
+              },
+              "response": {
+                  "status": http_status,
+                  "contentType": "application/json",
+                  "bodyFile": f"page-{page:04d}.json",
+              },
+          }, indent=2, ensure_ascii=False) + "\n")
+          PY
 
               count="$(python - "$output" <<'PY'
           import json
@@ -121,7 +161,7 @@ jobs:
 
               total=$((total + count))
               if [ "$count" -eq 0 ]; then
-                rm "$output"
+                rm "$output" "$snapshot_dir/pages/$catalog/page-$(printf '%04d' "$page").request.json"
                 break
               fi
 
@@ -199,17 +239,27 @@ jobs:
               item_counts[name] = len(metas)
               hashes[name] = hashlib.sha256(aggregate.read_bytes()).hexdigest()
 
-              pages = sorted((directory / "pages" / name).glob("page-*.json"))
+              pages = sorted((directory / "pages" / name).glob("page-[0-9][0-9][0-9][0-9].json"))
               page_counts[name] = len(pages)
               page_hashes[name] = {
                   page.name: hashlib.sha256(page.read_bytes()).hexdigest()
                   for page in pages
               }
+              request_pages = sorted((directory / "pages" / name).glob("page-*.request.json"))
+              if len(request_pages) != len(pages):
+                  raise SystemExit(f"{name}: request metadata count does not match response page count")
+              page_hashes[f"{name}:requests"] = {
+                  page.name: hashlib.sha256(page.read_bytes()).hexdigest()
+                  for page in request_pages
+              }
 
           hashes["manifest"] = hashlib.sha256((directory / "manifest.json").read_bytes()).hexdigest()
 
           metadata = {
-              "schemaVersion": 2,
+              "schemaVersion": 3,
+              "protocolType": "series",
+              "legacyProtocolType": "anime",
+              "requestCapture": "per-page GET request metadata and raw JSON response",
               "releaseVersion": release_version,
               "capturedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
               "productionBaseUrl": base_url,
@@ -245,8 +295,9 @@ jobs:
           else
             git switch -c "$branch"
           fi
-          mkdir -p "ops/catalog-snapshots/$RELEASE_TAG"
+          mkdir -p "ops/catalog-snapshots/$RELEASE_TAG/pages"
           cp /tmp/catalog-snapshot/*.json "ops/catalog-snapshots/$RELEASE_TAG/"
+          cp -R /tmp/catalog-snapshot/pages/. "ops/catalog-snapshots/$RELEASE_TAG/pages/"
 
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com

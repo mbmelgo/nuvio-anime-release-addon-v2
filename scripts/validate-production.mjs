@@ -13,13 +13,13 @@ export function validateManifest(manifest, expectedVersion) {
   if (manifest.version !== expectedVersion) throw new Error(`Manifest version ${manifest.version} does not match expected ${expectedVersion}.`);
   if (manifest.id !== "com.marki.nuvio.anime-releases") throw new Error("Manifest addon id is invalid.");
   if (manifest.identityMode !== "provider") throw new Error("Manifest identity mode must be provider.");
-  if (JSON.stringify(manifest.resources) !== JSON.stringify([{ name: "catalog", types: ["anime"] }])) {
+  if (JSON.stringify(manifest.resources) !== JSON.stringify([{ name: "catalog", types: ["series"] }])) {
     throw new Error("Manifest resources do not match the Nuvio catalog contract.");
   }
   if (JSON.stringify(manifest.types) !== JSON.stringify(["anime"])) throw new Error("Manifest types do not match the Nuvio catalog contract.");
   const ids = (manifest.catalogs || []).map((catalog) => catalog.id);
   if (JSON.stringify(ids) !== JSON.stringify(PRODUCTION_CATALOG_IDS)) throw new Error("Manifest catalogs do not match the five supported catalogs.");
-  if ((manifest.catalogs || []).some((catalog) => catalog.type !== "anime")) throw new Error("Manifest contains a non-anime catalog.");
+  if ((manifest.catalogs || []).some((catalog) => catalog.type !== "series")) throw new Error("Manifest contains a non-anime catalog.");
   return true;
 }
 
@@ -58,7 +58,7 @@ export async function validateProduction(baseUrl, expectedVersion, fetchImpl = f
   validateManifest(manifest, expectedVersion);
 
   for (const catalogId of PRODUCTION_CATALOG_IDS) {
-    const response = await fetchImpl(`${base}/catalog/anime/${catalogId}.json`);
+    const response = await fetchImpl(`${base}/catalog/series/${catalogId}.json`);
     if (!response.ok) throw new Error(`${catalogId}: HTTP ${response.status}`);
     const catalog = await response.json();
     validateCatalog(catalog, catalogId);
