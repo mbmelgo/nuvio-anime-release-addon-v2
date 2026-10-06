@@ -120,7 +120,7 @@ test("detects additions and removals while ignoring catalog array position", () 
   assert.equal(catalog.summary.added, 1);
   assert.equal(catalog.summary.removed, 0);
   assert.equal(catalog.summary.matched, 2);
-  assert.equal(catalog.summary.orderingChanged, false);
+  assert.equal(catalog.summary.orderingChanged, 0);
 });
 
 test("detects real ordering changes among matched entries", () => {
@@ -140,7 +140,7 @@ test("detects real ordering changes among matched entries", () => {
   });
 
   const catalog = compareCatalogSnapshots(before, after).catalogs.current_season;
-  assert.equal(catalog.summary.orderingChanged, true);
+  assert.ok(catalog.summary.orderingChanged > 0);
   assert.ok(catalog.changes.some((change) => change.changeTypes.includes("ordering_changed")));
 });
 
