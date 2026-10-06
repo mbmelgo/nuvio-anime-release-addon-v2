@@ -235,3 +235,60 @@ test("IMDb fallback prefers the TV series over a same-title theatrical compilati
 
   assert.equal(result.get(185874)?.[0]?.imdbIds[0], "tt14986406");
 });
+
+
+test("IMDb fallback prefers a TV series over a same-title theatrical feature for a TV anime", async () => {
+  clearImdbSearchCache();
+  const result = await resolveAniListMappingsByImdbSearch([{
+    id: 185874,
+    idMal: 60636,
+    format: "TV",
+    startDate: { year: 2026 },
+    title: {
+      english: "BLEACH: Thousand-Year Blood War - The Calamity",
+      romaji: "BLEACH: Sennen Kessen-hen - Kashin-tan",
+      native: "BLEACH 千年血戦篇-禍進譚-",
+    },
+    synonyms: [],
+  }], {
+    endpoint: "https://example.test/suggestion/x/",
+    fetchImpl: async (url) => {
+      const title = decodeURIComponent(url.split("/").pop().replace(".json", ""));
+      if (title.startsWith("tt")) {
+        const canonical = title === "tt43383343"
+          ? {
+            id: title,
+            l: "BLEACH: Thousand-Year Blood War - The Calamity",
+            y: 2026,
+            q: "feature",
+          }
+          : {
+            id: title,
+            l: "Bleach: Thousand-Year Blood War",
+            y: 2022,
+            q: "tvSeries",
+          };
+        return new Response(JSON.stringify({ d: [canonical] }), { status: 200 });
+      }
+
+      const payload = [
+        {
+          id: "tt43383343",
+          l: "BLEACH: Thousand-Year Blood War - The Calamity",
+          y: 2026,
+          q: "feature",
+        },
+        {
+          id: "tt14986406",
+          l: "Bleach: Thousand-Year Blood War",
+          y: 2022,
+          q: "tvSeries",
+        },
+      ];
+
+      return new Response(JSON.stringify({ d: payload }), { status: 200 });
+    },
+  });
+
+  assert.equal(result.get(185874)?.[0]?.imdbIds[0], "tt14986406");
+});
