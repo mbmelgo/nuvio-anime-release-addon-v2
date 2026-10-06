@@ -1,0 +1,159 @@
+name: Post-release catalog snapshot
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Release version to snapshot (for manual capture)'
+        required: true
+        type: string
+      release_sha:
+        description: 'Exact deployed release commit SHA (for manual capture)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: catalog-snapshot
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    if: >-
+      ${{
+        github.event_name == 'workflow_dispatch' ||
+        contains(github.event.head_commit.message || '', '[capture-catalog]')
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release metadata
+        id: release
+        env:
+          INPUT_VERSION: ${{ inputs.release_version || '' }}
+          INPUT_SHA: ${{ inputs.release_sha || '' }}
+        run: |
+          set -euo pipefail
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          state = json.loads(Path("ops/release-state.json").read_text())
+          version = os.environ.get("INPUT_VERSION", "").strip() or state["lastDeploymentVersion"]
+          sha = os.environ.get("INPUT_SHA", "").strip() or state["lastDeploymentSha"]
+
+          if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+              raise SystemExit(f"Invalid release version: {version}")
+          if not re.fullmatch(r"[0-9a-fA-F]{40}", sha):
+              raise SystemExit("Release SHA must be a full 40-character commit SHA")
+          if state["lastDeploymentVersion"] != version and not os.environ.get("INPUT_VERSION", "").strip():
+              raise SystemExit("Current release state does not identify a deployed release")
+
+          print(f"version={version}")
+          print(f"sha={sha}")
+          print(f"tag=v{version}")
+          PY
+
+      - name: Capture production payloads
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          PRODUCTION_BASE_URL: https://nuvio-anime-release-addon-v2.vercel.app
+        run: |
+          set -euo pipefail
+          snapshot_dir="/tmp/catalog-snapshot"
+          rm -rf "$snapshot_dir"
+          mkdir -p "$snapshot_dir"
+
+          curl_args=(--fail --silent --show-error --location --retry 5 --retry-delay 2 --retry-all-errors)
+          curl "${curl_args[@]}" "$PRODUCTION_BASE_URL/manifest.json" -o "$snapshot_dir/manifest.json"
+
+          for catalog in current_season previous_season upcoming_season new_episodes upcoming_episodes; do
+            curl "${curl_args[@]}" \
+              "$PRODUCTION_BASE_URL/catalog/anime/${catalog}.json" \
+              -o "$snapshot_dir/${catalog}.json"
+          done
+
+          python - "$snapshot_dir" "$RELEASE_VERSION" "$PRODUCTION_BASE_URL" <<'PY'
+          import hashlib
+          import json
+          import sys
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          directory = Path(sys.argv[1])
+          release_version = sys.argv[2]
+          base_url = sys.argv[3]
+          manifest = json.loads((directory / "manifest.json").read_text())
+
+          if manifest.get("version") != release_version:
+              raise SystemExit(
+                  f"Production manifest version {manifest.get('version')!r} does not match release {release_version!r}"
+              )
+
+          expected = [
+              "current_season",
+              "previous_season",
+              "upcoming_season",
+              "new_episodes",
+              "upcoming_episodes",
+          ]
+          hashes = {}
+          counts = {}
+          for name in expected:
+              path = directory / f"{name}.json"
+              payload = json.loads(path.read_text())
+              metas = payload.get("metas")
+              if not isinstance(metas, list):
+                  raise SystemExit(f"{name}: missing metas array")
+              counts[name] = len(metas)
+              hashes[name] = hashlib.sha256(path.read_bytes()).hexdigest()
+
+          hashes["manifest"] = hashlib.sha256((directory / "manifest.json").read_bytes()).hexdigest()
+          metadata = {
+              "schemaVersion": 1,
+              "releaseVersion": release_version,
+              "capturedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+              "productionBaseUrl": base_url,
+              "catalogs": expected,
+              "itemCounts": counts,
+              "sha256": hashes,
+          }
+          (directory / "capture-metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
+          PY
+
+      - name: Persist immutable snapshot branch
+        env:
+          RELEASE_SHA: ${{ steps.release.outputs.sha }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          branch="catalog-snapshots/$RELEASE_TAG"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            echo "Snapshot branch already exists: $branch"
+            exit 1
+          fi
+
+          git fetch --quiet origin "$RELEASE_SHA"
+          git switch --detach "$RELEASE_SHA"
+          git switch -c "$branch"
+          mkdir -p "ops/catalog-snapshots/$RELEASE_TAG"
+          cp /tmp/catalog-snapshot/*.json "ops/catalog-snapshots/$RELEASE_TAG/"
+
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add "ops/catalog-snapshots/$RELEASE_TAG"
+          git commit -m "chore: capture $RELEASE_TAG catalog snapshot [skip-release-pipeline]"
+          git push origin "HEAD:refs/heads/$branch"
+
+          echo "Snapshot persisted to $branch"
