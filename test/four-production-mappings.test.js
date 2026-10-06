@@ -51,3 +51,13 @@ test("full canonical production replay",async()=>{
  const metas=await canonicalizeCatalogPage(media);
  console.log(JSON.stringify(metas.map(m=>({id:m.id,anilistId:m.extra?.anilistId,identityProvider:m.extra?.identityProvider,identityId:m.extra?.identityId,identityEvidence:m.extra?.identityEvidence}))));
 });
+
+test("relation protection differential",async()=>{
+ const q=`query($id:Int){Media(id:$id,type:ANIME){id idMal format title{english romaji native} synonyms startDate{year} relations{edges{relationType node{id format title{english romaji native} synonyms startDate{year} externalLinks{site url}}}}}}`;
+ const {canonicalizeCatalogPage}=await import("../api/catalog-source.js");
+ for(const id of [235,191832]){const rr=await fetch("https://graphql.anilist.co",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({query:q,variables:{id}})});const media=(await rr.json()).data.Media;
+  const withRelations=(await canonicalizeCatalogPage([media]))[0];
+  const withoutRelations=(await canonicalizeCatalogPage([{...media,relations:{edges:[]}}]))[0];
+  console.log(JSON.stringify({id,withRelations:{id:withRelations.id,evidence:withRelations.extra?.identityEvidence},withoutRelations:{id:withoutRelations.id,evidence:withoutRelations.extra?.identityEvidence}}));
+ }
+});
