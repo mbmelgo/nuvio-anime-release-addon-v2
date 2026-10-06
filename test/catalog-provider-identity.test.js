@@ -228,4 +228,3 @@ test("catalog verifies IMDb after a TMDB-only match before accepting TMDB identi
   assert.equal(metas[0].id, "tt44923712");
   assert.equal(metas[0].extra.identityProvider, "imdb");
 });
-\n
