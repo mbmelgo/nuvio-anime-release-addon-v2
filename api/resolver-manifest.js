@@ -24,7 +24,7 @@ export function buildManifest(info) {
     resources: [
       { name: "catalog", types: ["series"] },
     ],
-    types: ["anime"],
+    types: ["series"],
     catalogs: catalogDefinitions(info, "mal"),
     identityMode: "provider",
   };
