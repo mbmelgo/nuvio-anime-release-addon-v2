@@ -8,6 +8,11 @@ test("IMDb search tries AniList synonym and numeric title variants", async () =>
   const fetchImpl = async (url) => {
     const title = decodeURIComponent(String(url).split("/").pop().replace(/\.json$/, ""));
     requested.push(title);
+    if (title === "tt32547691") {
+      return { ok: true, json: async () => ({
+        d: [{ id: "tt32547691", l: "Norman the Snowman: Kodomo-tachi no Hitotsuboshi", y: 2026 }],
+      }) };
+    }
     if (title !== "Norman the Snowman 3") {
       return { ok: true, json: async () => ({ d: [] }) };
     }
@@ -50,6 +55,7 @@ test("IMDb search derives constrained installment aliases", async () => {
   const fetchImpl = async (url) => {
     const title = decodeURIComponent(String(url).split("/").pop().replace(/\.json$/, ""));
     requested.push(title);
+    if (title === "tt39382762") return { ok: true, json: async () => ({ d: [{ id: "tt39382762", l: "Patlabor EZY: File 3", y: 2027 }] }) };
     if (title !== "Patlabor EZY File 3") return { ok: true, json: async () => ({ d: [] }) };
     return {
       ok: true,
@@ -91,6 +97,7 @@ test("IMDb search accepts one-word franchise bases for derived installments", as
     const fetchImpl = async (url) => {
       const title = decodeURIComponent(String(url).split("/").pop().replace(/\.json$/, ""));
       requested.push(title);
+      if (title === item.imdb) return { ok: true, json: async () => ({ d: [{ id: item.imdb, l: item.candidate, y: 2026 }] }) };
       if (title !== base) return { ok: true, json: async () => ({ d: [] }) };
       return { ok: true, json: async () => ({ d: [{ id: item.imdb, l: item.candidate, y: 2026 }] }) };
     };
@@ -136,6 +143,7 @@ test("IMDb search derives parenthetical year suffixes", async () => {
   const fetchImpl = async (url) => {
     const title = decodeURIComponent(String(url).split("/").pop().replace(/\.json$/, ""));
     requested.push(title);
+    if (title === "tt12471116") return { ok: true, json: async () => ({ d: [{ id: "tt12471116", l: "Pokétoon", y: 2020 }] }) };
     if (title !== "POKÉTOON") return { ok: true, json: async () => ({ d: [] }) };
     return { ok: true, json: async () => ({ d: [{ id: "tt12471116", l: "Pokétoon", y: 2020 }] }) };
   };

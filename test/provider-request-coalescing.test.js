@@ -94,9 +94,9 @@ test("Anime Mapper coalesces concurrent requests for the same MAL ID", async () 
 
 test("IMDb search coalesces concurrent requests for the same title", async () => {
   clearImdbSearchCache();
-  let calls = 0;
-  const fetchImpl = async () => {
-    calls += 1;
+  const calls = [];
+  const fetchImpl = async (url) => {
+    calls.push(String(url));
     return delayedResponse({
       d: [{ id: "tt1234567", l: "Example Anime", y: 2026 }],
     });
@@ -114,7 +114,9 @@ test("IMDb search coalesces concurrent requests for the same title", async () =>
     resolveAniListMappingsByImdbSearch([{ ...row, id: 12346 }], { fetchImpl }),
   ]);
 
-  assert.equal(calls, 1);
+  assert.equal(calls.length, 2);
+  assert.equal(calls.filter((url) => url.endsWith("/Example%20Anime.json")).length, 1);
+  assert.equal(calls.filter((url) => url.endsWith("/tt1234567.json")).length, 1);
   assert.equal(first.get(12345)[0].imdbIds[0], "tt1234567");
   assert.equal(second.get(12346)[0].imdbIds[0], "tt1234567");
 });
