@@ -1033,7 +1033,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
       const seenMediaIds = new Set();
       for (const row of eligibleRows) { const mediaId = Number(row.media.id); if (seenMediaIds.has(mediaId)) continue; seenMediaIds.add(mediaId); uniqueEligibleRows.push(row); }
       const searchedRows = filterAiringRowsBySearch(uniqueEligibleRows, search);
-      const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), { resolveMappings, resolveSecondaryMappings, resolveAlternativeMappings });
+      const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), { resolveMappings, resolveSecondaryMappings, resolveAlternativeMappings, resolveCanonicalSeriesMappings: async () => new Map() });
       const metas = [];
       const usedIdentities = new Set();
       for (const row of searchedRows) {
