@@ -18,7 +18,7 @@ import { resolveAniListExternalMappings } from "../lib/external-provider-mapping
 import { resolveAniListMappingsAnimap } from "../lib/animap-mapping.js";
 import { resolveAniListMappingsIdMapper } from "../lib/idmapper-mapping.js";
 import { resolveAniListMappingsByTMDB, selectTMDBIdentity } from "../lib/tmdb-mapping.js";
-import { resolveAniListMappingsByAnimeMapper, resolveAniListRelatedProviderIdsByAnimeMapper } from "../lib/anime-mapper-mapping.js";
+import { resolveAniListMappingsByAnimeMapper, resolveAniListRelatedProviderIdsByAnimeMapper, resolveAniListCanonicalSeriesByAnimeMapper } from "../lib/anime-mapper-mapping.js";
 import { resolveAniListMappingsByAniBridge } from "../lib/anibridge-mapping.js";
 import { resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
 import { resolveAniListMappingsFromAnimeApiTsv } from "../lib/animeapi-tsv-mapping.js";
@@ -335,6 +335,54 @@ async function resolveMappingsForRows(
     resolveAnimeMapperMappings,
     resolveAnimeMapperRelatedProviderIds,
   });
+
+
+  // Resolve season/installment entries to the canonical series root used by
+  // downstream scrapers. This is deliberately additive: the source row's
+  // AniList identity and display metadata remain unchanged while the
+  // scraper-facing provider identity is anchored to the canonical series.
+  try {
+    const canonicalRoots = await resolveAniListCanonicalSeriesByAnimeMapper(rows);
+    const canonicalRows = [];
+    const canonicalByCurrentId = new Map();
+    for (const [currentId, root] of canonicalRoots instanceof Map ? canonicalRoots : []) {
+      if (!root?.canonicalTitle || !root?.canonicalMalId) continue;
+      const currentRow = rows.find((row) => Number(row?.id) === Number(currentId));
+      if (!currentRow) continue;
+      canonicalByCurrentId.set(Number(currentId), root);
+      canonicalRows.push({
+        ...currentRow,
+        id: Number(currentId),
+        idMal: Number(root.canonicalMalId),
+        format: "TV",
+        title: { english: root.canonicalTitle, romaji: root.canonicalTitle, native: root.canonicalTitle },
+        synonyms: [],
+        startDate: { year: root.canonicalYear },
+        relations: { edges: [] },
+      });
+    }
+    if (canonicalRows.length) {
+      const canonicalImdb = await resolveImdbMappings(canonicalRows);
+      for (const [currentId, records] of canonicalImdb instanceof Map ? canonicalImdb : []) {
+        const root = canonicalByCurrentId.get(Number(currentId));
+        if (!root) continue;
+        const canonicalRecords = (Array.isArray(records) ? records : []).map((record) => ({
+          ...record,
+          source: "imdb-search-canonical-series",
+          canonicalSeries: true,
+          canonicalSeriesAnilistId: root.canonicalAnilistId,
+          canonicalSeriesMalId: root.canonicalMalId,
+          canonicalSeriesTitle: root.canonicalTitle,
+          relation: false,
+        }));
+        if (canonicalRecords.length) {
+          mappings = mergeMappings(mappings, new Map([[Number(currentId), canonicalRecords]]));
+        }
+      }
+    }
+  } catch (error) {
+    console.error("[identity] canonical series root resolution failed; preserving current identity", error);
+  }
 
   // Relation protection can invalidate an identity that was valid before
   // related provider ownership was known. Re-run IMDb verification for only
