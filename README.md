@@ -166,7 +166,7 @@ Catalog names and season labels are generated dynamically.
 
 ## 🚀 Current release
 
-**Production:** `v1.50.0`  
+**Production:** `v1.49.0`  
 **Development:** `v1.49.1` — release candidate with validated IMDb retry behavior and no BingeCat API dependency
 **Major baseline:** `v1.0.0`
 
