@@ -161,7 +161,7 @@ jobs:
 
               total=$((total + count))
               if [ "$count" -eq 0 ]; then
-                rm "$output"
+                rm "$output" "$snapshot_dir/pages/$catalog/page-$(printf '%04d' "$page").request.json"
                 break
               fi
 
