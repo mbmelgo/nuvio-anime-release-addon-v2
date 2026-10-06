@@ -38,7 +38,7 @@ test("IMDb fallback resolves a two-token derived base title for Black Clover Sea
   }], {
     endpoint: "https://example.test/suggestion/x/",
     fetchImpl: async (url) => {
-      const title = decodeURIComponent(url.split("/").pop().replace(/\.json$/, ""));
+      const title = decodeURIComponent(url.split("/").pop().replace(".json", ""));
       if (title === "tt7441658") {
         return new Response(JSON.stringify({
           d: [{ id: "tt7441658", l: "Black Clover", y: 2017, q: "tvSeries" }],
