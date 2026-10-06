@@ -318,6 +318,25 @@ async function resolveMappingsForRows(
     resolveAnimeMapperRelatedProviderIds,
   });
 
+  // Relation protection can invalidate an identity that was valid before
+  // related provider ownership was known. Re-run IMDb verification for only
+  // those rows so a corroborated current-title identity can replace a
+  // protected parent/franchise identity instead of falling directly to MAL.
+  const relationInvalidatedRows = rows.filter((row) => !selectProviderIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
+  if (relationInvalidatedRows.length) {
+    try {
+      mappings = mergeMappings(
+        mappings,
+        await resolveImdbMappings(relationInvalidatedRows),
+      );
+    } catch (error) {
+      console.error("[identity] post-protection IMDb verification failed", error);
+    }
+  }
+
   return mappings;
 }
 
