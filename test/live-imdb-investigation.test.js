@@ -43,7 +43,7 @@ async function fetchAniListMedia(ids) {
 }
 
 test("investigation: actual AniList relations do not suppress Link Click Season 3 or Detective Conan", async () => {
-  const rows = await fetchAniListMedia([151020, 235]);
+  const rows = await fetchAniListMedia([191832, 235]);
   for (const row of rows) console.log(JSON.stringify({ id: row.id, title: row.title, externalLinks: row.externalLinks, relations: row.relations?.edges?.map((edge) => ({ relationType: edge.relationType, id: edge.node?.id, title: edge.node?.title, externalLinks: edge.node?.externalLinks })) }));
   const empty = async () => new Map();
   const metas = await canonicalizeCatalogPage(rows, {
@@ -56,6 +56,6 @@ test("investigation: actual AniList relations do not suppress Link Click Season 
     resolveSecondaryMappings: empty, resolveAlternativeMappings: empty,
   });
   console.log(JSON.stringify(metas.map((meta) => ({ id: meta.id, anilistId: meta.extra?.anilistId, identityProvider: meta.extra?.identityProvider, identityId: meta.extra?.identityId, identityEvidence: meta.extra?.identityEvidence }))));
-  assert.equal(metas.find((meta) => meta.extra?.anilistId === 151020)?.id, "tt14976292");
+  assert.equal(metas.find((meta) => meta.extra?.anilistId === 191832)?.id, "tt14976292");
   assert.equal(metas.find((meta) => meta.extra?.anilistId === 235)?.id, "tt0131179");
 });
