@@ -54,7 +54,7 @@ export default function handler(req, res) {
       ${CATALOGS.map(([name, id, description]) => `
       <div class="catalog">
         <div><h3>${name}</h3><p>${description}</p></div>
-        <a href="${BASE_URL}/catalog/anime/${id}.json">${BASE_URL}/catalog/anime/${id}.json</a>
+        <a href="${BASE_URL}/catalog/series/${id}.json">${BASE_URL}/catalog/anime/${id}.json</a>
       </div>`).join("")}
     </section>
 
