@@ -72,3 +72,26 @@ test("IMDb fallback does not invent a mapping for incompatible search results", 
 
   assert.equal(result.has(123), false);
 });
+
+test("IMDb fallback rejects stopword-heavy false matches such as Dust of the Simulacrum vs Daughters of the Dust", async () => {
+  clearImdbSearchCache();
+  const result = await resolveAniListMappingsByImdbSearch([{
+    id: 214070,
+    format: "MOVIE",
+    startDate: { year: 2026 },
+    title: { english: "Dust of the Simulacrum", romaji: "Dust of the Simulacrum", native: "砂塵ノ中デ" },
+    synonyms: [],
+  }], {
+    endpoint: "https://example.test/suggestion/x/",
+    fetchImpl: async () => new Response(JSON.stringify({
+      d: [{
+        id: "tt0104057",
+        l: "Daughters of the Dust",
+        y: 1991,
+        q: "feature",
+      }],
+    }), { status: 200 }),
+  });
+
+  assert.equal(result.has(214070), false);
+});
