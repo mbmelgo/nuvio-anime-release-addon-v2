@@ -376,7 +376,33 @@ async function resolveMappingsForRows(
           canonicalSeriesTitle: root.canonicalTitle,
           relation: false,
         }));
-        if (canonicalRecords.length) {
+        const currentRow = rows.find((row) => Number(row?.id) === Number(currentId));
+        const currentCandidates = currentRow
+          ? getProviderCandidates(
+            { ...currentRow, anilistId: Number(currentId) },
+            mappings.get(Number(currentId)) || [],
+          )
+          : [];
+        const independentlyVerifiedCurrentImdb = selectProviderIdentity(
+          { ...(currentRow || {}), anilistId: Number(currentId) },
+          currentCandidates.filter((candidate) =>
+            candidate.provider === "imdb"
+            && candidate.evidence?.some((entry) =>
+              ["imdb-search", "imdb-search-relation"].includes(entry?.source),
+            ),
+          ),
+        );
+        const canonicalImdbIds = new Set(
+          canonicalRecords.flatMap((record) =>
+            Array.isArray(record?.imdbIds)
+              ? record.imdbIds.filter((id) => /^tt\d+$/.test(String(id))).map(String)
+              : [],
+          ),
+        );
+        const canonicalWouldOverrideCurrentIdentity = independentlyVerifiedCurrentImdb
+          && canonicalImdbIds.size > 0
+          && !canonicalImdbIds.has(String(independentlyVerifiedCurrentImdb.id));
+        if (canonicalRecords.length && !canonicalWouldOverrideCurrentIdentity) {
           mappings = mergeMappings(mappings, new Map([[Number(currentId), canonicalRecords]]));
         }
       }
