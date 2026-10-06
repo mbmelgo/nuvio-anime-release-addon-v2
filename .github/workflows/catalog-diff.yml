@@ -1,0 +1,135 @@
+name: Compare catalog snapshots
+
+on:
+  push:
+    branches:
+      - "catalog-snapshots/v*"
+  workflow_dispatch:
+    inputs:
+      before_version:
+        description: "Baseline snapshot version (for example 1.51.0); leave empty to auto-select the previous release"
+        required: false
+        type: string
+      after_version:
+        description: "Snapshot version to compare (for example 1.52.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalog-diff-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Resolve snapshot versions
+        id: versions
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_BEFORE: ${{ inputs.before_version || '' }}
+          INPUT_AFTER: ${{ inputs.after_version || '' }}
+        run: |
+          set -euo pipefail
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import os
+          import re
+          import subprocess
+
+          version_re = re.compile(r"^v(\d+)\.(\d+)\.(\d+)$")
+
+          def normalize(value):
+              value = str(value or "").strip()
+              if value.startswith("v"):
+                  value = value[1:]
+              if not re.fullmatch(r"\d+\.\d+\.\d+", value):
+                  raise SystemExit(f"Invalid release version: {value!r}")
+              return value
+
+          event_name = os.environ["EVENT_NAME"]
+          ref_name = os.environ["REF_NAME"]
+          input_before = os.environ["INPUT_BEFORE"]
+          input_after = os.environ["INPUT_AFTER"]
+
+          if input_after.strip():
+              after = normalize(input_after)
+          else:
+              match = version_re.fullmatch(ref_name.removeprefix("catalog-snapshots/"))
+              if not match:
+                  raise SystemExit(f"Unable to derive release version from ref: {ref_name!r}")
+              after = ".".join(match.groups())
+
+          raw_refs = subprocess.check_output(
+              ["git", "ls-remote", "--heads", "origin", "refs/heads/catalog-snapshots/v*"],
+              text=True,
+          )
+          versions = []
+          for line in raw_refs.splitlines():
+              ref = line.split("\t", 1)[-1].removeprefix("refs/heads/catalog-snapshots/")
+              match = version_re.fullmatch(ref)
+              if match:
+                  versions.append(tuple(map(int, match.groups())))
+
+          current_tuple = tuple(map(int, after.split(".")))
+          if input_before.strip():
+              before = normalize(input_before)
+          else:
+              candidates = [version for version in versions if version < current_tuple]
+              if not candidates:
+                  raise SystemExit(f"No previous snapshot exists for v{after}")
+              before = ".".join(map(str, max(candidates)))
+
+          if before == after:
+              raise SystemExit("Baseline and target snapshot versions must differ")
+
+          print(f"before_version={before}")
+          print(f"after_version={after}")
+          PY
+
+      - name: Materialize snapshot inputs
+        env:
+          BEFORE_VERSION: ${{ steps.versions.outputs.before_version }}
+          AFTER_VERSION: ${{ steps.versions.outputs.after_version }}
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/catalog-diff
+          mkdir -p /tmp/catalog-diff/before /tmp/catalog-diff/after
+
+          git fetch --quiet origin "catalog-snapshots/v$BEFORE_VERSION" "catalog-snapshots/v$AFTER_VERSION"
+
+          git archive "origin/catalog-snapshots/v$BEFORE_VERSION"             "ops/catalog-snapshots/v$BEFORE_VERSION" |
+            tar -x --strip-components=3 -C /tmp/catalog-diff/before
+
+          git archive "origin/catalog-snapshots/v$AFTER_VERSION"             "ops/catalog-snapshots/v$AFTER_VERSION" |
+            tar -x --strip-components=3 -C /tmp/catalog-diff/after
+
+          test -f /tmp/catalog-diff/before/capture-metadata.json
+          test -f /tmp/catalog-diff/after/capture-metadata.json
+
+      - name: Generate machine-readable and Markdown diff
+        env:
+          BEFORE_VERSION: ${{ steps.versions.outputs.before_version }}
+          AFTER_VERSION: ${{ steps.versions.outputs.after_version }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/catalog-diff/output
+          node scripts/compare-catalog-snapshots.js             /tmp/catalog-diff/before             /tmp/catalog-diff/after             /tmp/catalog-diff/output
+
+          cat /tmp/catalog-diff/output/release-diff.md
+
+      - name: Upload release diff
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-diff-v${{ steps.versions.outputs.before_version }}-to-v${{ steps.versions.outputs.after_version }}
+          path: /tmp/catalog-diff/output/
+          if-no-files-found: error

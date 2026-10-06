@@ -52,6 +52,32 @@ The catalog keeps the AniList source id in the item's extra metadata so downstre
 - Rolling catalogs paginate **after** schedule records are filtered and deduplicated.
 - Nuvio search parameters are supported by the catalog endpoints.
 
+### 🔎 Release snapshot comparison
+
+Production catalog snapshots can be compared deterministically by stable AniList/MAL identity, with a conservative normalized-title fallback when neither source ID is available.
+
+The comparator reports:
+
+- added and removed entries
+- unchanged entries
+- identity improvements and degradations
+- provider changes and identity changes
+- title, year, and explicitly exposed season changes
+- ordering changes among matched entries
+
+Run it locally against two snapshot directories with:
+
+```text
+npm run compare:snapshots -- <before-snapshot-dir> <after-snapshot-dir> <output-dir>
+```
+
+The command writes:
+
+- `release-diff.json` — machine-readable comparison
+- `release-diff.md` — human-readable summary
+
+The `Compare catalog snapshots` GitHub Actions workflow automatically performs the same comparison when a new `catalog-snapshots/vX.Y.Z` branch is updated and uploads both files as an artifact. No production deployment or credentials are required.
+
 ### 🎞️ Supported anime formats
 
 Seasonal catalog discovery includes:
