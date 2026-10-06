@@ -97,6 +97,25 @@ test("IMDb fallback preserves the provider title instead of copying the AniList 
   assert.equal(result.has(206814), false);
 });
 
+test("IMDb fallback rejects a franchise collision with overlapping but non-contained title tokens", async () => {
+  clearImdbSearchCache();
+  const result = await resolveAniListMappingsByImdbSearch([{
+    id: 206814,
+    idMal: 63367,
+    format: "TV",
+    startDate: { year: 2026 },
+    title: { english: "Dragon Ball Super: Beerus", romaji: "Dragon Ball Super: Beerus" },
+    synonyms: [],
+  }], {
+    endpoint: "https://example.test/suggestion/x/",
+    fetchImpl: async () => new Response(JSON.stringify({
+      d: [{ id: "tt8433216", l: "Super Dragon Ball Heroes", y: 2018, q: "tvSeries" }],
+    }), { status: 200 }),
+  });
+
+  assert.equal(result.has(206814), false);
+});
+
 test("IMDb fallback rejects stopword-heavy false matches such as Dust of the Simulacrum vs Daughters of the Dust", async () => {
   clearImdbSearchCache();
   const result = await resolveAniListMappingsByImdbSearch([{
