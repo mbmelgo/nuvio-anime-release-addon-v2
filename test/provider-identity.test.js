@@ -156,3 +156,48 @@ test("related provider protection accepts exact Detective Conan corroboration", 
   ];
   assert.equal(selectProviderIdentity(media, getProviderCandidates(media, records))?.id, "tt0131179");
 });
+
+
+test("provider identity rejects fuzzy derived-title collision with another franchise", () => {
+  const row = media({
+    anilistId: 206814,
+    title: { english: "Dragon Ball Super: Beerus", romaji: "Dragon Ball Super: Beerus" },
+    startDate: { year: 2026 },
+  });
+  const records = [{
+    source: "imdb-search",
+    anilistId: 206814,
+    type: "TV",
+    imdbIds: ["tt8433216"],
+    title: "Super Dragon Ball Heroes",
+    titles: ["Super Dragon Ball Heroes"],
+    year: 2018,
+    derivedTitle: true,
+    derivedSearchTitle: "Dragon Ball Super",
+  }];
+
+  assert.equal(selectProviderIdentity(row, getProviderCandidates(row, records)), null);
+});
+
+test("provider identity accepts a verified canonical series root for a season entry", () => {
+  const row = media({
+    anilistId: 185874,
+    title: { english: "BLEACH: Thousand-Year Blood War - The Calamity", romaji: "BLEACH: Sennen Kessen-hen - Kashin-tan" },
+    startDate: { year: 2026 },
+  });
+  const records = [{
+    source: "imdb-search-canonical-series",
+    anilistId: 185874,
+    type: "TV",
+    imdbIds: ["tt0434665"],
+    title: "Bleach",
+    titles: ["Bleach"],
+    year: 2004,
+    canonicalSeries: true,
+    canonicalSeriesAnilistId: 269,
+    canonicalSeriesMalId: 269,
+    canonicalSeriesTitle: "Bleach",
+  }];
+
+  assert.equal(selectProviderIdentity(row, getProviderCandidates(row, records))?.id, "tt0434665");
+});
