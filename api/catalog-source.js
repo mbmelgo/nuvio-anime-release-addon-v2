@@ -844,7 +844,13 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
       { excludeIds: usedIdentities },
     );
     if (tmdbSelected?.provider === "imdb" || providerSelected?.provider === "imdb") {
-      const selected = tmdbSelected?.provider === "imdb" ? tmdbSelected : providerSelected;
+      const independentlyVerifiedImdb = providerSelected?.provider === "imdb"
+        && providerSelected.evidence?.some((entry) => ["imdb-search", "imdb-search-relation"].includes(entry?.source));
+      const selected = independentlyVerifiedImdb
+        ? providerSelected
+        : tmdbSelected?.provider === "imdb"
+          ? tmdbSelected
+          : providerSelected;
       usedIdentities.add(selected.stremioId);
       if (tmdbSelected?.provider === "imdb") {
         metas.push({ ...meta, id: tmdbSelected.stremioId, extra: { ...meta.extra, tmdbProvider: tmdbSelected.provider, tmdbId: tmdbSelected.id, tmdbEvidence: "tmdb-search" } });
