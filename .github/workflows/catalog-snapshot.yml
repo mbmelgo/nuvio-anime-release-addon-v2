@@ -78,7 +78,7 @@ jobs:
           curl_args=(--fail --silent --show-error --location --retry 5 --retry-delay 2 --retry-all-errors)
           curl "${curl_args[@]}" "$PRODUCTION_BASE_URL/manifest.json" -o "$snapshot_dir/manifest.json"
 
-          for catalog in current_season previous_season upcoming_season new_episodes upcoming_episodes; do
+          for catalog in current_season previous_season upcoming_season upcoming_5_days previous_7_days; do
             curl "${curl_args[@]}" \
               "$PRODUCTION_BASE_URL/catalog/anime/${catalog}.json" \
               -o "$snapshot_dir/${catalog}.json"
@@ -105,8 +105,8 @@ jobs:
               "current_season",
               "previous_season",
               "upcoming_season",
-              "new_episodes",
-              "upcoming_episodes",
+              "upcoming_5_days",
+              "previous_7_days",
           ]
           hashes = {}
           counts = {}
