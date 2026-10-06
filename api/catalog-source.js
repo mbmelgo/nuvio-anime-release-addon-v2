@@ -322,15 +322,18 @@ async function resolveMappingsForRows(
   // related provider ownership was known. Re-run IMDb verification for only
   // those rows so a corroborated current-title identity can replace a
   // protected parent/franchise identity instead of falling directly to MAL.
-  const relationInvalidatedRows = rows.filter((row) => !selectProviderIdentity(
-    { ...row, anilistId: Number(row.id) },
-    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-  ));
-  if (relationInvalidatedRows.length) {
+  const relationRetryRows = rows.filter((row) => {
+    const media = { ...row, anilistId: Number(row.id) };
+    const candidates = getProviderCandidates(media, mappings.get(Number(row.id)) || []);
+    return candidates.some((candidate) =>
+      candidate.relatedProviderIds?.includes(`${candidate.provider}:${candidate.id}`),
+    );
+  });
+  if (relationRetryRows.length) {
     try {
       mappings = mergeMappings(
         mappings,
-        await resolveImdbMappings(relationInvalidatedRows),
+        await resolveImdbMappings(relationRetryRows),
       );
     } catch (error) {
       console.error("[identity] post-protection IMDb verification failed", error);
