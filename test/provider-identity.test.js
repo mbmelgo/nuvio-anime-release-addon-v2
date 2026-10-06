@@ -179,6 +179,25 @@ test("provider identity rejects fuzzy derived-title collision with another franc
   assert.equal(selectProviderIdentity(row, getProviderCandidates(row, records)), null);
 });
 
+test("provider identity rejects a weak IMDb mapping without semantic evidence", () => {
+  const row = media({
+    anilistId: 206814,
+    title: { english: "Dragon Ball Super: Beerus", romaji: "Dragon Ball Super: Beerus" },
+    startDate: { year: 2026 },
+  });
+  const records = [{
+    source: "arm",
+    anilistId: 206814,
+    type: "TV",
+    imdbIds: ["tt8433216"],
+    tvdbId: null,
+    tmdbTvId: null,
+    tmdbMovieIds: [],
+  }];
+
+  assert.equal(selectProviderIdentity(row, getProviderCandidates(row, records)), null);
+});
+
 test("provider identity rejects a direct mapping with the right AniList ID but an unrelated provider title", () => {
   const row = media({
     anilistId: 206814,
