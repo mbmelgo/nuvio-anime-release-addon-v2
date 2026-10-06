@@ -935,6 +935,17 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
       continue;
     }
     const tmdbSelected = selectTMDBIdentity({ ...row, anilistId }, mappings.get(anilistId) || [], { excludeIds: usedIdentities });
+    const tmdbImdbValidated = tmdbSelected?.provider === "imdb"
+      ? selectProviderIdentity(
+        { ...row, anilistId },
+        providerCandidates.filter((candidate) =>
+          candidate.provider === "imdb" && candidate.id === tmdbSelected.id),
+        { excludeIds: usedIdentities },
+      )
+      : null;
+    const effectiveTmdbSelected = tmdbSelected?.provider === "imdb"
+      ? tmdbImdbValidated
+      : tmdbSelected;
     const providerSelected = selectProviderIdentity(
       { ...row, anilistId },
       providerCandidates,
@@ -949,22 +960,23 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
       ),
       { excludeIds: usedIdentities },
     );
-    if (tmdbSelected?.provider === "imdb" || providerSelected?.provider === "imdb") {
+    if (effectiveTmdbSelected?.provider === "imdb" || providerSelected?.provider === "imdb") {
       const selected = independentlyVerifiedImdb
-        || (tmdbSelected?.provider === "imdb" ? tmdbSelected : providerSelected);
+        || effectiveTmdbSelected
+        || providerSelected;
       usedIdentities.add(selected.stremioId);
       if (independentlyVerifiedImdb) {
         metas.push({ ...meta, id: selected.stremioId, extra: { ...meta.extra, identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence } });
-      } else if (tmdbSelected?.provider === "imdb") {
-        metas.push({ ...meta, id: tmdbSelected.stremioId, extra: { ...meta.extra, tmdbProvider: tmdbSelected.provider, tmdbId: tmdbSelected.id, tmdbEvidence: "tmdb-search" } });
+      } else if (effectiveTmdbSelected?.provider === "imdb") {
+        metas.push({ ...meta, id: effectiveTmdbSelected.stremioId, extra: { ...meta.extra, tmdbProvider: effectiveTmdbSelected.provider, tmdbId: effectiveTmdbSelected.id, tmdbEvidence: "tmdb-search" } });
       } else {
         metas.push({ ...meta, id: selected.stremioId, extra: { ...meta.extra, identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence } });
       }
       continue;
     }
-    if (tmdbSelected) {
-      usedIdentities.add(tmdbSelected.stremioId);
-      metas.push({ ...meta, id: tmdbSelected.stremioId, extra: { ...meta.extra, tmdbProvider: tmdbSelected.provider, tmdbId: tmdbSelected.id, tmdbEvidence: "tmdb-search" } });
+    if (effectiveTmdbSelected) {
+      usedIdentities.add(effectiveTmdbSelected.stremioId);
+      metas.push({ ...meta, id: effectiveTmdbSelected.stremioId, extra: { ...meta.extra, tmdbProvider: effectiveTmdbSelected.provider, tmdbId: effectiveTmdbSelected.id, tmdbEvidence: "tmdb-search" } });
       continue;
     }
     const selected = providerSelected;
