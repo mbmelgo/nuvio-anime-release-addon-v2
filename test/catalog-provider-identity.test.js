@@ -228,3 +228,59 @@ test("catalog verifies IMDb after a TMDB-only match before accepting TMDB identi
   assert.equal(metas[0].id, "tt44923712");
   assert.equal(metas[0].extra.identityProvider, "imdb");
 });
+
+
+test("catalog prefers independently verified TV IMDb identity over a TMDB movie IMDb external ID", async () => {
+  const metas = await canonicalizeCatalogPage([{
+    ...row(185874, 60636),
+    title: {
+      english: "BLEACH: Thousand-Year Blood War - The Calamity",
+      romaji: "BLEACH: Sennen Kessen-hen - Kashin-tan",
+      native: "BLEACH 千年血戦篇-禍進譚-",
+    },
+    startDate: { year: 2026 },
+  }], {
+    resolveMappings: empty,
+    resolveFribbMappings: empty,
+    resolveExternalMappings: () => new Map(),
+    resolveAniBridgeMappings: empty,
+    resolveTMDBMappings: async () => new Map([[185874, [{
+      source: "tmdb-search",
+      anilistId: 185874,
+      type: "TV",
+      imdbIds: ["tt43383343"],
+      tvdbId: null,
+      tmdbTvId: 185874,
+      tmdbMovieIds: [],
+      title: "BLEACH: Thousand-Year Blood War - The Calamity",
+      titles: ["BLEACH: Thousand-Year Blood War - The Calamity"],
+      year: 2026,
+      tmdbAuthoritative: true,
+      tmdbMatchScore: 130,
+    }]]]),
+    resolveAnimapMappings: empty,
+    resolveIdMapperMappings: empty,
+    resolveAnimeMapperMappings: empty,
+    resolveTsvMappings: empty,
+    resolveImdbMappings: async () => new Map([[185874, [{
+      source: "imdb-search",
+      anilistId: 185874,
+      type: "TV",
+      imdbIds: ["tt14986406"],
+      tvdbId: null,
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+      title: "Bleach: Thousand-Year Blood War",
+      titles: ["Bleach: Thousand-Year Blood War"],
+      derivedTitle: true,
+      derivedSearchTitle: "BLEACH: Thousand-Year Blood War",
+      relation: false,
+      evidence: [{ source: "imdb-search", relation: false }],
+    }]]]),
+    resolveSecondaryMappings: empty,
+    resolveAlternativeMappings: empty,
+  });
+
+  assert.equal(metas[0].id, "tt14986406");
+  assert.equal(metas[0].extra.identityProvider, "imdb");
+});
