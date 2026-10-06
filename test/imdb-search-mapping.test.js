@@ -97,6 +97,41 @@ test("IMDb fallback preserves the provider title instead of copying the AniList 
   assert.equal(result.has(206814), false);
 });
 
+test("IMDb fallback rejects an old franchise title returned by a derived subtitle search", async () => {
+  clearImdbSearchCache();
+  const result = await resolveAniListMappingsByImdbSearch([{
+    id: 169080,
+    idMal: 56613,
+    format: "TV",
+    startDate: { year: 2026 },
+    title: {
+      english: "Anime AzurLane: Slow Ahead! Season 2",
+      romaji: "Azur Lane: Bisoku Zenshin! Ni!!",
+      native: "アズールレーン びそくぜんしんっ！にっ!!",
+    },
+    synonyms: [],
+  }], {
+    endpoint: "https://example.test/suggestion/x/",
+    fetchImpl: async (url) => {
+      const title = decodeURIComponent(url.split("/").pop().replace(/\.json$/, ""));
+      if (title === "tt10980934") {
+        return new Response(JSON.stringify({
+          d: [{ id: "tt10980934", l: "Azur Lane", y: 2019, q: "tvSeries" }],
+        }), { status: 200 });
+      }
+      if (title === "Azur Lane") {
+        return new Response(JSON.stringify({
+          d: [{ id: "tt10980934", l: "Azur Lane", y: 2019, q: "tvSeries" }],
+        }), { status: 200 });
+      }
+      return new Response(JSON.stringify({ d: [] }), { status: 200 });
+    },
+  });
+
+  assert.equal(result.has(169080), false);
+});
+
+
 test("IMDb fallback rejects a franchise collision with overlapping but non-contained title tokens", async () => {
   clearImdbSearchCache();
   const result = await resolveAniListMappingsByImdbSearch([{
