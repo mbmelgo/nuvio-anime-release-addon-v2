@@ -239,11 +239,18 @@ jobs:
               item_counts[name] = len(metas)
               hashes[name] = hashlib.sha256(aggregate.read_bytes()).hexdigest()
 
-              pages = sorted((directory / "pages" / name).glob("page-*.json"))
+              pages = sorted((directory / "pages" / name).glob("page-[0-9][0-9][0-9][0-9].json"))
               page_counts[name] = len(pages)
               page_hashes[name] = {
                   page.name: hashlib.sha256(page.read_bytes()).hexdigest()
                   for page in pages
+              }
+              request_pages = sorted((directory / "pages" / name).glob("page-*.request.json"))
+              if len(request_pages) != len(pages):
+                  raise SystemExit(f"{name}: request metadata count does not match response page count")
+              page_hashes[f"{name}:requests"] = {
+                  page.name: hashlib.sha256(page.read_bytes()).hexdigest()
+                  for page in request_pages
               }
 
           hashes["manifest"] = hashlib.sha256((directory / "manifest.json").read_bytes()).hexdigest()
