@@ -189,7 +189,7 @@ jobs:
           catalog = sys.argv[3]
           metas = []
 
-          for page in sorted(pages_dir.glob("page-*.json")):
+          for page in sorted(pages_dir.glob("page-[0-9][0-9][0-9][0-9].json")):
               payload = json.loads(page.read_text())
               page_metas = payload.get("metas")
               if not isinstance(page_metas, list):
