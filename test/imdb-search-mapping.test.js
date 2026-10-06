@@ -95,3 +95,88 @@ test("IMDb fallback rejects stopword-heavy false matches such as Dust of the Sim
 
   assert.equal(result.has(214070), false);
 });
+
+
+test("IMDb fallback rejects a stale canonical ID even when the search payload falsely matches Dust of the Simulacrum", async () => {
+  clearImdbSearchCache();
+  const result = await resolveAniListMappingsByImdbSearch([{
+    id: 214070,
+    format: "MOVIE",
+    startDate: { year: 2026 },
+    title: { english: "Dust of the Simulacrum", romaji: "Dust of the Simulacrum", native: "砂塵ノ中デ" },
+    synonyms: [],
+  }], {
+    endpoint: "https://example.test/suggestion/x/",
+    fetchImpl: async (url) => {
+      if (url.endsWith("/tt0104057.json")) {
+        return new Response(JSON.stringify({
+          d: [{ id: "tt0104057", l: "Daughters of the Dust", y: 1991, q: "feature" }],
+        }), { status: 200 });
+      }
+      return new Response(JSON.stringify({
+        d: [{ id: "tt0104057", l: "Dust of the Simulacrum", y: 2026, q: "feature" }],
+      }), { status: 200 });
+    },
+  });
+
+  assert.equal(result.has(214070), false);
+});
+
+test("IMDb fallback rejects a stale canonical ID when the search payload reports the 2026 Rusuban", async () => {
+  clearImdbSearchCache();
+  const result = await resolveAniListMappingsByImdbSearch([{
+    id: 213908,
+    format: "MOVIE",
+    startDate: { year: 2026 },
+    title: { english: "Rusuban", romaji: "Rusuban", native: "るすばん" },
+    synonyms: [],
+  }], {
+    endpoint: "https://example.test/suggestion/x/",
+    fetchImpl: async (url) => {
+      if (url.endsWith("/tt2124031.json")) {
+        return new Response(JSON.stringify({
+          d: [{ id: "tt2124031", l: "Rusuban", y: 1996, q: "short" }],
+        }), { status: 200 });
+      }
+      return new Response(JSON.stringify({
+        d: [{ id: "tt2124031", l: "Rusuban", y: 2026, q: "short" }],
+      }), { status: 200 });
+    },
+  });
+
+  assert.equal(result.has(213908), false);
+});
+
+test("IMDb fallback rejects a canonical ID whose title no longer matches Now That I Can Control Reality", async () => {
+  clearImdbSearchCache();
+  const result = await resolveAniListMappingsByImdbSearch([{
+    id: 206774,
+    format: "TV",
+    startDate: { year: 2026 },
+    title: {
+      english: "Now That I Can Control Reality With A Mouse Cursor, I'm Gonna Click Away On The Girls!",
+      romaji: "Mouse Cursor de Genjitsu wo Sousa Dekiru You ni Natta node, Onnanoko wo Ippai Click Shimasu",
+      native: "マウスカーソルで現実を操作できるようになったので、女の子をいっぱいクリックしまーす",
+    },
+    synonyms: ["Click Me All Over"],
+  }], {
+    endpoint: "https://example.test/suggestion/x/",
+    fetchImpl: async (url) => {
+      if (url.endsWith("/tt37493643.json")) {
+        return new Response(JSON.stringify({
+          d: [{ id: "tt37493643", l: "Haim: All over me", y: 2025, q: "musicVideo" }],
+        }), { status: 200 });
+      }
+      return new Response(JSON.stringify({
+        d: [{
+          id: "tt37493643",
+          l: "Now That I Can Control Reality With A Mouse Cursor, I'm Gonna Click Away On The Girls!",
+          y: 2026,
+          q: "tvSeries",
+        }],
+      }), { status: 200 });
+    },
+  });
+
+  assert.equal(result.has(206774), false);
+});
