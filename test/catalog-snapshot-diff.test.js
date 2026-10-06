@@ -187,3 +187,51 @@ test("does not title-match ambiguous duplicates", () => {
 function diffChanges(diff) {
   return diff.catalogs.current_season.changes.filter((change) => change.before && change.after);
 }
+
+test("CLI generates JSON and Markdown from snapshot directories", () => {
+  const fs = await import("node:fs");
+  const os = await import("node:os");
+  const path = await import("node:path");
+  const { spawnSync } = await import("node:child_process");
+
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "catalog-diff-test-"));
+  const beforeDir = path.join(root, "before");
+  const afterDir = path.join(root, "after");
+  const outputDir = path.join(root, "output");
+
+  try {
+    for (const [directory, version] of [[beforeDir, "1.51.0"], [afterDir, "1.52.0"]]) {
+      fs.mkdirSync(directory, { recursive: true });
+      fs.writeFileSync(
+        path.join(directory, "capture-metadata.json"),
+        JSON.stringify({ releaseVersion: version }),
+      );
+      for (const catalog of [
+        "current_season",
+        "previous_season",
+        "upcoming_season",
+        "upcoming_5_days",
+        "previous_7_days",
+      ]) {
+        fs.writeFileSync(path.join(directory, `${catalog}.json`), JSON.stringify({ metas: [] }));
+      }
+    }
+
+    const result = spawnSync(
+      process.execPath,
+      ["scripts/compare-catalog-snapshots.js", beforeDir, afterDir, outputDir],
+      { encoding: "utf8" },
+    );
+
+    assert.equal(result.status, 0, result.stderr);
+    const diff = JSON.parse(fs.readFileSync(path.join(outputDir, "release-diff.json"), "utf8"));
+    assert.equal(diff.beforeReleaseVersion, "1.51.0");
+    assert.equal(diff.afterReleaseVersion, "1.52.0");
+    assert.match(
+      fs.readFileSync(path.join(outputDir, "release-diff.md"), "utf8"),
+      /Catalog release diff: v1\.51\.0 → v1\.52\.0/,
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
