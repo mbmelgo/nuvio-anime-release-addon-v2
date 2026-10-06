@@ -18,7 +18,7 @@ import { resolveAniListExternalMappings } from "../lib/external-provider-mapping
 import { resolveAniListMappingsAnimap } from "../lib/animap-mapping.js";
 import { resolveAniListMappingsIdMapper } from "../lib/idmapper-mapping.js";
 import { resolveAniListMappingsByTMDB, selectTMDBIdentity } from "../lib/tmdb-mapping.js";
-import { resolveAniListMappingsByAnimeMapper, resolveAniListRelatedProviderIdsByAnimeMapper } from "../lib/anime-mapper-mapping.js";
+import { resolveAniListMappingsByAnimeMapper, resolveAniListRelatedProviderIdsByAnimeMapper, resolveAniListCanonicalSeriesByAnimeMapper } from "../lib/anime-mapper-mapping.js";
 import { resolveAniListMappingsByAniBridge } from "../lib/anibridge-mapping.js";
 import { resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
 import { resolveAniListMappingsFromAnimeApiTsv } from "../lib/animeapi-tsv-mapping.js";
@@ -128,6 +128,7 @@ async function resolveMappingsForRows(
     resolveTMDBMappings = resolveAniListMappingsByTMDB,
     resolveAnimeMapperMappings = resolveAniListMappingsByAnimeMapper,
     resolveAnimeMapperRelatedProviderIds = resolveAniListRelatedProviderIdsByAnimeMapper,
+    resolveCanonicalSeriesMappings = resolveAniListCanonicalSeriesByAnimeMapper,
     resolveAniBridgeMappings = resolveAniListMappingsByAniBridge,
     resolveTsvMappings = resolveAniListMappingsFromAnimeApiTsv,
     resolveImdbMappings = resolveAniListMappingsByImdbSearch,
@@ -335,6 +336,54 @@ async function resolveMappingsForRows(
     resolveAnimeMapperMappings,
     resolveAnimeMapperRelatedProviderIds,
   });
+
+
+  // Resolve season/installment entries to the canonical series root used by
+  // downstream scrapers. This is deliberately additive: the source row's
+  // AniList identity and display metadata remain unchanged while the
+  // scraper-facing provider identity is anchored to the canonical series.
+  try {
+    const canonicalRoots = await resolveCanonicalSeriesMappings(rows);
+    const canonicalRows = [];
+    const canonicalByCurrentId = new Map();
+    for (const [currentId, root] of canonicalRoots instanceof Map ? canonicalRoots : []) {
+      if (!root?.canonicalTitle || !root?.canonicalMalId) continue;
+      const currentRow = rows.find((row) => Number(row?.id) === Number(currentId));
+      if (!currentRow) continue;
+      canonicalByCurrentId.set(Number(currentId), root);
+      canonicalRows.push({
+        ...currentRow,
+        id: Number(currentId),
+        idMal: Number(root.canonicalMalId),
+        format: "TV",
+        title: { english: root.canonicalTitle, romaji: root.canonicalTitle, native: root.canonicalTitle },
+        synonyms: [],
+        startDate: { year: root.canonicalYear },
+        relations: { edges: [] },
+      });
+    }
+    if (canonicalRows.length) {
+      const canonicalImdb = await resolveImdbMappings(canonicalRows);
+      for (const [currentId, records] of canonicalImdb instanceof Map ? canonicalImdb : []) {
+        const root = canonicalByCurrentId.get(Number(currentId));
+        if (!root) continue;
+        const canonicalRecords = (Array.isArray(records) ? records : []).map((record) => ({
+          ...record,
+          source: "imdb-search-canonical-series",
+          canonicalSeries: true,
+          canonicalSeriesAnilistId: root.canonicalAnilistId,
+          canonicalSeriesMalId: root.canonicalMalId,
+          canonicalSeriesTitle: root.canonicalTitle,
+          relation: false,
+        }));
+        if (canonicalRecords.length) {
+          mappings = mergeMappings(mappings, new Map([[Number(currentId), canonicalRecords]]));
+        }
+      }
+    }
+  } catch (error) {
+    console.error("[identity] canonical series root resolution failed; preserving current identity", error);
+  }
 
   // Relation protection can invalidate an identity that was valid before
   // related provider ownership was known. Re-run IMDb verification for only
@@ -837,11 +886,55 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
     const rawMeta = toCatalogIdentity(toMetaFromAniList(anilistId, row));
     if (!rawMeta) { unresolvedIds.push(anilistId); continue; }
     const meta = normalizeSeasonalCatalogMetaTypes([rawMeta])[0];
-    const tmdbSelected = selectTMDBIdentity({ ...row, anilistId }, mappings.get(anilistId) || [], { excludeIds: usedIdentities });
+    const canonicalSeriesRecord = (mappings.get(anilistId) || []).find((record) =>
+      record?.canonicalSeries === true
+      && Array.isArray(record?.imdbIds)
+      && record.imdbIds.some((id) => /^tt\d+$/.test(String(id))),
+    );
+    if (canonicalSeriesRecord) {
+      const canonicalImdbId = canonicalSeriesRecord.imdbIds.find((id) => /^tt\d+$/.test(String(id)));
+      metas.push({
+        ...meta,
+        id: canonicalImdbId,
+        extra: {
+          ...meta.extra,
+          identityProvider: "imdb",
+          identityId: canonicalImdbId,
+          identityCanonicalSeries: true,
+          identityCanonicalSeriesAnilistId: canonicalSeriesRecord.canonicalSeriesAnilistId,
+          identityCanonicalSeriesMalId: canonicalSeriesRecord.canonicalSeriesMalId,
+          identityCanonicalSeriesTitle: canonicalSeriesRecord.canonicalSeriesTitle,
+          identityEvidence: [{ source: canonicalSeriesRecord.source || "imdb-search-canonical-series", season: null, episodeOffset: null, relation: false }],
+        },
+      });
+      continue;
+    }
     const providerCandidates = getProviderCandidates(
       { ...row, anilistId },
       mappings.get(anilistId) || [],
     );
+    const canonicalSeriesSelected = selectProviderIdentity(
+      { ...row, anilistId },
+      providerCandidates.filter((candidate) => candidate.canonicalSeries === true),
+    );
+    if (canonicalSeriesSelected) {
+      metas.push({
+        ...meta,
+        id: canonicalSeriesSelected.stremioId,
+        extra: {
+          ...meta.extra,
+          identityProvider: canonicalSeriesSelected.provider,
+          identityId: canonicalSeriesSelected.id,
+          identityCanonicalSeries: true,
+          identityCanonicalSeriesAnilistId: canonicalSeriesSelected.canonicalSeriesAnilistId,
+          identityCanonicalSeriesMalId: canonicalSeriesSelected.canonicalSeriesMalId,
+          identityCanonicalSeriesTitle: canonicalSeriesSelected.canonicalSeriesTitle,
+          identityEvidence: canonicalSeriesSelected.evidence,
+        },
+      });
+      continue;
+    }
+    const tmdbSelected = selectTMDBIdentity({ ...row, anilistId }, mappings.get(anilistId) || [], { excludeIds: usedIdentities });
     const providerSelected = selectProviderIdentity(
       { ...row, anilistId },
       providerCandidates,
@@ -940,13 +1033,66 @@ export async function buildRollingCatalog(id, date, skip, search, {
       const seenMediaIds = new Set();
       for (const row of eligibleRows) { const mediaId = Number(row.media.id); if (seenMediaIds.has(mediaId)) continue; seenMediaIds.add(mediaId); uniqueEligibleRows.push(row); }
       const searchedRows = filterAiringRowsBySearch(uniqueEligibleRows, search);
-      const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), { resolveMappings, resolveSecondaryMappings, resolveAlternativeMappings });
+      const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), { resolveMappings, resolveSecondaryMappings, resolveAlternativeMappings, resolveCanonicalSeriesMappings: async () => new Map() });
       const metas = [];
       const usedIdentities = new Set();
       for (const row of searchedRows) {
         const media = row.media; const mediaId = Number(media.id);
         const baseMeta = toCatalogIdentity(toMetaFromAniList(mediaId, media));
         if (!baseMeta) continue;
+        const canonicalSeriesRecord = (mappings.get(mediaId) || []).find((record) =>
+          record?.canonicalSeries === true
+          && Array.isArray(record?.imdbIds)
+          && record.imdbIds.some((id) => /^tt\d+$/.test(String(id))),
+        );
+        if (canonicalSeriesRecord) {
+          const canonicalImdbId = canonicalSeriesRecord.imdbIds.find((id) => /^tt\d+$/.test(String(id)));
+          metas.push({
+            ...baseMeta,
+            id: canonicalImdbId,
+            extra: {
+              ...baseMeta.extra,
+              identityProvider: "imdb",
+              identityId: canonicalImdbId,
+              identityCanonicalSeries: true,
+              identityCanonicalSeriesAnilistId: canonicalSeriesRecord.canonicalSeriesAnilistId,
+              identityCanonicalSeriesMalId: canonicalSeriesRecord.canonicalSeriesMalId,
+              identityCanonicalSeriesTitle: canonicalSeriesRecord.canonicalSeriesTitle,
+              identityEvidence: [{ source: canonicalSeriesRecord.source || "imdb-search-canonical-series", season: null, episodeOffset: null, relation: false }],
+              episode: row.episode,
+              airingAt: row.airingAt,
+              ...(futureOnly ? { nextEpisode: row.episode, nextAiringAt: row.airingAt } : {}),
+            },
+            type: "series",
+          });
+          continue;
+        }
+        const providerCandidates = getProviderCandidates(media, mappings.get(mediaId) || []);
+        const canonicalSeriesSelected = selectProviderIdentity(
+          { ...media, anilistId: mediaId },
+          providerCandidates.filter((candidate) => candidate.canonicalSeries === true),
+        );
+        if (canonicalSeriesSelected) {
+          metas.push({
+            ...baseMeta,
+            id: canonicalSeriesSelected.stremioId,
+            extra: {
+              ...baseMeta.extra,
+              identityProvider: canonicalSeriesSelected.provider,
+              identityId: canonicalSeriesSelected.id,
+              identityCanonicalSeries: true,
+              identityCanonicalSeriesAnilistId: canonicalSeriesSelected.canonicalSeriesAnilistId,
+              identityCanonicalSeriesMalId: canonicalSeriesSelected.canonicalSeriesMalId,
+              identityCanonicalSeriesTitle: canonicalSeriesSelected.canonicalSeriesTitle,
+              identityEvidence: canonicalSeriesSelected.evidence,
+              episode: row.episode,
+              airingAt: row.airingAt,
+              ...(futureOnly ? { nextEpisode: row.episode, nextAiringAt: row.airingAt } : {}),
+            },
+            type: "series",
+          });
+          continue;
+        }
         const tmdbSelected = selectTMDBIdentity({ ...media, anilistId: mediaId }, mappings.get(mediaId) || [], { excludeIds: usedIdentities });
         const providerSelected = selectProviderIdentity(
           { ...media, anilistId: mediaId },
