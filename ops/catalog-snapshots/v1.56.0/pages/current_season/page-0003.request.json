@@ -1,0 +1,17 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://nuvio-anime-release-addon-v2.vercel.app/catalog/anime/current_season.json?skip=100",
+    "catalog": "current_season",
+    "page": 3,
+    "query": {
+      "skip": 100
+    },
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "bodyFile": "page-0003.json"
+  }
+}
