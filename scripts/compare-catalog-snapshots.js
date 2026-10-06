@@ -30,7 +30,7 @@ console.log(`Markdown: ${markdownPath}`);
 function loadSnapshot(directory) {
   const metadata = readJson(path.join(directory, "capture-metadata.json"));
   const releaseVersion = String(metadata.releaseVersion || "").trim();
-  if (!/^\\d+\\.\\d+\\.\\d+$/.test(releaseVersion)) {
+  if (!/^\d+\.\d+\.\d+$/.test(releaseVersion)) {
     throw new Error(`Invalid or missing releaseVersion in ${directory}/capture-metadata.json`);
   }
 
