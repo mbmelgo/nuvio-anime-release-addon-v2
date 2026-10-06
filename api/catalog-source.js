@@ -886,6 +886,29 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
     const rawMeta = toCatalogIdentity(toMetaFromAniList(anilistId, row));
     if (!rawMeta) { unresolvedIds.push(anilistId); continue; }
     const meta = normalizeSeasonalCatalogMetaTypes([rawMeta])[0];
+    const canonicalSeriesRecord = (mappings.get(anilistId) || []).find((record) =>
+      record?.canonicalSeries === true
+      && Array.isArray(record?.imdbIds)
+      && record.imdbIds.some((id) => /^tt\d+$/.test(String(id))),
+    );
+    if (canonicalSeriesRecord) {
+      const canonicalImdbId = canonicalSeriesRecord.imdbIds.find((id) => /^tt\d+$/.test(String(id)));
+      metas.push({
+        ...meta,
+        id: canonicalImdbId,
+        extra: {
+          ...meta.extra,
+          identityProvider: "imdb",
+          identityId: canonicalImdbId,
+          identityCanonicalSeries: true,
+          identityCanonicalSeriesAnilistId: canonicalSeriesRecord.canonicalSeriesAnilistId,
+          identityCanonicalSeriesMalId: canonicalSeriesRecord.canonicalSeriesMalId,
+          identityCanonicalSeriesTitle: canonicalSeriesRecord.canonicalSeriesTitle,
+          identityEvidence: [{ source: canonicalSeriesRecord.source || "imdb-search-canonical-series", season: null, episodeOffset: null, relation: false }],
+        },
+      });
+      continue;
+    }
     const providerCandidates = getProviderCandidates(
       { ...row, anilistId },
       mappings.get(anilistId) || [],
@@ -1017,6 +1040,33 @@ export async function buildRollingCatalog(id, date, skip, search, {
         const media = row.media; const mediaId = Number(media.id);
         const baseMeta = toCatalogIdentity(toMetaFromAniList(mediaId, media));
         if (!baseMeta) continue;
+        const canonicalSeriesRecord = (mappings.get(mediaId) || []).find((record) =>
+          record?.canonicalSeries === true
+          && Array.isArray(record?.imdbIds)
+          && record.imdbIds.some((id) => /^tt\d+$/.test(String(id))),
+        );
+        if (canonicalSeriesRecord) {
+          const canonicalImdbId = canonicalSeriesRecord.imdbIds.find((id) => /^tt\d+$/.test(String(id)));
+          metas.push({
+            ...baseMeta,
+            id: canonicalImdbId,
+            extra: {
+              ...baseMeta.extra,
+              identityProvider: "imdb",
+              identityId: canonicalImdbId,
+              identityCanonicalSeries: true,
+              identityCanonicalSeriesAnilistId: canonicalSeriesRecord.canonicalSeriesAnilistId,
+              identityCanonicalSeriesMalId: canonicalSeriesRecord.canonicalSeriesMalId,
+              identityCanonicalSeriesTitle: canonicalSeriesRecord.canonicalSeriesTitle,
+              identityEvidence: [{ source: canonicalSeriesRecord.source || "imdb-search-canonical-series", season: null, episodeOffset: null, relation: false }],
+              episode: row.episode,
+              airingAt: row.airingAt,
+              ...(futureOnly ? { nextEpisode: row.episode, nextAiringAt: row.airingAt } : {}),
+            },
+            type: "series",
+          });
+          continue;
+        }
         const providerCandidates = getProviderCandidates(media, mappings.get(mediaId) || []);
         const canonicalSeriesSelected = selectProviderIdentity(
           { ...media, anilistId: mediaId },
