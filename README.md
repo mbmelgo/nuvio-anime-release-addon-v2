@@ -3,7 +3,7 @@
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
 [![MAL](https://img.shields.io/badge/MyAnimeList-identity-2e51a2.svg)](https://myanimelist.net)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
-[![Version](https://img.shields.io/badge/version-1.51.0-blue.svg)](https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases)
+[![Version](https://img.shields.io/badge/version-1.52.0-blue.svg)](https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases)
 
 > A lightweight, season-aware anime release catalog for Nuvio and Stremio-compatible clients.
 
@@ -40,7 +40,7 @@ TVDB: tvdb:<id>
 TMDB: tmdb:<id>
 ```
 
-TMDB is the active primary resolver: strong title/year matches are upgraded to IMDb when TMDB exposes an IMDb identity, or retained as TMDB when it does not. ARM supplies the primary cross-provider mapping in a batched request. Later independent sources supplement unresolved rows through Fribb, AniList external links, AniBridge, AniMap, IDMapper, Anime Mapper, AnimeAPI TSV data, IMDb title search, secondary mappings, relation-aware provider resolution, and the MAL identity bridge. Provider validation checks title, year, format, source identity, and explicit related-entry collisions before an identity is accepted.
+TMDB is the active primary resolver: strong title/year matches are upgraded to IMDb when TMDB exposes an IMDb identity, or retained as TMDB when neither TMDB nor the independent IMDb title search yields a validated IMDb identity. ARM supplies the primary cross-provider mapping in a batched request. Later independent sources supplement unresolved rows through Fribb, AniList external links, AniBridge, AniMap, IDMapper, Anime Mapper, AnimeAPI TSV data, IMDb title search, secondary mappings, relation-aware provider resolution, and the MAL identity bridge. Provider validation checks title, year, format, source identity, and explicit related-entry collisions before an identity is accepted.
 
 If no validated provider identity is available, the canonical AniList MAL ID is used as the final fallback (`mal:<id>`); if neither a provider identity nor a MAL ID exists, the catalog emits an AniList identity fallback rather than dropping the row.
 
@@ -193,7 +193,7 @@ Catalog names and season labels are generated dynamically.
 ## 🚀 Current release
 
 **Production:** `v1.51.0`  
-**Development:** `v1.51.0` — release candidate with post-protection IMDb re-verification for related provider collisions
+**Development:** `v1.52.0` — release candidate with post-protection IMDb re-verification for related provider collisions
 **Major baseline:** `v1.0.0`
 
 The 1.42.0 release switches active identity resolution to TMDB-backed matching, upgrades strong TMDB matches to IMDb when available, and retains TMDB identities when IMDb is unavailable. BingeCat API integration was later removed because its public endpoint is not usable by the addon and its private endpoint requires authenticated session access.
