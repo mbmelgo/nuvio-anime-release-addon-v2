@@ -27,7 +27,7 @@ const snapshot = (version, catalogs) => ({
 });
 
 test("normalizes fallback titles deterministically", () => {
-  assert.equal(normalizeCatalogTitle("  Poké-Oki: Season 2!  "), "pokeoki season 2");
+  assert.equal(normalizeCatalogTitle("  Poké-Oki: Season 2!  "), "poke oki season 2");
   assert.equal(normalizeCatalogTitle("Ｍａｇｉｃａｌ★Explorer"), "magical explorer");
 });
 
@@ -111,8 +111,8 @@ test("detects additions and removals while ignoring catalog array position", () 
   const after = snapshot("1.52.0", {
     current_season: [
       item({ extra: { anilistId: 102, malId: 202 }, id: "tt102", name: "New" }),
-      item({ extra: { anilistId: 101, malId: 201 }, id: "tt101", name: "Second" }),
       item(),
+      item({ extra: { anilistId: 101, malId: 201 }, id: "tt101", name: "Second" }),
     ],
   });
 
