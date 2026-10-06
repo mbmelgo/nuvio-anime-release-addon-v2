@@ -179,6 +179,25 @@ test("provider identity rejects fuzzy derived-title collision with another franc
   assert.equal(selectProviderIdentity(row, getProviderCandidates(row, records)), null);
 });
 
+test("provider identity accepts the dedicated Dragon Ball Super: Beerus IMDb title", () => {
+  const row = media({
+    anilistId: 206814,
+    title: { english: "Dragon Ball Super: Beerus", romaji: "Dragon Ball Super: Beerus" },
+    startDate: { year: 2026 },
+  });
+  const records = [{
+    source: "imdb-search",
+    anilistId: 206814,
+    type: "TV",
+    imdbIds: ["tt39395275"],
+    title: "Doragon Bôru Sûpâ Birusu",
+    titles: ["Dragon Ball Super: Beerus"],
+    year: 2026,
+  }];
+
+  assert.equal(selectProviderIdentity(row, getProviderCandidates(row, records))?.id, "tt39395275");
+});
+
 test("provider identity accepts a verified canonical series root for a season entry", () => {
   const row = media({
     anilistId: 185874,
