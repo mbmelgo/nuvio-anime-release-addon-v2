@@ -61,6 +61,7 @@ test("canonical series resolver follows prequel chains to the original series", 
   assert.equal(root?.canonicalMalId, 14719);
   assert.equal(root?.canonicalAnilistId, 14719);
   assert.equal(root?.canonicalTitle, "JoJo's Bizarre Adventure");
+  assert.equal(root?.canonicalExternal?.tvdb, 262954);
 });
 
 test("canonical series resolver does not collapse an enhanced re-edition without shared series identity", async () => {
