@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 3,
+  "protocolType": "anime",
+  "releaseVersion": "1.56.0",
+  "sourceDeploymentId": "dpl_2r62xpVbGTRyC14QCBfp7XntqaQR",
+  "productionBaseUrl": "https://nuvio-anime-release-addon-v2.vercel.app",
+  "requestCapture": "per-page GET request metadata and raw JSON response",
+  "pagination": {
+    "pageSize": 50,
+    "queryParameter": "skip",
+    "termination": "empty-page"
+  },
+  "catalogs": [
+    "current_season",
+    "previous_season",
+    "upcoming_season",
+    "upcoming_5_days",
+    "previous_7_days"
+  ],
+  "itemCounts": {
+    "upcoming_season": 54,
+    "current_season": 96,
+    "previous_season": 107,
+    "upcoming_5_days": 91,
+    "previous_7_days": 97
+  },
+  "pageCounts": {
+    "upcoming_season": 3,
+    "current_season": 3,
+    "previous_season": 4,
+    "upcoming_5_days": 3,
+    "previous_7_days": 3
+  },
+  "pagesCapturedIncludingTerminalEmpty": true
+}
