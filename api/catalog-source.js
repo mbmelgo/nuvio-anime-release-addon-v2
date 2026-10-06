@@ -202,6 +202,24 @@ async function resolveMappingsForRows(
     }
   }
 
+  // A TMDB match without an IMDb external ID is a useful fallback, but it is
+  // not proof that IMDb has no current identity. Verify TMDB-only matches
+  // through the independent IMDb title search before allowing the TMDB
+  // fallback to become terminal. Existing relation/title validation still
+  // applies when the candidate is selected.
+  const tmdbOnlyRows = rows.filter((row) => {
+    const media = { ...row, anilistId: Number(row.id) };
+    const tmdbSelected = selectTMDBIdentity(media, mappings.get(Number(row.id)) || []);
+    return tmdbSelected?.provider === "tmdb";
+  });
+  if (tmdbOnlyRows.length) {
+    try {
+      mappings = mergeMappings(mappings, await resolveImdbMappings(tmdbOnlyRows));
+    } catch (error) {
+      console.error("[identity] post-TMDB IMDb verification failed", error);
+    }
+  }
+
   unresolvedRows = rows.filter((row) => !selectProviderIdentity(
     { ...row, anilistId: Number(row.id) },
     getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
@@ -820,12 +838,27 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
     if (!rawMeta) { unresolvedIds.push(anilistId); continue; }
     const meta = normalizeSeasonalCatalogMetaTypes([rawMeta])[0];
     const tmdbSelected = selectTMDBIdentity({ ...row, anilistId }, mappings.get(anilistId) || [], { excludeIds: usedIdentities });
+    const providerSelected = selectProviderIdentity(
+      { ...row, anilistId },
+      getProviderCandidates({ ...row, anilistId }, mappings.get(anilistId) || []),
+      { excludeIds: usedIdentities },
+    );
+    if (tmdbSelected?.provider === "imdb" || providerSelected?.provider === "imdb") {
+      const selected = tmdbSelected?.provider === "imdb" ? tmdbSelected : providerSelected;
+      usedIdentities.add(selected.stremioId);
+      if (tmdbSelected?.provider === "imdb") {
+        metas.push({ ...meta, id: tmdbSelected.stremioId, extra: { ...meta.extra, tmdbProvider: tmdbSelected.provider, tmdbId: tmdbSelected.id, tmdbEvidence: "tmdb-search" } });
+      } else {
+        metas.push({ ...meta, id: selected.stremioId, extra: { ...meta.extra, identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence } });
+      }
+      continue;
+    }
     if (tmdbSelected) {
       usedIdentities.add(tmdbSelected.stremioId);
       metas.push({ ...meta, id: tmdbSelected.stremioId, extra: { ...meta.extra, tmdbProvider: tmdbSelected.provider, tmdbId: tmdbSelected.id, tmdbEvidence: "tmdb-search" } });
       continue;
     }
-    const selected = selectProviderIdentity({ ...row, anilistId }, getProviderCandidates({ ...row, anilistId }, mappings.get(anilistId) || []), { excludeIds: usedIdentities });
+    const selected = providerSelected;
     if (selected) {
       usedIdentities.add(selected.stremioId);
       metas.push({ ...meta, id: selected.stremioId, extra: { ...meta.extra, identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence } });
@@ -899,7 +932,16 @@ export async function buildRollingCatalog(id, date, skip, search, {
         const baseMeta = toCatalogIdentity(toMetaFromAniList(mediaId, media));
         if (!baseMeta) continue;
         const tmdbSelected = selectTMDBIdentity({ ...media, anilistId: mediaId }, mappings.get(mediaId) || [], { excludeIds: usedIdentities });
-        const selected = tmdbSelected || selectProviderIdentity({ ...media, anilistId: mediaId }, getProviderCandidates(media, mappings.get(mediaId) || []), { excludeIds: usedIdentities });
+        const providerSelected = selectProviderIdentity(
+          { ...media, anilistId: mediaId },
+          getProviderCandidates(media, mappings.get(mediaId) || []),
+          { excludeIds: usedIdentities },
+        );
+        const selected = tmdbSelected?.provider === "imdb"
+          ? tmdbSelected
+          : providerSelected?.provider === "imdb"
+            ? providerSelected
+            : tmdbSelected || providerSelected;
         const malId = getCanonicalMalId(media, baseMeta, mappings.get(mediaId) || []);
         let meta;
         if (selected) {
