@@ -65,10 +65,36 @@ jobs:
           print(f"tag=v{version}")
           PY
 
+      - name: Resolve exact production deployment URL
+        id: production
+        env:
+          RELEASE_SHA: ${{ steps.release.outputs.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          deployments="$(gh api "repos/${GITHUB_REPOSITORY}/deployments?sha=${RELEASE_SHA}&per_page=20")"
+          url="$(DEPLOYMENTS="$deployments" python - <<'PY'
+          import json
+          import os
+
+          deployments = json.loads(os.environ["DEPLOYMENTS"])
+          for deployment in deployments:
+              if deployment.get("environment") == "production" and deployment.get("environment_url"):
+                  print(deployment["environment_url"].rstrip("/"))
+                  break
+          PY
+          )"
+          if [ -z "$url" ]; then
+            echo "No production deployment URL found for release $RELEASE_SHA" >&2
+            exit 1
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Resolved exact production deployment URL."
+
       - name: Capture production payloads
         env:
           RELEASE_VERSION: ${{ steps.release.outputs.version }}
-          PRODUCTION_BASE_URL: https://nuvio-anime-release-addon-v2.vercel.app
+          PRODUCTION_BASE_URL: ${{ steps.production.outputs.url }}
         run: |
           set -euo pipefail
           snapshot_dir="/tmp/catalog-snapshot"
