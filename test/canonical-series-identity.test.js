@@ -87,10 +87,7 @@ test("canonical series resolver stops at a franchise sequel with a different ser
     },
   ], { fetchImpl });
 
-  const root = result.get(210482);
-  assert.equal(root?.canonicalMalId, 61469);
-  assert.equal(root?.canonicalAnilistId, 210482);
-  assert.equal(root?.canonicalTitle, "Steel Ball Run: JoJo's Bizarre Adventure");
+  assert.equal(result.has(210482), false);
 });
 
 test("canonical series resolver still follows genuine JoJo season continuity", async () => {
