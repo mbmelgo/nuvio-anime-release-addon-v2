@@ -196,7 +196,7 @@ Catalog names and season labels are generated dynamically.
 **Development:** `v1.56.0` — release candidate with canonical seasonal-series identity anchoring
 **Major baseline:** `v1.0.0`
 
-The 1.42.0 release switches active identity resolution to TMDB-backed matching, upgrades strong TMDB matches to IMDb when available, and retains TMDB identities when IMDb is unavailable. BingeCat API integration was later removed because its public endpoint is not usable by the addon and its private endpoint requires authenticated session access.
+The 1.56.0 release anchors seasonal/installment catalog entries to their canonical franchise series identity for scraper-facing provider IDs while preserving the specific seasonal display metadata.\n\nThe 1.42.0 release switches active identity resolution to TMDB-backed matching, upgrades strong TMDB matches to IMDb when available, and retains TMDB identities when IMDb is unavailable. BingeCat API integration was later removed because its public endpoint is not usable by the addon and its private endpoint requires authenticated session access.
 
 The 1.43.0 release lets TMDB upgrade earlier non-IMDb provider mappings, such as TVDB-only mappings, to stronger IMDb identities when TMDB finds a strong match.
 
