@@ -188,7 +188,7 @@ function diffChanges(diff) {
   return diff.catalogs.current_season.changes.filter((change) => change.before && change.after);
 }
 
-test("CLI generates JSON and Markdown from snapshot directories", () => {
+test("CLI generates JSON and Markdown from snapshot directories", async () => {
   const fs = await import("node:fs");
   const os = await import("node:os");
   const path = await import("node:path");
