@@ -28,22 +28,52 @@ function record(mal, anilist, title, sequence = [], year = 2026, type = "TV", ma
   };
 }
 
-test("canonical series resolver follows prequel chains to the original series", async () => {
+test("canonical series resolver follows prequel chains within the same named series", async () => {
   clearAnimeMapperCache();
   const fetchImpl = createFetch({
-    61469: record(61469, 210482, "Steel Ball Run", [
-      { malId: 51367, title: { english: "Stone Ocean Part 2" }, format: "ONA", seasonYear: 2022, relationType: "PREQUEL" },
+    60636: record(60636, 185874, "Bleach: Thousand-Year Blood War - The Calamity", [
+      { malId: 56784, title: { english: "Bleach: Thousand-Year Blood War - The Conflict" }, format: "TV", seasonYear: 2024, relationType: "PREQUEL" },
+    ], 2026, "TV", { tmdb: 30984, tvdb: 74796, trakt: 30850 }),
+    56784: record(56784, 169755, "Bleach: Thousand-Year Blood War - The Conflict", [
+      { malId: 53998, title: { english: "Bleach: Thousand-Year Blood War - The Separation" }, format: "TV", seasonYear: 2023, relationType: "PREQUEL" },
+    ], 2024, "TV", { tmdb: 30984, tvdb: 74796, trakt: 30850 }),
+    53998: record(53998, 159322, "Bleach: Thousand-Year Blood War - The Separation", [
+      { malId: 41467, title: { english: "Bleach: Thousand-Year Blood War" }, format: "TV", seasonYear: 2022, relationType: "PREQUEL" },
+    ], 2023, "TV", { tmdb: 30984, tvdb: 74796, trakt: 30850 }),
+    41467: record(41467, 116674, "Bleach: Thousand-Year Blood War", [
+      { malId: 269, title: { english: "Bleach" }, format: "TV", seasonYear: 2004, relationType: "PREQUEL" },
+    ], 2022, "TV", { tmdb: 30984, tvdb: 74796, trakt: 30850 }),
+    269: record(269, 269, "Bleach", [], 2004, "TV", { tmdb: 30984, tvdb: 74796, trakt: 30850 }),
+  });
+
+  const result = await resolveAniListCanonicalSeriesByAnimeMapper([
+    {
+      id: 185874,
+      idMal: 60636,
+      format: "TV",
+      title: { english: "BLEACH: Thousand-Year Blood War - The Calamity" },
+      synonyms: [],
+      startDate: { year: 2026 },
+    },
+  ], { fetchImpl });
+
+  const root = result.get(185874);
+  assert.equal(root?.canonicalMalId, 41467);
+  assert.equal(root?.canonicalAnilistId, 116674);
+  assert.equal(root?.canonicalTitle, "Bleach: Thousand-Year Blood War");
+  assert.equal(root?.canonicalExternal?.tvdb, 74796);
+});
+
+test("canonical series resolver stops at a franchise sequel with a different series title", async () => {
+  clearAnimeMapperCache();
+  const fetchImpl = createFetch({
+    61469: record(61469, 210482, "Steel Ball Run: JoJo's Bizarre Adventure", [
+      { malId: 51367, title: { english: "JoJo's Bizarre Adventure: Stone Ocean Part 2" }, format: "ONA", seasonYear: 2022, relationType: "PREQUEL" },
     ], 2026, "ONA", { tmdb: 45790, tvdb: 262954, trakt: 45537 }),
-    51367: record(51367, 146722, "Stone Ocean Part 2", [
-      { malId: 48661, title: { english: "Stone Ocean" }, format: "ONA", seasonYear: 2021, relationType: "PREQUEL" },
-    ]),
-    48661: record(48661, 131942, "Stone Ocean", [
-      { malId: 20899, title: { english: "Stardust Crusaders" }, format: "TV", seasonYear: 2014, relationType: "PREQUEL" },
-    ]),
-    20899: record(20899, 20474, "Stardust Crusaders", [
-      { malId: 14719, title: { english: "JoJo's Bizarre Adventure" }, format: "TV", seasonYear: 2012, relationType: "PREQUEL" },
-    ]),
-    14719: record(14719, 14719, "JoJo's Bizarre Adventure", [], 2012, "TV", { tmdb: 45790, tvdb: 262954, trakt: 45537 }),
+    51367: record(51367, 146722, "JoJo's Bizarre Adventure: Stone Ocean Part 2", [
+      { malId: 48661, title: { english: "JoJo's Bizarre Adventure: Stone Ocean" }, format: "ONA", seasonYear: 2021, relationType: "PREQUEL" },
+    ], 2022, "ONA", { tmdb: 45790, tvdb: 262954, trakt: 45537 }),
+    48661: record(48661, 131942, "JoJo's Bizarre Adventure: Stone Ocean", [], 2021, "ONA", { tmdb: 45790, tvdb: 262954, trakt: 45537 }),
   });
 
   const result = await resolveAniListCanonicalSeriesByAnimeMapper([
@@ -51,17 +81,42 @@ test("canonical series resolver follows prequel chains to the original series", 
       id: 210482,
       idMal: 61469,
       format: "ONA",
-      title: { english: "STEEL BALL RUN JoJo's Bizarre Adventure 2nd - 3rd STAGE" },
+      title: { english: "Steel Ball Run: JoJo's Bizarre Adventure" },
       synonyms: [],
       startDate: { year: 2026 },
     },
   ], { fetchImpl });
 
   const root = result.get(210482);
+  assert.equal(root?.canonicalMalId, 61469);
+  assert.equal(root?.canonicalAnilistId, 210482);
+  assert.equal(root?.canonicalTitle, "Steel Ball Run: JoJo's Bizarre Adventure");
+});
+
+test("canonical series resolver still follows genuine JoJo season continuity", async () => {
+  clearAnimeMapperCache();
+  const fetchImpl = createFetch({
+    20899: record(20899, 20474, "JoJo's Bizarre Adventure: Stardust Crusaders", [
+      { malId: 14719, title: { english: "JoJo's Bizarre Adventure" }, format: "TV", seasonYear: 2012, relationType: "PREQUEL" },
+    ], 2014, "TV", { tmdb: 45790, tvdb: 262954, trakt: 45537 }),
+    14719: record(14719, 14719, "JoJo's Bizarre Adventure", [], 2012, "TV", { tmdb: 45790, tvdb: 262954, trakt: 45537 }),
+  });
+
+  const result = await resolveAniListCanonicalSeriesByAnimeMapper([
+    {
+      id: 20474,
+      idMal: 20899,
+      format: "TV",
+      title: { english: "JoJo's Bizarre Adventure: Stardust Crusaders" },
+      synonyms: [],
+      startDate: { year: 2014 },
+    },
+  ], { fetchImpl });
+
+  const root = result.get(20474);
   assert.equal(root?.canonicalMalId, 14719);
   assert.equal(root?.canonicalAnilistId, 14719);
   assert.equal(root?.canonicalTitle, "JoJo's Bizarre Adventure");
-  assert.equal(root?.canonicalExternal?.tvdb, 262954);
 });
 
 test("canonical series resolver does not collapse an enhanced re-edition without shared series identity", async () => {
