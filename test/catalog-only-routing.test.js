@@ -75,6 +75,6 @@ test("manifest advertises only the series protocol while catalog routing preserv
 
 test("catalog snapshot aggregation selects response pages without request metadata", () => {
   const workflow = fs.readFileSync(new URL("../.github/workflows/catalog-snapshot.yml", import.meta.url), "utf8");
-  assert.match(workflow, /glob\("page-\[0-9\]\[0-9\]\[0-9\]\[0-9\]\\.json"\)/);
-  assert.doesNotMatch(workflow, /glob\("page-\*\\.json"\)/);
+  assert.match(workflow, /glob\("page-\[0-9\]\[0-9\]\[0-9\]\[0-9\]\.json"\)/);
+  assert.doesNotMatch(workflow, /glob\("page-\*\.json"\)/);
 });
