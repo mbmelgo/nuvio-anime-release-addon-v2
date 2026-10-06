@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "releaseVersion": "1.51.0",
+  "capturedAt": "2026-10-06T03:31:17.697217Z",
+  "productionBaseUrl": "https://nuvio-anime-release-addon-v2.vercel.app",
+  "catalogs": [
+    "current_season",
+    "previous_season",
+    "upcoming_season",
+    "upcoming_5_days",
+    "previous_7_days"
+  ],
+  "itemCounts": {
+    "current_season": 50,
+    "previous_season": 50,
+    "upcoming_season": 50,
+    "upcoming_5_days": 50,
+    "previous_7_days": 50
+  },
+  "sha256": {
+    "current_season": "deb261f9066b27b8c4aeb0f2c440cc5971cab0fa5838cf3e1a4d9b5f001cd2a5",
+    "previous_season": "eec25093530270530caf8a442c95003edf4980de134f96db92bb53021d6ea36d",
+    "upcoming_season": "2b7bbb8085589889828b9799ffdd09a3549525967e4b96a43e188440209413d4",
+    "upcoming_5_days": "402d6200e5da4192144941a3c6e8665ea16691e572b5d11608e16d33e5a28059",
+    "previous_7_days": "7606b1286a6885eecb6bc43d310e9d47934605ee2091117ccb39d7260d72bbaf",
+    "manifest": "76cdfa8becd36628e645d7c9a3d1cae3b122d4d894acc948f95ed3f502bdffe8"
+  }
+}
