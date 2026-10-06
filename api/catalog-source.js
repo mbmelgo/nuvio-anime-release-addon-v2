@@ -1016,10 +1016,14 @@ export async function buildRollingCatalog(id, date, skip, search, {
   resolveMappings = resolveAniListMappings,
   resolveSecondaryMappings = resolveAniListMappingsSecondary,
   resolveAlternativeMappings = resolveAniListMappingsByMalIds,
-    resolveCanonicalSeriesMappings = resolveAniListCanonicalSeriesByAnimeMapper,
+    resolveCanonicalSeriesMappings = null,
     resolveImdbMappings = resolveAniListMappingsByImdbSearch,
   } = {}) {
   const range = getRollingCatalogRange(id, date);
+  const canonicalSeriesResolver = resolveCanonicalSeriesMappings
+    || (resolveMappings === resolveAniListMappings
+      ? resolveAniListCanonicalSeriesByAnimeMapper
+      : async () => new Map());
   if (!range) return [];
   const futureOnly = id === "upcoming_5_days";
   const sort = futureOnly ? "TIME" : "TIME_DESC";
@@ -1035,7 +1039,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
       const seenMediaIds = new Set();
       for (const row of eligibleRows) { const mediaId = Number(row.media.id); if (seenMediaIds.has(mediaId)) continue; seenMediaIds.add(mediaId); uniqueEligibleRows.push(row); }
       const searchedRows = filterAiringRowsBySearch(uniqueEligibleRows, search);
-      const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), { resolveMappings, resolveSecondaryMappings, resolveAlternativeMappings, resolveCanonicalSeriesMappings, resolveImdbMappings });
+      const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), { resolveMappings, resolveSecondaryMappings, resolveAlternativeMappings, resolveCanonicalSeriesMappings: canonicalSeriesResolver, resolveImdbMappings });
       const metas = [];
       const usedIdentities = new Set();
       for (const row of searchedRows) {
