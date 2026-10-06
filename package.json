@@ -7,6 +7,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "compare:snapshots": "node scripts/compare-catalog-snapshots.js"
   }
 }
