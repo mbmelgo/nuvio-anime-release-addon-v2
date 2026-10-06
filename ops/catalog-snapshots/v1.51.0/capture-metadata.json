@@ -1,8 +1,14 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "releaseVersion": "1.51.0",
-  "capturedAt": "2026-10-06T03:31:17.697217Z",
+  "capturedAt": "2026-10-06T03:43:27.580102Z",
   "productionBaseUrl": "https://nuvio-anime-release-addon-v2.vercel.app",
+  "pagination": {
+    "pageSize": 50,
+    "queryParameter": "skip",
+    "termination": "empty-page",
+    "maxPages": 1000
+  },
   "catalogs": [
     "current_season",
     "previous_season",
@@ -11,18 +17,48 @@
     "previous_7_days"
   ],
   "itemCounts": {
-    "current_season": 50,
-    "previous_season": 50,
-    "upcoming_season": 50,
-    "upcoming_5_days": 50,
-    "previous_7_days": 50
+    "current_season": 96,
+    "previous_season": 107,
+    "upcoming_season": 54,
+    "upcoming_5_days": 78,
+    "previous_7_days": 93
+  },
+  "pageCounts": {
+    "current_season": 2,
+    "previous_season": 3,
+    "upcoming_season": 2,
+    "upcoming_5_days": 2,
+    "previous_7_days": 2
   },
   "sha256": {
-    "current_season": "deb261f9066b27b8c4aeb0f2c440cc5971cab0fa5838cf3e1a4d9b5f001cd2a5",
-    "previous_season": "eec25093530270530caf8a442c95003edf4980de134f96db92bb53021d6ea36d",
-    "upcoming_season": "2b7bbb8085589889828b9799ffdd09a3549525967e4b96a43e188440209413d4",
-    "upcoming_5_days": "402d6200e5da4192144941a3c6e8665ea16691e572b5d11608e16d33e5a28059",
-    "previous_7_days": "7606b1286a6885eecb6bc43d310e9d47934605ee2091117ccb39d7260d72bbaf",
+    "current_season": "66195099bf2288bd7b95ce720e8a6830529df7873b181096e7ddc358d7d6df4b",
+    "previous_season": "84b4583fc4dd514c8544f15bbe494184d9cdfc5039e185647327d1f67da80516",
+    "upcoming_season": "6313f75f93b3c16dd63ff8204c829bb3ec484acc8ea587aa6dd7baecb41eb611",
+    "upcoming_5_days": "95010eab1b2bddcebfe6defda2fc010fb3d1c968d52ae2aecbd2271660634d9c",
+    "previous_7_days": "95fca85982702fee50666bedc8b46a0cc11b5214968fe9a0692e3dde00e31ac5",
     "manifest": "76cdfa8becd36628e645d7c9a3d1cae3b122d4d894acc948f95ed3f502bdffe8"
+  },
+  "pageSha256": {
+    "current_season": {
+      "page-0001.json": "deb261f9066b27b8c4aeb0f2c440cc5971cab0fa5838cf3e1a4d9b5f001cd2a5",
+      "page-0002.json": "64d0337b8d2386c208d8a63a13341c48ca4c65b86d80c7d5e08370395ba953cf"
+    },
+    "previous_season": {
+      "page-0001.json": "eec25093530270530caf8a442c95003edf4980de134f96db92bb53021d6ea36d",
+      "page-0002.json": "cafc7fb8bdc816927fe7069ba7e3d67dbe7841c220785acaaf80b8f1da0b1b85",
+      "page-0003.json": "dbb74457fcbc15a3f20d9967045efd6ad7b44314f9b04fc7d5f67b741c328a1b"
+    },
+    "upcoming_season": {
+      "page-0001.json": "2b7bbb8085589889828b9799ffdd09a3549525967e4b96a43e188440209413d4",
+      "page-0002.json": "74ea57de16e21f0aa119a5926d6ae9a2707d8a074505b640e4ea9984d0ac49dd"
+    },
+    "upcoming_5_days": {
+      "page-0001.json": "402d6200e5da4192144941a3c6e8665ea16691e572b5d11608e16d33e5a28059",
+      "page-0002.json": "668f27c7f591ea86ef60e4daf7bee99ad8a8ec2d95be941162fa47c3d5a495ef"
+    },
+    "previous_7_days": {
+      "page-0001.json": "7606b1286a6885eecb6bc43d310e9d47934605ee2091117ccb39d7260d72bbaf",
+      "page-0002.json": "2cda215ff1855b339f7ef840799f249cdb52c3c787b3644d4603fd04aeab1e05"
+    }
   }
 }
