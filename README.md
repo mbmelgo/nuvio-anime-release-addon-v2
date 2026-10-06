@@ -3,7 +3,7 @@
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
 [![MAL](https://img.shields.io/badge/MyAnimeList-identity-2e51a2.svg)](https://myanimelist.net)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
-[![Version](https://img.shields.io/badge/version-1.56.4-blue.svg)](https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases)
+[![Version](https://img.shields.io/badge/version-1.56.5-blue.svg)](https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases)
 
 > A lightweight, season-aware anime release catalog for Nuvio and Stremio-compatible clients.
 
@@ -193,7 +193,7 @@ Catalog names and season labels are generated dynamically.
 ## 🚀 Current release
 
 **Production:** `v1.56.0`  
-**Development:** `v1.56.4` — release candidate with canonical seasonal-series identity anchoring
+**Development:** `v1.56.5` — release candidate with canonical seasonal-series identity anchoring
 **Major baseline:** `v1.0.0`
 
 The 1.56.0 release anchors seasonal/installment catalog entries to their canonical franchise series identity for scraper-facing provider IDs while preserving the specific seasonal display metadata.\n\nThe 1.42.0 release switches active identity resolution to TMDB-backed matching, upgrades strong TMDB matches to IMDb when available, and retains TMDB identities when IMDb is unavailable. BingeCat API integration was later removed because its public endpoint is not usable by the addon and its private endpoint requires authenticated session access.
