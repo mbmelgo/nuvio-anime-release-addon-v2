@@ -93,3 +93,67 @@ test("catalog preserves MAL identity when no provider mapping is available", asy
   assert.equal(metas[0].id, "mal:271");
   assert.equal(metas[0].extra.identityEvidence, "canonical-mal-id-fallback");
 });
+
+test("catalog retries IMDb after relation protection invalidates an early provider mapping", async () => {
+  const metas = await canonicalizeCatalogPage([{
+    ...row(272, 272),
+    title: { english: "Link Click Season 3", romaji: "Shiguang Dailiren III" },
+    startDate: { year: 2026 },
+    relations: {
+      edges: [{
+        relationType: "PREQUEL",
+        node: {
+          id: 271272,
+          format: "TV",
+          title: { english: "Link Click" },
+          startDate: { year: 2021 },
+          externalLinks: [{ site: "IMDb", url: "https://www.imdb.com/title/tt14976292/" }],
+        },
+      }],
+    },
+  }], {
+    resolveMappings: async (ids) => ids.includes(272)
+      ? new Map([[272, [{
+        source: "arm",
+        anilistId: 272,
+        type: "TV",
+        imdbIds: ["tt14976292"],
+        tvdbId: null,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: "Link Click",
+        year: 2021,
+      }]]])
+      : new Map(),
+    resolveFribbMappings: empty,
+    resolveExternalMappings: () => new Map(),
+    resolveAniBridgeMappings: empty,
+    resolveTMDBMappings: empty,
+    resolveAnimapMappings: empty,
+    resolveIdMapperMappings: empty,
+    resolveAnimeMapperMappings: empty,
+    resolveAnimeMapperRelatedProviderIds: empty,
+    resolveTsvMappings: empty,
+    resolveImdbMappings: async (rows) => new Map(rows.some((r) => Number(r.id) === 272) ? [[272, [{
+      source: "imdb-search",
+      anilistId: 272,
+      type: "TV",
+      imdbIds: ["tt14976292"],
+      tvdbId: null,
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+      title: "Link Click Season 3",
+      titles: ["Link Click"],
+      derivedTitle: true,
+      derivedInstallmentTitle: true,
+      derivedSearchTitle: "Link Click",
+      relation: false,
+    }]]] : []),
+    resolveSecondaryMappings: empty,
+    resolveAlternativeMappings: empty,
+  });
+
+  assert.equal(metas[0].id, "tt14976292");
+  assert.equal(metas[0].extra.identityProvider, "imdb");
+  assert.ok(metas[0].extra.identityEvidence.some((entry) => entry.source === "imdb-search"));
+});
