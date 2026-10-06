@@ -860,7 +860,9 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
       const selected = independentlyVerifiedImdb
         || (tmdbSelected?.provider === "imdb" ? tmdbSelected : providerSelected);
       usedIdentities.add(selected.stremioId);
-      if (tmdbSelected?.provider === "imdb") {
+      if (independentlyVerifiedImdb) {
+        metas.push({ ...meta, id: selected.stremioId, extra: { ...meta.extra, identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence } });
+      } else if (tmdbSelected?.provider === "imdb") {
         metas.push({ ...meta, id: tmdbSelected.stremioId, extra: { ...meta.extra, tmdbProvider: tmdbSelected.provider, tmdbId: tmdbSelected.id, tmdbEvidence: "tmdb-search" } });
       } else {
         metas.push({ ...meta, id: selected.stremioId, extra: { ...meta.extra, identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence } });
