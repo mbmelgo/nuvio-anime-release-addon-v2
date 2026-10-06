@@ -128,6 +128,7 @@ async function resolveMappingsForRows(
     resolveTMDBMappings = resolveAniListMappingsByTMDB,
     resolveAnimeMapperMappings = resolveAniListMappingsByAnimeMapper,
     resolveAnimeMapperRelatedProviderIds = resolveAniListRelatedProviderIdsByAnimeMapper,
+    resolveCanonicalSeriesMappings = resolveAniListCanonicalSeriesByAnimeMapper,
     resolveAniBridgeMappings = resolveAniListMappingsByAniBridge,
     resolveTsvMappings = resolveAniListMappingsFromAnimeApiTsv,
     resolveImdbMappings = resolveAniListMappingsByImdbSearch,
@@ -342,7 +343,7 @@ async function resolveMappingsForRows(
   // AniList identity and display metadata remain unchanged while the
   // scraper-facing provider identity is anchored to the canonical series.
   try {
-    const canonicalRoots = await resolveAniListCanonicalSeriesByAnimeMapper(rows);
+    const canonicalRoots = await resolveCanonicalSeriesMappings(rows);
     const canonicalRows = [];
     const canonicalByCurrentId = new Map();
     for (const [currentId, root] of canonicalRoots instanceof Map ? canonicalRoots : []) {
