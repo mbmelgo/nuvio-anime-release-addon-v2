@@ -38,14 +38,12 @@ jobs:
           current = re.search(r'ADDON_VERSION = "([^"]+)"', version_path.read_text()).group(1)
           major, minor, patch = map(int, current.split("."))
           next_version = f"{major}.{minor}.{patch + 1}"
-          version_path.write_text(f'export const ADDON_VERSION = "{next_version}";
-')
+          version_path.write_text(f'export const ADDON_VERSION = "{next_version}";\\n')
 
           package_path = Path("package.json")
           package = json.loads(package_path.read_text())
           package["version"] = next_version
-          package_path.write_text(json.dumps(package, indent=2) + "
-")
+          package_path.write_text(json.dumps(package, indent=2) + "\\n")
 
           readme_path = Path("README.md")
           readme = readme_path.read_text()
