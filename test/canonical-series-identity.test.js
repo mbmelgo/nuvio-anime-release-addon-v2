@@ -18,10 +18,10 @@ function createFetch(records) {
   };
 }
 
-function record(mal, anilist, title, sequence = [], year = 2026, type = "TV", mappings = {}) {
+function record(mal, anilist, title, sequence = [], year = 2026, type = "TV", mappings = {}, synonyms = []) {
   return {
     mappings: { mal, anilist, ...mappings },
-    title: { english: title, romaji: title, native: title },
+    title: { english: title, romaji: title, native: title, synonyms },
     type,
     year,
     sequence,
@@ -69,7 +69,10 @@ test("canonical series resolver stops at a franchise sequel with a different ser
   const fetchImpl = createFetch({
     61469: record(61469, 210482, "Steel Ball Run: JoJo's Bizarre Adventure", [
       { malId: 51367, title: { english: "JoJo's Bizarre Adventure: Stone Ocean Part 2" }, format: "ONA", seasonYear: 2022, relationType: "PREQUEL" },
-    ], 2026, "ONA", { tmdb: 45790, tvdb: 262954, trakt: 45537 }),
+    ], 2026, "ONA", { tmdb: 45790, tvdb: 262954, trakt: 45537 }, [
+      "JoJo's Bizarre Adventure",
+      "JoJo's Bizarre Adventure: Part 7 - Steel Ball Run",
+    ]),
     51367: record(51367, 146722, "JoJo's Bizarre Adventure: Stone Ocean Part 2", [
       { malId: 48661, title: { english: "JoJo's Bizarre Adventure: Stone Ocean" }, format: "ONA", seasonYear: 2021, relationType: "PREQUEL" },
     ], 2022, "ONA", { tmdb: 45790, tvdb: 262954, trakt: 45537 }),
