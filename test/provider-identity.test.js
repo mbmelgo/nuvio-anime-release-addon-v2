@@ -104,3 +104,55 @@ test("provider identity rejects a shorter one-word IMDb title from a multi-word 
   const selected = selectProviderIdentity(row, getProviderCandidates(row, records));
   assert.equal(selected, null);
 });
+
+
+test("related provider protection accepts a corroborated current-title identity when the first mapping lacks semantic metadata", () => {
+  const media = {
+    anilistId: 191832,
+    format: "ONA",
+    startDate: { year: 2026 },
+    title: { english: "Link Click Season 3", romaji: "Shiguang Dailiren III", native: "时光代理人 第三季" },
+    synonyms: [],
+    relations: { edges: [{ relationType: "PREQUEL", node: { id: 170166, title: { english: "Link Click: Bridon Arc" } } }] },
+    relatedProviderIds: ["imdb:tt14976292"],
+    relatedProviderTitles: ["Link Click: Bridon Arc"],
+  };
+  const records = [
+    { source: "arm", anilistId: 191832, type: "TV", imdbIds: ["tt14976292"], title: null, year: null },
+    { source: "imdb-search", anilistId: 191832, type: "TV", imdbIds: ["tt14976292"], title: "Link Click Season 3", titles: ["Link Click"], derivedTitle: true, derivedInstallmentTitle: true, derivedSearchTitle: "Link Click", year: null },
+  ];
+  assert.equal(selectProviderIdentity(media, getProviderCandidates(media, records))?.id, "tt14976292");
+});
+
+test("related provider protection still rejects a parent-only identity without current-title corroboration", () => {
+  const media = {
+    anilistId: 155723,
+    format: "ONA",
+    startDate: { year: 2026 },
+    title: { english: null, romaji: "Wushen Zhuzai: Da Wei Pian", native: "武神主宰：大威篇" },
+    synonyms: [],
+    relations: { edges: [{ relationType: "PREQUEL", node: { id: 117168, title: { english: "The God of War Dominates" } } }] },
+    relatedProviderIds: ["imdb:tt20769560"],
+    relatedProviderTitles: ["The God of War Dominates"],
+  };
+  const records = [{ source: "arm", anilistId: 155723, type: "TV", imdbIds: ["tt20769560"], title: null, year: null }];
+  assert.equal(selectProviderIdentity(media, getProviderCandidates(media, records)), null);
+});
+
+test("related provider protection accepts exact Detective Conan corroboration", () => {
+  const media = {
+    anilistId: 235,
+    format: "TV",
+    startDate: { year: 1996 },
+    title: { english: "Detective Conan", romaji: "Meitantei Conan", native: "名探偵コナン" },
+    synonyms: ["Case Closed"],
+    relations: { edges: [{ relationType: "SIDE_STORY", node: { id: 112094, title: { romaji: "Meitantei Conan: Keisatsu Gakkou-hen - Wild Police Story" } } }] },
+    relatedProviderIds: ["imdb:tt0131179"],
+    relatedProviderTitles: ["Meitantei Conan: Keisatsu Gakkou-hen - Wild Police Story"],
+  };
+  const records = [
+    { source: "arm", anilistId: 235, type: "TV", imdbIds: ["tt0131179"], title: null, year: null },
+    { source: "imdb-search", anilistId: 235, type: "TV", imdbIds: ["tt0131179"], title: "Detective Conan", titles: ["Detective Conan"], derivedTitle: true, derivedSearchTitle: "Detective Conan", year: null },
+  ];
+  assert.equal(selectProviderIdentity(media, getProviderCandidates(media, records))?.id, "tt0131179");
+});
