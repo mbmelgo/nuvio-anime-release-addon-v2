@@ -885,11 +885,32 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
     const rawMeta = toCatalogIdentity(toMetaFromAniList(anilistId, row));
     if (!rawMeta) { unresolvedIds.push(anilistId); continue; }
     const meta = normalizeSeasonalCatalogMetaTypes([rawMeta])[0];
-    const tmdbSelected = selectTMDBIdentity({ ...row, anilistId }, mappings.get(anilistId) || [], { excludeIds: usedIdentities });
     const providerCandidates = getProviderCandidates(
       { ...row, anilistId },
       mappings.get(anilistId) || [],
     );
+    const canonicalSeriesSelected = selectProviderIdentity(
+      { ...row, anilistId },
+      providerCandidates.filter((candidate) => candidate.canonicalSeries === true),
+    );
+    if (canonicalSeriesSelected) {
+      metas.push({
+        ...meta,
+        id: canonicalSeriesSelected.stremioId,
+        extra: {
+          ...meta.extra,
+          identityProvider: canonicalSeriesSelected.provider,
+          identityId: canonicalSeriesSelected.id,
+          identityCanonicalSeries: true,
+          identityCanonicalSeriesAnilistId: canonicalSeriesSelected.canonicalSeriesAnilistId,
+          identityCanonicalSeriesMalId: canonicalSeriesSelected.canonicalSeriesMalId,
+          identityCanonicalSeriesTitle: canonicalSeriesSelected.canonicalSeriesTitle,
+          identityEvidence: canonicalSeriesSelected.evidence,
+        },
+      });
+      continue;
+    }
+    const tmdbSelected = selectTMDBIdentity({ ...row, anilistId }, mappings.get(anilistId) || [], { excludeIds: usedIdentities });
     const providerSelected = selectProviderIdentity(
       { ...row, anilistId },
       providerCandidates,
@@ -995,6 +1016,32 @@ export async function buildRollingCatalog(id, date, skip, search, {
         const media = row.media; const mediaId = Number(media.id);
         const baseMeta = toCatalogIdentity(toMetaFromAniList(mediaId, media));
         if (!baseMeta) continue;
+        const providerCandidates = getProviderCandidates(media, mappings.get(mediaId) || []);
+        const canonicalSeriesSelected = selectProviderIdentity(
+          { ...media, anilistId: mediaId },
+          providerCandidates.filter((candidate) => candidate.canonicalSeries === true),
+        );
+        if (canonicalSeriesSelected) {
+          metas.push({
+            ...baseMeta,
+            id: canonicalSeriesSelected.stremioId,
+            extra: {
+              ...baseMeta.extra,
+              identityProvider: canonicalSeriesSelected.provider,
+              identityId: canonicalSeriesSelected.id,
+              identityCanonicalSeries: true,
+              identityCanonicalSeriesAnilistId: canonicalSeriesSelected.canonicalSeriesAnilistId,
+              identityCanonicalSeriesMalId: canonicalSeriesSelected.canonicalSeriesMalId,
+              identityCanonicalSeriesTitle: canonicalSeriesSelected.canonicalSeriesTitle,
+              identityEvidence: canonicalSeriesSelected.evidence,
+              episode: row.episode,
+              airingAt: row.airingAt,
+              ...(futureOnly ? { nextEpisode: row.episode, nextAiringAt: row.airingAt } : {}),
+            },
+            type: "series",
+          });
+          continue;
+        }
         const tmdbSelected = selectTMDBIdentity({ ...media, anilistId: mediaId }, mappings.get(mediaId) || [], { excludeIds: usedIdentities });
         const providerSelected = selectProviderIdentity(
           { ...media, anilistId: mediaId },
