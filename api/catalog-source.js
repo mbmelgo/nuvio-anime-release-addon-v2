@@ -695,9 +695,14 @@ async function resolveRelatedProviderIds(rows, {
 }
 
 export function isSelectedIdentityProtected(media, candidates) {
-  const selected = selectProviderIdentity(media, candidates);
+  const originalCandidates = Array.isArray(candidates) ? candidates : [];
+  const preProtectionCandidates = originalCandidates.map((candidate) => ({
+    ...candidate,
+    relatedProviderIds: [],
+  }));
+  const selected = selectProviderIdentity(media, preProtectionCandidates);
   if (!selected) return false;
-  return (Array.isArray(candidates) ? candidates : []).some((candidate) =>
+  return originalCandidates.some((candidate) =>
     candidate.provider === selected.provider
     && String(candidate.id) === String(selected.id)
     && candidate.relatedProviderIds?.includes(`${candidate.provider}:${candidate.id}`),
