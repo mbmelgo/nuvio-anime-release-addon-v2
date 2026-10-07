@@ -29,6 +29,7 @@ on:
 permissions:
   contents: write
   statuses: read
+  actions: write
 
 concurrency:
   group: main-release-pipeline
@@ -412,3 +413,16 @@ jobs:
           git add ops/release-state.json README.md
           git commit -m "chore: record $tag production release [skip-release-pipeline] [capture-catalog]"
           git push origin HEAD:main
+
+      - name: Trigger post-release catalog snapshot
+        if: steps.gate.outputs.release == 'true' && inputs.dry_run != true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          release_version="$(python -c 'import json;print(json.load(open("ops/release-state.json"))["lastDeploymentVersion"])')"
+          gh workflow run catalog-snapshot.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f release_version="$release_version" \
+            -f release_sha="${{ steps.gate.outputs.release_target_sha }}"

@@ -37,4 +37,9 @@ test("release pipeline only allocates a runner for release or manual requests", 
   assert.ok(sync.includes("'[finalize-prod:'"));
   assert.ok(!sync.includes("name: Bump patch version and sync metadata"));
   assert.ok(sync.includes("name: Run full CI"));
+  assert.ok(sync.includes("actions: write"));
+  assert.ok(sync.includes("name: Trigger post-release catalog snapshot"));
+  assert.ok(sync.includes("gh workflow run catalog-snapshot.yml"));
+  assert.ok(sync.includes("-f release_version="));
+  assert.ok(sync.includes("-f release_sha="));
 });
