@@ -41,9 +41,17 @@ test("catalog anchors Bleach TYBW with a parent relation while preserving standa
     },
   ]]);
 
-  const directMappings = new Map([[
-    210482,
-    [{
+  const directMappings = new Map([
+    [185874, [{
+      source: "imdb-search",
+      anilistId: 185874,
+      type: "TV",
+      imdbIds: ["tt14986406"],
+      title: "Bleach: Thousand-Year Blood War",
+      titles: ["Bleach: Thousand-Year Blood War"],
+      year: 2022,
+    }]],
+    [210482, [{
       source: "imdb-search",
       anilistId: 210482,
       type: "TV",
@@ -51,8 +59,8 @@ test("catalog anchors Bleach TYBW with a parent relation while preserving standa
       title: "Steel Ball Run: JoJo's Bizarre Adventure",
       titles: ["Steel Ball Run: JoJo's Bizarre Adventure"],
       year: 2026,
-    }],
-  ]]);
+    }]],
+  ]);
 
   let canonicalCalls = 0;
   const resolveImdbMappings = async (canonicalRows) => new Map(
