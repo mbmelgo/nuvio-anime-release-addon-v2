@@ -990,13 +990,18 @@ function getCanonicalMalId(row, meta, mappingRecords) {
   return null;
 }
 
+export function normalizeCatalogOptions(options) {
+  return options && typeof options === "object" ? options : {};
+}
+
 export async function canonicalizeCatalogPage(mediaRows, options = {}) {
+  const normalizedOptions = normalizeCatalogOptions(options);
   const normalizedRows = Array.isArray(mediaRows)
     ? mediaRows.map((row) => (typeof row === "object" && row !== null ? row : { id: row }))
       .filter((row) => /^\d+$/.test(String(row.id ?? "").trim()))
     : [];
   if (!normalizedRows.length) return [];
-  const mappings = await resolveMappingsForRows(normalizedRows, options);
+  const mappings = await resolveMappingsForRows(normalizedRows, normalizedOptions);
   const metas = [];
   const usedIdentities = new Set();
   const unresolvedIds = [];
@@ -1270,7 +1275,7 @@ export async function buildCatalog(id, info, skip, search, diagnostics = null) {
       filter,
       skip,
       search,
-      canonicalizePage: (rows, pageDiagnostics) => canonicalizeCatalogPage(rows, pageDiagnostics),
+      canonicalizePage: (rows, pageDiagnostics) => canonicalizeCatalogPage(rows, { diagnostics: pageDiagnostics }),
       diagnostics,
     });
   }
