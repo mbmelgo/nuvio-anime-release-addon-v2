@@ -192,7 +192,7 @@ Catalog names and season labels are generated dynamically.
 
 ## 🚀 Current release
 
-**Production:** `v1.57.0`  
+**Production:** `v1.58.0`  
 **Development:** `v1.58.0` — release candidate with optimized canonical-series resolution for catalog performance
 **Major baseline:** `v1.0.0`
 
