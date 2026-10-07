@@ -165,8 +165,11 @@ async function resolveMappingsForRows(
   let mappings = new Map();
 
   try {
+    const stageStart = diagnostics ? performance.now() : 0;
     mappings = await resolveMappings(ids);
+    if (diagnostics) diagnostics.arm = performance.now() - stageStart;
   } catch (error) {
+    if (diagnostics) diagnostics.arm = performance.now() - stageStart;
     console.error("[identity] ARM mapping failed; using secondary mapping sources", error);
   }
 
