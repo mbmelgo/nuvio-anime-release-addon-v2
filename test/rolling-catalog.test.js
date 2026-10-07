@@ -191,3 +191,27 @@ test("rolling catalog preserves an entry with AniList fallback when no provider 
   assert.equal(result[0].id, "anilist:900998");
   assert.equal(result[0].extra.identityEvidence, "anilist-id-fallback");
 });
+
+
+test("rolling catalogs enforce the exact requested time range after schedule cache bucketing", async () => {
+  const now = new Date("2026-10-01T00:00:00.000Z");
+  const rows = [
+    schedule(1, now.getTime() - 1, 1),
+    schedule(2, now.getTime() + 60_000, 1, "Inside"),
+    schedule(3, now.getTime() + (5 * 24 * 60 * 60 * 1000) + 1, 1),
+  ];
+  const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+    fetchPage: async () => rows,
+    maxPages: 1,
+    resolveMappings: async (ids) => new Map(ids.map((id) => [id, [{
+      source: "test",
+      anilistId: id,
+      type: "TV",
+      imdbIds: [`tt${10000000 + id}`],
+      tvdbId: null,
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+    }]])),
+  });
+  assert.deepEqual(result.map((meta) => meta.id), ["tt10000002"]);
+});
