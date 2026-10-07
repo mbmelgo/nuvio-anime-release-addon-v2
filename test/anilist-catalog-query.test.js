@@ -111,3 +111,24 @@ test("airing schedule queries include relation titles needed by rolling identity
     globalThis.fetch = originalFetch;
   }
 });
+
+
+test("airing schedule query buckets moving time windows for cache reuse", async () => {
+  const originalFetch = globalThis.fetch;
+  const requests = [];
+  globalThis.fetch = async (_url, options) => {
+    requests.push(JSON.parse(options.body));
+    return new Response(JSON.stringify({ data: { Page: { airingSchedules: [] } } }), { status: 200 });
+  };
+
+  try {
+    const base = 1_800_000_000_000;
+    await queryAiringSchedulePage(base + 1_000, base + 86_401_000, true, 1);
+    await queryAiringSchedulePage(base + 10_000, base + 86_410_000, true, 1);
+    assert.equal(requests.length, 1);
+    assert.equal(requests[0].variables.start % 30, 0);
+    assert.equal(requests[0].variables.end % 30, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
