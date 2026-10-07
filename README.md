@@ -192,7 +192,7 @@ Catalog names and season labels are generated dynamically.
 
 ## 🚀 Current release
 
-**Production:** `v1.68.0`  
+**Production:** `v1.69.0`  
 **Development:** `v1.69.0` — Vercel Fluid Compute cold-start optimization
 
 Post-release production catalog snapshots are captured automatically after each controlled release and retained on versioned `catalog-snapshots/*` branches.
