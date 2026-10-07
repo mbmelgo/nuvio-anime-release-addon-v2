@@ -4,7 +4,7 @@
   "legacyProtocolType": "anime",
   "requestCapture": "per-page GET request metadata and raw JSON response",
   "releaseVersion": "1.70.0",
-  "capturedAt": "2026-10-07T10:39:56.670289Z",
+  "capturedAt": "2026-10-07T11:34:14.883256Z",
   "productionBaseUrl": "https://nuvio-anime-release-addon-v2.vercel.app",
   "pagination": {
     "pageSize": 50,
@@ -34,16 +34,16 @@
     "previous_7_days": 3
   },
   "sha256": {
-    "current_season": "57a6cd9e3b6d5fcd8052d5f1a4b38cc61de1f67caad6b843ea6ceab576541168",
+    "current_season": "e5f4c775862d66fa16c280a80ab9321d593b947ad9fb62b975f974ad15383da5",
     "previous_season": "9a692c3274c802afef8dc522e667f25ff8a5ef02c5e2ac28700d113745a856b3",
-    "upcoming_season": "ef9795cf237ca43f81974440b934e2d35a42078098a27552a9ce2dd4efff9e4b",
+    "upcoming_season": "bcf344116f2557e0853c1c814e51b67689bfbe3b2465c1020b1aa1a0331b33a6",
     "upcoming_5_days": "c0d89ce6e064e8046d0f5cb0821c22559a43a3743aa8ac643d5ec0cf911e11ba",
     "previous_7_days": "23dd83fb10368f27d1847a16a5a26b6b49fc061105f533da1bd8e963885bd694",
     "manifest": "1be23856b8ebc062989e89681d19f7574e23223305d557081370951b262927de"
   },
   "pageSha256": {
     "current_season": {
-      "page-0001.json": "7da4c2c72ad563faecbb8574edb47731f839e61400598083172d52d1547abae6",
+      "page-0001.json": "a64a7503dfd9cafb6868c96de22856748af7c5ba3c0d5aa3c1589b70167fdc95",
       "page-0002.json": "ec57a735052457151c4b6bb53d083bfad2802fc11668e6935d723b051b14fd73",
       "page-0003.json": "900fd9f08899d41cab8734b696e0a528df81e7e6bf7790dc5b3d25b2c3a2219a"
     },
@@ -65,7 +65,7 @@
       "page-0004.request.json": "44f8e1dedfcd33b1fc2d0d63e46d77dd81c5c1a32102bd470a96c033ab918ee2"
     },
     "upcoming_season": {
-      "page-0001.json": "8baca837d12016ab9b32ee0d6b8a96a59c47f9330b86da5402b0ab69b4e2811b",
+      "page-0001.json": "ed39c7bf8562e0fbb9c69d86db3c01720860e4733acb6cda9f7a15401129a703",
       "page-0002.json": "5a9825f4c7cc07dc2b21338e2df81eded8d89b0a976fbf0fd99526835d1613ca",
       "page-0003.json": "900fd9f08899d41cab8734b696e0a528df81e7e6bf7790dc5b3d25b2c3a2219a"
     },
