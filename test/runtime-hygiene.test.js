@@ -76,6 +76,11 @@ test("README and home page describe the current provider identity release", asyn
   assert.doesNotMatch(home, /AniList-only/);
 });
 
+test("Vercel configuration enables Fluid Compute for production functions", async () => {
+  const config = JSON.parse(await readFile("vercel.json", "utf8"));
+  assert.equal(config.fluid, true);
+});
+
 test("home page uses only canonical unversioned catalog URLs", async () => {
   const source = await readFile("api/home-selector.js", "utf8");
   assert.doesNotMatch(source, /\/v5\//);
