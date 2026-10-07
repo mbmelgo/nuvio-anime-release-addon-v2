@@ -481,9 +481,7 @@ async function resolveMappingsForRows(
   const relationRetryRows = rows.filter((row) => {
     const media = { ...row, anilistId: Number(row.id) };
     const candidates = getProviderCandidates(media, mappings.get(Number(row.id)) || []);
-    return candidates.some((candidate) =>
-      candidate.relatedProviderIds?.includes(`${candidate.provider}:${candidate.id}`),
-    );
+    return isSelectedIdentityProtected(media, candidates);
   });
   if (relationRetryRows.length) {
     try {
@@ -696,6 +694,12 @@ async function resolveRelatedProviderIds(rows, {
   return new Map([...result.entries()].map(([id, idsForRow]) => [id, [...idsForRow]]));
 }
 
+export function isSelectedIdentityProtected(media, candidates) {
+  // If relation protection still leaves a valid provider identity, the
+  // expensive IMDb retry cannot change the selected provider. If protection
+  // invalidates every candidate, retain the retry as the recovery path.
+  return !selectProviderIdentity(media, candidates);
+}
 function parseRelatedProviderLinks(links) {
   const ids = [];
   for (const link of Array.isArray(links) ? links : []) {
