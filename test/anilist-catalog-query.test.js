@@ -104,17 +104,8 @@ test("airing schedule queries include relation titles needed by rolling identity
     assert.match(request.query, /relationType/);
     assert.match(request.query, /node\s*\{\s*id\s+format\s+title/);
     assert.match(request.query, /externalLinks\s*\{\s*site url\s*\}/);
-    assert.match(request.query, /countryOfOrigin/);
+    assert.doesNotMatch(request.query, /countryOfOrigin/);
   } finally {
     globalThis.fetch = originalFetch;
   }
-});
-
-
-test("rolling schedule media payload omits unused countryOfOrigin field", async () => {
-  const source = await readFile(new URL("../lib/catalog-anilist.js", import.meta.url), "utf8");
-  const scheduleStart = source.indexOf("export const SCHEDULE_MEDIA_FIELDS = `");
-  const scheduleEnd = source.indexOf("`;\n\nexport async function queryAnime", scheduleStart);
-  const scheduleFields = source.slice(scheduleStart, scheduleEnd);
-  assert.equal(scheduleFields.includes("countryOfOrigin"), false);
 });
