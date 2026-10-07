@@ -343,7 +343,13 @@ async function resolveMappingsForRows(
   // AniList identity and display metadata remain unchanged while the
   // scraper-facing provider identity is anchored to the canonical series.
   try {
-    const canonicalRoots = await resolveCanonicalSeriesMappings(rows);
+    // Canonical-series traversal is a network-heavy fallback. Only rows that
+    // actually expose a parent/prequel relation can resolve to a different
+    // canonical root, so avoid crawling unrelated standalone entries.
+    const canonicalCandidates = rows.filter((row) => hasCanonicalSeriesRelation(row));
+    const canonicalRoots = canonicalCandidates.length
+      ? await resolveCanonicalSeriesMappings(canonicalCandidates)
+      : new Map();
     const canonicalRows = [];
     const canonicalByCurrentId = new Map();
     for (const [currentId, root] of canonicalRoots instanceof Map ? canonicalRoots : []) {
@@ -498,6 +504,15 @@ function hasExplicitProviderRelations(row) {
   return Array.isArray(row?.relations?.edges)
     && row.relations.edges.some((edge) => ["PARENT", "PREQUEL", "SEQUEL", "SPIN_OFF", "SIDE_STORY"]
       .includes(String(edge?.relationType || "").toUpperCase()));
+}
+
+function hasCanonicalSeriesRelation(row) {
+  return Array.isArray(row?.relations?.edges)
+    && row.relations.edges.some((edge) =>
+      ["PARENT", "PREQUEL"].includes(String(edge?.relationType || "").toUpperCase())
+      && Number.isInteger(Number(edge?.node?.id))
+      && Number(edge.node.id) > 0,
+    );
 }
 
 async function resolveRelatedProviderIds(rows, {
