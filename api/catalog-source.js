@@ -63,6 +63,16 @@ export function getSeasonInfo(date) {
   return getSeasonInfoValue(date);
 }
 
+let catalogRequestSeen = false;
+
+export function formatCatalogDiagnostics(durationMs, coldStart) {
+  const normalizedDuration = Math.max(0, Math.round(Number(durationMs) || 0));
+  return {
+    "X-Nuvio-Catalog-Duration-Ms": String(normalizedDuration),
+    "X-Nuvio-Cold-Start": coldStart ? "1" : "0",
+  };
+}
+
 export default async function handler(req, res) {
   const url = new URL(req.url, `https://${req.headers.host || "localhost"}`);
   const parts = url.pathname.split("/").filter(Boolean);
@@ -75,6 +85,10 @@ export default async function handler(req, res) {
   const id = rawId ? decodeURIComponent(String(rawId).replace(/\.json$/, "")) : "";
   const now = new Date();
   const seasonInfo = getSeasonInfo(now);
+  const diagnosticsEnabled = String(query.diagnostics || "") === "1";
+  const diagnosticsStart = diagnosticsEnabled ? performance.now() : 0;
+  const coldStart = !catalogRequestSeen;
+  catalogRequestSeen = true;
 
   if (req.method === "OPTIONS") return send(res, {}, 200);
 
@@ -85,10 +99,11 @@ export default async function handler(req, res) {
     try {
       const skip = Math.max(0, Number(query.skip || 0) || 0);
       const search = String(query.search || "").trim();
-      return send(res, { metas: await buildCatalog(id, seasonInfo, skip, search) });
+      const metas = await buildCatalog(id, seasonInfo, skip, search);
+      return send(res, { metas }, 200, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart) : null, diagnosticsEnabled);
     } catch (error) {
       console.error("[catalog] request failed", { id, skip: query.skip, search: query.search, error });
-      return send(res, { metas: [] }, 500);
+      return send(res, { metas: [] }, 500, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart) : null, diagnosticsEnabled);
     }
   }
 
@@ -1216,12 +1231,13 @@ export async function buildCatalog(id, info, skip, search) {
   return [];
 }
 
-function send(res, body, status = 200) {
+function send(res, body, status = 200, extraHeaders = null, diagnosticsEnabled = false) {
   res.status(status);
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400, stale-if-error=86400");
+  res.setHeader("Cache-Control", diagnosticsEnabled ? "no-store" : "public, s-maxage=3600, stale-while-revalidate=86400, stale-if-error=86400");
+  for (const [name, value] of Object.entries(extraHeaders || {})) res.setHeader(name, value);
   return res.json(body);
 }
