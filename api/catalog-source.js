@@ -481,9 +481,7 @@ async function resolveMappingsForRows(
   const relationRetryRows = rows.filter((row) => {
     const media = { ...row, anilistId: Number(row.id) };
     const candidates = getProviderCandidates(media, mappings.get(Number(row.id)) || []);
-    return candidates.some((candidate) =>
-      candidate.relatedProviderIds?.includes(`${candidate.provider}:${candidate.id}`),
-    );
+    return isSelectedIdentityProtected(media, candidates);
   });
   if (relationRetryRows.length) {
     try {
@@ -694,6 +692,16 @@ async function resolveRelatedProviderIds(rows, {
   }
 
   return new Map([...result.entries()].map(([id, idsForRow]) => [id, [...idsForRow]]));
+}
+
+export function isSelectedIdentityProtected(media, candidates) {
+  const selected = selectProviderIdentity(media, candidates);
+  if (!selected) return false;
+  return (Array.isArray(candidates) ? candidates : []).some((candidate) =>
+    candidate.provider === selected.provider
+    && String(candidate.id) === String(selected.id)
+    && candidate.relatedProviderIds?.includes(`${candidate.provider}:${candidate.id}`),
+  );
 }
 
 function parseRelatedProviderLinks(links) {
