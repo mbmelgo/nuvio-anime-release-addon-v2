@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { canonicalizeCatalogPage } from "../api/catalog-source.js";
+import { canonicalizeCatalogPage, isSelectedIdentityProtected } from "../api/catalog-source.js";
 
 const empty = async () => new Map();
 
@@ -318,4 +318,22 @@ test("catalog prefers independently verified TV IMDb identity over a TMDB movie 
 
   assert.equal(metas[0].id, "tt14986406");
   assert.equal(metas[0].extra.identityProvider, "imdb");
+});
+
+
+test("relation retry ignores protected identities that are not selected", () => {
+  const media = { anilistId: 9001, format: "TV", title: { english: "Example Season 2", romaji: "Example Season 2" }, startDate: { year: 2026 }, relations: { edges: [] } };
+  const candidates = [
+    { provider: "imdb", id: "tt9001", stremioId: "tt9001", evidence: [{ source: "imdb-search" }], title: "Example Season 2" },
+    { provider: "tvdb", id: "9001", stremioId: "tvdb:9001", evidence: [{ source: "arm" }], title: "Example Season 2", relatedProviderIds: ["tvdb:9001"] },
+  ];
+  assert.equal(isSelectedIdentityProtected(media, candidates), false);
+});
+
+test("relation retry still runs when the selected identity is protected", () => {
+  const media = { anilistId: 9002, format: "TV", title: { english: "Example Season 3", romaji: "Example Season 3" }, startDate: { year: 2026 }, relations: { edges: [] } };
+  const candidates = [
+    { provider: "imdb", id: "tt9002", stremioId: "tt9002", evidence: [{ source: "imdb-search" }], title: "Example Season 3", relatedProviderIds: ["imdb:tt9002"] },
+  ];
+  assert.equal(isSelectedIdentityProtected(media, candidates), true);
 });
