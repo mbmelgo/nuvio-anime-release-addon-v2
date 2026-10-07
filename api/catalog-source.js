@@ -699,6 +699,7 @@ export function isSelectedIdentityProtected(media, candidates) {
   const preProtectionCandidates = originalCandidates.map((candidate) => ({
     ...candidate,
     relatedProviderIds: [],
+    relatedProviderTitles: [],
   }));
   const selected = selectProviderIdentity(media, preProtectionCandidates);
   if (!selected) return false;
