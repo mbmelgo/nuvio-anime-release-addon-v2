@@ -65,11 +65,19 @@ export function getSeasonInfo(date) {
 
 let catalogRequestSeen = false;
 
-export function formatCatalogDiagnostics(durationMs, coldStart) {
+export function formatCatalogDiagnostics(durationMs, coldStart, stages = {}) {
   const normalizedDuration = Math.max(0, Math.round(Number(durationMs) || 0));
+  const normalizedStages = Object.fromEntries(
+    Object.entries(stages || {})
+      .filter(([, value]) => Number.isFinite(Number(value)))
+      .map(([name, value]) => [name, Math.max(0, Math.round(Number(value)))])
+  );
   return {
     "X-Nuvio-Catalog-Duration-Ms": String(normalizedDuration),
     "X-Nuvio-Cold-Start": coldStart ? "1" : "0",
+    ...(Object.keys(normalizedStages).length
+      ? { "X-Nuvio-Catalog-Stages": JSON.stringify(normalizedStages) }
+      : {}),
   };
 }
 
@@ -87,6 +95,7 @@ export default async function handler(req, res) {
   const seasonInfo = getSeasonInfo(now);
   const diagnosticsEnabled = String(query.diagnostics || "") === "1";
   const diagnosticsStart = diagnosticsEnabled ? performance.now() : 0;
+  const diagnosticsStages = diagnosticsEnabled ? {} : null;
   const coldStart = !catalogRequestSeen;
   catalogRequestSeen = true;
 
@@ -99,11 +108,11 @@ export default async function handler(req, res) {
     try {
       const skip = Math.max(0, Number(query.skip || 0) || 0);
       const search = String(query.search || "").trim();
-      const metas = await buildCatalog(id, seasonInfo, skip, search);
-      return send(res, { metas }, 200, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart) : null, diagnosticsEnabled);
+      const metas = await buildCatalog(id, seasonInfo, skip, search, diagnosticsStages);
+      return send(res, { metas }, 200, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages) : null, diagnosticsEnabled);
     } catch (error) {
       console.error("[catalog] request failed", { id, skip: query.skip, search: query.search, error });
-      return send(res, { metas: [] }, 500, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart) : null, diagnosticsEnabled);
+      return send(res, { metas: [] }, 500, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages) : null, diagnosticsEnabled);
     }
   }
 
@@ -149,6 +158,7 @@ async function resolveMappingsForRows(
     resolveImdbMappings = resolveAniListMappingsByImdbSearch,
     resolveSecondaryMappings = resolveAniListMappingsSecondary,
     resolveAlternativeMappings = resolveAniListMappingsByMalIds,
+    diagnostics = null,
   } = {},
 ) {
   const ids = rows.map((row) => Number(row.id));
@@ -167,7 +177,9 @@ async function resolveMappingsForRows(
 
   if (unresolvedRows.length) {
     try {
+      const stageStart = diagnostics ? performance.now() : 0;
       mappings = mergeMappings(mappings, await resolveFribbMappings(unresolvedRows.map((row) => Number(row.id))));
+      if (diagnostics) diagnostics.fribb = performance.now() - stageStart;
     } catch (error) {
       console.error("[identity] Fribb mapping source failed; trying AniList external links", error);
     }
@@ -193,7 +205,9 @@ async function resolveMappingsForRows(
 
   if (unresolvedRows.length) {
     try {
+      const stageStart = diagnostics ? performance.now() : 0;
       mappings = mergeMappings(mappings, await resolveAniBridgeMappings(unresolvedRows));
+      if (diagnostics) diagnostics.anibridge = performance.now() - stageStart;
     } catch (error) {
       console.error("[identity] AniBridge bulk mapping failed; trying TMDB", error);
     }
@@ -212,7 +226,9 @@ async function resolveMappingsForRows(
   });
   if (tmdbRows.length) {
     try {
+      const stageStart = diagnostics ? performance.now() : 0;
       mappings = mergeMappings(mappings, await resolveTMDBMappings(tmdbRows));
+      if (diagnostics) diagnostics.tmdb = performance.now() - stageStart;
     } catch (error) {
       console.error("[identity] TMDB mapping failed; trying AniMap", error);
     }
@@ -230,7 +246,9 @@ async function resolveMappingsForRows(
   });
   if (tmdbImdbVerificationRows.length) {
     try {
+      const stageStart = diagnostics ? performance.now() : 0;
       mappings = mergeMappings(mappings, await resolveImdbMappings(tmdbImdbVerificationRows));
+      if (diagnostics) diagnostics.imdbVerification = performance.now() - stageStart;
     } catch (error) {
       console.error("[identity] post-TMDB IMDb verification failed", error);
     }
@@ -243,7 +261,9 @@ async function resolveMappingsForRows(
 
   if (unresolvedRows.length) {
     try {
+      const stageStart = diagnostics ? performance.now() : 0;
       mappings = mergeMappings(mappings, await resolveAnimapMappings(unresolvedRows.map((row) => Number(row.id))));
+      if (diagnostics) diagnostics.animap = performance.now() - stageStart;
     } catch (error) {
       console.error("[identity] AniMap mapping failed; trying IDMapper", error);
     }
@@ -256,7 +276,9 @@ async function resolveMappingsForRows(
 
   if (unresolvedRows.length) {
     try {
+      const stageStart = diagnostics ? performance.now() : 0;
       mappings = mergeMappings(mappings, await resolveIdMapperMappings(unresolvedRows.map((row) => Number(row.id))));
+      if (diagnostics) diagnostics.idmapper = performance.now() - stageStart;
     } catch (error) {
       console.error("[identity] IDMapper mapping failed; trying Anime Mapper", error);
     }
@@ -269,7 +291,9 @@ async function resolveMappingsForRows(
 
   if (unresolvedRows.length) {
     try {
+      const stageStart = diagnostics ? performance.now() : 0;
       mappings = mergeMappings(mappings, await resolveAnimeMapperMappings(unresolvedRows));
+      if (diagnostics) diagnostics.animeMapper = performance.now() - stageStart;
     } catch (error) {
       console.error("[identity] Anime Mapper mapping source failed; trying AnimeAPI TSV", error);
     }
@@ -282,7 +306,9 @@ async function resolveMappingsForRows(
 
   if (unresolvedRows.length) {
     try {
+      const stageStart = diagnostics ? performance.now() : 0;
       mappings = mergeMappings(mappings, await resolveTsvMappings(unresolvedRows));
+      if (diagnostics) diagnostics.animeApiTsv = performance.now() - stageStart;
     } catch (error) {
       console.error("[identity] AnimeAPI TSV mapping failed; trying IMDb search", error);
     }
@@ -298,7 +324,9 @@ async function resolveMappingsForRows(
 
   if (unresolvedRows.length) {
     try {
+      const stageStart = diagnostics ? performance.now() : 0;
       mappings = mergeMappings(mappings, await resolveImdbMappings(unresolvedRows));
+      if (diagnostics) diagnostics.imdb = performance.now() - stageStart;
     } catch (error) {
       console.error("[identity] IMDb mapping failed; trying secondary sources", error);
     }
@@ -311,7 +339,9 @@ async function resolveMappingsForRows(
 
   if (unresolvedRows.length) {
     try {
+      const stageStart = diagnostics ? performance.now() : 0;
       mappings = mergeMappings(mappings, await resolveSecondaryMappings(unresolvedRows.map((row) => Number(row.id))));
+      if (diagnostics) diagnostics.secondary = performance.now() - stageStart;
     } catch (error) {
       console.error("[identity] secondary mapping source failed; trying MAL identity bridge", error);
     }
@@ -324,7 +354,9 @@ async function resolveMappingsForRows(
 
   if (stillUnresolvedRows.length) {
     try {
+      const stageStart = diagnostics ? performance.now() : 0;
       mappings = mergeMappings(mappings, await resolveAlternativeMappings(stillUnresolvedRows));
+      if (diagnostics) diagnostics.malBridge = performance.now() - stageStart;
     } catch (error) {
       console.error("[identity] MAL identity bridge failed", error);
     }
@@ -332,6 +364,7 @@ async function resolveMappingsForRows(
 
   if (stillUnresolvedRows.length) {
     try {
+      const stageStart = diagnostics ? performance.now() : 0;
       const relationMappings = await resolveRelationMappings(stillUnresolvedRows, {
         resolveMappings,
         resolveFribbMappings,
@@ -339,11 +372,13 @@ async function resolveMappingsForRows(
         resolveImdbMappings,
       });
       mappings = mergeMappings(mappings, relationMappings);
+      if (diagnostics) diagnostics.relations = performance.now() - stageStart;
     } catch (error) {
       console.error("[identity] relation-id mapping fallback failed", error);
     }
   }
 
+  const protectionStart = diagnostics ? performance.now() : 0;
   await applyRelatedProviderProtection(rows, mappings, {
     resolveMappings,
     resolveFribbMappings,
@@ -351,6 +386,7 @@ async function resolveMappingsForRows(
     resolveAnimeMapperMappings,
     resolveAnimeMapperRelatedProviderIds,
   });
+  if (diagnostics) diagnostics.relatedProtection = performance.now() - protectionStart;
 
 
   // Resolve season/installment entries to the canonical series root used by
@@ -361,6 +397,7 @@ async function resolveMappingsForRows(
     // Canonical-series traversal is a network-heavy fallback. Keep it for
     // explicit canonical relations and rows whose current identity is not
     // independently verified, while skipping identities it cannot change.
+    const canonicalStart = diagnostics ? performance.now() : 0;
     const canonicalCandidates = rows.filter((row) => shouldResolveCanonicalSeries(row, mappings));
     const canonicalRoots = canonicalCandidates.length
       ? await resolveCanonicalSeriesMappings(canonicalCandidates)
@@ -428,7 +465,9 @@ async function resolveMappingsForRows(
         }
       }
     }
+    if (diagnostics) diagnostics.canonical = performance.now() - canonicalStart;
   } catch (error) {
+    if (diagnostics) diagnostics.canonical = performance.now() - canonicalStart;
     console.error("[identity] canonical series root resolution failed; preserving current identity", error);
   }
 
@@ -445,6 +484,7 @@ async function resolveMappingsForRows(
   });
   if (relationRetryRows.length) {
     try {
+      const stageStart = diagnostics ? performance.now() : 0;
       const retryMappings = await resolveImdbMappings(relationRetryRows);
       for (const [id, records] of retryMappings instanceof Map ? retryMappings : []) {
         const existing = mappings.get(id) || [];
@@ -453,7 +493,9 @@ async function resolveMappingsForRows(
           ...existing,
         ]);
       }
+      if (diagnostics) diagnostics.relationRetry = performance.now() - stageStart;
     } catch (error) {
+      if (diagnostics) diagnostics.relationRetry = performance.now() - stageStart;
       console.error("[identity] post-protection IMDb verification failed", error);
     }
   }
@@ -1078,12 +1120,17 @@ export async function fetchValidatedSeasonCatalogPage({
   search = "",
   fetchPage = queryAnime,
   canonicalizePage,
+  diagnostics = null,
 }) {
   const normalizedSkip = Math.max(0, Number(skip) || 0);
   const anilistPage = Math.floor(normalizedSkip / NUVIO_PAGE_SIZE) + 1;
   const pageOffset = normalizedSkip % NUVIO_PAGE_SIZE;
+  const fetchStart = diagnostics ? performance.now() : 0;
   const rows = await fetchPage(filter, anilistPage, search, { includeMalId: true });
-  const canonical = await canonicalizePage(rows);
+  if (diagnostics) diagnostics.anilist = performance.now() - fetchStart;
+  const canonicalStart = diagnostics ? performance.now() : 0;
+  const canonical = await canonicalizePage(rows, diagnostics);
+  if (diagnostics) diagnostics.identity = performance.now() - canonicalStart;
   return canonical.slice(pageOffset, pageOffset + NUVIO_PAGE_SIZE);
 }
 
@@ -1107,6 +1154,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
   resolveAlternativeMappings = resolveAniListMappingsByMalIds,
     resolveCanonicalSeriesMappings = null,
     resolveImdbMappings = resolveAniListMappingsByImdbSearch,
+    diagnostics = null,
   } = {}) {
   const range = getRollingCatalogRange(id, date);
   const canonicalSeriesResolver = resolveCanonicalSeriesMappings
@@ -1119,7 +1167,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
   return collectValidatedCatalogPage({
     skip, pageSize, maxPages,
     fetchPage: (page) => fetchPage(range.start, range.end, futureOnly, page, sort),
-    canonicalizePage: async (rows) => {
+    canonicalizePage: async (rows, pageDiagnostics) => {
       const eligibleRows = (Array.isArray(rows) ? rows : []).filter((row) => {
         const media = row?.media;
         return Number.isInteger(Number(media?.id)) && Number(media.id) > 0 && isEligibleRollingMedia(media);
@@ -1128,7 +1176,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
       const seenMediaIds = new Set();
       for (const row of eligibleRows) { const mediaId = Number(row.media.id); if (seenMediaIds.has(mediaId)) continue; seenMediaIds.add(mediaId); uniqueEligibleRows.push(row); }
       const searchedRows = filterAiringRowsBySearch(uniqueEligibleRows, search);
-      const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), { resolveMappings, resolveSecondaryMappings, resolveAlternativeMappings, resolveCanonicalSeriesMappings: canonicalSeriesResolver, resolveImdbMappings });
+      const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), { resolveMappings, resolveSecondaryMappings, resolveAlternativeMappings, resolveCanonicalSeriesMappings: canonicalSeriesResolver, resolveImdbMappings, diagnostics: pageDiagnostics });
       const metas = [];
       const usedIdentities = new Set();
       for (const row of searchedRows) {
@@ -1215,18 +1263,19 @@ export async function buildRollingCatalog(id, date, skip, search, {
     },
   });
 }
-export async function buildCatalog(id, info, skip, search) {
+export async function buildCatalog(id, info, skip, search, diagnostics = null) {
   const filter = getCatalogFilter(id, info);
   if (filter) {
     return fetchValidatedSeasonCatalogPage({
       filter,
       skip,
       search,
-      canonicalizePage: (rows) => canonicalizeCatalogPage(rows),
+      canonicalizePage: (rows, pageDiagnostics) => canonicalizeCatalogPage(rows, pageDiagnostics),
+      diagnostics,
     });
   }
   if (getRollingCatalogRange(id, new Date())) {
-    return buildRollingCatalog(id, new Date(), skip, search);
+    return buildRollingCatalog(id, new Date(), skip, search, { diagnostics });
   }
   return [];
 }
