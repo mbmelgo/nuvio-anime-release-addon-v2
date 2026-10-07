@@ -1181,7 +1181,13 @@ export async function buildRollingCatalog(id, date, skip, search, {
     fetchPage: async (page) => {
       const stageStart = diagnostics ? performance.now() : 0;
       try {
-        return await fetchPage(range.start, range.end, futureOnly, page, sort);
+        const rows = await fetchPage(range.start, range.end, futureOnly, page, sort);
+        return (Array.isArray(rows) ? rows : []).filter((row) => {
+          const airingAt = Number(row?.airingAt);
+          return Number.isFinite(airingAt)
+            && airingAt * 1000 > range.start
+            && airingAt * 1000 < range.end;
+        });
       } finally {
         if (diagnostics) diagnostics.schedule = (diagnostics.schedule || 0) + (performance.now() - stageStart);
       }
