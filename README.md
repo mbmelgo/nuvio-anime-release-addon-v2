@@ -196,6 +196,8 @@ Catalog names and season labels are generated dynamically.
 **Development:** `v1.59.0` — release candidate with optimized canonical-series resolution and parallelized terminal identity fallbacks
 
 Post-release production catalog snapshots are captured automatically after each controlled release and retained on versioned `catalog-snapshots/*` branches.
+
+Production release state is finalized by the controlled release pipeline after deployment validation.
 **Major baseline:** `v1.0.0`
 
 The 1.56.0 release anchors seasonal/installment catalog entries to their canonical franchise series identity for scraper-facing provider IDs while preserving the specific seasonal display metadata.\n\nThe 1.42.0 release switches active identity resolution to TMDB-backed matching, upgrades strong TMDB matches to IMDb when available, and retains TMDB identities when IMDb is unavailable. BingeCat API integration was later removed because its public endpoint is not usable by the addon and its private endpoint requires authenticated session access.
