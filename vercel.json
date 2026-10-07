@@ -24,5 +24,6 @@
       "source": "/",
       "destination": "/api/home-selector"
     }
-  ]
+  ],
+  "fluid": true
 }
