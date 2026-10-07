@@ -4,31 +4,26 @@ import { canonicalizeCatalogPage } from "../api/catalog-source.js";
 
 const empty = async () => new Map();
 
-test("catalog anchors Bleach TYBW and Steel Ball Run to canonical series roots", async () => {
+test("catalog anchors Bleach TYBW with a parent relation while preserving standalone SBR identity", async () => {
   const rows = [
     {
       id: 185874,
       idMal: 60636,
       format: "TV",
-      title: {
-        english: "BLEACH: Thousand-Year Blood War - The Calamity",
-        romaji: "BLEACH: Sennen Kessen-hen - Kashin-tan",
-        native: "BLEACH 千年血戦篇-禍進譚-",
-      },
+      title: { english: "BLEACH: Thousand-Year Blood War - The Calamity" },
       synonyms: ["BLEACH: Thousand-Year Blood War Part 4"],
       startDate: { year: 2026 },
-      relations: { edges: [] },
+      relations: { edges: [{
+        relationType: "PARENT",
+        node: { id: 116674, format: "TV", title: { english: "Bleach: Thousand-Year Blood War" }, startDate: { year: 2022 } },
+      }] },
       coverImage: { large: "bleach-poster" },
     },
     {
       id: 210482,
       idMal: 61469,
       format: "ONA",
-      title: {
-        english: "STEEL BALL RUN JoJo's Bizarre Adventure 2nd - 3rd STAGE",
-        romaji: "JoJo no Kimyou na Bouken: Steel Ball Run - 2nd & 3rd STAGE",
-        native: "ジョジョの奇妙な冒険 スティール・ボール・ラン 2nd＆3rd STAGE",
-      },
+      title: { english: "STEEL BALL RUN JoJo's Bizarre Adventure 2nd - 3rd STAGE" },
       synonyms: ["JoJo's Bizarre Adventure: Part 7–Steel Ball Run"],
       startDate: { year: 2026 },
       relations: { edges: [] },
@@ -36,38 +31,52 @@ test("catalog anchors Bleach TYBW and Steel Ball Run to canonical series roots",
     },
   ];
 
-  const canonicalRoots = new Map([
-    [185874, {
+  const canonicalRoots = new Map([[
+    185874,
+    {
       canonicalAnilistId: 116674,
       canonicalMalId: 41467,
       canonicalTitle: "Bleach: Thousand-Year Blood War",
       canonicalYear: 2022,
-    }],
-    [210482, {
-      canonicalAnilistId: 210482,
-      canonicalMalId: 61469,
-      canonicalTitle: "Steel Ball Run: JoJo's Bizarre Adventure",
-      canonicalYear: 2026,
-    }],
+    },
+  ]]);
+
+  const directMappings = new Map([
+    [185874, [{
+      source: "imdb-search",
+      anilistId: 185874,
+      type: "TV",
+      imdbIds: ["tt14986406"],
+      title: "Bleach: Thousand-Year Blood War",
+      titles: ["Bleach: Thousand-Year Blood War"],
+      year: 2022,
+    }]],
+    [210482, [{
+      source: "imdb-search",
+      anilistId: 210482,
+      type: "TV",
+      imdbIds: ["tt38268282"],
+      title: "Steel Ball Run: JoJo's Bizarre Adventure",
+      titles: ["Steel Ball Run: JoJo's Bizarre Adventure"],
+      year: 2026,
+    }]],
   ]);
 
+  let canonicalCalls = 0;
   const resolveImdbMappings = async (canonicalRows) => new Map(
-    canonicalRows.map((row) => [
-      Number(row.id),
-      [{
-        source: "imdb-search",
-        anilistId: Number(row.id),
-        type: "TV",
-        imdbIds: [row.idMal === 41467 ? "tt14986406" : "tt38268282"],
-        title: row.idMal === 41467 ? "Bleach: Thousand-Year Blood War" : "Steel Ball Run: JoJo's Bizarre Adventure",
-        titles: [row.idMal === 41467 ? "Bleach: Thousand-Year Blood War" : "Steel Ball Run: JoJo's Bizarre Adventure"],
-        year: row.idMal === 41467 ? 2022 : 2026,
-      }],
-    ]),
+    canonicalRows.map((row) => [Number(row.id), [{
+      source: "imdb-search-canonical-series",
+      anilistId: Number(row.id),
+      type: "TV",
+      imdbIds: ["tt14986406"],
+      title: "Bleach: Thousand-Year Blood War",
+      titles: ["Bleach: Thousand-Year Blood War"],
+      year: 2022,
+    }]]),
   );
 
   const result = await canonicalizeCatalogPage(rows, {
-    resolveMappings: empty,
+    resolveMappings: async () => directMappings,
     resolveFribbMappings: empty,
     resolveExternalMappings: empty,
     resolveAnimapMappings: empty,
@@ -75,22 +84,24 @@ test("catalog anchors Bleach TYBW and Steel Ball Run to canonical series roots",
     resolveTMDBMappings: empty,
     resolveAnimeMapperMappings: empty,
     resolveAnimeMapperRelatedProviderIds: empty,
-    resolveCanonicalSeriesMappings: async () => canonicalRoots,
+    resolveCanonicalSeriesMappings: async (candidateRows) => {
+      canonicalCalls += 1;
+      assert.deepEqual(candidateRows.map((row) => row.id), [185874]);
+      return canonicalRoots;
+    },
     resolveAniBridgeMappings: empty,
     resolveTsvMappings: empty,
     resolveImdbMappings,
     resolveSecondaryMappings: empty,
     resolveAlternativeMappings: empty,
+    restrictCanonicalSeriesToRelatedRows: true,
   });
 
+  assert.equal(canonicalCalls, 1);
   assert.deepEqual(result.map((meta) => meta.id), ["tt14986406", "tt38268282"]);
-  assert.equal(result[0].name, "BLEACH: Thousand-Year Blood War - The Calamity");
-  assert.equal(result[1].name, "STEEL BALL RUN JoJo's Bizarre Adventure 2nd - 3rd STAGE");
   assert.equal(result[0].extra.identityCanonicalSeries, true);
-  assert.equal(result[1].extra.identityCanonicalSeries, true);
+  assert.equal(result[1].extra.identityCanonicalSeries, undefined);
 });
-
-
 test("catalog preserves an independently verified current IMDb series over a different canonical ancestor", async () => {
   const rows = [{
     id: 210482,
