@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatCatalogDiagnostics } from "../api/catalog-source.js";
+import { formatCatalogDiagnostics, normalizeCatalogOptions } from "../api/catalog-source.js";
 
 test("catalog diagnostics expose stable duration and cold-start headers", () => {
   assert.deepEqual(
@@ -18,4 +18,11 @@ test("catalog diagnostics expose stable duration and cold-start headers", () => 
       "X-Nuvio-Cold-Start": "0",
     },
   );
+});
+
+
+test("catalog canonicalizer options normalize null diagnostics input", () => {
+  assert.deepEqual(normalizeCatalogOptions(null), {});
+  const diagnostics = {};
+  assert.deepEqual(normalizeCatalogOptions({ diagnostics }), { diagnostics });
 });
