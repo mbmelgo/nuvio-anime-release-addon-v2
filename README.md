@@ -192,7 +192,7 @@ Catalog names and season labels are generated dynamically.
 
 ## 🚀 Current release
 
-**Production:** `v1.66.0`  
+**Production:** `v1.67.0`  
 **Development:** `v1.67.0` — slim rolling AniList schedule query
 
 Post-release production catalog snapshots are captured automatically after each controlled release and retained on versioned `catalog-snapshots/*` branches.
