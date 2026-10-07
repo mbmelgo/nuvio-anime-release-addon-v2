@@ -1270,7 +1270,7 @@ export async function buildCatalog(id, info, skip, search, diagnostics = null) {
       filter,
       skip,
       search,
-      canonicalizePage: (rows, pageDiagnostics) => canonicalizeCatalogPage(rows, pageDiagnostics),
+      canonicalizePage: (rows, pageDiagnostics) => canonicalizeCatalogPage(rows, { diagnostics: pageDiagnostics }),
       diagnostics,
     });
   }
