@@ -695,21 +695,11 @@ async function resolveRelatedProviderIds(rows, {
 }
 
 export function isSelectedIdentityProtected(media, candidates) {
-  const originalCandidates = Array.isArray(candidates) ? candidates : [];
-  const preProtectionCandidates = originalCandidates.map((candidate) => ({
-    ...candidate,
-    relatedProviderIds: [],
-    relatedProviderTitles: [],
-  }));
-  const selected = selectProviderIdentity(media, preProtectionCandidates);
-  if (!selected) return false;
-  return originalCandidates.some((candidate) =>
-    candidate.provider === selected.provider
-    && String(candidate.id) === String(selected.id)
-    && candidate.relatedProviderIds?.includes(`${candidate.provider}:${candidate.id}`),
-  );
+  // If relation protection still leaves a valid provider identity, the
+  // expensive IMDb retry cannot change the selected provider. If protection
+  // invalidates every candidate, retain the retry as the recovery path.
+  return !selectProviderIdentity(media, candidates);
 }
-
 function parseRelatedProviderLinks(links) {
   const ids = [];
   for (const link of Array.isArray(links) ? links : []) {
