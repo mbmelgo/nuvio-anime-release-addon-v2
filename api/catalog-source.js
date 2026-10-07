@@ -134,6 +134,7 @@ async function resolveMappingsForRows(
     resolveImdbMappings = resolveAniListMappingsByImdbSearch,
     resolveSecondaryMappings = resolveAniListMappingsSecondary,
     resolveAlternativeMappings = resolveAniListMappingsByMalIds,
+    restrictCanonicalSeriesToRelatedRows = false,
   } = {},
 ) {
   const ids = rows.map((row) => Number(row.id));
@@ -346,7 +347,9 @@ async function resolveMappingsForRows(
     // Canonical-series traversal is a network-heavy fallback. Only rows that
     // actually expose a parent/prequel relation can resolve to a different
     // canonical root, so avoid crawling unrelated standalone entries.
-    const canonicalCandidates = rows.filter((row) => hasCanonicalSeriesRelation(row));
+    const canonicalCandidates = restrictCanonicalSeriesToRelatedRows
+      ? rows.filter((row) => hasCanonicalSeriesRelation(row))
+      : rows;
     const canonicalRoots = canonicalCandidates.length
       ? await resolveCanonicalSeriesMappings(canonicalCandidates)
       : new Map();
@@ -1186,7 +1189,9 @@ export async function buildCatalog(id, info, skip, search) {
       filter,
       skip,
       search,
-      canonicalizePage: (rows) => canonicalizeCatalogPage(rows),
+      canonicalizePage: (rows) => canonicalizeCatalogPage(rows, {
+        restrictCanonicalSeriesToRelatedRows: true,
+      }),
     });
   }
   if (getRollingCatalogRange(id, new Date())) {
