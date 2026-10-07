@@ -101,6 +101,60 @@ test("catalog anchors Bleach TYBW with a parent relation while preserving standa
   assert.equal(result[0].extra.identityCanonicalSeries, true);
   assert.equal(result[1].extra.identityCanonicalSeries, undefined);
 });
+test("canonical traversal scales with unresolved or related rows instead of catalog page size", async () => {
+  const rows = Array.from({ length: 50 }, (_, index) => ({
+    id: 300000 + index,
+    idMal: 400000 + index,
+    format: "TV",
+    title: { english: `Test Series ${index}` },
+    synonyms: [],
+    startDate: { year: 2026 },
+    relations: { edges: [] },
+    coverImage: { large: `poster-${index}` },
+  }));
+
+  rows[49].relations = {
+    edges: [{
+      relationType: "PARENT",
+      node: { id: 500000, format: "TV", title: { english: "Canonical Test Series" }, startDate: { year: 2020 } },
+    }],
+  };
+
+  const directMappings = new Map(rows.map((row) => [row.id, [{
+    source: "imdb-search",
+    anilistId: row.id,
+    type: "TV",
+    imdbIds: [`tt${10000000 + row.id}`],
+    title: row.title.english,
+    titles: [row.title.english],
+    year: 2026,
+  }]]));
+
+  let canonicalCandidateCount = 0;
+  await canonicalizeCatalogPage(rows, {
+    resolveMappings: async () => directMappings,
+    resolveFribbMappings: empty,
+    resolveExternalMappings: empty,
+    resolveAnimapMappings: empty,
+    resolveIdMapperMappings: empty,
+    resolveTMDBMappings: empty,
+    resolveAnimeMapperMappings: empty,
+    resolveAnimeMapperRelatedProviderIds: empty,
+    resolveCanonicalSeriesMappings: async (candidateRows) => {
+      canonicalCandidateCount = candidateRows.length;
+      assert.deepEqual(candidateRows.map((row) => row.id), [rows[49].id]);
+      return new Map();
+    },
+    resolveAniBridgeMappings: empty,
+    resolveTsvMappings: empty,
+    resolveImdbMappings: empty,
+    resolveSecondaryMappings: empty,
+    resolveAlternativeMappings: empty,
+  });
+
+  assert.equal(canonicalCandidateCount, 1);
+});
+
 test("catalog preserves an independently verified current IMDb series over a different canonical ancestor", async () => {
   const rows = [{
     id: 210482,
