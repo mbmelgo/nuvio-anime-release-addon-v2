@@ -193,7 +193,7 @@ Catalog names and season labels are generated dynamically.
 ## 🚀 Current release
 
 **Production:** `v1.59.0`  
-**Development:** `v1.59.0` — release candidate with optimized canonical-series resolution and parallelized terminal identity fallbacks
+**Development:** `v1.60.0` — release candidate with optimized canonical-series resolution, parallelized terminal identity fallbacks, and opt-in catalog diagnostics
 
 Post-release production catalog snapshots are captured automatically after each controlled release and retained on versioned `catalog-snapshots/*` branches.
 
