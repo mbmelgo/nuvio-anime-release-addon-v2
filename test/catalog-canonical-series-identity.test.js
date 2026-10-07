@@ -94,6 +94,7 @@ test("catalog anchors Bleach TYBW with a parent relation while preserving standa
     resolveImdbMappings,
     resolveSecondaryMappings: empty,
     resolveAlternativeMappings: empty,
+    restrictCanonicalSeriesToRelatedRows: true,
   });
 
   assert.equal(canonicalCalls, 1);
