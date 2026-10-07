@@ -83,7 +83,8 @@ test("catalog AniList queries request 50 media rows with only fields needed to r
     assert.match(request.query, /endDate\s*\{/);
     assert.match(request.query, /genres/);
     assert.match(request.query, /idMal/);
-    assert.match(request.query, /externalLinks\s*\{\s*site url\s*\}/);
+    assert.match(request.query, /node\s*\{[\s\S]*externalLinks\s*\{\s*site url\s*\}/);
+    assert.doesNotMatch(request.query, /format\s+externalLinks\s*\{\s*site url\s*\}/);
     assert.doesNotMatch(request.query, /nextAiringEpisode/);
   } finally {
     globalThis.fetch = originalFetch;
@@ -103,7 +104,8 @@ test("airing schedule queries include relation titles needed by rolling identity
     assert.match(request.query, /relations\s*\{/);
     assert.match(request.query, /relationType/);
     assert.match(request.query, /node\s*\{\s*id\s+format\s+title/);
-    assert.match(request.query, /externalLinks\s*\{\s*site url\s*\}/);
+    assert.match(request.query, /node\s*\{\s*id\s+format\s+title[\s\S]*externalLinks\s*\{\s*site url\s*\}/);
+    assert.doesNotMatch(request.query, /isAdult\s+externalLinks\s*\{\s*site url\s*\}/);
     assert.doesNotMatch(request.query, /countryOfOrigin/);
   } finally {
     globalThis.fetch = originalFetch;
