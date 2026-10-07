@@ -115,7 +115,7 @@ export default async function handler(req, res) {
       return send(res, { metas }, 200, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null, diagnosticsEnabled);
     } catch (error) {
       console.error("[catalog] request failed", { id, skip: query.skip, search: query.search, error });
-      return send(res, { metas: [] }, 500, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages) : null, diagnosticsEnabled);
+      return send(res, { metas: [] }, 500, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null, diagnosticsEnabled);
     }
   }
 
