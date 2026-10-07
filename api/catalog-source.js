@@ -134,7 +134,6 @@ async function resolveMappingsForRows(
     resolveImdbMappings = resolveAniListMappingsByImdbSearch,
     resolveSecondaryMappings = resolveAniListMappingsSecondary,
     resolveAlternativeMappings = resolveAniListMappingsByMalIds,
-    restrictCanonicalSeriesToRelatedRows = false,
   } = {},
 ) {
   const ids = rows.map((row) => Number(row.id));
@@ -347,9 +346,7 @@ async function resolveMappingsForRows(
     // Canonical-series traversal is a network-heavy fallback. Only rows that
     // actually expose a parent/prequel relation can resolve to a different
     // canonical root, so avoid crawling unrelated standalone entries.
-    const canonicalCandidates = restrictCanonicalSeriesToRelatedRows
-      ? rows.filter((row) => hasCanonicalSeriesRelation(row))
-      : rows;
+    const canonicalCandidates = rows.filter((row) => shouldResolveCanonicalSeries(row, mappings));
     const canonicalRoots = canonicalCandidates.length
       ? await resolveCanonicalSeriesMappings(canonicalCandidates)
       : new Map();
@@ -507,6 +504,27 @@ function hasExplicitProviderRelations(row) {
   return Array.isArray(row?.relations?.edges)
     && row.relations.edges.some((edge) => ["PARENT", "PREQUEL", "SEQUEL", "SPIN_OFF", "SIDE_STORY"]
       .includes(String(edge?.relationType || "").toUpperCase()));
+}
+
+function shouldResolveCanonicalSeries(row, mappings) {
+  if (hasCanonicalSeriesRelation(row)) return true;
+
+  const media = { ...row, anilistId: Number(row?.id) };
+  const candidates = getProviderCandidates(
+    media,
+    mappings.get(Number(row?.id)) || [],
+  );
+  const independentlyVerifiedImdb = selectProviderIdentity(
+    media,
+    candidates.filter((candidate) =>
+      candidate.provider === "imdb"
+      && candidate.evidence?.some((entry) =>
+        ["imdb-search", "imdb-search-relation"].includes(entry?.source),
+      ),
+    ),
+  );
+
+  return !independentlyVerifiedImdb;
 }
 
 function hasCanonicalSeriesRelation(row) {
@@ -1189,9 +1207,7 @@ export async function buildCatalog(id, info, skip, search) {
       filter,
       skip,
       search,
-      canonicalizePage: (rows) => canonicalizeCatalogPage(rows, {
-        restrictCanonicalSeriesToRelatedRows: true,
-      }),
+      canonicalizePage: (rows) => canonicalizeCatalogPage(rows),
     });
   }
   if (getRollingCatalogRange(id, new Date())) {
