@@ -193,7 +193,7 @@ Catalog names and season labels are generated dynamically.
 ## 🚀 Current release
 
 **Production:** `v1.70.0`  
-**Development:** `v1.71.0` — relation-retry optimization
+**Development:** `v1.71.0` — relation-retry optimization and identity-protection safeguards
 
 Post-release production catalog snapshots are captured automatically after each controlled release and retained on versioned `catalog-snapshots/*` branches.
 
