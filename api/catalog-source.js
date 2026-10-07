@@ -65,7 +65,7 @@ export function getSeasonInfo(date) {
 
 let catalogRequestSeen = false;
 
-export function formatCatalogDiagnostics(durationMs, coldStart, stages = {}) {
+export function formatCatalogDiagnostics(durationMs, coldStart, stages = {}, processUptimeMs = null) {
   const normalizedDuration = Math.max(0, Math.round(Number(durationMs) || 0));
   const normalizedStages = Object.fromEntries(
     Object.entries(stages || {})
@@ -75,6 +75,9 @@ export function formatCatalogDiagnostics(durationMs, coldStart, stages = {}) {
   return {
     "X-Nuvio-Catalog-Duration-Ms": String(normalizedDuration),
     "X-Nuvio-Cold-Start": coldStart ? "1" : "0",
+    ...(Number.isFinite(Number(processUptimeMs))
+      ? { "X-Nuvio-Process-Uptime-Ms": String(Math.max(0, Math.round(Number(processUptimeMs)))) }
+      : {}),
     ...(Object.keys(normalizedStages).length
       ? { "X-Nuvio-Catalog-Stages": JSON.stringify(normalizedStages) }
       : {}),
@@ -109,10 +112,10 @@ export default async function handler(req, res) {
       const skip = Math.max(0, Number(query.skip || 0) || 0);
       const search = String(query.search || "").trim();
       const metas = await buildCatalog(id, seasonInfo, skip, search, diagnosticsStages);
-      return send(res, { metas }, 200, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages) : null, diagnosticsEnabled);
+      return send(res, { metas }, 200, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null, diagnosticsEnabled);
     } catch (error) {
       console.error("[catalog] request failed", { id, skip: query.skip, search: query.search, error });
-      return send(res, { metas: [] }, 500, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages) : null, diagnosticsEnabled);
+      return send(res, { metas: [] }, 500, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null, diagnosticsEnabled);
     }
   }
 
@@ -1202,7 +1205,9 @@ export async function buildRollingCatalog(id, date, skip, search, {
       const seenMediaIds = new Set();
       for (const row of eligibleRows) { const mediaId = Number(row.media.id); if (seenMediaIds.has(mediaId)) continue; seenMediaIds.add(mediaId); uniqueEligibleRows.push(row); }
       const searchedRows = filterAiringRowsBySearch(uniqueEligibleRows, search);
-      const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), { resolveMappings, resolveSecondaryMappings, resolveAlternativeMappings, resolveCanonicalSeriesMappings: canonicalSeriesResolver, resolveImdbMappings, diagnostics });
+      const mappingStart = diagnostics ? performance.now() : 0;
+    const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), { resolveMappings, resolveSecondaryMappings, resolveAlternativeMappings, resolveCanonicalSeriesMappings: canonicalSeriesResolver, resolveImdbMappings, diagnostics });
+    if (diagnostics) diagnostics.identityResolution = performance.now() - mappingStart;
       const metas = [];
       const usedIdentities = new Set();
       for (const row of searchedRows) {
