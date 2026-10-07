@@ -8,6 +8,7 @@ test("catalog diagnostics expose stable duration and cold-start headers", () => 
     {
       "X-Nuvio-Catalog-Duration-Ms": "13",
       "X-Nuvio-Cold-Start": "1",
+    "X-Nuvio-Process-Uptime-Ms": "0",
       "X-Nuvio-Catalog-Stages": JSON.stringify({ arm: 4, canonical: 10 }),
     },
   );
