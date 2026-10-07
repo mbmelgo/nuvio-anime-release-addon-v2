@@ -343,9 +343,9 @@ async function resolveMappingsForRows(
   // AniList identity and display metadata remain unchanged while the
   // scraper-facing provider identity is anchored to the canonical series.
   try {
-    // Canonical-series traversal is a network-heavy fallback. Only rows that
-    // actually expose a parent/prequel relation can resolve to a different
-    // canonical root, so avoid crawling unrelated standalone entries.
+    // Canonical-series traversal is a network-heavy fallback. Keep it for
+    // explicit canonical relations and rows whose current identity is not
+    // independently verified, while skipping identities it cannot change.
     const canonicalCandidates = rows.filter((row) => shouldResolveCanonicalSeries(row, mappings));
     const canonicalRoots = canonicalCandidates.length
       ? await resolveCanonicalSeriesMappings(canonicalCandidates)
