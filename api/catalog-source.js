@@ -1171,7 +1171,14 @@ export async function buildRollingCatalog(id, date, skip, search, {
   const sort = futureOnly ? "TIME" : "TIME_DESC";
   return collectValidatedCatalogPage({
     skip, pageSize, maxPages,
-    fetchPage: (page) => fetchPage(range.start, range.end, futureOnly, page, sort),
+    fetchPage: async (page) => {
+      const stageStart = diagnostics ? performance.now() : 0;
+      try {
+        return await fetchPage(range.start, range.end, futureOnly, page, sort);
+      } finally {
+        if (diagnostics) diagnostics.schedule = (diagnostics.schedule || 0) + (performance.now() - stageStart);
+      }
+    },
     canonicalizePage: async (rows, pageDiagnostics) => {
       const eligibleRows = (Array.isArray(rows) ? rows : []).filter((row) => {
         const media = row?.media;
