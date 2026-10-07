@@ -83,7 +83,7 @@ test("catalog AniList queries request 50 media rows with only fields needed to r
     assert.match(request.query, /endDate\s*\{/);
     assert.match(request.query, /genres/);
     assert.match(request.query, /idMal/);
-    assert.match(request.query, /externalLinks\s*\{\s*site url\s*\}/);
+    assert.match(request.query, /node\s*\{[\s\S]*externalLinks\s*\{\s*site url\s*\}/);\n    assert.doesNotMatch(request.query, /format\s+externalLinks\s*\{\s*site url\s*\}/);
     assert.doesNotMatch(request.query, /nextAiringEpisode/);
   } finally {
     globalThis.fetch = originalFetch;
