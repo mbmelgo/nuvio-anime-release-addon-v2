@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { clearSecondaryMappingCache, normalizeAnimeApiRecord, resolveAniListMappingsSecondary, resolveAniListMappingsFromDump } from "../lib/secondary-mapping.js";
+import { clearSecondaryMappingCache, normalizeAnimeApiRecord, resolveAniListMappingsSecondary, resolveAniListMappingsFromDump, resolveAniListMappingsByMalIds } from "../lib/secondary-mapping.js";
 
 
 test("AnimeAPI dataset resolves AniList mappings without per-ID requests", async () => {
@@ -116,6 +116,37 @@ test("AnimeAPI per-ID fallback resolves independent misses concurrently", async 
   const result = await resolveAniListMappingsSecondary([1, 2], {
     fetchImpl,
     endpoint: "https://example.test/anilist",
+  });
+
+  assert.equal(result.size, 2);
+  assert.equal(maxActive, 2);
+});
+
+
+test("AnimeAPI MAL fallback resolves independent misses concurrently", async () => {
+  clearSecondaryMappingCache();
+  let active = 0;
+  let maxActive = 0;
+  const fetchImpl = async (url) => {
+    active += 1;
+    maxActive = Math.max(maxActive, active);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    active -= 1;
+    const malId = Number(url.split("/").pop());
+    return {
+      ok: true,
+      async json() {
+        return { anilist: malId + 1000, myanimelist: malId, imdb: `tt${String(malId).padStart(7, "0")}` };
+      },
+    };
+  };
+
+  const result = await resolveAniListMappingsByMalIds([
+    { id: 1001, idMal: 1 },
+    { id: 1002, idMal: 2 },
+  ], {
+    fetchImpl,
+    endpoint: "https://example.test/myanimelist",
   });
 
   assert.equal(result.size, 2);
