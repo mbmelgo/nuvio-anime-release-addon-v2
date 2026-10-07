@@ -93,3 +93,31 @@ test("AnimeAPI mapping preserves MAL-only records for terminal identity fallback
   assert.equal(record.tvdbId, null);
   assert.equal(record.tmdbTvId, null);
 });
+
+
+test("AnimeAPI per-ID fallback resolves independent misses concurrently", async () => {
+  clearSecondaryMappingCache();
+  let active = 0;
+  let maxActive = 0;
+  const fetchImpl = async (url) => {
+    active += 1;
+    maxActive = Math.max(maxActive, active);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    active -= 1;
+    const id = Number(url.split("/").pop());
+    return {
+      ok: true,
+      async json() {
+        return { anilist: id, imdb: `tt${String(id).padStart(7, "0")}` };
+      },
+    };
+  };
+
+  const result = await resolveAniListMappingsSecondary([1, 2], {
+    fetchImpl,
+    endpoint: "https://example.test/anilist",
+  });
+
+  assert.equal(result.size, 2);
+  assert.equal(maxActive, 2);
+});
