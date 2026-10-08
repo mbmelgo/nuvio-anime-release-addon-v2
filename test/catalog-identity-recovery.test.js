@@ -62,6 +62,75 @@ test("identity recovery continues when an earlier recovery source fails", async 
   assert.equal(fribbCalls, 2);
 });
 
+test("identity recovery providers run concurrently while preserving source order", async () => {
+  let armCalls = 0;
+  let fribbCalls = 0;
+  let armActive = false;
+  let fribbActive = false;
+  let overlapped = false;
+
+  const row = {
+    id: 200455,
+    idMal: 62753,
+    format: "TV",
+    title: { english: "Recovery Concurrency Test", romaji: "Recovery Concurrency Test", native: null },
+    synonyms: [],
+    startDate: { year: 2026 },
+    relations: { edges: [] },
+    status: "RELEASING",
+    coverImage: { large: null },
+    genres: [],
+  };
+
+  const record = {
+    source: "fribb",
+    anilistId: 200455,
+    type: "TV",
+    imdbIds: ["tt44444444"],
+    title: row.title.english,
+    titles: [row.title.english],
+    year: 2026,
+  };
+
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const result = await canonicalizeCatalogPage([row], {
+    resolveMappings: async () => {
+      armCalls += 1;
+      if (armCalls < 2) return new Map();
+      armActive = true;
+      if (fribbActive) overlapped = true;
+      await wait(20);
+      armActive = false;
+      return new Map();
+    },
+    resolveFribbMappings: async () => {
+      fribbCalls += 1;
+      if (fribbCalls < 2) return new Map();
+      fribbActive = true;
+      if (armActive) overlapped = true;
+      await wait(20);
+      fribbActive = false;
+      return new Map([[200455, [record]]]);
+    },
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveTMDBMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveAnimeMapperRelatedProviderIds: async () => new Map(),
+    resolveCanonicalSeriesMappings: async () => new Map(),
+    resolveAniBridgeMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(result[0].id, "tt44444444");
+  assert.equal(overlapped, true);
+});
+
 test("IDMapper and Anime Mapper run concurrently while preserving Anime Mapper precedence", async () => {
   let idMapperActive = false;
   let animeMapperActive = false;
