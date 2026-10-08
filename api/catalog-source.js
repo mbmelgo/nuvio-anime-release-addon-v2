@@ -777,23 +777,36 @@ async function resolveRelatedProviderIds(rows, {
   if (!ids.length) return new Map();
 
   let mappings = new Map();
-  try {
-    mappings = await resolveMappings(ids);
-  } catch (error) {
-    console.error("[identity] related ARM protection lookup failed", error);
-  }
-
-  if (typeof resolveAnimeMapperRelatedProviderIds === "function") {
+  const armPromise = (async () => {
     try {
-      const animeMapperProviderIds = await resolveAnimeMapperRelatedProviderIds(rows);
-      for (const [currentId, providerIds] of animeMapperProviderIds instanceof Map ? animeMapperProviderIds : []) {
-        const protectedIds = result.get(Number(currentId));
-        if (!protectedIds) continue;
-        for (const providerId of providerIds || []) protectedIds.add(providerId);
-      }
+      return await resolveMappings(ids);
     } catch (error) {
-      console.error("[identity] related Anime Mapper protection lookup failed", error);
+      console.error("[identity] related ARM protection lookup failed", error);
+      return new Map();
     }
+  })();
+
+  const animeMapperPromise = typeof resolveAnimeMapperRelatedProviderIds === "function"
+    ? (async () => {
+      try {
+        return await resolveAnimeMapperRelatedProviderIds(rows);
+      } catch (error) {
+        console.error("[identity] related Anime Mapper protection lookup failed", error);
+        return new Map();
+      }
+    })()
+    : Promise.resolve(new Map());
+
+  const [armMappings, animeMapperProviderIds] = await Promise.all([
+    armPromise,
+    animeMapperPromise,
+  ]);
+  mappings = armMappings instanceof Map ? armMappings : new Map();
+
+  for (const [currentId, providerIds] of animeMapperProviderIds instanceof Map ? animeMapperProviderIds : []) {
+    const protectedIds = result.get(Number(currentId));
+    if (!protectedIds) continue;
+    for (const providerId of providerIds || []) protectedIds.add(providerId);
   }
 
   const missing = ids.filter((id) => !(mappings.get(id)?.length));
