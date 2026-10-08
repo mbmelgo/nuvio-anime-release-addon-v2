@@ -102,16 +102,22 @@ test("Anime Mapper rejects a record whose AniList identity does not match", asyn
   assert.equal(result.has(214260), false);
 });
 
-test("Anime Mapper retries missing records instead of caching negative results", async () => {
+test("Anime Mapper coalesces transient failures briefly without durable negative caching", async () => {
   clearAnimeMapperCache();
   let calls = 0;
+  let now = 0;
   const fetchImpl = async () => {
     calls += 1;
     return { ok: false, status: 404, async json() { return {}; } };
   };
   const row = [{ id: 205289, idMal: 63221, format: "MOVIE", titleRomaji: "Norman the Snowman" }];
-  await resolveAniListMappingsByAnimeMapper(row, { baseUrl: "https://mapper.test", fetchImpl });
-  await resolveAniListMappingsByAnimeMapper(row, { baseUrl: "https://mapper.test", fetchImpl });
+
+  await resolveAniListMappingsByAnimeMapper(row, { baseUrl: "https://mapper.test", fetchImpl, now: () => now });
+  await resolveAniListMappingsByAnimeMapper(row, { baseUrl: "https://mapper.test", fetchImpl, now: () => now });
+  assert.equal(calls, 1);
+
+  now += 5001;
+  await resolveAniListMappingsByAnimeMapper(row, { baseUrl: "https://mapper.test", fetchImpl, now: () => now });
   assert.equal(calls, 2);
 });
 
