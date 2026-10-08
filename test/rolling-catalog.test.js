@@ -340,3 +340,35 @@ test("catalog identity recovery retries transiently unresolved provider mappings
   assert.equal(mappingCalls, 2);
   assert.equal(imdbCalls, 2);
 });
+
+test("catalog uses verified production identity cache only when live providers have no candidate", async () => {
+  const row = {
+    id: 209463,
+    idMal: 0,
+    title: { english: "From Far Away", romaji: "From Far Away", native: null },
+    synonyms: [],
+    format: "TV",
+    startDate: { year: 2026 },
+    relations: { edges: [] },
+  };
+  const empty = async () => new Map();
+  const result = await canonicalizeCatalogPage([row], {
+    resolveMappings: empty,
+    resolveFribbMappings: empty,
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: empty,
+    resolveIdMapperMappings: empty,
+    resolveTMDBMappings: empty,
+    resolveAnimeMapperMappings: empty,
+    resolveAnimeMapperRelatedProviderIds: empty,
+    resolveCanonicalSeriesMappings: empty,
+    resolveAniBridgeMappings: empty,
+    resolveTsvMappings: empty,
+    resolveImdbMappings: empty,
+    resolveSecondaryMappings: empty,
+    resolveAlternativeMappings: empty,
+  });
+
+  assert.equal(result[0].id, "tt18268600");
+  assert.equal(result[0].extra?.identityEvidence?.[0]?.source, "previous-production-snapshot");
+});
