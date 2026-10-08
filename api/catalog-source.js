@@ -21,6 +21,7 @@ import { resolveAniListMappingsByTMDB, selectTMDBIdentity } from "../lib/tmdb-ma
 import { resolveAniListMappingsByAnimeMapper, resolveAniListRelatedProviderIdsByAnimeMapper, resolveAniListCanonicalSeriesByAnimeMapper } from "../lib/anime-mapper-mapping.js";
 import { resolveAniListMappingsByAniBridge } from "../lib/anibridge-mapping.js";
 import { resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
+import { PRODUCTION_IDENTITY_CACHE, PRODUCTION_IDENTITY_CACHE_VERSION } from "../lib/production-identity-cache.js";
 import { resolveAniListMappingsFromAnimeApiTsv } from "../lib/animeapi-tsv-mapping.js";
 import { getProviderCandidates, selectProviderIdentity } from "../lib/provider-identity.js";
 import {
@@ -376,6 +377,45 @@ async function resolveMappingsForRows(
       if (diagnostics) diagnostics.identityRecovery = performance.now() - stageStart;
       console.error("[identity] unresolved identity recovery failed; preserving fallback behavior", error);
     }
+  }
+
+  stillUnresolvedRows = rows.filter((row) => !selectProviderIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
+
+  const cacheFallbackRows = stillUnresolvedRows.filter((row) => {
+    const candidates = getProviderCandidates(
+      { ...row, anilistId: Number(row.id) },
+      mappings.get(Number(row.id)) || [],
+    );
+    return candidates.length === 0 && PRODUCTION_IDENTITY_CACHE[String(row.id)];
+  });
+  for (const row of cacheFallbackRows) {
+    const cached = PRODUCTION_IDENTITY_CACHE[String(row.id)];
+    const records = mappings.get(Number(row.id)) || [];
+    mappings.set(Number(row.id), [
+      ...records,
+      {
+        source: cached.source,
+        sourceVersion: cached.version || PRODUCTION_IDENTITY_CACHE_VERSION,
+        anilistId: Number(row.id),
+        type: row.type,
+        malId: row.malId,
+        title: row.title,
+        titles: row.titles,
+        year: row.startDate?.year || null,
+        season: null,
+        episodeOffset: null,
+        imdbIds: cached.provider === "imdb" ? [cached.id] : [],
+        tvdbId: cached.provider === "tvdb" ? Number(cached.id.split(":")[1]) : null,
+        tmdbTvId: cached.provider === "tmdb" ? Number(cached.id.split(":")[1]) : null,
+        tmdbMovieIds: [],
+      },
+    ]);
+  }
+  if (cacheFallbackRows.length && diagnostics) {
+    diagnostics.productionIdentityCache = cacheFallbackRows.length;
   }
 
   stillUnresolvedRows = rows.filter((row) => !selectProviderIdentity(
