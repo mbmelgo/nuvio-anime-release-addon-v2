@@ -59,8 +59,8 @@ test("catalog uses TMDB as the primary resolver", async () => {
     resolveSecondaryMappings: empty,
     resolveAlternativeMappings: empty,
   });
-  assert.equal(metas[0].id, "tt0434665");
-  assert.equal(metas[0].extra.tmdbProvider, "imdb");
+  assert.equal(metas[0].id, "tmdb:30984");
+  assert.equal(metas[0].extra.tmdbProvider, "tmdb");
 });
 
 test("catalog falls back to an independent provider mapping when TMDB has no match", async () => {
@@ -278,12 +278,11 @@ test("catalog verifies IMDb after a TMDB-only match before accepting TMDB identi
     resolveAlternativeMappings: empty,
   });
 
-  assert.equal(metas[0].id, "tt44923712");
-  assert.equal(metas[0].extra.identityProvider, "imdb");
+  assert.equal(metas[0].id, "tmdb:315682");
 });
 
 
-test("catalog prefers independently verified TV IMDb identity over a TMDB movie IMDb external ID", async () => {
+test("catalog prefers strong direct IMDb identity over a TMDB-derived IMDb identity", async () => {
   const metas = await canonicalizeCatalogPage([{
     ...row(185874, 60636),
     title: {
@@ -317,7 +316,7 @@ test("catalog prefers independently verified TV IMDb identity over a TMDB movie 
     resolveAnimeMapperMappings: empty,
     resolveTsvMappings: empty,
     resolveImdbMappings: async () => new Map([[185874, [{
-      source: "imdb-search",
+      source: "anime-mapper",
       anilistId: 185874,
       type: "TV",
       imdbIds: ["tt14986406"],
@@ -436,4 +435,56 @@ test("catalog uses native TMDB route when IMDb is only supplied by the TMDB mapp
     resolveAlternativeMappings: empty,
   });
   assert.equal(metas[0].id, "tmdb:30985");
+});
+
+
+test("catalog prefers native TMDB route for Mofusand when IMDb is only TMDB/search-derived", async () => {
+  const metas = await canonicalizeCatalogPage([{
+    ...row(204656, 63151),
+    title: { english: "mofusand", romaji: "mofusand", native: "mofusand" },
+    startDate: { year: 2025 },
+    format: "TV",
+  }], {
+    resolveMappings: empty,
+    resolveFribbMappings: empty,
+    resolveExternalMappings: () => new Map(),
+    resolveAniBridgeMappings: empty,
+    resolveTMDBMappings: async () => new Map([[204656, [{
+      source: "tmdb-search",
+      anilistId: 204656,
+      type: "TV",
+      imdbIds: ["tt43851457"],
+      tvdbId: 472627,
+      tmdbTvId: 308934,
+      tmdbMovieIds: [],
+      title: "mofusand animation",
+      titles: ["mofusand animation"],
+      year: 2025,
+      tmdbAuthoritative: true,
+      tmdbMatchScore: 130,
+    }]]]),
+    validateImdbMappings: async () => new Map(),
+    resolveAnimapMappings: empty,
+    resolveIdMapperMappings: empty,
+    resolveAnimeMapperMappings: empty,
+    resolveTsvMappings: empty,
+    resolveImdbMappings: async () => new Map([[204656, [{
+      source: "imdb-search",
+      anilistId: 204656,
+      type: "TV",
+      imdbIds: ["tt43851457"],
+      tvdbId: null,
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+      title: "mofusand",
+      titles: ["mofusand"],
+      year: 2025,
+    }]]]),
+    resolveSecondaryMappings: empty,
+    resolveAlternativeMappings: empty,
+  });
+
+  assert.equal(metas[0].id, "tmdb:308934");
+  assert.equal(metas[0].extra.tmdbProvider, "tmdb");
+  assert.equal(metas[0].extra.tmdbId, "308934");
 });

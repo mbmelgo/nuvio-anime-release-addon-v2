@@ -26,7 +26,7 @@ import {
 } from "../lib/imdb-search-mapping.js";
 import { PRODUCTION_IDENTITY_CACHE, PRODUCTION_IDENTITY_CACHE_VERSION } from "../lib/production-identity-cache.js";
 import { resolveAniListMappingsFromAnimeApiTsv } from "../lib/animeapi-tsv-mapping.js";
-import { getProviderCandidates, selectProviderIdentity } from "../lib/provider-identity.js";
+import { getProviderCandidates, hasStrongDirectProviderEvidence, selectProviderIdentity } from "../lib/provider-identity.js";
 import {
   resolveAniListMappingsSecondary,
   resolveAniListMappingsByMalIds,
@@ -553,9 +553,7 @@ async function resolveMappingsForRows(
           { ...(currentRow || {}), anilistId: Number(currentId) },
           currentCandidates.filter((candidate) =>
             candidate.provider === "imdb"
-            && candidate.evidence?.some((entry) =>
-              ["imdb-search", "imdb-search-relation"].includes(entry?.source),
-            ),
+            && hasStrongDirectProviderEvidence(candidate),
           ),
         );
         const canonicalImdbIds = new Set(
@@ -1292,8 +1290,7 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
       { ...row, anilistId },
       providerCandidates.filter((candidate) =>
         candidate.provider === "imdb"
-        && candidate.evidence?.some((entry) =>
-          ["imdb-search", "imdb-search-relation"].includes(entry?.source)),
+        && hasStrongDirectProviderEvidence(candidate),
       ),
       { excludeIds: usedIdentities },
     );
@@ -1304,7 +1301,6 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
     // case; keep IMDb when independent evidence exists.
     const nuvioTmdbRoute = tmdbSelected?.tmdbId
       && tmdbSelected.provider === "imdb"
-      && tmdbSelected.providerExactTitle !== true
       && !independentlyVerifiedImdb
       ? {
         ...tmdbSelected,
@@ -1499,9 +1495,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
           { ...media, anilistId: mediaId },
           providerCandidates.filter((candidate) =>
             candidate.provider === "imdb"
-            && candidate.evidence?.some((entry) =>
-              ["imdb-search", "imdb-search-relation"].includes(entry?.source),
-            ),
+            && hasStrongDirectProviderEvidence(candidate),
           ),
           { excludeIds: usedIdentities },
         );
@@ -1511,8 +1505,8 @@ export async function buildRollingCatalog(id, date, skip, search, {
           && providerSelected?.provider === "imdb"
           ? { ...tmdbSelected, provider: "tmdb", id: String(tmdbSelected.tmdbId), stremioId: `tmdb:${tmdbSelected.tmdbId}` }
           : null;
-        const selected = independentlyVerifiedImdb
-          || (cachedProductionIdentity?.provider === "imdb" ? cachedProductionIdentity : null)
+        const selected = (cachedProductionIdentity?.provider === "imdb" ? cachedProductionIdentity : null)
+          || independentlyVerifiedImdb
           || nuvioTmdbRoute
           || (tmdbSelected?.provider === "imdb" ? tmdbSelected : null)
           || (providerSelected?.provider === "imdb" ? providerSelected : null)
