@@ -340,3 +340,24 @@ test("catalog identity recovery retries transiently unresolved provider mappings
   assert.equal(mappingCalls, 2);
   assert.equal(imdbCalls, 2);
 });
+
+test("rolling catalog uses verified production identity cache when live providers have no candidate", async () => {
+  const now = new Date("2026-10-01T00:00:00.000Z");
+  const airingAt = now.getTime() + 60_000;
+  const row = schedule(209463, airingAt, 1, "From Far Away");
+  const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+    fetchPage: async () => [row],
+    maxPages: 1,
+    resolveMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+    resolveCanonicalSeriesMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+  });
+
+  assert.equal(result[0].id, "tt18268600");
+  assert.equal(result[0].extra?.identityProvider, "imdb");
+  assert.equal(result[0].extra?.identityId, "tt18268600");
+  assert.equal(result[0].extra?.identityEvidence?.[0]?.source, "previous-production-snapshot");
+});
+

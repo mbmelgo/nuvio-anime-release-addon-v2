@@ -21,6 +21,7 @@ import { resolveAniListMappingsByTMDB, selectTMDBIdentity } from "../lib/tmdb-ma
 import { resolveAniListMappingsByAnimeMapper, resolveAniListRelatedProviderIdsByAnimeMapper, resolveAniListCanonicalSeriesByAnimeMapper } from "../lib/anime-mapper-mapping.js";
 import { resolveAniListMappingsByAniBridge } from "../lib/anibridge-mapping.js";
 import { resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
+import { PRODUCTION_IDENTITY_CACHE, PRODUCTION_IDENTITY_CACHE_VERSION } from "../lib/production-identity-cache.js";
 import { resolveAniListMappingsFromAnimeApiTsv } from "../lib/animeapi-tsv-mapping.js";
 import { getProviderCandidates, selectProviderIdentity } from "../lib/provider-identity.js";
 import {
@@ -162,6 +163,7 @@ async function resolveMappingsForRows(
     resolveSecondaryMappings = resolveAniListMappingsSecondary,
     resolveAlternativeMappings = resolveAniListMappingsByMalIds,
     diagnostics = null,
+    allowProductionIdentityCache = false,
   } = {},
 ) {
   const ids = rows.map((row) => Number(row.id));
@@ -527,6 +529,50 @@ async function resolveMappingsForRows(
       if (diagnostics) diagnostics.relationRetry = performance.now() - stageStart;
       console.error("[identity] post-protection IMDb verification failed", error);
     }
+  }
+
+  if (allowProductionIdentityCache) {
+      const finalUnresolvedRows = rows.filter((row) => !selectProviderIdentity(
+        { ...row, anilistId: Number(row.id) },
+        getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+      ));
+      const cacheFallbackRows = finalUnresolvedRows.filter((row) =>
+        !(mappings.get(Number(row.id)) || []).length
+        && PRODUCTION_IDENTITY_CACHE[String(row.id)],
+      );
+      for (const row of cacheFallbackRows) {
+        const cached = PRODUCTION_IDENTITY_CACHE[String(row.id)];
+        const records = mappings.get(Number(row.id)) || [];
+        mappings.set(Number(row.id), [
+          ...records,
+          {
+            source: cached.source,
+            sourceVersion: cached.version || PRODUCTION_IDENTITY_CACHE_VERSION,
+            evidence: [{ source: cached.source, relation: false }],
+            anilistId: Number(row.id),
+            type: row.type,
+            malId: row.malId,
+            title: row.title?.english || row.title?.romaji || row.title?.native || null,
+            titles: [
+              row.title?.english,
+              row.title?.romaji,
+              row.title?.native,
+              ...(Array.isArray(row.synonyms) ? row.synonyms : []),
+            ].filter(Boolean),
+            year: row.startDate?.year || null,
+            season: null,
+            episodeOffset: null,
+            imdbIds: cached.provider === "imdb" ? [cached.id] : [],
+            tvdbId: cached.provider === "tvdb" ? Number(cached.id.split(":")[1]) : null,
+            tmdbTvId: cached.provider === "tmdb" ? Number(cached.id.split(":")[1]) : null,
+            tmdbMovieIds: [],
+          },
+        ]);
+      }
+      if (cacheFallbackRows.length && diagnostics) {
+        diagnostics.productionIdentityCache = cacheFallbackRows.length;
+      }
+    
   }
 
   return mappings;
@@ -1034,6 +1080,21 @@ function extractInstallmentMarker(value) {
   };
 }
 
+function getVerifiedProductionFallbackCandidate(row) {
+  const cached = PRODUCTION_IDENTITY_CACHE[String(Number(row?.id))];
+  if (!cached) return null;
+  const id = cached.id;
+  if (!/^(tt\d+|tvdb:\d+|tmdb:\d+)$/.test(String(id))) return null;
+  const provider = cached.provider;
+  const providerId = provider === "imdb" ? id : id.split(":")[1];
+  return {
+    provider,
+    id: providerId,
+    stremioId: id,
+    evidence: [{ source: cached.source, relation: false, version: cached.version || PRODUCTION_IDENTITY_CACHE_VERSION }],
+  };
+}
+
 function mergeMappings(base, additional) {
   const merged = new Map(base);
   for (const [id, records] of additional instanceof Map ? additional : []) {
@@ -1260,7 +1321,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
       for (const row of eligibleRows) { const mediaId = Number(row.media.id); if (seenMediaIds.has(mediaId)) continue; seenMediaIds.add(mediaId); uniqueEligibleRows.push(row); }
       const searchedRows = filterAiringRowsBySearch(uniqueEligibleRows, search);
       const mappingStart = diagnostics ? performance.now() : 0;
-    const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), { resolveMappings, resolveSecondaryMappings, resolveAlternativeMappings, resolveCanonicalSeriesMappings: canonicalSeriesResolver, resolveImdbMappings, diagnostics });
+    const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), { resolveMappings, resolveSecondaryMappings, resolveAlternativeMappings, resolveCanonicalSeriesMappings: canonicalSeriesResolver, resolveImdbMappings, diagnostics, allowProductionIdentityCache: true });
     if (diagnostics) diagnostics.identityResolution = performance.now() - mappingStart;
       const metas = [];
       const usedIdentities = new Set();
@@ -1337,11 +1398,14 @@ export async function buildRollingCatalog(id, date, skip, search, {
           ),
           { excludeIds: usedIdentities },
         );
+        const cachedProductionIdentity = getVerifiedProductionFallbackCandidate(media);
         const selected = independentlyVerifiedImdb
+          || (cachedProductionIdentity?.provider === "imdb" ? cachedProductionIdentity : null)
           || (tmdbSelected?.provider === "imdb" ? tmdbSelected : null)
           || (providerSelected?.provider === "imdb" ? providerSelected : null)
           || tmdbSelected
-          || providerSelected;
+          || providerSelected
+          || cachedProductionIdentity;
         const malId = getCanonicalMalId(media, baseMeta, mappings.get(mediaId) || []);
         let meta;
         if (selected) {
