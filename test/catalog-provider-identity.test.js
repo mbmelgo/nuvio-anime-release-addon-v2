@@ -4,6 +4,22 @@ import { canonicalizeCatalogPage, isSelectedIdentityProtected } from "../api/cat
 
 const empty = async () => new Map();
 
+const validateKnownImdb = async (rows, identities) => new Map(
+  [...identities.entries()].map(([id, imdbId]) => [id, [{
+    source: "imdb-search",
+    anilistId: id,
+    type: "TV",
+    imdbIds: [imdbId],
+    tvdbId: null,
+    tmdbTvId: null,
+    tmdbMovieIds: [],
+    title: rows.find((row) => Number(row.id) === id)?.title?.english || null,
+    titles: [rows.find((row) => Number(row.id) === id)?.title?.english].filter(Boolean),
+    year: rows.find((row) => Number(row.id) === id)?.startDate?.year || null,
+  }]]),
+);
+
+
 function row(id = 269, malId = 269) {
   return {
     id,
@@ -34,20 +50,7 @@ test("catalog uses TMDB as the primary resolver", async () => {
       tmdbAuthoritative: true,
       tmdbMatchScore: 130,
     }]]]),
-    validateImdbMappings: async (_rows, identities) => new Map(
-      [...identities.entries()].map(([id, imdbId]) => [id, [{
-        source: "imdb-search",
-        anilistId: id,
-        type: "TV",
-        imdbIds: [imdbId],
-        tvdbId: null,
-        tmdbTvId: null,
-        tmdbMovieIds: [],
-        title: "Bleach",
-        titles: ["Bleach"],
-        year: 2004,
-      }]]]),
-    ),
+    validateImdbMappings: validateKnownImdb,
     resolveAnimapMappings: empty,
     resolveIdMapperMappings: empty,
     resolveAnimeMapperMappings: empty,
@@ -216,7 +219,7 @@ test("catalog rejects a TMDB IMDb external ID when its title does not match the 
       tmdbAuthoritative: true,
       tmdbMatchScore: 130,
     }]]]),
-    validateImdbMappings: async () => new Map(),
+    validateImdbMappings: validateKnownImdb,
     resolveAnimapMappings: empty,
     resolveIdMapperMappings: empty,
     resolveAnimeMapperMappings: empty,
@@ -308,7 +311,7 @@ test("catalog prefers independently verified TV IMDb identity over a TMDB movie 
       tmdbAuthoritative: true,
       tmdbMatchScore: 130,
     }]]]),
-    validateImdbMappings: async () => new Map(),
+    validateImdbMappings: validateKnownImdb,
     resolveAnimapMappings: empty,
     resolveIdMapperMappings: empty,
     resolveAnimeMapperMappings: empty,
