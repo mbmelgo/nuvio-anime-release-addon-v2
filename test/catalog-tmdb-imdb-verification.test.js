@@ -68,7 +68,7 @@ test("catalog validates a known TMDB IMDb identity without title-searching it", 
     resolveAlternativeMappings: async () => new Map(),
   });
 
-  assert.equal(result[0].id, "tt12345678");
+  assert.equal(result[0].id, "tmdb:200455");
   assert.equal(validationCalls, 1);
   assert.equal(imdbCalls, 0);
 });
