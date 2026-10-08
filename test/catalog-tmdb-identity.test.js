@@ -144,10 +144,9 @@ test("catalog lets TMDB upgrade non-IMDb mappings", async () => {
         year: 2004,
         tmdbAuthoritative: true,
         tmdbMatchScore: 130,
-      }]]]);;
+}]]]);
     },
     validateImdbMappings: validateKnownImdb,
-    },
     resolveAnimapMappings: empty,
     resolveIdMapperMappings: empty,
     resolveAnimeMapperMappings: empty,
@@ -197,10 +196,9 @@ test("catalog lets TMDB upgrade an earlier TVDB mapping to IMDb", async () => {
         year: 2004,
         tmdbAuthoritative: true,
         tmdbMatchScore: 130,
-      }]]]);;
+}]]]);
     },
     validateImdbMappings: validateKnownImdb,
-    },
     resolveFribbMappings: empty,
     resolveExternalMappings: () => new Map(),
     resolveAnimapMappings: empty,
@@ -258,10 +256,9 @@ test("catalog retries TMDB when an earlier IMDb mapping is invalid", async () =>
         year: 2026,
         tmdbAuthoritative: true,
         tmdbMatchScore: 130,
-      }]]]);;
+}]]]);
     },
     validateImdbMappings: validateKnownImdb,
-    },
     resolveAnimapMappings: empty,
     resolveIdMapperMappings: empty,
     resolveAnimeMapperMappings: empty,
