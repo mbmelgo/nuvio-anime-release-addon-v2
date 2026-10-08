@@ -179,9 +179,9 @@ test("related protection runs ARM and Anime Mapper lookups concurrently", async 
         anilistId: ids[0],
         type: "TV",
         imdbIds: ["tt33333333"],
-        title: "Parent Series",
-        titles: ["Parent Series"],
-        year: 2020,
+        title: "Related Protection Test",
+        titles: ["Related Protection Test"],
+        year: 2026,
       }]]]);
     },
     resolveFribbMappings: async () => new Map(),
