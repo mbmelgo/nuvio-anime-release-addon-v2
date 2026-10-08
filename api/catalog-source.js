@@ -535,10 +535,7 @@ async function resolveMappingsForRows(
     getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
   ));
   const cacheFallbackRows = finalUnresolvedRows.filter((row) =>
-    getProviderCandidates(
-      { ...row, anilistId: Number(row.id) },
-      mappings.get(Number(row.id)) || [],
-    ).length === 0
+    !(mappings.get(Number(row.id)) || []).length
     && PRODUCTION_IDENTITY_CACHE[String(row.id)],
   );
   for (const row of cacheFallbackRows) {
