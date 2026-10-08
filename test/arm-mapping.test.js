@@ -114,7 +114,7 @@ test("ARM mapping client chunks batches at the upstream maximum", async () => {
   assert.equal(mappings.get(101)[0].imdbIds[0], "tt10000101");
 });
 
-test("ARM mapping client caches successful and negative results", async () => {
+test("ARM mapping client retries empty results instead of caching a negative mapping", async () => {
   clearMappingCache();
   let calls = 0;
   const fetchImpl = async () => {
@@ -125,7 +125,7 @@ test("ARM mapping client caches successful and negative results", async () => {
   const first = await resolveAniListMappings([999999], { fetchImpl });
   const second = await resolveAniListMappings([999999], { fetchImpl });
 
-  assert.equal(calls, 1);
+  assert.equal(calls, 2);
   assert.equal(first.has(999999), false);
   assert.equal(second.has(999999), false);
 });

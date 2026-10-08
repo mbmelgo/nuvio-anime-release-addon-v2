@@ -396,3 +396,36 @@ test("IMDb fallback retries transient suggestion failures before giving up", asy
   assert.equal(result.get(199353)?.[0]?.imdbIds[0], "tt16409202");
   assert.equal(attempts, 3);
 });
+
+test("IMDb search retries empty suggestions instead of caching a negative result", async () => {
+  clearImdbSearchCache();
+  let calls = 0;
+  let phase = 0;
+  const fetchImpl = async (url) => {
+    calls += 1;
+    if (phase === 0) {
+      return new Response(JSON.stringify({ d: [] }), { status: 200 });
+    }
+    return new Response(JSON.stringify({
+      d: [{ id: "tt16409202", l: "Dawang Raoming 3", y: 2026, q: "tvSeries" }],
+    }), { status: 200 });
+  };
+
+  const row = {
+    id: 199353,
+    idMal: 60597,
+    format: "ONA",
+    title: { english: "Dawang Raoming 3", romaji: "Dawang Raoming 3", native: "大王饶命 第三季" },
+    synonyms: [],
+    startDate: { year: 2026 },
+  };
+
+  const first = await resolveAniListMappingsByImdbSearch([row], { fetchImpl });
+  phase = 1;
+  const second = await resolveAniListMappingsByImdbSearch([row], { fetchImpl });
+
+  assert.equal(first.has(199353), false);
+  assert.equal(second.get(199353)?.[0]?.imdbIds[0], "tt16409202");
+  assert.ok(calls > 1);
+});
+

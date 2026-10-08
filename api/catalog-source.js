@@ -12,21 +12,20 @@ import {
 import { collectValidatedCatalogPage } from "../lib/catalog-pagination.js";
 import { filterCatalogMetasBySearch, toMetaFromAniList } from "../lib/catalog-meta.js";
 import { queryAnime, queryAiringSchedulePage } from "../lib/catalog-anilist.js";
-import { resolveAniListMappings, clearMappingCache } from "../lib/arm-mapping.js";
-import { resolveAniListMappingsFribb, clearFribbMappingCache } from "../lib/fribb-mapping.js";
+import { resolveAniListMappings } from "../lib/arm-mapping.js";
+import { resolveAniListMappingsFribb } from "../lib/fribb-mapping.js";
 import { resolveAniListExternalMappings } from "../lib/external-provider-mapping.js";
 import { resolveAniListMappingsAnimap } from "../lib/animap-mapping.js";
-import { resolveAniListMappingsIdMapper, clearIdMapperCache } from "../lib/idmapper-mapping.js";
+import { resolveAniListMappingsIdMapper } from "../lib/idmapper-mapping.js";
 import { resolveAniListMappingsByTMDB, selectTMDBIdentity } from "../lib/tmdb-mapping.js";
-import { resolveAniListMappingsByAnimeMapper, resolveAniListRelatedProviderIdsByAnimeMapper, resolveAniListCanonicalSeriesByAnimeMapper, clearAnimeMapperCache } from "../lib/anime-mapper-mapping.js";
+import { resolveAniListMappingsByAnimeMapper, resolveAniListRelatedProviderIdsByAnimeMapper, resolveAniListCanonicalSeriesByAnimeMapper } from "../lib/anime-mapper-mapping.js";
 import { resolveAniListMappingsByAniBridge } from "../lib/anibridge-mapping.js";
-import { resolveAniListMappingsByImdbSearch, clearImdbSearchCache } from "../lib/imdb-search-mapping.js";
+import { resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
 import { resolveAniListMappingsFromAnimeApiTsv } from "../lib/animeapi-tsv-mapping.js";
 import { getProviderCandidates, selectProviderIdentity } from "../lib/provider-identity.js";
 import {
   resolveAniListMappingsSecondary,
   resolveAniListMappingsByMalIds,
-  clearSecondaryMappingCache,
 } from "../lib/secondary-mapping.js";
 
 export {
@@ -365,12 +364,6 @@ async function resolveMappingsForRows(
   if (stillUnresolvedRows.length) {
     try {
       const stageStart = diagnostics ? performance.now() : 0;
-      clearMappingCache();
-      clearFribbMappingCache();
-      clearIdMapperCache();
-      clearAnimeMapperCache();
-      clearSecondaryMappingCache();
-      clearImdbSearchCache();
       const recoveryIds = stillUnresolvedRows.map((row) => Number(row.id));
       mappings = mergeMappings(mappings, await resolveMappings(recoveryIds));
       mappings = mergeMappings(mappings, await resolveFribbMappings(recoveryIds));
