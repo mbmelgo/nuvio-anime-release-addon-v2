@@ -300,8 +300,7 @@ test("catalog identity recovery retries transiently unresolved provider mappings
     relations: { edges: [] },
   };
   const result = await canonicalizeCatalogPage([row], {
-    resolveMappings: async (ids) => {
-      mappingCalls += 1;
+    resolveMappings: async () => {
       mappingCalls += 1;
       return new Map();
     },
@@ -315,7 +314,24 @@ test("catalog identity recovery retries transiently unresolved provider mappings
     resolveCanonicalSeriesMappings: async () => new Map(),
     resolveAniBridgeMappings: async () => new Map(),
     resolveTsvMappings: async () => new Map(),
-    resolveImdbMappings: async () => new Map(),
+    resolveImdbMappings: async (rows) => {
+      imdbCalls += 1;
+      if (imdbCalls < 2) return new Map();
+      return new Map(rows.map((item) => [Number(item.id), [{
+        source: "imdb-search",
+        anilistId: Number(item.id),
+        type: "TV",
+        malId: 60597,
+        imdbIds: ["tt16409202"],
+        tvdbId: null,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: "Dawang Raoming 3",
+        titles: ["Dawang Raoming 3"],
+        year: 2026,
+        relation: false,
+      }]]));
+    },
     resolveSecondaryMappings: async () => new Map(),
     resolveAlternativeMappings: async () => new Map(),
   });
