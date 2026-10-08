@@ -54,7 +54,7 @@ test("IDMapper rejects source-id mismatches and records without BingeCat identit
   }, 202390), null);
 });
 
-test("IDMapper resolver caches successful and negative results", async () => {
+test("IDMapper resolver caches successful results but retries negative results", async () => {
   clearIdMapperCache();
   let calls = 0;
   const fetchImpl = async (url) => {
@@ -74,7 +74,7 @@ test("IDMapper resolver caches successful and negative results", async () => {
   const first = await resolveAniListMappingsIdMapper([202390, 202391], { fetchImpl });
   const second = await resolveAniListMappingsIdMapper([202390, 202391], { fetchImpl });
 
-  assert.equal(calls, 2);
+  assert.equal(calls, 3);
   assert.equal(first.get(202390)[0].imdbIds[0], "tt12345678");
   assert.equal(first.has(202391), false);
   assert.equal(second.has(202390), true);
