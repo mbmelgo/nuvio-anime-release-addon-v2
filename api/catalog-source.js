@@ -723,9 +723,7 @@ function shouldResolveCanonicalSeries(row, mappings) {
     media,
     candidates.filter((candidate) =>
       candidate.provider === "imdb"
-      && candidate.evidence?.some((entry) =>
-        ["imdb-search", "imdb-search-relation"].includes(entry?.source),
-      ),
+      && hasStrongDirectProviderEvidence(candidate),
     ),
   );
 
@@ -1290,8 +1288,7 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
       { ...row, anilistId },
       providerCandidates.filter((candidate) =>
         candidate.provider === "imdb"
-        && candidate.evidence?.some((entry) =>
-          ["imdb-search", "imdb-search-relation"].includes(entry?.source)),
+        && hasStrongDirectProviderEvidence(candidate),
       ),
       { excludeIds: usedIdentities },
     );
