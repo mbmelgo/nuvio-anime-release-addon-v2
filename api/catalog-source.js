@@ -1081,10 +1081,32 @@ function getVerifiedProductionFallbackCandidate(row) {
   if (!cached) return null;
   const id = cached.id;
   if (!/^(tt\d+|tvdb:\d+|tmdb:\d+)$/.test(String(id))) return null;
+
+  const rowYear = Number(row?.startDate?.year);
+  if (Number.isInteger(cached.year) && cached.year > 0 && Number.isInteger(rowYear) && rowYear > 0
+    && Math.abs(cached.year - rowYear) > 1) {
+    return null;
+  }
+
+  const rowTitles = [
+    row?.title?.english,
+    row?.title?.romaji,
+    row?.title?.native,
+    ...(Array.isArray(row?.synonyms) ? row.synonyms : []),
+  ].filter(Boolean);
+  const cachedTokens = normalizeProviderTitleTokens(cached.title || "");
+  if (cachedTokens.length && rowTitles.length) {
+    const rowTokenSets = rowTitles.map((title) => new Set(normalizeProviderTitleTokens(title)));
+    const titleMatches = rowTokenSets.some((tokens) => {
+      const overlap = cachedTokens.filter((token) => tokens.has(token) && token.length >= 3);
+      const required = Math.min(2, cachedTokens.filter((token) => token.length >= 3).length);
+      return required > 0 && overlap.length >= required;
+    });
+    if (!titleMatches) return null;
+  }
+
   const provider = cached.provider;
-  const providerId = provider === "imdb"
-    ? id
-    : id.split(":")[1];
+  const providerId = provider === "imdb" ? id : id.split(":")[1];
   return {
     provider,
     id: providerId,
