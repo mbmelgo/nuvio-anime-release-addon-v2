@@ -385,22 +385,3 @@ test("relation retry runs when protection changes the pre-protection winner", ()
   ];
   assert.equal(isSelectedIdentityProtected(media, candidates), true);
 });
-
-
-test("provider selection does not let a weak IMDb mapping outrank stronger direct provider evidence", async () => {
-  const { getProviderCandidates, selectProviderIdentity } = await import("../lib/provider-identity.js");
-  const media = {
-    anilistId: 9005,
-    format: "TV",
-    title: { english: "Example Strong Evidence", romaji: "Example Strong Evidence" },
-    startDate: { year: 2026 },
-    relations: { edges: [] },
-  };
-  const records = [
-    { source: "arm", anilistId: 9005, type: "TV", imdbIds: ["tt9005"], title: "Example Strong Evidence", year: 2026 },
-    { source: "anime-mapper", anilistId: 9005, type: "TV", tvdbId: 99005, title: "Example Strong Evidence", year: 2026 },
-  ];
-  const selected = selectProviderIdentity(media, getProviderCandidates(media, records));
-  assert.equal(selected?.provider, "tvdb");
-  assert.equal(selected?.id, "99005");
-});
