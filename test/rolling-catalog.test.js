@@ -351,12 +351,9 @@ test("rolling catalogs use native TMDB route for an unverified TMDB IMDb mapping
   const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
     fetchPage: async () => [schedule(209464, now.getTime() + 60000, 1, "TMDB Route Test", 12346)],
     maxPages: 1,
-    resolveMappings: async () => new Map([[209464, [{
-      source: "arm", anilistId: 209464, type: "TV", imdbIds: [], tvdbId: 12346,
-      tmdbTvId: null, tmdbMovieIds: [], title: "TMDB Route Test", titles: ["TMDB Route Test"], year: 2026,
-    }]]]),
+    resolveMappings: async () => new Map(),
     resolveTMDBMappings: async () => new Map([[209464, [{
-      source: "tmdb-search", anilistId: 209464, type: "TV", imdbIds: ["tt43691316"], tvdbId: 12346,
+      source: "tmdb-search", anilistId: 209464, type: "TV", imdbIds: ["tt43691316"], tvdbId: null,
       tmdbTvId: 43691316, tmdbMovieIds: [], title: "TMDB Route Test", titles: ["TMDB Route Test"],
       year: 2026, tmdbMatchScore: 130, tmdbAuthoritative: true,
     }]]]),
