@@ -1297,7 +1297,6 @@ export async function buildRollingCatalog(id, date, skip, search, {
           continue;
         }
         const tmdbSelected = selectTMDBIdentity({ ...media, anilistId: mediaId }, mappings.get(mediaId) || [], { excludeIds: usedIdentities });
-        const providerCandidates = getProviderCandidates(media, mappings.get(mediaId) || []);
         const providerSelected = selectProviderIdentity(
           { ...media, anilistId: mediaId },
           providerCandidates,
