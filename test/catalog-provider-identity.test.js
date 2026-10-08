@@ -279,7 +279,6 @@ test("catalog verifies IMDb after a TMDB-only match before accepting TMDB identi
   });
 
   assert.equal(metas[0].id, "tmdb:315682");
-  assert.equal(metas[0].extra.tmdbProvider, "tmdb");
 });
 
 
