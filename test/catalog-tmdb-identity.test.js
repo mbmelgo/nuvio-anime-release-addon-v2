@@ -20,7 +20,7 @@ const validateKnownImdb = async (rows, identities) => new Map(
 );
 
 
-test("catalog prefers TMDB resolver identity", async () => {
+test("catalog prefers native TMDB route for TMDB-derived IMDb identity", async () => {
     const metas = await canonicalizeCatalogPage([{
     id: 269,
     idMal: 269,
@@ -55,8 +55,9 @@ test("catalog prefers TMDB resolver identity", async () => {
     resolveAniBridgeMappings: empty,
   });
 
-  assert.equal(metas[0].id, "tt0434665");  assert.equal(metas[0].extra.tmdbProvider, "imdb");
-  assert.equal(metas[0].extra.tmdbId, "tt0434665");
+  assert.equal(metas[0].id, "tmdb:30984");
+  assert.equal(metas[0].extra.tmdbProvider, "tmdb");
+  assert.equal(metas[0].extra.tmdbId, "30984");
   assert.equal(metas[0].extra.tmdbEvidence, "tmdb-search");});
 
 test("catalog returns TMDB ID when TMDB match has no IMDb identity", async () => {
@@ -100,7 +101,7 @@ test("catalog returns TMDB ID when TMDB match has no IMDb identity", async () =>
 
 
 
-test("catalog lets TMDB upgrade non-IMDb mappings", async () => {
+test("catalog keeps the native TMDB route when TMDB upgrades a non-IMDb mapping", async () => {
   let tmdbCalls = 0;
   
   const metas = await canonicalizeCatalogPage([{
@@ -157,12 +158,12 @@ test("catalog lets TMDB upgrade non-IMDb mappings", async () => {
   });
 
   assert.equal(metas.length, 2);
-  assert.equal(metas[0].id, "tt0434665");
-  assert.equal(metas[0].extra.tmdbProvider, "imdb");
+  assert.equal(metas[0].id, "tmdb:30984");
+  assert.equal(metas[0].extra.tmdbProvider, "tmdb");
   assert.equal(metas[0].extra.tmdbEvidence, "tmdb-search");
   assert.equal(tmdbCalls, 1);});
 
-test("catalog lets TMDB upgrade an earlier TVDB mapping to IMDb", async () => {
+test("catalog keeps the native TMDB route when TMDB upgrades an earlier TVDB mapping", async () => {
   let tmdbCalls = 0;
   
   const metas = await canonicalizeCatalogPage([{
@@ -211,8 +212,8 @@ test("catalog lets TMDB upgrade an earlier TVDB mapping to IMDb", async () => {
     resolveAniBridgeMappings: empty,
   });
 
-  assert.equal(metas[0].id, "tt0434665");
-  assert.equal(metas[0].extra.tmdbProvider, "imdb");
+  assert.equal(metas[0].id, "tmdb:30984");
+  assert.equal(metas[0].extra.tmdbProvider, "tmdb");
   assert.equal(tmdbCalls, 1);
 });
 
@@ -268,9 +269,9 @@ test("catalog retries TMDB when an earlier IMDb mapping is invalid", async () =>
     resolveAlternativeMappings: empty,
   });
 
-  assert.equal(metas[0].id, "tt1234567");
-  assert.equal(metas[0].extra.tmdbProvider, "imdb");
-  assert.equal(metas[0].extra.tmdbId, "tt1234567");
+  assert.equal(metas[0].id, "tmdb:765432");
+  assert.equal(metas[0].extra.tmdbProvider, "tmdb");
+  assert.equal(metas[0].extra.tmdbId, "765432");
   assert.equal(tmdbCalls, 1);
 });
 
