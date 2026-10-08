@@ -1079,6 +1079,25 @@ function extractInstallmentMarker(value) {
   };
 }
 
+function getVerifiedProductionFallbackCandidate(row) {
+  const cached = PRODUCTION_IDENTITY_CACHE[String(Number(row?.id))];
+  if (!cached) return null;
+  const id = cached.id;
+  if (!/^(tt\d+|tvdb:\d+|tmdb:\d+)$/.test(String(id))) return null;
+  const provider = cached.provider;
+  const providerId = provider === "imdb"
+    ? id
+    : id.split(":")[1];
+  return {
+    provider,
+    id: providerId,
+    stremioId: id,
+    evidence: [{ source: cached.source, relation: false, version: cached.version || PRODUCTION_IDENTITY_CACHE_VERSION }],
+    source: cached.source,
+    sourceVersion: cached.version || PRODUCTION_IDENTITY_CACHE_VERSION,
+  };
+}
+
 function mergeMappings(base, additional) {
   const merged = new Map(base);
   for (const [id, records] of additional instanceof Map ? additional : []) {
@@ -1212,7 +1231,7 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
       metas.push({ ...meta, id: effectiveTmdbSelected.stremioId, extra: { ...meta.extra, tmdbProvider: effectiveTmdbSelected.provider, tmdbId: effectiveTmdbSelected.id, tmdbEvidence: "tmdb-search" } });
       continue;
     }
-    const selected = providerSelected;
+    const selected = providerSelected || getVerifiedProductionFallbackCandidate(row);
     if (selected) {
       usedIdentities.add(selected.stremioId);
       metas.push({ ...meta, id: selected.stremioId, extra: { ...meta.extra, identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence } });
@@ -1386,7 +1405,8 @@ export async function buildRollingCatalog(id, date, skip, search, {
           || (tmdbSelected?.provider === "imdb" ? tmdbSelected : null)
           || (providerSelected?.provider === "imdb" ? providerSelected : null)
           || tmdbSelected
-          || providerSelected;
+          || providerSelected
+          || getVerifiedProductionFallbackCandidate(media);
         const malId = getCanonicalMalId(media, baseMeta, mappings.get(mediaId) || []);
         let meta;
         if (selected) {
