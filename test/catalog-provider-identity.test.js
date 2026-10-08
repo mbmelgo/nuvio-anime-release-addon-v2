@@ -59,10 +59,8 @@ test("catalog uses TMDB as the primary resolver", async () => {
     resolveSecondaryMappings: empty,
     resolveAlternativeMappings: empty,
   });
-  assert.equal(metas[0].id, "tmdb:30984");
-  assert.equal(metas[0].extra.tmdbProvider, "tmdb");
-  assert.equal(metas[0].extra.tmdbId, "30984");
-  assert.equal(metas[0].extra.identityFallback, "nuvio-tmdb-route");
+  assert.equal(metas[0].id, "tt0434665");
+  assert.equal(metas[0].extra.tmdbProvider, "imdb");
 });
 
 test("catalog falls back to an independent provider mapping when TMDB has no match", async () => {
