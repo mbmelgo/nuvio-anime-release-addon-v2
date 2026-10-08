@@ -274,9 +274,22 @@ async function resolveMappingsForRows(
         return [Number(row.id), selected?.id];
       }));
       const validated = await validateImdbMappings(tmdbKnownImdbRows, knownIds);
-      mappings = mergeMappings(mappings, validated);
       for (const row of tmdbKnownImdbRows) {
-        if (!validated.has(Number(row.id))) tmdbInvalidKnownImdbRows.push(row);
+        const rowId = Number(row.id);
+        if (!validated.has(rowId)) {
+          tmdbInvalidKnownImdbRows.push(row);
+          continue;
+        }
+
+        const validatedImdbId = knownIds.get(rowId);
+        const records = mappings.get(rowId) || [];
+        mappings.set(rowId, records.map((record) =>
+          record?.source === "tmdb-search"
+            && Array.isArray(record.imdbIds)
+            && record.imdbIds.some((id) => String(id) === String(validatedImdbId))
+            ? { ...record, providerExactTitle: true }
+            : record,
+        ));
       }
     } catch (error) {
       console.error("[identity] TMDB-provided IMDb validation failed; using title search fallback", error);
