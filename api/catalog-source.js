@@ -1504,8 +1504,12 @@ export async function buildRollingCatalog(id, date, skip, search, {
           { excludeIds: usedIdentities },
         );
         const cachedProductionIdentity = getVerifiedProductionFallbackCandidate(media);
+        const nuvioTmdbRoute = tmdbSelected?.tmdbId && !independentlyVerifiedImdb && cachedProductionIdentity?.provider !== "imdb"
+          ? { ...tmdbSelected, provider: "tmdb", id: String(tmdbSelected.tmdbId), stremioId: `tmdb:${tmdbSelected.tmdbId}` }
+          : null;
         const selected = independentlyVerifiedImdb
           || (cachedProductionIdentity?.provider === "imdb" ? cachedProductionIdentity : null)
+          || nuvioTmdbRoute
           || (tmdbSelected?.provider === "imdb" ? tmdbSelected : null)
           || (providerSelected?.provider === "imdb" ? providerSelected : null)
           || tmdbSelected
