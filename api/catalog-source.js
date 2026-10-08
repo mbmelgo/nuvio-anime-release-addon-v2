@@ -367,20 +367,26 @@ async function resolveMappingsForRows(
   // let a single failed pass become a terminal MAL/AniList identity when the
   // same media can be resolved successfully on a subsequent request.
   if (stillUnresolvedRows.length) {
-    try {
-      const stageStart = diagnostics ? performance.now() : 0;
-      const recoveryIds = stillUnresolvedRows.map((row) => Number(row.id));
-      mappings = mergeMappings(mappings, await resolveMappings(recoveryIds));
-      mappings = mergeMappings(mappings, await resolveFribbMappings(recoveryIds));
-      mappings = mergeMappings(mappings, await resolveIdMapperMappings(recoveryIds));
-      mappings = mergeMappings(mappings, await resolveAnimeMapperMappings(stillUnresolvedRows));
-      mappings = mergeMappings(mappings, await resolveSecondaryMappings(recoveryIds));
-      mappings = mergeMappings(mappings, await resolveImdbMappings(stillUnresolvedRows));
-      if (diagnostics) diagnostics.identityRecovery = performance.now() - stageStart;
-    } catch (error) {
-      if (diagnostics) diagnostics.identityRecovery = performance.now() - stageStart;
-      console.error("[identity] unresolved identity recovery failed; preserving fallback behavior", error);
+    const stageStart = diagnostics ? performance.now() : 0;
+    const recoveryIds = stillUnresolvedRows.map((row) => Number(row.id));
+    const recoveryStages = [
+      ["ARM", () => resolveMappings(recoveryIds)],
+      ["Fribb", () => resolveFribbMappings(recoveryIds)],
+      ["IDMapper", () => resolveIdMapperMappings(recoveryIds)],
+      ["Anime Mapper", () => resolveAnimeMapperMappings(stillUnresolvedRows)],
+      ["secondary", () => resolveSecondaryMappings(recoveryIds)],
+      ["IMDb", () => resolveImdbMappings(stillUnresolvedRows)],
+    ];
+
+    for (const [sourceName, resolveRecoveryStage] of recoveryStages) {
+      try {
+        mappings = mergeMappings(mappings, await resolveRecoveryStage());
+      } catch (error) {
+        console.error(`[identity] unresolved identity recovery source failed: ${sourceName}`, error);
+      }
     }
+
+    if (diagnostics) diagnostics.identityRecovery = performance.now() - stageStart;
   }
 
   stillUnresolvedRows = rows.filter((row) => !selectProviderIdentity(
