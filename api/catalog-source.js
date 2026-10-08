@@ -1302,15 +1302,15 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
     // mapping's IMDb external ID does not carry that fallback behavior when
     // it is not independently verified. Prefer the native TMDB route in that
     // case; keep IMDb when independent evidence exists.
-    const nuvioTmdbRoute = effectiveTmdbSelected?.tmdbId
-      && effectiveTmdbSelected.provider === "imdb"
-      && effectiveTmdbSelected.providerExactTitle !== true
+    const nuvioTmdbRoute = tmdbSelected?.tmdbId
+      && tmdbSelected.provider === "imdb"
+      && tmdbSelected.providerExactTitle !== true
       && !independentlyVerifiedImdb
       ? {
-        ...effectiveTmdbSelected,
+        ...tmdbSelected,
         provider: "tmdb",
-        id: String(effectiveTmdbSelected.tmdbId),
-        stremioId: `tmdb:${effectiveTmdbSelected.tmdbId}`,
+        id: String(tmdbSelected.tmdbId),
+        stremioId: `tmdb:${tmdbSelected.tmdbId}`,
       }
       : null;
     if (effectiveTmdbSelected?.provider === "imdb" || providerSelected?.provider === "imdb") {
