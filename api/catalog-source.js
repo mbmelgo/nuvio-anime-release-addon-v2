@@ -384,56 +384,6 @@ async function resolveMappingsForRows(
     getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
   ));
 
-
-  const finalUnresolvedRows = rows.filter((row) => !selectProviderIdentity(
-    { ...row, anilistId: Number(row.id) },
-    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-  ));
-  const cacheFallbackRows = finalUnresolvedRows.filter((row) => {
-    const candidates = getProviderCandidates(
-      { ...row, anilistId: Number(row.id) },
-      mappings.get(Number(row.id)) || [],
-    );
-    return candidates.length === 0 && PRODUCTION_IDENTITY_CACHE[String(row.id)];
-  });
-  for (const row of cacheFallbackRows) {
-    const cached = PRODUCTION_IDENTITY_CACHE[String(row.id)];
-    const records = mappings.get(Number(row.id)) || [];
-    mappings.set(Number(row.id), [
-      ...records,
-      {
-        source: cached.source,
-        sourceVersion: cached.version || PRODUCTION_IDENTITY_CACHE_VERSION,
-        evidence: [{ source: cached.source, relation: false }],
-        anilistId: Number(row.id),
-        type: row.type,
-        malId: row.malId,
-        title: row.title?.english || row.title?.romaji || row.title?.native || null,
-        titles: [
-          row.title?.english,
-          row.title?.romaji,
-          row.title?.native,
-          ...(Array.isArray(row.synonyms) ? row.synonyms : []),
-        ].filter(Boolean),
-        year: row.startDate?.year || null,
-        season: null,
-        episodeOffset: null,
-        imdbIds: cached.provider === "imdb" ? [cached.id] : [],
-        tvdbId: cached.provider === "tvdb" ? Number(cached.id.split(":")[1]) : null,
-        tmdbTvId: cached.provider === "tmdb" ? Number(cached.id.split(":")[1]) : null,
-        tmdbMovieIds: [],
-      },
-    ]);
-  }
-  if (cacheFallbackRows.length && diagnostics) {
-    diagnostics.productionIdentityCache = cacheFallbackRows.length;
-  }
-
-  stillUnresolvedRows = rows.filter((row) => !selectProviderIdentity(
-    { ...row, anilistId: Number(row.id) },
-    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-  ));
-
   if (stillUnresolvedRows.length) {
     try {
       const stageStart = diagnostics ? performance.now() : 0;
@@ -578,6 +528,50 @@ async function resolveMappingsForRows(
       if (diagnostics) diagnostics.relationRetry = performance.now() - stageStart;
       console.error("[identity] post-protection IMDb verification failed", error);
     }
+  }
+
+  const finalUnresolvedRows = rows.filter((row) => !selectProviderIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
+  const cacheFallbackRows = finalUnresolvedRows.filter((row) =>
+    getProviderCandidates(
+      { ...row, anilistId: Number(row.id) },
+      mappings.get(Number(row.id)) || [],
+    ).length === 0
+    && PRODUCTION_IDENTITY_CACHE[String(row.id)],
+  );
+  for (const row of cacheFallbackRows) {
+    const cached = PRODUCTION_IDENTITY_CACHE[String(row.id)];
+    const records = mappings.get(Number(row.id)) || [];
+    mappings.set(Number(row.id), [
+      ...records,
+      {
+        source: cached.source,
+        sourceVersion: cached.version || PRODUCTION_IDENTITY_CACHE_VERSION,
+        evidence: [{ source: cached.source, relation: false }],
+        anilistId: Number(row.id),
+        type: row.type,
+        malId: row.malId,
+        title: row.title?.english || row.title?.romaji || row.title?.native || null,
+        titles: [
+          row.title?.english,
+          row.title?.romaji,
+          row.title?.native,
+          ...(Array.isArray(row.synonyms) ? row.synonyms : []),
+        ].filter(Boolean),
+        year: row.startDate?.year || null,
+        season: null,
+        episodeOffset: null,
+        imdbIds: cached.provider === "imdb" ? [cached.id] : [],
+        tvdbId: cached.provider === "tvdb" ? Number(cached.id.split(":")[1]) : null,
+        tmdbTvId: cached.provider === "tmdb" ? Number(cached.id.split(":")[1]) : null,
+        tmdbMovieIds: [],
+      },
+    ]);
+  }
+  if (cacheFallbackRows.length && diagnostics) {
+    diagnostics.productionIdentityCache = cacheFallbackRows.length;
   }
 
   return mappings;
