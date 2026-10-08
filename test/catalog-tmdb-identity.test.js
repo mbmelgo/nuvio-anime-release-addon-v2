@@ -4,6 +4,22 @@ import { canonicalizeCatalogPage } from "../api/catalog-source.js";
 
 const empty = async () => new Map();
 
+const validateKnownImdb = async (rows, identities) => new Map(
+  [...identities.entries()].map(([id, imdbId]) => [id, [{
+    source: "imdb-search",
+    anilistId: id,
+    type: "TV",
+    imdbIds: [imdbId],
+    tvdbId: null,
+    tmdbTvId: null,
+    tmdbMovieIds: [],
+    title: rows.find((row) => Number(row.id) === id)?.title?.english || null,
+    titles: [rows.find((row) => Number(row.id) === id)?.title?.english].filter(Boolean),
+    year: rows.find((row) => Number(row.id) === id)?.startDate?.year || null,
+  }]]),
+);
+
+
 test("catalog prefers TMDB resolver identity", async () => {
     const metas = await canonicalizeCatalogPage([{
     id: 269,
