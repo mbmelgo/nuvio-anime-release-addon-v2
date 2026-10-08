@@ -61,3 +61,78 @@ test("identity recovery continues when an earlier recovery source fails", async 
   assert.equal(armCalls, 2);
   assert.equal(fribbCalls, 2);
 });
+
+test("IDMapper and Anime Mapper run concurrently while preserving Anime Mapper precedence", async () => {
+  let idMapperActive = false;
+  let animeMapperActive = false;
+  let overlapped = false;
+
+  const row = {
+    id: 200455,
+    idMal: 62753,
+    format: "TV",
+    title: { english: "Concurrent Provider Test", romaji: "Concurrent Provider Test", native: null },
+    synonyms: [],
+    startDate: { year: 2026 },
+    relations: { edges: [] },
+    status: "RELEASING",
+    coverImage: { large: null },
+    genres: [],
+  };
+
+  const animeMapperRecord = {
+    source: "anime-mapper",
+    anilistId: 200455,
+    type: "TV",
+    malId: 62753,
+    imdbIds: ["tt11111111"],
+    title: row.title.english,
+    titles: [row.title.english],
+    year: 2026,
+  };
+
+  const idMapperRecord = {
+    source: "idmapper",
+    anilistId: 200455,
+    type: "TV",
+    malId: 62753,
+    imdbIds: ["tt22222222"],
+    title: row.title.english,
+    titles: [row.title.english],
+    year: 2026,
+  };
+
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const result = await canonicalizeCatalogPage([row], {
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveTMDBMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => {
+      animeMapperActive = true;
+      if (idMapperActive) overlapped = true;
+      await wait(20);
+      animeMapperActive = false;
+      return new Map([[200455, [animeMapperRecord]]]);
+    },
+    resolveIdMapperMappings: async () => {
+      idMapperActive = true;
+      if (animeMapperActive) overlapped = true;
+      await wait(20);
+      idMapperActive = false;
+      return new Map([[200455, [idMapperRecord]]]);
+    },
+    resolveAnimeMapperRelatedProviderIds: async () => new Map(),
+    resolveCanonicalSeriesMappings: async () => new Map(),
+    resolveAniBridgeMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(result[0].id, "tt11111111");
+  assert.equal(overlapped, true);
+});

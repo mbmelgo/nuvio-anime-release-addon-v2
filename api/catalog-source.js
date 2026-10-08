@@ -328,28 +328,43 @@ async function resolveMappingsForRows(
   ));
 
   if (unresolvedRows.length) {
-    try {
-      const stageStart = diagnostics ? performance.now() : 0;
-      mappings = mergeMappings(mappings, await resolveIdMapperMappings(unresolvedRows.map((row) => Number(row.id))));
-      if (diagnostics) diagnostics.idmapper = performance.now() - stageStart;
-    } catch (error) {
-      console.error("[identity] IDMapper mapping failed; trying Anime Mapper", error);
-    }
-  }
+    const stageStart = diagnostics ? performance.now() : 0;
+    const idMapperStart = diagnostics ? performance.now() : 0;
+    const animeMapperStart = diagnostics ? performance.now() : 0;
 
-  unresolvedRows = rows.filter((row) => !selectProviderIdentity(
-    { ...row, anilistId: Number(row.id) },
-    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-  ));
+    const idMapperPromise = (async () => {
+      try {
+        return await resolveIdMapperMappings(unresolvedRows.map((row) => Number(row.id)));
+      } catch (error) {
+        console.error("[identity] IDMapper mapping failed; trying Anime Mapper", error);
+        return new Map();
+      } finally {
+        if (diagnostics) diagnostics.idmapper = performance.now() - idMapperStart;
+      }
+    })();
 
-  if (unresolvedRows.length) {
-    try {
-      const stageStart = diagnostics ? performance.now() : 0;
-      mappings = mergeMappings(mappings, await resolveAnimeMapperMappings(unresolvedRows));
-      if (diagnostics) diagnostics.animeMapper = performance.now() - stageStart;
-    } catch (error) {
-      console.error("[identity] Anime Mapper mapping source failed; trying AnimeAPI TSV", error);
-    }
+    const animeMapperPromise = (async () => {
+      try {
+        return await resolveAnimeMapperMappings(unresolvedRows);
+      } catch (error) {
+        console.error("[identity] Anime Mapper mapping source failed; trying AnimeAPI TSV", error);
+        return new Map();
+      } finally {
+        if (diagnostics) diagnostics.animeMapper = performance.now() - animeMapperStart;
+      }
+    })();
+
+    const [idMapperMappings, animeMapperMappings] = await Promise.all([
+      idMapperPromise,
+      animeMapperPromise,
+    ]);
+
+    // Preserve the previous precedence: Anime Mapper records are merged
+    // before IDMapper records, even though both network stages now run
+    // concurrently.
+    mappings = mergeMappings(mappings, animeMapperMappings);
+    mappings = mergeMappings(mappings, idMapperMappings);
+    if (diagnostics) diagnostics.parallelProviderResolution = performance.now() - stageStart;
   }
 
   unresolvedRows = rows.filter((row) => !selectProviderIdentity(
