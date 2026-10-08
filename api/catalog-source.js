@@ -384,7 +384,12 @@ async function resolveMappingsForRows(
     getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
   ));
 
-  const cacheFallbackRows = stillUnresolvedRows.filter((row) => {
+
+  const finalUnresolvedRows = rows.filter((row) => !selectProviderIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
+  const cacheFallbackRows = finalUnresolvedRows.filter((row) => {
     const candidates = getProviderCandidates(
       { ...row, anilistId: Number(row.id) },
       mappings.get(Number(row.id)) || [],
