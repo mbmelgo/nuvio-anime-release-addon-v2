@@ -215,3 +215,56 @@ test("rolling catalogs enforce the exact requested time range after schedule cac
   });
   assert.deepEqual(result.map((meta) => meta.id), ["tt10000002"]);
 });
+
+
+test("rolling catalogs prefer independently verified IMDb identity over a conflicting TMDB-derived IMDb identity", async () => {
+  const now = new Date("2026-10-01T00:00:00.000Z");
+  const rows = [schedule(209463, now.getTime() + 60_000, 1, "From Far Away", 12345)];
+
+  const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+    fetchPage: async () => rows,
+    maxPages: 1,
+    resolveMappings: async () => new Map([[209463, [{
+      source: "test-direct",
+      anilistId: 209463,
+      type: "TV",
+      imdbIds: [],
+      tvdbId: 12345,
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+      title: "From Far Away",
+      titles: ["From Far Away"],
+      year: 2026,
+    }]]]),
+    resolveTMDBMappings: async () => new Map([[209463, [{
+      source: "tmdb-search",
+      anilistId: 209463,
+      type: "TV",
+      imdbIds: ["tt43691315"],
+      tvdbId: null,
+      tmdbTvId: 43691315,
+      tmdbMovieIds: [],
+      title: "From Far Away",
+      titles: ["From Far Away"],
+      year: 2026,
+      tmdbMatchScore: 130,
+      tmdbAuthoritative: true,
+    }]]]),
+    resolveImdbMappings: async () => new Map([[209463, [{
+      source: "imdb-search",
+      anilistId: 209463,
+      type: "TV",
+      imdbIds: ["tt18268600"],
+      tvdbId: null,
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+      title: "From Far Away",
+      titles: ["From Far Away"],
+      year: 2026,
+    }]]]),
+  });
+
+  assert.equal(result[0].id, "tt18268600");
+  assert.equal(result[0].extra.identityProvider, "imdb");
+  assert.equal(result[0].extra.identityId, "tt18268600");
+});
