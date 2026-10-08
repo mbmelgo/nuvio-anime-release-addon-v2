@@ -1297,13 +1297,30 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
       ),
       { excludeIds: usedIdentities },
     );
+    // Nuvio can resolve a tmdb: ID through its metadata addons and has a
+    // standalone TMDB fallback when those addons return no meta. A TMDB
+    // mapping's IMDb external ID does not carry that fallback behavior when
+    // it is not independently verified. Prefer the native TMDB route in that
+    // case; keep IMDb when independent evidence exists.
+    const nuvioTmdbRoute = effectiveTmdbSelected?.tmdbId
+      && !independentlyVerifiedImdb
+      ? {
+        ...effectiveTmdbSelected,
+        provider: "tmdb",
+        id: String(effectiveTmdbSelected.tmdbId),
+        stremioId: `tmdb:${effectiveTmdbSelected.tmdbId}`,
+      }
+      : null;
     if (effectiveTmdbSelected?.provider === "imdb" || providerSelected?.provider === "imdb") {
       const selected = independentlyVerifiedImdb
+        || nuvioTmdbRoute
         || effectiveTmdbSelected
         || providerSelected;
       usedIdentities.add(selected.stremioId);
       if (independentlyVerifiedImdb) {
         metas.push({ ...meta, id: selected.stremioId, extra: { ...meta.extra, identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence } });
+      } else if (nuvioTmdbRoute) {
+        metas.push({ ...meta, id: selected.stremioId, extra: { ...meta.extra, tmdbProvider: selected.provider, tmdbId: selected.id, tmdbEvidence: "tmdb-search", identityFallback: "nuvio-tmdb-route" } });
       } else if (effectiveTmdbSelected?.provider === "imdb") {
         metas.push({ ...meta, id: effectiveTmdbSelected.stremioId, extra: { ...meta.extra, tmdbProvider: effectiveTmdbSelected.provider, tmdbId: effectiveTmdbSelected.id, tmdbEvidence: "tmdb-search" } });
       } else {
