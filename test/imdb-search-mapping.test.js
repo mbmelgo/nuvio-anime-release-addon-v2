@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { clearImdbSearchCache, resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
+import { clearImdbSearchCache, resolveAniListMappingsByImdbSearch, validateImdbMappingsByKnownIds } from "../lib/imdb-search-mapping.js";
 
 test("IMDb fallback selects a title-compatible, year-compatible IMDb result", async () => {
   clearImdbSearchCache();
