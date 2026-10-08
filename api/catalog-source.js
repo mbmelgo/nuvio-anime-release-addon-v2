@@ -553,9 +553,10 @@ async function resolveMappingsForRows(
           { ...(currentRow || {}), anilistId: Number(currentId) },
           currentCandidates.filter((candidate) =>
             candidate.provider === "imdb"
-            && candidate.evidence?.some((entry) =>
-              ["imdb-search", "imdb-search-relation"].includes(entry?.source),
-            ),
+            && (candidate.providerExactTitle === true
+              || candidate.evidence?.some((entry) =>
+                ["imdb-search", "imdb-search-relation"].includes(entry?.source),
+              )),
           ),
         );
         const canonicalImdbIds = new Set(
@@ -1498,9 +1499,10 @@ export async function buildRollingCatalog(id, date, skip, search, {
           { ...media, anilistId: mediaId },
           providerCandidates.filter((candidate) =>
             candidate.provider === "imdb"
-            && candidate.evidence?.some((entry) =>
-              ["imdb-search", "imdb-search-relation"].includes(entry?.source),
-            ),
+            && (candidate.providerExactTitle === true
+              || candidate.evidence?.some((entry) =>
+                ["imdb-search", "imdb-search-relation"].includes(entry?.source),
+              )),
           ),
           { excludeIds: usedIdentities },
         );
