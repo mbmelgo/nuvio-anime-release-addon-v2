@@ -183,7 +183,24 @@ test("rolling catalog preserves an entry with AniList fallback when no provider 
     resolveIdMapperMappings: async () => new Map(),
     resolveAnimeMapperMappings: async () => new Map(),
     resolveTsvMappings: async () => new Map(),
-    resolveImdbMappings: async () => new Map(),
+    resolveImdbMappings: async (rows) => {
+      imdbCalls += 1;
+      if (imdbCalls < 2) return new Map();
+      return new Map(rows.map((item) => [Number(item.id), [{
+        source: "imdb-search",
+        anilistId: Number(item.id),
+        type: "TV",
+        malId: 60597,
+        imdbIds: ["tt16409202"],
+        tvdbId: null,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: "Dawang Raoming 3",
+        titles: ["Dawang Raoming 3"],
+        year: 2026,
+        relation: false,
+      }]]));
+    },
     resolveSecondaryMappings: async () => new Map(),
     resolveAlternativeMappings: async () => new Map(),
   });
@@ -272,6 +289,7 @@ test("rolling catalogs prefer independently verified IMDb identity over a confli
 
 test("catalog identity recovery retries transiently unresolved provider mappings before MAL fallback", async () => {
   let mappingCalls = 0;
+  let imdbCalls = 0;
   const row = {
     id: 199353,
     idMal: 60597,
@@ -284,17 +302,8 @@ test("catalog identity recovery retries transiently unresolved provider mappings
   const result = await canonicalizeCatalogPage([row], {
     resolveMappings: async (ids) => {
       mappingCalls += 1;
-      if (mappingCalls === 1) return new Map();
-      return new Map(ids.map((id) => [id, [{
-        source: "arm",
-        anilistId: id,
-        type: "TV",
-        malId: 60597,
-        imdbIds: ["tt16409202"],
-        tvdbId: null,
-        tmdbTvId: null,
-        tmdbMovieIds: [],
-      }]]));
+      mappingCalls += 1;
+      return new Map();
     },
     resolveFribbMappings: async () => new Map(),
     resolveExternalMappings: () => new Map(),
@@ -313,4 +322,5 @@ test("catalog identity recovery retries transiently unresolved provider mappings
 
   assert.equal(result[0].id, "tt16409202");
   assert.equal(mappingCalls, 2);
+  assert.equal(imdbCalls, 2);
 });
