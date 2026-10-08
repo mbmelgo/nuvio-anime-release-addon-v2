@@ -723,7 +723,9 @@ function shouldResolveCanonicalSeries(row, mappings) {
     media,
     candidates.filter((candidate) =>
       candidate.provider === "imdb"
-      && hasStrongDirectProviderEvidence(candidate),
+      && candidate.evidence?.some((entry) =>
+        ["imdb-search", "imdb-search-relation"].includes(entry?.source),
+      ),
     ),
   );
 
