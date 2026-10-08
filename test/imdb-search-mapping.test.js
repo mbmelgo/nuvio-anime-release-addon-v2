@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { clearImdbSearchCache, resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
+import { clearImdbSearchCache, resolveAniListMappingsByImdbSearch, validateImdbMappingsByKnownIds } from "../lib/imdb-search-mapping.js";
 
 test("IMDb fallback selects a title-compatible, year-compatible IMDb result", async () => {
   clearImdbSearchCache();
@@ -429,3 +429,56 @@ test("IMDb search retries empty suggestions instead of caching a negative result
   assert.ok(calls > 1);
 });
 
+
+test("IMDb known-identity validation accepts a matching TV identity without title search", async () => {
+  clearImdbSearchCache();
+  const result = await validateImdbMappingsByKnownIds([{
+    id: 200455,
+    idMal: 62753,
+    format: "TV",
+    startDate: { year: 2026 },
+    title: { english: "Example Series", romaji: "Example Series", native: null },
+    synonyms: [],
+  }], new Map([[200455, "tt12345678"]]), {
+    endpoint: "https://example.test/suggestion/x/",
+    fetchImpl: async (url) => {
+      assert.ok(url.endsWith("/tt12345678.json"));
+      return new Response(JSON.stringify({
+        d: [{ id: "tt12345678", l: "Example Series", y: 2026, q: "tvSeries" }],
+      }), { status: 200 });
+    },
+  });
+
+  assert.equal(result.get(200455)?.[0]?.imdbIds[0], "tt12345678");
+});
+
+test("IMDb known-identity validation rejects a TMDB IMDb feature for a TV identity", async () => {
+  clearImdbSearchCache();
+  const result = await validateImdbMappingsByKnownIds([{
+    id: 185874,
+    idMal: 60636,
+    format: "TV",
+    startDate: { year: 2026 },
+    title: {
+      english: "BLEACH: Thousand-Year Blood War - The Calamity",
+      romaji: "BLEACH: Sennen Kessen-hen - Kashin-tan",
+      native: null,
+    },
+    synonyms: [],
+  }], new Map([[185874, "tt43383343"]]), {
+    endpoint: "https://example.test/suggestion/x/",
+    fetchImpl: async (url) => {
+      assert.ok(url.endsWith("/tt43383343.json"));
+      return new Response(JSON.stringify({
+        d: [{
+          id: "tt43383343",
+          l: "BLEACH: Thousand-Year Blood War - The Calamity",
+          y: 2026,
+          q: "feature",
+        }],
+      }), { status: 200 });
+    },
+  });
+
+  assert.equal(result.has(185874), false);
+});

@@ -143,3 +143,40 @@ test("Anime Mapper resolves provider IDs from explicit related entries without p
   assert.deepEqual(result.get(206814), ["tvdb:81472"]);
   assert.equal(calls.length, 2);
 });
+
+
+test("Anime Mapper relation protection uses enough concurrency for catalog-scale lookups", async () => {
+  clearAnimeMapperCache();
+  const rows = Array.from({ length: 12 }, (_, index) => ({
+    anilistId: 300000 + index,
+    malId: 60000 + index,
+    type: "TV",
+    title: { english: `Protected Series ${index}` },
+  }));
+  let active = 0;
+  let maxActive = 0;
+
+  const result = await resolveAniListRelatedProviderIdsByAnimeMapper(rows, {
+    baseUrl: "https://mapper.test",
+    fetchImpl: async (url) => {
+      const malId = Number(url.match(/\/(\d+)\.json$/)?.[1]);
+      active += 1;
+      maxActive = Math.max(maxActive, active);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      active -= 1;
+
+      if (malId >= 60000 && malId < 60012) {
+        return response({
+          mappings: { anilist: malId - 30000 },
+          sequence: [{ relationType: "PREQUEL", malId: 70000 + (malId - 60000) }],
+        });
+      }
+      return response({
+        mappings: { anilist: malId, tvdb: 80000 + (malId - 70000) },
+      });
+    },
+  });
+
+  assert.equal(result.size, 12);
+  assert.ok(maxActive >= 6, `expected at least 6 concurrent protection lookups, saw ${maxActive}`);
+});

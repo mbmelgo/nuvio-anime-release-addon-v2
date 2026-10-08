@@ -4,6 +4,22 @@ import { canonicalizeCatalogPage } from "../api/catalog-source.js";
 
 const empty = async () => new Map();
 
+const validateKnownImdb = async (rows, identities) => new Map(
+  [...identities.entries()].map(([id, imdbId]) => [id, [{
+    source: "imdb-search",
+    anilistId: id,
+    type: "TV",
+    imdbIds: [imdbId],
+    tvdbId: null,
+    tmdbTvId: null,
+    tmdbMovieIds: [],
+    title: rows.find((row) => Number(row.id) === id)?.title?.english || null,
+    titles: [rows.find((row) => Number(row.id) === id)?.title?.english].filter(Boolean),
+    year: rows.find((row) => Number(row.id) === id)?.startDate?.year || null,
+  }]]),
+);
+
+
 test("catalog prefers TMDB resolver identity", async () => {
     const metas = await canonicalizeCatalogPage([{
     id: 269,
@@ -25,6 +41,7 @@ test("catalog prefers TMDB resolver identity", async () => {
       tmdbAuthoritative: true,
       tmdbMatchScore: 130,
     }]]]),
+    validateImdbMappings: validateKnownImdb,
     resolveMappings: empty,
     resolveFribbMappings: empty,
     resolveExternalMappings: () => new Map(),
@@ -62,6 +79,7 @@ test("catalog returns TMDB ID when TMDB match has no IMDb identity", async () =>
       tmdbAuthoritative: true,
       tmdbMatchScore: 130,
     }]]]),
+    validateImdbMappings: validateKnownImdb,
     resolveMappings: empty,
     resolveFribbMappings: empty,
     resolveExternalMappings: () => new Map(),
@@ -126,8 +144,9 @@ test("catalog lets TMDB upgrade non-IMDb mappings", async () => {
         year: 2004,
         tmdbAuthoritative: true,
         tmdbMatchScore: 130,
-      }]]]);
+}]]]);
     },
+    validateImdbMappings: validateKnownImdb,
     resolveAnimapMappings: empty,
     resolveIdMapperMappings: empty,
     resolveAnimeMapperMappings: empty,
@@ -177,8 +196,9 @@ test("catalog lets TMDB upgrade an earlier TVDB mapping to IMDb", async () => {
         year: 2004,
         tmdbAuthoritative: true,
         tmdbMatchScore: 130,
-      }]]]);
+}]]]);
     },
+    validateImdbMappings: validateKnownImdb,
     resolveFribbMappings: empty,
     resolveExternalMappings: () => new Map(),
     resolveAnimapMappings: empty,
@@ -236,8 +256,9 @@ test("catalog retries TMDB when an earlier IMDb mapping is invalid", async () =>
         year: 2026,
         tmdbAuthoritative: true,
         tmdbMatchScore: 130,
-      }]]]);
+}]]]);
     },
+    validateImdbMappings: validateKnownImdb,
     resolveAnimapMappings: empty,
     resolveIdMapperMappings: empty,
     resolveAnimeMapperMappings: empty,

@@ -20,7 +20,10 @@ import { resolveAniListMappingsIdMapper } from "../lib/idmapper-mapping.js";
 import { resolveAniListMappingsByTMDB, selectTMDBIdentity } from "../lib/tmdb-mapping.js";
 import { resolveAniListMappingsByAnimeMapper, resolveAniListRelatedProviderIdsByAnimeMapper, resolveAniListCanonicalSeriesByAnimeMapper } from "../lib/anime-mapper-mapping.js";
 import { resolveAniListMappingsByAniBridge } from "../lib/anibridge-mapping.js";
-import { resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
+import {
+  resolveAniListMappingsByImdbSearch,
+  validateImdbMappingsByKnownIds,
+} from "../lib/imdb-search-mapping.js";
 import { PRODUCTION_IDENTITY_CACHE, PRODUCTION_IDENTITY_CACHE_VERSION } from "../lib/production-identity-cache.js";
 import { resolveAniListMappingsFromAnimeApiTsv } from "../lib/animeapi-tsv-mapping.js";
 import { getProviderCandidates, selectProviderIdentity } from "../lib/provider-identity.js";
@@ -160,6 +163,7 @@ async function resolveMappingsForRows(
     resolveAniBridgeMappings = resolveAniListMappingsByAniBridge,
     resolveTsvMappings = resolveAniListMappingsFromAnimeApiTsv,
     resolveImdbMappings = resolveAniListMappingsByImdbSearch,
+    validateImdbMappings = validateImdbMappingsByKnownIds,
     resolveSecondaryMappings = resolveAniListMappingsSecondary,
     resolveAlternativeMappings = resolveAniListMappingsByMalIds,
     diagnostics = null,
@@ -247,23 +251,61 @@ async function resolveMappingsForRows(
   // through the independent IMDb title search before allowing the TMDB
   // fallback to become terminal. Existing relation/title validation still
   // applies when the candidate is selected.
-  const tmdbImdbVerificationRows = rows.filter((row) => {
+  const tmdbImdbVerificationStart = diagnostics ? performance.now() : 0;
+  const tmdbTitleVerificationRows = rows.filter((row) => {
     const media = { ...row, anilistId: Number(row.id) };
     const tmdbSelected = selectTMDBIdentity(media, mappings.get(Number(row.id)) || []);
-    // Only TMDB-native selections need independent IMDb title verification.
-    // If TMDB already supplied an IMDb identity, re-querying IMDb adds latency
-    // without changing the selection's evidence or safety properties.
     return tmdbSelected?.provider === "tmdb";
   });
+  const tmdbKnownImdbRows = rows.filter((row) => {
+    const media = { ...row, anilistId: Number(row.id) };
+    const tmdbSelected = selectTMDBIdentity(media, mappings.get(Number(row.id)) || []);
+    return tmdbSelected?.provider === "imdb";
+  });
+
+  const tmdbInvalidKnownImdbRows = [];
+  if (tmdbKnownImdbRows.length) {
+    try {
+      const knownIds = new Map(tmdbKnownImdbRows.map((row) => {
+        const selected = selectTMDBIdentity(
+          { ...row, anilistId: Number(row.id) },
+          mappings.get(Number(row.id)) || [],
+        );
+        return [Number(row.id), selected?.id];
+      }));
+      const validated = await validateImdbMappings(tmdbKnownImdbRows, knownIds);
+      for (const row of tmdbKnownImdbRows) {
+        const rowId = Number(row.id);
+        if (!validated.has(rowId)) {
+          tmdbInvalidKnownImdbRows.push(row);
+          continue;
+        }
+
+        const validatedImdbId = knownIds.get(rowId);
+        const records = mappings.get(rowId) || [];
+        mappings.set(rowId, records.map((record) =>
+          record?.source === "tmdb-search"
+            && Array.isArray(record.imdbIds)
+            && record.imdbIds.some((id) => String(id) === String(validatedImdbId))
+            ? { ...record, providerExactTitle: true }
+            : record,
+        ));
+      }
+    } catch (error) {
+      console.error("[identity] TMDB-provided IMDb validation failed; using title search fallback", error);
+      tmdbInvalidKnownImdbRows.push(...tmdbKnownImdbRows);
+    }
+  }
+
+  const tmdbImdbVerificationRows = [...tmdbTitleVerificationRows, ...tmdbInvalidKnownImdbRows];
   if (tmdbImdbVerificationRows.length) {
     try {
-      const stageStart = diagnostics ? performance.now() : 0;
       mappings = mergeMappings(mappings, await resolveImdbMappings(tmdbImdbVerificationRows));
-      if (diagnostics) diagnostics.imdbVerification = performance.now() - stageStart;
     } catch (error) {
       console.error("[identity] post-TMDB IMDb verification failed", error);
     }
   }
+  if (diagnostics) diagnostics.imdbVerification = performance.now() - tmdbImdbVerificationStart;
 
   unresolvedRows = rows.filter((row) => !selectProviderIdentity(
     { ...row, anilistId: Number(row.id) },
