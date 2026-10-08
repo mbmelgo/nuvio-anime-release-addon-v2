@@ -431,6 +431,7 @@ test("catalog uses native TMDB route when IMDb is only supplied by the TMDB mapp
     resolveAnimeMapperMappings: empty,
     resolveTsvMappings: empty,
     resolveImdbMappings: empty,
+    validateImdbMappings: empty,
     resolveSecondaryMappings: empty,
     resolveAlternativeMappings: empty,
   });
