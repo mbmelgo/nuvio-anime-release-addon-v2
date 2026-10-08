@@ -394,5 +394,5 @@ test("IMDb fallback retries transient suggestion failures before giving up", asy
   });
 
   assert.equal(result.get(199353)?.[0]?.imdbIds[0], "tt16409202");
-  assert.equal(attempts, 2);
+  assert.equal(attempts, 3);
 });
