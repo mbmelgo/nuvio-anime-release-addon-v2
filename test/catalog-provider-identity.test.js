@@ -408,7 +408,8 @@ test("relation retry runs when protection changes the pre-protection winner", ()
 
 test("catalog uses native TMDB route when IMDb is only supplied by the TMDB mapping", async () => {
   const metas = await canonicalizeCatalogPage([row(272, 272)], {
-    resolveMappings: async () => new Map([[272, [{
+    resolveMappings: empty,
+    resolveTMDBMappings: async () => new Map([[272, [{
       source: "tmdb-search",
       anilistId: 272,
       type: "TV",
@@ -422,7 +423,6 @@ test("catalog uses native TMDB route when IMDb is only supplied by the TMDB mapp
       tmdbAuthoritative: true,
       tmdbMatchScore: 130,
     }]]]),
-    resolveTMDBMappings: empty,
     resolveFribbMappings: empty,
     resolveExternalMappings: () => new Map(),
     resolveAniBridgeMappings: empty,
