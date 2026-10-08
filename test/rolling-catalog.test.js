@@ -5,6 +5,7 @@ import {
   getCatalogFilter,
   getRollingCatalogRange,
   fetchValidatedSeasonCatalogPage,
+  canonicalizeCatalogPage,
 } from "../api/catalog-source.js";
 
 function schedule(mediaId, airingAt, episode, title = `Anime ${mediaId}`, malId = null) {
@@ -182,7 +183,24 @@ test("rolling catalog preserves an entry with AniList fallback when no provider 
     resolveIdMapperMappings: async () => new Map(),
     resolveAnimeMapperMappings: async () => new Map(),
     resolveTsvMappings: async () => new Map(),
-    resolveImdbMappings: async () => new Map(),
+    resolveImdbMappings: async (rows) => {
+      imdbCalls += 1;
+      if (imdbCalls < 2) return new Map();
+      return new Map(rows.map((item) => [Number(item.id), [{
+        source: "imdb-search",
+        anilistId: Number(item.id),
+        type: "TV",
+        malId: 60597,
+        imdbIds: ["tt16409202"],
+        tvdbId: null,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: "Dawang Raoming 3",
+        titles: ["Dawang Raoming 3"],
+        year: 2026,
+        relation: false,
+      }]]));
+    },
     resolveSecondaryMappings: async () => new Map(),
     resolveAlternativeMappings: async () => new Map(),
   });
@@ -267,4 +285,58 @@ test("rolling catalogs prefer independently verified IMDb identity over a confli
   assert.equal(result[0].id, "tt18268600");
   assert.equal(result[0].extra.identityProvider, "imdb");
   assert.equal(result[0].extra.identityId, "tt18268600");
+});
+
+test("catalog identity recovery retries transiently unresolved provider mappings before MAL fallback", async () => {
+  let mappingCalls = 0;
+  let imdbCalls = 0;
+  const row = {
+    id: 199353,
+    idMal: 60597,
+    title: { english: "Dawang Raoming 3", romaji: "Dawang Raoming 3", native: "大王饶命 第三季" },
+    synonyms: [],
+    format: "TV",
+    startDate: { year: 2026 },
+    relations: { edges: [] },
+  };
+  const result = await canonicalizeCatalogPage([row], {
+    resolveMappings: async () => {
+      mappingCalls += 1;
+      return new Map();
+    },
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveTMDBMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveAnimeMapperRelatedProviderIds: async () => new Map(),
+    resolveCanonicalSeriesMappings: async () => new Map(),
+    resolveAniBridgeMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async (rows) => {
+      imdbCalls += 1;
+      if (imdbCalls < 2) return new Map();
+      return new Map(rows.map((item) => [Number(item.id), [{
+        source: "imdb-search",
+        anilistId: Number(item.id),
+        type: "TV",
+        malId: 60597,
+        imdbIds: ["tt16409202"],
+        tvdbId: null,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: "Dawang Raoming 3",
+        titles: ["Dawang Raoming 3"],
+        year: 2026,
+        relation: false,
+      }]]));
+    },
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  });
+
+  assert.equal(result[0].id, "tt16409202");
+  assert.equal(mappingCalls, 2);
+  assert.equal(imdbCalls, 2);
 });
