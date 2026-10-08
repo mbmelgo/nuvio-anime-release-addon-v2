@@ -1080,47 +1080,6 @@ function extractInstallmentMarker(value) {
   };
 }
 
-function getVerifiedProductionFallbackCandidate(row) {
-  const cached = PRODUCTION_IDENTITY_CACHE[String(Number(row?.id))];
-  if (!cached) return null;
-  const id = cached.id;
-  if (!/^(tt\d+|tvdb:\d+|tmdb:\d+)$/.test(String(id))) return null;
-
-  const rowYear = Number(row?.startDate?.year);
-  if (Number.isInteger(cached.year) && cached.year > 0 && Number.isInteger(rowYear) && rowYear > 0
-    && Math.abs(cached.year - rowYear) > 1) {
-    return null;
-  }
-
-  const rowTitles = [
-    row?.title?.english,
-    row?.title?.romaji,
-    row?.title?.native,
-    ...(Array.isArray(row?.synonyms) ? row.synonyms : []),
-  ].filter(Boolean);
-  const cachedTokens = normalizeProviderTitleTokens(cached.title || "");
-  if (cachedTokens.length && rowTitles.length) {
-    const rowTokenSets = rowTitles.map((title) => new Set(normalizeProviderTitleTokens(title)));
-    const titleMatches = rowTokenSets.some((tokens) => {
-      const overlap = cachedTokens.filter((token) => tokens.has(token) && token.length >= 3);
-      const required = Math.min(2, cachedTokens.filter((token) => token.length >= 3).length);
-      return required > 0 && overlap.length >= required;
-    });
-    if (!titleMatches) return null;
-  }
-
-  const provider = cached.provider;
-  const providerId = provider === "imdb" ? id : id.split(":")[1];
-  return {
-    provider,
-    id: providerId,
-    stremioId: id,
-    evidence: [{ source: cached.source, relation: false, version: cached.version || PRODUCTION_IDENTITY_CACHE_VERSION }],
-    source: cached.source,
-    sourceVersion: cached.version || PRODUCTION_IDENTITY_CACHE_VERSION,
-  };
-}
-
 function mergeMappings(base, additional) {
   const merged = new Map(base);
   for (const [id, records] of additional instanceof Map ? additional : []) {
@@ -1254,7 +1213,7 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
       metas.push({ ...meta, id: effectiveTmdbSelected.stremioId, extra: { ...meta.extra, tmdbProvider: effectiveTmdbSelected.provider, tmdbId: effectiveTmdbSelected.id, tmdbEvidence: "tmdb-search" } });
       continue;
     }
-    const selected = providerSelected || getVerifiedProductionFallbackCandidate(row);
+    const selected = providerSelected;
     if (selected) {
       usedIdentities.add(selected.stremioId);
       metas.push({ ...meta, id: selected.stremioId, extra: { ...meta.extra, identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence } });
@@ -1428,8 +1387,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
           || (tmdbSelected?.provider === "imdb" ? tmdbSelected : null)
           || (providerSelected?.provider === "imdb" ? providerSelected : null)
           || tmdbSelected
-          || providerSelected
-          || getVerifiedProductionFallbackCandidate(media);
+          || providerSelected;
         const malId = getCanonicalMalId(media, baseMeta, mappings.get(mediaId) || []);
         let meta;
         if (selected) {
