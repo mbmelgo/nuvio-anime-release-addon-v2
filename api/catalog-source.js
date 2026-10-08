@@ -250,7 +250,10 @@ async function resolveMappingsForRows(
   const tmdbImdbVerificationRows = rows.filter((row) => {
     const media = { ...row, anilistId: Number(row.id) };
     const tmdbSelected = selectTMDBIdentity(media, mappings.get(Number(row.id)) || []);
-    return tmdbSelected?.provider === "tmdb" || tmdbSelected?.provider === "imdb";
+    // Only TMDB-native selections need independent IMDb title verification.
+    // If TMDB already supplied an IMDb identity, re-querying IMDb adds latency
+    // without changing the selection's evidence or safety properties.
+    return tmdbSelected?.provider === "tmdb";
   });
   if (tmdbImdbVerificationRows.length) {
     try {
