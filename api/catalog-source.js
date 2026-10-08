@@ -1299,14 +1299,24 @@ export async function buildRollingCatalog(id, date, skip, search, {
         const tmdbSelected = selectTMDBIdentity({ ...media, anilistId: mediaId }, mappings.get(mediaId) || [], { excludeIds: usedIdentities });
         const providerSelected = selectProviderIdentity(
           { ...media, anilistId: mediaId },
-          getProviderCandidates(media, mappings.get(mediaId) || []),
+          providerCandidates,
           { excludeIds: usedIdentities },
         );
-        const selected = tmdbSelected?.provider === "imdb"
-          ? tmdbSelected
-          : providerSelected?.provider === "imdb"
-            ? providerSelected
-            : tmdbSelected || providerSelected;
+        const independentlyVerifiedImdb = selectProviderIdentity(
+          { ...media, anilistId: mediaId },
+          providerCandidates.filter((candidate) =>
+            candidate.provider === "imdb"
+            && candidate.evidence?.some((entry) =>
+              ["imdb-search", "imdb-search-relation"].includes(entry?.source),
+            ),
+          ),
+          { excludeIds: usedIdentities },
+        );
+        const selected = independentlyVerifiedImdb
+          || (tmdbSelected?.provider === "imdb" ? tmdbSelected : null)
+          || (providerSelected?.provider === "imdb" ? providerSelected : null)
+          || tmdbSelected
+          || providerSelected;
         const malId = getCanonicalMalId(media, baseMeta, mappings.get(mediaId) || []);
         let meta;
         if (selected) {
