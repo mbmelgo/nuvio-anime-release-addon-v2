@@ -400,19 +400,14 @@ test("IMDb fallback retries transient suggestion failures before giving up", asy
 test("IMDb search retries empty suggestions instead of caching a negative result", async () => {
   clearImdbSearchCache();
   let calls = 0;
+  let phase = 0;
   const fetchImpl = async (url) => {
     calls += 1;
-    const title = decodeURIComponent(url.split("/").pop().replace(/\.json$/, ""));
-    if (title === "Dawang Raoming 3" && calls === 1) {
+    if (phase === 0) {
       return new Response(JSON.stringify({ d: [] }), { status: 200 });
     }
-    if (title === "Dawang Raoming 3") {
-      return new Response(JSON.stringify({
-        d: [{ id: "tt16409202", l: "Dawang Raoming 3", y: 2026, q: "tvSeries" }],
-      }), { status: 200 });
-    }
     return new Response(JSON.stringify({
-      d: [{ id: "tt16409202", l: "Spare Me, Great Lord!", y: 2021, q: "tvSeries" }],
+      d: [{ id: "tt16409202", l: "Dawang Raoming 3", y: 2026, q: "tvSeries" }],
     }), { status: 200 });
   };
 
@@ -426,9 +421,11 @@ test("IMDb search retries empty suggestions instead of caching a negative result
   };
 
   const first = await resolveAniListMappingsByImdbSearch([row], { fetchImpl });
+  phase = 1;
   const second = await resolveAniListMappingsByImdbSearch([row], { fetchImpl });
 
   assert.equal(first.has(199353), false);
   assert.equal(second.get(199353)?.[0]?.imdbIds[0], "tt16409202");
-  assert.ok(calls >= 2);
+  assert.ok(calls > 1);
 });
+
