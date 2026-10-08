@@ -404,3 +404,35 @@ test("relation retry runs when protection changes the pre-protection winner", ()
   ];
   assert.equal(isSelectedIdentityProtected(media, candidates), true);
 });
+
+
+test("catalog uses native TMDB route when IMDb is only supplied by the TMDB mapping", async () => {
+  const metas = await canonicalizeCatalogPage([row(272, 272)], {
+    resolveMappings: async () => new Map([[272, [{
+      source: "tmdb-search",
+      anilistId: 272,
+      type: "TV",
+      imdbIds: ["tt0000272"],
+      tvdbId: null,
+      tmdbTvId: 30985,
+      tmdbMovieIds: [],
+      title: "Bleach",
+      titles: ["Bleach"],
+      year: 2004,
+      tmdbAuthoritative: true,
+      tmdbMatchScore: 130,
+    }]]]),
+    resolveTMDBMappings: empty,
+    resolveFribbMappings: empty,
+    resolveExternalMappings: () => new Map(),
+    resolveAniBridgeMappings: empty,
+    resolveAnimapMappings: empty,
+    resolveIdMapperMappings: empty,
+    resolveAnimeMapperMappings: empty,
+    resolveTsvMappings: empty,
+    resolveImdbMappings: empty,
+    resolveSecondaryMappings: empty,
+    resolveAlternativeMappings: empty,
+  });
+  assert.equal(metas[0].id, "tmdb:30985");
+});
