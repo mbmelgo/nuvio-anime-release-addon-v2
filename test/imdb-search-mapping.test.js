@@ -365,3 +365,34 @@ test("IMDb fallback prefers a TV series over a same-title theatrical feature for
 
   assert.equal(result.get(185874)?.[0]?.imdbIds[0], "tt14986406");
 });
+
+test("IMDb fallback retries transient suggestion failures before giving up", async () => {
+  clearImdbSearchCache();
+  let attempts = 0;
+  const result = await resolveAniListMappingsByImdbSearch([{
+    id: 199353,
+    idMal: 60597,
+    format: "TV",
+    startDate: { year: 2026 },
+    title: { english: "Dawang Raoming 3", romaji: "Dawang Raoming 3", native: "大王饶命 第三季" },
+    synonyms: [],
+  }], {
+    endpoint: "https://example.test/suggestion/x/",
+    fetchImpl: async (url) => {
+      attempts += 1;
+      if (attempts === 1) return new Response("", { status: 503 });
+      const title = decodeURIComponent(url.split("/").pop().replace(/\.json$/, ""));
+      if (title === "tt16409202") {
+        return new Response(JSON.stringify({
+          d: [{ id: "tt16409202", l: "Dawang Raoming 3", y: 2026, q: "tvSeries" }],
+        }), { status: 200 });
+      }
+      return new Response(JSON.stringify({
+        d: [{ id: "tt16409202", l: "Dawang Raoming 3", y: 2026, q: "tvSeries" }],
+      }), { status: 200 });
+    },
+  });
+
+  assert.equal(result.get(199353)?.[0]?.imdbIds[0], "tt16409202");
+  assert.equal(attempts, 3);
+});
