@@ -344,3 +344,20 @@ test("rolling catalog uses verified production identity cache when live provider
   assert.equal(result[0].extra?.identityEvidence?.[0]?.source, "previous-production-snapshot");
 });
 
+
+
+test("rolling catalogs use native TMDB route for an unverified TMDB IMDb mapping", async () => {
+  const now = new Date("2026-10-01T00:00:00.000Z");
+  const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+    fetchPage: async () => [schedule(209464, now.getTime() + 60000, 1, "TMDB Route Test", 12346)],
+    maxPages: 1,
+    resolveMappings: async () => new Map([[209464, [{
+      source: "tmdb-search", anilistId: 209464, type: "TV", imdbIds: ["tt43691316"], tvdbId: null,
+      tmdbTvId: 43691316, tmdbMovieIds: [], title: "TMDB Route Test", titles: ["TMDB Route Test"],
+      year: 2026, tmdbMatchScore: 130, tmdbAuthoritative: true,
+    }]]]),
+    resolveImdbMappings: async () => new Map(),
+  });
+  assert.equal(result[0].id, "tmdb:43691316");
+  assert.equal(result[0].extra.tmdbProvider, "tmdb");
+});
