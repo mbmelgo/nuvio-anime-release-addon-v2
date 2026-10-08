@@ -399,6 +399,7 @@ async function resolveMappingsForRows(
       {
         source: cached.source,
         sourceVersion: cached.version || PRODUCTION_IDENTITY_CACHE_VERSION,
+        evidence: [{ source: cached.source, relation: false }],
         anilistId: Number(row.id),
         type: row.type,
         malId: row.malId,
