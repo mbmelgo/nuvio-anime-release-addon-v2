@@ -1080,6 +1080,21 @@ function extractInstallmentMarker(value) {
   };
 }
 
+function getVerifiedProductionFallbackCandidate(row) {
+  const cached = PRODUCTION_IDENTITY_CACHE[String(Number(row?.id))];
+  if (!cached) return null;
+  const id = cached.id;
+  if (!/^(tt\d+|tvdb:\d+|tmdb:\d+)$/.test(String(id))) return null;
+  const provider = cached.provider;
+  const providerId = provider === "imdb" ? id : id.split(":")[1];
+  return {
+    provider,
+    id: providerId,
+    stremioId: id,
+    evidence: [{ source: cached.source, relation: false, version: cached.version || PRODUCTION_IDENTITY_CACHE_VERSION }],
+  };
+}
+
 function mergeMappings(base, additional) {
   const merged = new Map(base);
   for (const [id, records] of additional instanceof Map ? additional : []) {
@@ -1383,11 +1398,14 @@ export async function buildRollingCatalog(id, date, skip, search, {
           ),
           { excludeIds: usedIdentities },
         );
+        const cachedProductionIdentity = getVerifiedProductionFallbackCandidate(media);
         const selected = independentlyVerifiedImdb
+          || (cachedProductionIdentity?.provider === "imdb" ? cachedProductionIdentity : null)
           || (tmdbSelected?.provider === "imdb" ? tmdbSelected : null)
           || (providerSelected?.provider === "imdb" ? providerSelected : null)
           || tmdbSelected
-          || providerSelected;
+          || providerSelected
+          || cachedProductionIdentity;
         const malId = getCanonicalMalId(media, baseMeta, mappings.get(mediaId) || []);
         let meta;
         if (selected) {
