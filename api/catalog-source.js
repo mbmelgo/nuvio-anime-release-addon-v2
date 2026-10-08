@@ -12,7 +12,7 @@ import {
 import { collectValidatedCatalogPage } from "../lib/catalog-pagination.js";
 import { filterCatalogMetasBySearch, toMetaFromAniList } from "../lib/catalog-meta.js";
 import { queryAnime, queryAiringSchedulePage } from "../lib/catalog-anilist.js";
-import { resolveAniListMappings } from "../lib/arm-mapping.js";
+import { resolveAniListMappings, clearMappingCache } from "../lib/arm-mapping.js";
 import { resolveAniListMappingsFribb } from "../lib/fribb-mapping.js";
 import { resolveAniListExternalMappings } from "../lib/external-provider-mapping.js";
 import { resolveAniListMappingsAnimap } from "../lib/animap-mapping.js";
@@ -20,7 +20,7 @@ import { resolveAniListMappingsIdMapper } from "../lib/idmapper-mapping.js";
 import { resolveAniListMappingsByTMDB, selectTMDBIdentity } from "../lib/tmdb-mapping.js";
 import { resolveAniListMappingsByAnimeMapper, resolveAniListRelatedProviderIdsByAnimeMapper, resolveAniListCanonicalSeriesByAnimeMapper } from "../lib/anime-mapper-mapping.js";
 import { resolveAniListMappingsByAniBridge } from "../lib/anibridge-mapping.js";
-import { resolveAniListMappingsByImdbSearch } from "../lib/imdb-search-mapping.js";
+import { resolveAniListMappingsByImdbSearch, clearImdbSearchCache } from "../lib/imdb-search-mapping.js";
 import { resolveAniListMappingsFromAnimeApiTsv } from "../lib/animeapi-tsv-mapping.js";
 import { getProviderCandidates, selectProviderIdentity } from "../lib/provider-identity.js";
 import {
@@ -353,7 +353,35 @@ async function resolveMappingsForRows(
     }
   }
 
-  const stillUnresolvedRows = rows.filter((row) => !selectProviderIdentity(
+  let stillUnresolvedRows = rows.filter((row) => !selectProviderIdentity(
+    { ...row, anilistId: Number(row.id) },
+    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+  ));
+
+  // Provider mapping endpoints can transiently return an empty result. Do not
+  // let a single failed pass become a terminal MAL/AniList identity when the
+  // same media can be resolved successfully on a subsequent request.
+  if (stillUnresolvedRows.length) {
+    try {
+      const stageStart = diagnostics ? performance.now() : 0;
+      clearMappingCache();
+      clearImdbSearchCache();
+      mappings = mergeMappings(
+        mappings,
+        await resolveMappings(stillUnresolvedRows.map((row) => Number(row.id))),
+      );
+      mappings = mergeMappings(
+        mappings,
+        await resolveImdbMappings(stillUnresolvedRows),
+      );
+      if (diagnostics) diagnostics.identityRecovery = performance.now() - stageStart;
+    } catch (error) {
+      if (diagnostics) diagnostics.identityRecovery = performance.now() - stageStart;
+      console.error("[identity] unresolved identity recovery failed; preserving fallback behavior", error);
+    }
+  }
+
+  stillUnresolvedRows = rows.filter((row) => !selectProviderIdentity(
     { ...row, anilistId: Number(row.id) },
     getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
   ));
