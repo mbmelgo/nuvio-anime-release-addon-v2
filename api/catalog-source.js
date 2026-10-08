@@ -163,6 +163,7 @@ async function resolveMappingsForRows(
     resolveSecondaryMappings = resolveAniListMappingsSecondary,
     resolveAlternativeMappings = resolveAniListMappingsByMalIds,
     diagnostics = null,
+    allowProductionIdentityCache = false,
   } = {},
 ) {
   const ids = rows.map((row) => Number(row.id));
@@ -530,45 +531,48 @@ async function resolveMappingsForRows(
     }
   }
 
-  const finalUnresolvedRows = rows.filter((row) => !selectProviderIdentity(
-    { ...row, anilistId: Number(row.id) },
-    getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
-  ));
-  const cacheFallbackRows = finalUnresolvedRows.filter((row) =>
-    !(mappings.get(Number(row.id)) || []).length
-    && PRODUCTION_IDENTITY_CACHE[String(row.id)],
-  );
-  for (const row of cacheFallbackRows) {
-    const cached = PRODUCTION_IDENTITY_CACHE[String(row.id)];
-    const records = mappings.get(Number(row.id)) || [];
-    mappings.set(Number(row.id), [
-      ...records,
-      {
-        source: cached.source,
-        sourceVersion: cached.version || PRODUCTION_IDENTITY_CACHE_VERSION,
-        evidence: [{ source: cached.source, relation: false }],
-        anilistId: Number(row.id),
-        type: row.type,
-        malId: row.malId,
-        title: row.title?.english || row.title?.romaji || row.title?.native || null,
-        titles: [
-          row.title?.english,
-          row.title?.romaji,
-          row.title?.native,
-          ...(Array.isArray(row.synonyms) ? row.synonyms : []),
-        ].filter(Boolean),
-        year: row.startDate?.year || null,
-        season: null,
-        episodeOffset: null,
-        imdbIds: cached.provider === "imdb" ? [cached.id] : [],
-        tvdbId: cached.provider === "tvdb" ? Number(cached.id.split(":")[1]) : null,
-        tmdbTvId: cached.provider === "tmdb" ? Number(cached.id.split(":")[1]) : null,
-        tmdbMovieIds: [],
-      },
-    ]);
-  }
-  if (cacheFallbackRows.length && diagnostics) {
-    diagnostics.productionIdentityCache = cacheFallbackRows.length;
+  if (allowProductionIdentityCache) {
+      const finalUnresolvedRows = rows.filter((row) => !selectProviderIdentity(
+        { ...row, anilistId: Number(row.id) },
+        getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
+      ));
+      const cacheFallbackRows = finalUnresolvedRows.filter((row) =>
+        !(mappings.get(Number(row.id)) || []).length
+        && PRODUCTION_IDENTITY_CACHE[String(row.id)],
+      );
+      for (const row of cacheFallbackRows) {
+        const cached = PRODUCTION_IDENTITY_CACHE[String(row.id)];
+        const records = mappings.get(Number(row.id)) || [];
+        mappings.set(Number(row.id), [
+          ...records,
+          {
+            source: cached.source,
+            sourceVersion: cached.version || PRODUCTION_IDENTITY_CACHE_VERSION,
+            evidence: [{ source: cached.source, relation: false }],
+            anilistId: Number(row.id),
+            type: row.type,
+            malId: row.malId,
+            title: row.title?.english || row.title?.romaji || row.title?.native || null,
+            titles: [
+              row.title?.english,
+              row.title?.romaji,
+              row.title?.native,
+              ...(Array.isArray(row.synonyms) ? row.synonyms : []),
+            ].filter(Boolean),
+            year: row.startDate?.year || null,
+            season: null,
+            episodeOffset: null,
+            imdbIds: cached.provider === "imdb" ? [cached.id] : [],
+            tvdbId: cached.provider === "tvdb" ? Number(cached.id.split(":")[1]) : null,
+            tmdbTvId: cached.provider === "tmdb" ? Number(cached.id.split(":")[1]) : null,
+            tmdbMovieIds: [],
+          },
+        ]);
+      }
+      if (cacheFallbackRows.length && diagnostics) {
+        diagnostics.productionIdentityCache = cacheFallbackRows.length;
+      }
+    
   }
 
   return mappings;
@@ -1343,7 +1347,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
       for (const row of eligibleRows) { const mediaId = Number(row.media.id); if (seenMediaIds.has(mediaId)) continue; seenMediaIds.add(mediaId); uniqueEligibleRows.push(row); }
       const searchedRows = filterAiringRowsBySearch(uniqueEligibleRows, search);
       const mappingStart = diagnostics ? performance.now() : 0;
-    const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), { resolveMappings, resolveSecondaryMappings, resolveAlternativeMappings, resolveCanonicalSeriesMappings: canonicalSeriesResolver, resolveImdbMappings, diagnostics });
+    const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), { resolveMappings, resolveSecondaryMappings, resolveAlternativeMappings, resolveCanonicalSeriesMappings: canonicalSeriesResolver, resolveImdbMappings, diagnostics, allowProductionIdentityCache: true });
     if (diagnostics) diagnostics.identityResolution = performance.now() - mappingStart;
       const metas = [];
       const usedIdentities = new Set();
