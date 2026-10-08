@@ -435,12 +435,21 @@ async function resolveMappingsForRows(
       ["IMDb", () => resolveImdbMappings(stillUnresolvedRows)],
     ];
 
-    for (const [sourceName, resolveRecoveryStage] of recoveryStages) {
-      try {
-        mappings = mergeMappings(mappings, await resolveRecoveryStage());
-      } catch (error) {
-        console.error(`[identity] unresolved identity recovery source failed: ${sourceName}`, error);
-      }
+    const recoveryResults = await Promise.all(
+      recoveryStages.map(async ([sourceName, resolveRecoveryStage]) => {
+        try {
+          return await resolveRecoveryStage();
+        } catch (error) {
+          console.error(`[identity] unresolved identity recovery source failed: ${sourceName}`, error);
+          return new Map();
+        }
+      }),
+    );
+
+    // Preserve the existing source precedence while allowing independent
+    // provider network requests to overlap.
+    for (const result of recoveryResults) {
+      mappings = mergeMappings(mappings, result);
     }
 
     if (diagnostics) diagnostics.identityRecovery = performance.now() - stageStart;
