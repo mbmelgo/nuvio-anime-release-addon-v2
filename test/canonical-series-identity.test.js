@@ -190,3 +190,20 @@ test("canonical series resolver does not collapse a sequel franchise without sha
 
   assert.equal(result.has(199068), false);
 });
+
+
+test("canonical series resolver does not merge JoJo installments through a shared franchise title", async () => {
+  clearAnimeMapperCache();
+  const sharedMappings = { tmdb: 45790, tvdb: 262954, trakt: 45537 };
+  const steelBallRun = record(61469, 210482, "Steel Ball Run: JoJo's Bizarre Adventure", [
+    { malId: 51367, title: { english: "JoJo's Bizarre Adventure: Stone Ocean Part 2" }, format: "ONA", seasonYear: 2022, relationType: "PREQUEL" },
+  ], 2026, "ONA", sharedMappings);
+  steelBallRun.title = { english: "Steel Ball Run: JoJo's Bizarre Adventure", romaji: "JoJo no Kimyou na Bouken: Steel Ball Run - 1st STAGE", native: "ジョジョの奇妙な冒険 スティール・ボール・ラン 1st STAGE" };
+  const stoneOcean = record(51367, 146722, "JoJo's Bizarre Adventure: Stone Ocean Part 2", [
+    { malId: 48661, title: { english: "JoJo's Bizarre Adventure: Stone Ocean" }, format: "ONA", seasonYear: 2021, relationType: "PREQUEL" },
+  ], 2022, "ONA", sharedMappings);
+  stoneOcean.title = { english: "JoJo's Bizarre Adventure: Stone Ocean Part 2", romaji: "JoJo no Kimyou na Bouken: Stone Ocean Part 2", native: "ジョジョの奇妙な冒険 ストーンオーシャン 2クール" };
+  const fetchImpl = createFetch({ 61469: steelBallRun, 51367: stoneOcean });
+  const result = await resolveAniListCanonicalSeriesByAnimeMapper([{ id: 210482, idMal: 61469, type: "ONA", title: { english: "Steel Ball Run: JoJo's Bizarre Adventure" } }], { fetchImpl });
+  assert.equal(result.has(210482), false);
+});
