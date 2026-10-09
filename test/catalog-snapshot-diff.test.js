@@ -108,6 +108,18 @@ test("ranks provider identities with TMDB first, IMDb second, and TVDB third", (
   assert.ok(changes[3].changeTypes.includes("identity_improved"), "MAL must outrank AniList");
 });
 
+test("treats unranked providers as the lowest-priority identity", () => {
+  const before = snapshot("1.88.0", {
+    current_season: [item({ id: "custom:100", extra: { anilistId: 100, malId: 200, identityProvider: "custom", identityId: "100" } })],
+  });
+  const after = snapshot("1.89.0", {
+    current_season: [item({ id: "tmdb:100", extra: { anilistId: 100, malId: 200, identityProvider: "tmdb", identityId: "100" } })],
+  });
+  const change = diffChanges(compareCatalogSnapshots(before, after))[0];
+  assert.ok(change.changeTypes.includes("identity_improved"));
+  assert.ok(!change.changeTypes.includes("identity_degraded"));
+});
+
 test("detects title, year, and explicit season changes without inventing season data", () => {
   const before = snapshot("1.51.0", {
     current_season: [item({
