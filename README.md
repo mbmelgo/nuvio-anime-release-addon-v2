@@ -192,7 +192,7 @@ Catalog names and season labels are generated dynamically.
 
 ## 🚀 Current release
 
-**Production:** `v1.90.0`  
+**Production:** `v1.91.0`  
 **Development:** `v1.91.0` — verified provider identity selection across seasonal and rolling catalogs
 
 Post-release production catalog snapshots are captured automatically after each controlled release and retained on versioned `catalog-snapshots/*` branches.
