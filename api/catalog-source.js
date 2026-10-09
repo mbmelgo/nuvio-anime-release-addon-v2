@@ -1243,8 +1243,13 @@ function selectCatalogIdentity(media, records, { excludeIds = new Set(), allowPr
       stremioId: `tmdb:${tmdbSelected.tmdbId}`,
     }
     : null;
-  const cachedProductionIdentity = allowProductionIdentityCache
+  const cachedCandidate = allowProductionIdentityCache
     ? getVerifiedProductionFallbackCandidate(media)
+    : null;
+  const cachedProductionIdentity = cachedCandidate
+    && !excludeIds.has(cachedCandidate.id)
+    && !excludeIds.has(cachedCandidate.stremioId)
+    ? cachedCandidate
     : null;
   const hasImdbSelection = effectiveTmdbSelected?.provider === "imdb"
     || providerSelected?.provider === "imdb";
@@ -1559,8 +1564,6 @@ export async function buildRollingCatalog(id, date, skip, search, {
         if (selected) {
           usedIdentities.add(selected.stremioId);
           const identityExtra = independentlyVerifiedImdb?.stremioId === selected.stremioId
-            || providerSelected?.stremioId === selected.stremioId
-            || cachedProductionIdentity?.stremioId === selected.stremioId
             ? { identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence }
             : nuvioTmdbRoute?.stremioId === selected.stremioId
               ? { tmdbProvider: selected.provider, tmdbId: selected.id, tmdbEvidence: "tmdb-search", identityFallback: "nuvio-tmdb-route" }
