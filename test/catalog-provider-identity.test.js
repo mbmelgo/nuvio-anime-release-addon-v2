@@ -402,6 +402,7 @@ test("relation retry runs when protected IMDb outranks valid TVDB", () => {
     },
   ];
   assert.equal(isSelectedIdentityProtected(media, candidates), true);
+});
 
 
 test("catalog uses native TMDB route when IMDb is only supplied by the TMDB mapping", async () => {
