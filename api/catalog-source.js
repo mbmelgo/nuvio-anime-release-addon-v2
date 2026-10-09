@@ -1244,11 +1244,17 @@ function selectCatalogIdentity(media, records, { excludeIds = new Set() } = {}) 
     }
     : null;
   const cachedProductionIdentity = getVerifiedProductionFallbackCandidate(media);
-  const selected = independentlyVerifiedImdb
-    || nuvioTmdbRoute
-    || effectiveTmdbSelected
-    || providerSelected
-    || cachedProductionIdentity;
+  const hasImdbSelection = effectiveTmdbSelected?.provider === "imdb"
+    || providerSelected?.provider === "imdb";
+  const selected = hasImdbSelection
+    ? independentlyVerifiedImdb
+      || nuvioTmdbRoute
+      || effectiveTmdbSelected
+      || providerSelected
+      || cachedProductionIdentity
+    : effectiveTmdbSelected
+      || providerSelected
+      || cachedProductionIdentity;
 
   return {
     providerCandidates,
@@ -1407,12 +1413,22 @@ export async function buildRollingCatalog(id, date, skip, search, {
   maxPages = MAX_SCHEDULE_PAGES,
   pageSize = NUVIO_PAGE_SIZE,
   resolveMappings = resolveAniListMappings,
+  resolveFribbMappings = resolveAniListMappingsFribb,
+  resolveExternalMappings = resolveAniListExternalMappings,
+  resolveAnimapMappings = resolveAniListMappingsAnimap,
+  resolveIdMapperMappings = resolveAniListMappingsIdMapper,
+  resolveTMDBMappings = resolveAniListMappingsByTMDB,
+  resolveAnimeMapperMappings = resolveAniListMappingsByAnimeMapper,
+  resolveAnimeMapperRelatedProviderIds = resolveAniListRelatedProviderIdsByAnimeMapper,
+  resolveCanonicalSeriesMappings = null,
+  resolveAniBridgeMappings = resolveAniListMappingsByAniBridge,
+  resolveTsvMappings = resolveAniListMappingsFromAnimeApiTsv,
+  resolveImdbMappings = resolveAniListMappingsByImdbSearch,
+  validateImdbMappings = validateImdbMappingsByKnownIds,
   resolveSecondaryMappings = resolveAniListMappingsSecondary,
   resolveAlternativeMappings = resolveAniListMappingsByMalIds,
-    resolveCanonicalSeriesMappings = null,
-    resolveImdbMappings = resolveAniListMappingsByImdbSearch,
-    diagnostics = null,
-  } = {}) {
+  diagnostics = null,
+} = {}) {
   const range = getRollingCatalogRange(id, date);
   const canonicalSeriesResolver = resolveCanonicalSeriesMappings
     || (resolveMappings === resolveAniListMappings
@@ -1448,7 +1464,25 @@ export async function buildRollingCatalog(id, date, skip, search, {
       for (const row of eligibleRows) { const mediaId = Number(row.media.id); if (seenMediaIds.has(mediaId)) continue; seenMediaIds.add(mediaId); uniqueEligibleRows.push(row); }
       const searchedRows = filterAiringRowsBySearch(uniqueEligibleRows, search);
       const mappingStart = diagnostics ? performance.now() : 0;
-    const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), { resolveMappings, resolveSecondaryMappings, resolveAlternativeMappings, resolveCanonicalSeriesMappings: canonicalSeriesResolver, resolveImdbMappings, diagnostics, allowProductionIdentityCache: true });
+    const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), {
+      resolveMappings,
+      resolveFribbMappings,
+      resolveExternalMappings,
+      resolveAnimapMappings,
+      resolveIdMapperMappings,
+      resolveTMDBMappings,
+      resolveAnimeMapperMappings,
+      resolveAnimeMapperRelatedProviderIds,
+      resolveCanonicalSeriesMappings: canonicalSeriesResolver,
+      resolveAniBridgeMappings,
+      resolveTsvMappings,
+      resolveImdbMappings,
+      validateImdbMappings,
+      resolveSecondaryMappings,
+      resolveAlternativeMappings,
+      diagnostics,
+      allowProductionIdentityCache: true,
+    });
     if (diagnostics) diagnostics.identityResolution = performance.now() - mappingStart;
       const metas = [];
       const usedIdentities = new Set();
