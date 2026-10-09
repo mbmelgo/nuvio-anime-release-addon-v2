@@ -234,7 +234,14 @@ async function resolveMappingsForRows(
       { ...row, anilistId: Number(row.id) },
       candidates,
     );
-    return !selected || selected.provider !== "tmdb";
+    const tmdbSelected = selectTMDBIdentity(
+      { ...row, anilistId: Number(row.id) },
+      mappings.get(Number(row.id)) || [],
+    );
+    // A relation-derived TMDB ID is a candidate, not an authoritative TMDB
+    // lookup. Verify it through TMDB rather than letting the provider label
+    // alone suppress the canonical TMDB mapping stage.
+    return !selected || selected.provider !== "tmdb" || !tmdbSelected;
   });
   if (tmdbRows.length) {
     try {
@@ -483,6 +490,27 @@ async function resolveMappingsForRows(
       if (diagnostics) diagnostics.relations = performance.now() - stageStart;
     } catch (error) {
       console.error("[identity] relation-id mapping fallback failed", error);
+    }
+  }
+
+  // Cross-verify relation-derived TMDB identities independently. A valid
+  // relation candidate must not suppress the IMDb title search that would
+  // otherwise run when the same AniList row has no selected identity.
+  const relationDerivedTmdbRows = rows.filter((row) => {
+    const media = { ...row, anilistId: Number(row.id) };
+    const records = mappings.get(Number(row.id)) || [];
+    const selected = selectProviderIdentity(media, getProviderCandidates(media, records));
+    return selected?.provider === "tmdb"
+      && !hasStrongDirectProviderEvidence(selected)
+      && selected.evidence?.some((entry) => /relation/i.test(String(entry?.source || "")));
+  });
+  if (relationDerivedTmdbRows.length) {
+    try {
+      const stageStart = diagnostics ? performance.now() : 0;
+      mappings = mergeMappings(mappings, await resolveImdbMappings(relationDerivedTmdbRows));
+      if (diagnostics) diagnostics.relationTmdbImdbVerification = performance.now() - stageStart;
+    } catch (error) {
+      console.error("[identity] relation-derived TMDB IMDb verification failed", error);
     }
   }
 
