@@ -489,9 +489,26 @@ test("seasonal and rolling catalogs cross-verify relation-derived TMDB identitie
     resolveIdMapperMappings: async () => new Map(),
     resolveAnimeMapperMappings: async () => new Map(),
     resolveTsvMappings: async () => new Map(),
-    resolveImdbMappings: async () => {
+    resolveImdbMappings: async (rows) => {
       imdbCalls += 1;
-      return new Map();
+      return new Map(rows.map((row) => [Number(row.id), [{
+        source: "imdb-search",
+        anilistId: Number(row.id),
+        type: "TV",
+        malId: 12347,
+        imdbIds: ["tt15792808"],
+        tvdbId: null,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: "Identity Parity Test",
+        titles: ["Identity Parity Test"],
+        year: 2026,
+        relation: false,
+        derivedTitle: false,
+        derivedInstallmentTitle: false,
+        season: null,
+        episodeOffset: null,
+      }]]));
     },
     resolveSecondaryMappings: async () => new Map(),
     resolveAlternativeMappings: async () => new Map(),
@@ -511,7 +528,7 @@ test("seasonal and rolling catalogs cross-verify relation-derived TMDB identitie
 
   assert.equal(tmdbCalls, 2, "both catalog paths should verify relation-derived TMDB identities");
   assert.equal(imdbCalls, 2, "both catalog paths should independently verify relation-derived TMDB identities");
-  assert.equal(seasonal[0].id, "tmdb:126437");
+  assert.equal(seasonal[0].id, "tt15792808");
   assert.equal(rolling[0].id, seasonal[0].id);
 });
 
