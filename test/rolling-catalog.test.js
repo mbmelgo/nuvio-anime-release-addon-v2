@@ -438,3 +438,52 @@ test("rolling catalogs use native TMDB route for an unverified TMDB IMDb mapping
   assert.equal(result[0].id, "tmdb:43691316");
   assert.equal(result[0].extra.tmdbProvider, "tmdb");
 });
+
+test("rolling catalogs cross-verify Anime Mapper relation TMDB identities before selection", async () => {
+  const now = new Date("2026-10-01T00:00:00.000Z");
+  const mediaId = 209465;
+  let tmdbCalls = 0;
+  let imdbCalls = 0;
+  const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+    fetchPage: async () => [schedule(mediaId, now.getTime() + 60_000, 1, "Identity Parity Test", 12347)],
+    maxPages: 1,
+    resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAniBridgeMappings: async () => new Map(),
+    resolveTMDBMappings: async () => {
+      tmdbCalls += 1;
+      return new Map();
+    },
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async (rows) => new Map(rows
+      .filter((row) => Number(row.id) === mediaId)
+      .map((row) => [mediaId, [{
+        source: "anime-mapper-relation",
+        anilistId: mediaId,
+        type: "TV",
+        imdbIds: [],
+        tvdbId: null,
+        tmdbTvId: 126437,
+        tmdbMovieIds: [],
+        title: "Identity Parity Test",
+        titles: ["Identity Parity Test"],
+        year: 2026,
+        relation: true,
+      }]])),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => {
+      imdbCalls += 1;
+      return new Map();
+    },
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+    resolveCanonicalSeriesMappings: async () => new Map(),
+    resolveAnimeMapperRelatedProviderIds: async () => new Map(),
+  });
+
+  assert.equal(tmdbCalls, 1, "a relation-derived TMDB identity should be checked against TMDB mapping");
+  assert.equal(imdbCalls, 1, "a relation-derived TMDB identity should receive independent IMDb verification");
+  assert.equal(result[0].id, "tmdb:126437");
+});
