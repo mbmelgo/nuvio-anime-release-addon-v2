@@ -234,7 +234,7 @@ async function resolveMappingsForRows(
       { ...row, anilistId: Number(row.id) },
       candidates,
     );
-    return !selected || selected.provider !== "imdb";
+    return !selected || selected.provider !== "tmdb";
   });
   if (tmdbRows.length) {
     try {
@@ -387,7 +387,7 @@ async function resolveMappingsForRows(
       { ...row, anilistId: Number(row.id) },
       getProviderCandidates({ ...row, anilistId: Number(row.id) }, mappings.get(Number(row.id)) || []),
     );
-    return !selected || selected.provider !== "imdb";
+    return !selected || selected.provider !== "tmdb";
   });
 
   if (unresolvedRows.length) {

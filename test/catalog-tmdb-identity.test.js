@@ -275,7 +275,7 @@ test("catalog retries TMDB when an earlier IMDb mapping is invalid", async () =>
   assert.equal(tmdbCalls, 1);
 });
 
-test("catalog skips TMDB when an earlier IMDb mapping is already valid", async () => {
+test("catalog queries TMDB even when an earlier IMDb mapping is already valid", async () => {
   let tmdbCalls = 0;
 
   const metas = await canonicalizeCatalogPage([{
@@ -315,5 +315,5 @@ test("catalog skips TMDB when an earlier IMDb mapping is already valid", async (
 
   assert.equal(metas[0].id, "tt1234567");
   assert.equal(metas[0].extra.identityProvider, "imdb");
-  assert.equal(tmdbCalls, 0);
+  assert.equal(tmdbCalls, 1);
 });

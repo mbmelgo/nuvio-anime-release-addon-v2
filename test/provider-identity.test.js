@@ -13,7 +13,7 @@ function media(overrides = {}) {
   };
 }
 
-test("provider identity prefers a valid TVDB mapping over IMDb", () => {
+test("provider identity prefers TMDB over IMDb and TVDB when all are valid", () => {
   const records = [{
     source: "arm",
     anilistId: 269,
@@ -26,11 +26,11 @@ test("provider identity prefers a valid TVDB mapping over IMDb", () => {
     year: 2004,
   }];
   const selected = selectProviderIdentity(media(), getProviderCandidates(media(), records));
-  assert.equal(selected?.provider, "tvdb");
+  assert.equal(selected?.provider, "tmdb");
   assert.equal(selected?.id, "30984");
 });
 
-test("provider identity falls back to IMDb when the higher-priority TVDB identity is protected", () => {
+test("provider identity prefers IMDb over TVDB when TMDB is unavailable", () => {
   const row = media({ relatedProviderIds: ["tvdb:30984"] });
   const records = [{
     source: "arm",

@@ -83,27 +83,41 @@ test("classifies provider and identity quality changes", () => {
   assert.ok(changes[1].changeTypes.includes("provider_changed"));
 });
 
-test("ranks provider identities according to the configured resolver priority", () => {
+test("ranks provider identities with TMDB first, IMDb second, and TVDB third", () => {
   const before = snapshot("1.88.0", {
     current_season: [
-      item({ id: "tt100", extra: { anilistId: 100, malId: 200, identityProvider: "imdb", identityId: "tt100" } }),
-      item({ id: "tmdb:201", extra: { anilistId: 101, malId: 201, identityProvider: "tmdb", identityId: "201" } }),
+      item({ id: "tvdb:100", extra: { anilistId: 100, malId: 200, identityProvider: "tvdb", identityId: "100" } }),
+      item({ id: "tt101", extra: { anilistId: 101, malId: 201, identityProvider: "imdb", identityId: "tt101" } }),
       item({ id: "mal:202", extra: { anilistId: 102, malId: 202, identityProvider: "mal", identityId: "202" } }),
+      item({ id: "anilist:103", extra: { anilistId: 103, malId: 203, identityProvider: "anilist", identityId: "103" } }),
     ],
   });
   const after = snapshot("1.89.0", {
     current_season: [
-      item({ id: "tvdb:100", extra: { anilistId: 100, malId: 200, identityProvider: "tvdb", identityId: "100" } }),
-      item({ id: "tt101", extra: { anilistId: 101, malId: 201, identityProvider: "imdb", identityId: "tt101" } }),
-      item({ id: "tmdb:202", extra: { anilistId: 102, malId: 202, identityProvider: "tmdb", identityId: "202" } }),
+      item({ id: "tmdb:100", extra: { anilistId: 100, malId: 200, identityProvider: "tmdb", identityId: "100" } }),
+      item({ id: "tvdb:101", extra: { anilistId: 101, malId: 201, identityProvider: "tvdb", identityId: "101" } }),
+      item({ id: "tt102", extra: { anilistId: 102, malId: 202, identityProvider: "imdb", identityId: "tt102" } }),
+      item({ id: "mal:103", extra: { anilistId: 103, malId: 203, identityProvider: "mal", identityId: "103" } }),
     ],
   });
 
   const changes = diffChanges(compareCatalogSnapshots(before, after));
-  assert.ok(changes[0].changeTypes.includes("identity_improved"), "TVDB must outrank IMDb");
-  assert.ok(changes[1].changeTypes.includes("identity_improved"), "IMDb must outrank TMDB");
-  assert.ok(changes[2].changeTypes.includes("identity_improved"), "TMDB must outrank MAL");
-  assert.ok(changes.every((change) => !change.changeTypes.includes("identity_degraded")));
+  assert.ok(changes[0].changeTypes.includes("identity_improved"), "TMDB must outrank TVDB");
+  assert.ok(changes[1].changeTypes.includes("identity_degraded"), "TVDB must rank below IMDb");
+  assert.ok(changes[2].changeTypes.includes("identity_improved"), "IMDb must outrank MAL");
+  assert.ok(changes[3].changeTypes.includes("identity_improved"), "MAL must outrank AniList");
+});
+
+test("treats unranked providers as the lowest-priority identity", () => {
+  const before = snapshot("1.88.0", {
+    current_season: [item({ id: "custom:100", extra: { anilistId: 100, malId: 200, identityProvider: "custom", identityId: "100" } })],
+  });
+  const after = snapshot("1.89.0", {
+    current_season: [item({ id: "tmdb:100", extra: { anilistId: 100, malId: 200, identityProvider: "tmdb", identityId: "100" } })],
+  });
+  const change = diffChanges(compareCatalogSnapshots(before, after))[0];
+  assert.ok(change.changeTypes.includes("identity_improved"));
+  assert.ok(!change.changeTypes.includes("identity_degraded"));
 });
 
 test("detects title, year, and explicit season changes without inventing season data", () => {
