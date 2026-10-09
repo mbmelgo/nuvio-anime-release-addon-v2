@@ -440,14 +440,27 @@ test("rolling catalogs use native TMDB route for an unverified TMDB IMDb mapping
   assert.equal(result[0].extra.tmdbProvider, "tmdb");
 });
 
-test("rolling catalogs cross-verify Anime Mapper relation TMDB identities before selection", async () => {
+test("seasonal and rolling catalogs cross-verify relation-derived TMDB identities consistently", async () => {
   const now = new Date("2026-10-01T00:00:00.000Z");
   const mediaId = 209465;
   let tmdbCalls = 0;
   let imdbCalls = 0;
-  const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
-    fetchPage: async () => [schedule(mediaId, now.getTime() + 60_000, 1, "Identity Parity Test", 12347)],
-    maxPages: 1,
+  const media = {
+    id: mediaId,
+    idMal: 12347,
+    title: { english: "Identity Parity Test", romaji: "Identity Parity Test", native: null },
+    synonyms: [],
+    coverImage: { large: `https://example.test/${mediaId}.jpg` },
+    status: "RELEASING",
+    format: "TV",
+    isAdult: false,
+    countryOfOrigin: "JP",
+    startDate: { year: 2026, month: 1, day: 1 },
+    endDate: { year: null },
+    genres: ["Action"],
+    relations: { edges: [] },
+  };
+  const sharedOptions = {
     resolveMappings: async () => new Map([[mediaId, [{
       source: "anime-mapper-relation",
       anilistId: mediaId,
@@ -484,11 +497,22 @@ test("rolling catalogs cross-verify Anime Mapper relation TMDB identities before
     resolveAlternativeMappings: async () => new Map(),
     resolveCanonicalSeriesMappings: async () => new Map(),
     resolveAnimeMapperRelatedProviderIds: async () => new Map(),
+  };
+
+  const seasonal = await canonicalizeCatalogPage([media], sharedOptions);
+  const rolling = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+    ...sharedOptions,
+    fetchPage: async () => [{
+      ...schedule(mediaId, now.getTime() + 60_000, 1, "Identity Parity Test", 12347),
+      media,
+    }],
+    maxPages: 1,
   });
 
-  assert.ok(tmdbCalls >= 1, "a relation-derived TMDB identity should be checked against TMDB mapping");
-  assert.equal(imdbCalls, 1, "a relation-derived TMDB identity should receive independent IMDb verification");
-  assert.equal(result[0].id, "tmdb:126437");
+  assert.equal(tmdbCalls, 2, "both catalog paths should verify relation-derived TMDB identities");
+  assert.equal(imdbCalls, 2, "both catalog paths should independently verify relation-derived TMDB identities");
+  assert.equal(seasonal[0].id, "tmdb:126437");
+  assert.equal(rolling[0].id, seasonal[0].id);
 });
 
 test("rolling AniList schedule requests include seasonal identity-relevant media fields", () => {
