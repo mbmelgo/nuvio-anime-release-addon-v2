@@ -1287,7 +1287,7 @@ function selectCatalogIdentity(media, records, { excludeIds = new Set(), allowPr
     media,
     providerCandidates.filter((candidate) =>
       candidate.provider === "tmdb"
-      && candidate.evidence?.some((entry) => /relation/i.test(String(entry?.source || "")),
+      && candidate.evidence?.some((entry) => /relation/i.test(String(entry?.source || ""))),
     ),
     { excludeIds },
   );
