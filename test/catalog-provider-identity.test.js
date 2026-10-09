@@ -401,33 +401,7 @@ test("relation retry runs when protected IMDb outranks valid TVDB", () => {
       title: "Example Season 4",
     },
   ];
-  assert.equal(isSelectedIdentityProtected(media, candidates), false);test("relation retry runs when protected IMDb outranks valid TVDB", () => {
-  const media = {
-    anilistId: 9004,
-    format: "TV",
-    title: { english: "Example Season 4", romaji: "Example Season 4" },
-    startDate: { year: 2026 },
-    relations: { edges: [] },
-  };
-  const candidates = [
-    {
-      provider: "imdb",
-      id: "tt9004",
-      stremioId: "tt9004",
-      evidence: [{ source: "imdb-search" }],
-      title: "Example Season 4",
-      relatedProviderIds: ["imdb:tt9004"],
-    },
-    {
-      provider: "tvdb",
-      id: "9004",
-      stremioId: "tvdb:9004",
-      evidence: [{ source: "arm" }],
-      title: "Example Season 4",
-    },
-  ];
   assert.equal(isSelectedIdentityProtected(media, candidates), true);
-});
 
 
 test("catalog uses native TMDB route when IMDb is only supplied by the TMDB mapping", async () => {
