@@ -30,6 +30,25 @@ test("provider identity prefers a valid TVDB mapping over IMDb", () => {
   assert.equal(selected?.id, "30984");
 });
 
+test("provider identity falls back to IMDb when the higher-priority TVDB identity is protected", () => {
+  const row = media({ relatedProviderIds: ["tvdb:30984"] });
+  const records = [{
+    source: "arm",
+    anilistId: 269,
+    type: "TV",
+    imdbIds: ["tt0434665"],
+    tvdbId: 30984,
+    tmdbTvId: null,
+    tmdbMovieIds: [],
+    title: "Bleach",
+    year: 2004,
+  }];
+
+  const selected = selectProviderIdentity(row, getProviderCandidates(row, records));
+  assert.equal(selected?.provider, "imdb");
+  assert.equal(selected?.id, "tt0434665");
+});
+
 test("provider identity rejects a weak related TVDB mapping", () => {
   const row = media({
     relations: {
