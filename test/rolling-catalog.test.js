@@ -447,7 +447,19 @@ test("rolling catalogs cross-verify Anime Mapper relation TMDB identities before
   const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
     fetchPage: async () => [schedule(mediaId, now.getTime() + 60_000, 1, "Identity Parity Test", 12347)],
     maxPages: 1,
-    resolveMappings: async () => new Map(),
+    resolveMappings: async () => new Map([[mediaId, [{
+      source: "anime-mapper-relation",
+      anilistId: mediaId,
+      type: "TV",
+      imdbIds: [],
+      tvdbId: null,
+      tmdbTvId: 126437,
+      tmdbMovieIds: [],
+      title: "Identity Parity Test",
+      titles: ["Identity Parity Test"],
+      year: 2026,
+      relation: true,
+    }]]]),
     resolveFribbMappings: async () => new Map(),
     resolveExternalMappings: () => new Map(),
     resolveAniBridgeMappings: async () => new Map(),
@@ -457,21 +469,7 @@ test("rolling catalogs cross-verify Anime Mapper relation TMDB identities before
     },
     resolveAnimapMappings: async () => new Map(),
     resolveIdMapperMappings: async () => new Map(),
-    resolveAnimeMapperMappings: async (rows) => new Map(rows
-      .filter((row) => Number(row.id) === mediaId)
-      .map((row) => [mediaId, [{
-        source: "anime-mapper-relation",
-        anilistId: mediaId,
-        type: "TV",
-        imdbIds: [],
-        tvdbId: null,
-        tmdbTvId: 126437,
-        tmdbMovieIds: [],
-        title: "Identity Parity Test",
-        titles: ["Identity Parity Test"],
-        year: 2026,
-        relation: true,
-      }]])),
+    resolveAnimeMapperMappings: async () => new Map(),
     resolveTsvMappings: async () => new Map(),
     resolveImdbMappings: async () => {
       imdbCalls += 1;
