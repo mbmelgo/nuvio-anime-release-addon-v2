@@ -167,7 +167,7 @@ async function resolveMappingsForRows(
     resolveSecondaryMappings = resolveAniListMappingsSecondary,
     resolveAlternativeMappings = resolveAniListMappingsByMalIds,
     diagnostics = null,
-    allowProductionIdentityCache = false,
+    allowProductionIdentityCache = true,
   } = {},
 ) {
   const ids = rows.map((row) => Number(row.id));
@@ -1205,6 +1205,66 @@ export function normalizeCatalogOptions(options) {
   return options && typeof options === "object" ? options : {};
 }
 
+function selectCatalogIdentity(media, records, { excludeIds = new Set() } = {}) {
+  const providerCandidates = getProviderCandidates(media, records);
+  const canonicalSeriesSelected = selectProviderIdentity(
+    media,
+    providerCandidates.filter((candidate) => candidate.canonicalSeries === true),
+    { excludeIds },
+  );
+  const tmdbSelected = selectTMDBIdentity(media, records, { excludeIds });
+  const tmdbImdbValidated = tmdbSelected?.provider === "imdb"
+    ? selectProviderIdentity(
+      media,
+      providerCandidates.filter((candidate) =>
+        candidate.provider === "imdb" && candidate.id === tmdbSelected.id),
+      { excludeIds },
+    )
+    : null;
+  const effectiveTmdbSelected = tmdbSelected?.provider === "imdb"
+    ? tmdbImdbValidated
+    : tmdbSelected;
+  const providerSelected = selectProviderIdentity(media, providerCandidates, { excludeIds });
+  const independentlyVerifiedImdb = selectProviderIdentity(
+    media,
+    providerCandidates.filter((candidate) =>
+      candidate.provider === "imdb" && hasStrongDirectProviderEvidence(candidate)),
+    { excludeIds },
+  );
+  // Preserve the seasonal catalog's established rule: a TMDB-derived IMDb
+  // ID is not an independent IMDb verification, so use Nuvio's native TMDB
+  // route unless a stronger direct IMDb identity is available.
+  const nuvioTmdbRoute = tmdbSelected?.tmdbId
+    && tmdbSelected.provider === "imdb"
+    && !independentlyVerifiedImdb
+    ? {
+      ...tmdbSelected,
+      provider: "tmdb",
+      id: String(tmdbSelected.tmdbId),
+      stremioId: `tmdb:${tmdbSelected.tmdbId}`,
+    }
+    : null;
+  const cachedProductionIdentity = getVerifiedProductionFallbackCandidate(media);
+  const selected = canonicalSeriesSelected
+    || independentlyVerifiedImdb
+    || nuvioTmdbRoute
+    || effectiveTmdbSelected
+    || providerSelected
+    || cachedProductionIdentity;
+
+  return {
+    providerCandidates,
+    canonicalSeriesSelected,
+    tmdbSelected,
+    providerSelected,
+    independentlyVerifiedImdb,
+    effectiveTmdbSelected,
+    nuvioTmdbRoute,
+    cachedProductionIdentity,
+    selected,
+  };
+}
+
 export async function canonicalizeCatalogPage(mediaRows, options = {}) {
   const normalizedOptions = normalizeCatalogOptions(options);
   const normalizedRows = Array.isArray(mediaRows)
@@ -1244,13 +1304,19 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
       });
       continue;
     }
-    const providerCandidates = getProviderCandidates(
+    const {
+      providerCandidates,
+      canonicalSeriesSelected,
+      tmdbSelected,
+      providerSelected,
+      independentlyVerifiedImdb,
+      effectiveTmdbSelected,
+      nuvioTmdbRoute,
+      selected: resolvedIdentity,
+    } = selectCatalogIdentity(
       { ...row, anilistId },
       mappings.get(anilistId) || [],
-    );
-    const canonicalSeriesSelected = selectProviderIdentity(
-      { ...row, anilistId },
-      providerCandidates.filter((candidate) => candidate.canonicalSeries === true),
+      { excludeIds: usedIdentities },
     );
     if (canonicalSeriesSelected) {
       metas.push({
@@ -1269,46 +1335,6 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
       });
       continue;
     }
-    const tmdbSelected = selectTMDBIdentity({ ...row, anilistId }, mappings.get(anilistId) || [], { excludeIds: usedIdentities });
-    const tmdbImdbValidated = tmdbSelected?.provider === "imdb"
-      ? selectProviderIdentity(
-        { ...row, anilistId },
-        providerCandidates.filter((candidate) =>
-          candidate.provider === "imdb" && candidate.id === tmdbSelected.id),
-        { excludeIds: usedIdentities },
-      )
-      : null;
-    const effectiveTmdbSelected = tmdbSelected?.provider === "imdb"
-      ? tmdbImdbValidated
-      : tmdbSelected;
-    const providerSelected = selectProviderIdentity(
-      { ...row, anilistId },
-      providerCandidates,
-      { excludeIds: usedIdentities },
-    );
-    const independentlyVerifiedImdb = selectProviderIdentity(
-      { ...row, anilistId },
-      providerCandidates.filter((candidate) =>
-        candidate.provider === "imdb"
-        && hasStrongDirectProviderEvidence(candidate),
-      ),
-      { excludeIds: usedIdentities },
-    );
-    // Nuvio can resolve a tmdb: ID through its metadata addons and has a
-    // standalone TMDB fallback when those addons return no meta. A TMDB
-    // mapping's IMDb external ID does not carry that fallback behavior when
-    // it is not independently verified. Prefer the native TMDB route in that
-    // case; keep IMDb when independent evidence exists.
-    const nuvioTmdbRoute = tmdbSelected?.tmdbId
-      && tmdbSelected.provider === "imdb"
-      && !independentlyVerifiedImdb
-      ? {
-        ...tmdbSelected,
-        provider: "tmdb",
-        id: String(tmdbSelected.tmdbId),
-        stremioId: `tmdb:${tmdbSelected.tmdbId}`,
-      }
-      : null;
     if (effectiveTmdbSelected?.provider === "imdb" || providerSelected?.provider === "imdb") {
       const selected = independentlyVerifiedImdb
         || nuvioTmdbRoute
@@ -1331,7 +1357,7 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
       metas.push({ ...meta, id: effectiveTmdbSelected.stremioId, extra: { ...meta.extra, tmdbProvider: effectiveTmdbSelected.provider, tmdbId: effectiveTmdbSelected.id, tmdbEvidence: "tmdb-search" } });
       continue;
     }
-    const selected = providerSelected;
+    const selected = resolvedIdentity;
     if (selected) {
       usedIdentities.add(selected.stremioId);
       metas.push({ ...meta, id: selected.stremioId, extra: { ...meta.extra, identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence } });
@@ -1459,60 +1485,14 @@ export async function buildRollingCatalog(id, date, skip, search, {
           });
           continue;
         }
-        const providerCandidates = getProviderCandidates(media, mappings.get(mediaId) || []);
-        const canonicalSeriesSelected = selectProviderIdentity(
+        const {
+          tmdbSelected,
+          selected,
+        } = selectCatalogIdentity(
           { ...media, anilistId: mediaId },
-          providerCandidates.filter((candidate) => candidate.canonicalSeries === true),
-        );
-        if (canonicalSeriesSelected) {
-          metas.push({
-            ...baseMeta,
-            id: canonicalSeriesSelected.stremioId,
-            extra: {
-              ...baseMeta.extra,
-              identityProvider: canonicalSeriesSelected.provider,
-              identityId: canonicalSeriesSelected.id,
-              identityCanonicalSeries: true,
-              identityCanonicalSeriesAnilistId: canonicalSeriesSelected.canonicalSeriesAnilistId,
-              identityCanonicalSeriesMalId: canonicalSeriesSelected.canonicalSeriesMalId,
-              identityCanonicalSeriesTitle: canonicalSeriesSelected.canonicalSeriesTitle,
-              identityEvidence: canonicalSeriesSelected.evidence,
-              episode: row.episode,
-              airingAt: row.airingAt,
-              ...(futureOnly ? { nextEpisode: row.episode, nextAiringAt: row.airingAt } : {}),
-            },
-            type: "series",
-          });
-          continue;
-        }
-        const tmdbSelected = selectTMDBIdentity({ ...media, anilistId: mediaId }, mappings.get(mediaId) || [], { excludeIds: usedIdentities });
-        const providerSelected = selectProviderIdentity(
-          { ...media, anilistId: mediaId },
-          providerCandidates,
+          mappings.get(mediaId) || [],
           { excludeIds: usedIdentities },
         );
-        const independentlyVerifiedImdb = selectProviderIdentity(
-          { ...media, anilistId: mediaId },
-          providerCandidates.filter((candidate) =>
-            candidate.provider === "imdb"
-            && hasStrongDirectProviderEvidence(candidate),
-          ),
-          { excludeIds: usedIdentities },
-        );
-        const cachedProductionIdentity = getVerifiedProductionFallbackCandidate(media);
-        const nuvioTmdbRoute = tmdbSelected?.tmdbId
-          && !independentlyVerifiedImdb
-          && providerSelected?.provider === "imdb"
-          ? { ...tmdbSelected, provider: "tmdb", id: String(tmdbSelected.tmdbId), stremioId: `tmdb:${tmdbSelected.tmdbId}` }
-          : null;
-        const selected = (cachedProductionIdentity?.provider === "imdb" ? cachedProductionIdentity : null)
-          || independentlyVerifiedImdb
-          || nuvioTmdbRoute
-          || (tmdbSelected?.provider === "imdb" ? tmdbSelected : null)
-          || (providerSelected?.provider === "imdb" ? providerSelected : null)
-          || tmdbSelected
-          || providerSelected
-          || cachedProductionIdentity;
         const malId = getCanonicalMalId(media, baseMeta, mappings.get(mediaId) || []);
         let meta;
         if (selected) {
