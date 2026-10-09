@@ -83,6 +83,29 @@ test("classifies provider and identity quality changes", () => {
   assert.ok(changes[1].changeTypes.includes("provider_changed"));
 });
 
+test("ranks provider identities according to the configured resolver priority", () => {
+  const before = snapshot("1.88.0", {
+    current_season: [
+      item({ id: "tt100", extra: { anilistId: 100, malId: 200, identityProvider: "imdb", identityId: "tt100" } }),
+      item({ id: "tmdb:201", extra: { anilistId: 101, malId: 201, identityProvider: "tmdb", identityId: "201" } }),
+      item({ id: "mal:202", extra: { anilistId: 102, malId: 202, identityProvider: "mal", identityId: "202" } }),
+    ],
+  });
+  const after = snapshot("1.89.0", {
+    current_season: [
+      item({ id: "tvdb:100", extra: { anilistId: 100, malId: 200, identityProvider: "tvdb", identityId: "100" } }),
+      item({ id: "tt101", extra: { anilistId: 101, malId: 201, identityProvider: "imdb", identityId: "tt101" } }),
+      item({ id: "tmdb:202", extra: { anilistId: 102, malId: 202, identityProvider: "tmdb", identityId: "202" } }),
+    ],
+  });
+
+  const changes = diffChanges(compareCatalogSnapshots(before, after));
+  assert.ok(changes[0].changeTypes.includes("identity_improved"), "TVDB must outrank IMDb");
+  assert.ok(changes[1].changeTypes.includes("identity_improved"), "IMDb must outrank TMDB");
+  assert.ok(changes[2].changeTypes.includes("identity_improved"), "TMDB must outrank MAL");
+  assert.ok(changes.every((change) => !change.changeTypes.includes("identity_degraded")));
+});
+
 test("detects title, year, and explicit season changes without inventing season data", () => {
   const before = snapshot("1.51.0", {
     current_season: [item({
