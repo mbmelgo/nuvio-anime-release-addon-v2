@@ -328,7 +328,7 @@ test("catalog prefers strong direct IMDb identity over a TMDB-derived IMDb ident
       derivedTitle: true,
       derivedSearchTitle: "BLEACH: Thousand-Year Blood War",
       relation: false,
-      evidence: [{ source: "imdb-search", relation: false }],
+      evidence: [{ source: "anime-mapper", relation: false }],
     }]]]),
     resolveSecondaryMappings: empty,
     resolveAlternativeMappings: empty,
