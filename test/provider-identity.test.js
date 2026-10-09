@@ -13,7 +13,7 @@ function media(overrides = {}) {
   };
 }
 
-test("provider identity selects a valid IMDb mapping", () => {
+test("provider identity prefers a valid TVDB mapping over IMDb", () => {
   const records = [{
     source: "arm",
     anilistId: 269,
@@ -26,8 +26,8 @@ test("provider identity selects a valid IMDb mapping", () => {
     year: 2004,
   }];
   const selected = selectProviderIdentity(media(), getProviderCandidates(media(), records));
-  assert.equal(selected?.provider, "imdb");
-  assert.equal(selected?.id, "tt0434665");
+  assert.equal(selected?.provider, "tvdb");
+  assert.equal(selected?.id, "30984");
 });
 
 test("provider identity rejects a weak related TVDB mapping", () => {
