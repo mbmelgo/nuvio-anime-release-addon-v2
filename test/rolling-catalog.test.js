@@ -1,4 +1,5 @@
 import test from "node:test";
+import { CATALOG_MEDIA_FIELDS, SCHEDULE_MEDIA_FIELDS } from "../lib/catalog-anilist.js";
 import assert from "node:assert/strict";
 import {
   buildRollingCatalog,
@@ -437,4 +438,86 @@ test("rolling catalogs use native TMDB route for an unverified TMDB IMDb mapping
   });
   assert.equal(result[0].id, "tmdb:43691316");
   assert.equal(result[0].extra.tmdbProvider, "tmdb");
+});
+
+test("seasonal and rolling catalogs cross-verify relation-derived TMDB identities consistently", async () => {
+  const now = new Date("2026-10-01T00:00:00.000Z");
+  const mediaId = 209465;
+  let tmdbCalls = 0;
+  let imdbCalls = 0;
+  const media = {
+    id: mediaId,
+    idMal: 12347,
+    title: { english: "Identity Parity Test", romaji: "Identity Parity Test", native: null },
+    synonyms: [],
+    coverImage: { large: `https://example.test/${mediaId}.jpg` },
+    status: "RELEASING",
+    format: "TV",
+    isAdult: false,
+    countryOfOrigin: "JP",
+    startDate: { year: 2026, month: 1, day: 1 },
+    endDate: { year: null },
+    genres: ["Action"],
+    relations: { edges: [] },
+  };
+  const sharedOptions = {
+    resolveMappings: async () => new Map([[mediaId, [{
+      source: "anime-mapper-relation",
+      anilistId: mediaId,
+      type: "TV",
+      malId: 12347,
+      imdbIds: [],
+      tvdbId: null,
+      tmdbTvId: 126437,
+      tmdbMovieIds: [],
+      title: "Identity Parity Test",
+      titles: ["Identity Parity Test"],
+      year: null,
+      relationType: "SEQUEL",
+      relatedAnilistId: 209464,
+      season: null,
+      episodeOffset: null,
+    }]]]),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAniBridgeMappings: async () => new Map(),
+    resolveTMDBMappings: async () => {
+      tmdbCalls += 1;
+      return new Map();
+    },
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => {
+      imdbCalls += 1;
+      return new Map();
+    },
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+    resolveCanonicalSeriesMappings: async () => new Map(),
+    resolveAnimeMapperRelatedProviderIds: async () => new Map(),
+  };
+
+  const seasonal = await canonicalizeCatalogPage([media], sharedOptions);
+  const rolling = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+    ...sharedOptions,
+    fetchPage: async () => [{
+      ...schedule(mediaId, now.getTime() + 60_000, 1, "Identity Parity Test", 12347),
+      media,
+    }],
+    maxPages: 1,
+  });
+
+  assert.equal(tmdbCalls, 2, "both catalog paths should verify relation-derived TMDB identities");
+  assert.equal(imdbCalls, 2, "both catalog paths should independently verify relation-derived TMDB identities");
+  assert.equal(seasonal[0].id, "tmdb:126437");
+  assert.equal(rolling[0].id, seasonal[0].id);
+});
+
+test("rolling AniList schedule requests include seasonal identity-relevant media fields", () => {
+  for (const field of ["countryOfOrigin", "genres"]) {
+    assert.match(CATALOG_MEDIA_FIELDS, new RegExp("\\b" + field + "\\b"));
+    assert.match(SCHEDULE_MEDIA_FIELDS, new RegExp("\\b" + field + "\\b"));
+  }
 });

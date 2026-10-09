@@ -106,7 +106,8 @@ test("airing schedule queries include relation titles needed by rolling identity
     assert.match(request.query, /node\s*\{\s*id\s+format\s+title/);
     assert.match(request.query, /node\s*\{\s*id\s+format\s+title[\s\S]*externalLinks\s*\{\s*site url\s*\}/);
     assert.doesNotMatch(request.query, /isAdult\s+externalLinks\s*\{\s*site url\s*\}/);
-    assert.doesNotMatch(request.query, /countryOfOrigin/);
+    assert.match(request.query, /countryOfOrigin/);
+    assert.match(request.query, /genres/);
   } finally {
     globalThis.fetch = originalFetch;
   }
