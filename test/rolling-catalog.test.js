@@ -538,3 +538,81 @@ test("rolling AniList schedule requests include seasonal identity-relevant media
     assert.match(SCHEDULE_MEDIA_FIELDS, new RegExp("\\b" + field + "\\b"));
   }
 });
+
+test("authoritative TMDB mapping retains priority over an IMDb title-search candidate", async () => {
+  const now = new Date("2026-10-01T00:00:00.000Z");
+  const mediaId = 209466;
+  const media = {
+    id: mediaId,
+    idMal: 12348,
+    title: { english: "Authoritative TMDB Control", romaji: "Authoritative TMDB Control", native: null },
+    synonyms: [],
+    coverImage: { large: `https://example.test/${mediaId}.jpg` },
+    status: "RELEASING",
+    format: "TV",
+    isAdult: false,
+    countryOfOrigin: "JP",
+    startDate: { year: 2026, month: 1, day: 1 },
+    endDate: { year: null },
+    genres: ["Action"],
+    relations: { edges: [] },
+  };
+  const sharedOptions = {
+    resolveMappings: async () => new Map([[mediaId, [{
+      source: "tmdb-search",
+      anilistId: mediaId,
+      type: "TV",
+      malId: 12348,
+      imdbIds: [],
+      tvdbId: null,
+      tmdbTvId: 126438,
+      tmdbMovieIds: [],
+      title: "Authoritative TMDB Control",
+      titles: ["Authoritative TMDB Control"],
+      year: 2026,
+      tmdbMatchScore: 130,
+      tmdbAuthoritative: true,
+    }]]]),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAniBridgeMappings: async () => new Map(),
+    resolveTMDBMappings: async () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async (rows) => new Map(rows.map((row) => [Number(row.id), [{
+      source: "imdb-search",
+      anilistId: Number(row.id),
+      type: "TV",
+      malId: 12348,
+      imdbIds: ["tt15792809"],
+      tvdbId: null,
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+      title: "Authoritative TMDB Control",
+      titles: ["Authoritative TMDB Control"],
+      year: 2026,
+      relation: false,
+      derivedTitle: false,
+      derivedInstallmentTitle: false,
+    }]])),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+    resolveCanonicalSeriesMappings: async () => new Map(),
+    resolveAnimeMapperRelatedProviderIds: async () => new Map(),
+  };
+
+  const seasonal = await canonicalizeCatalogPage([media], sharedOptions);
+  const rolling = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+    ...sharedOptions,
+    fetchPage: async () => [{
+      ...schedule(mediaId, now.getTime() + 60_000, 1, "Authoritative TMDB Control", 12348),
+      media,
+    }],
+    maxPages: 1,
+  });
+
+  assert.equal(seasonal[0].id, "tmdb:126438");
+  assert.equal(rolling[0].id, seasonal[0].id);
+});
