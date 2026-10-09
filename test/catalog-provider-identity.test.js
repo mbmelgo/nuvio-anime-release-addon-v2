@@ -339,13 +339,13 @@ test("catalog prefers strong direct IMDb identity over a TMDB-derived IMDb ident
 });
 
 
-test("relation retry runs when the TVDB-preferred identity is protected despite a valid IMDb fallback", () => {
+test("relation retry is skipped when a valid IMDb identity outranks protected TVDB", () => {
   const media = { anilistId: 9001, format: "TV", title: { english: "Example Season 2", romaji: "Example Season 2" }, startDate: { year: 2026 }, relations: { edges: [] } };
   const candidates = [
     { provider: "imdb", id: "tt9001", stremioId: "tt9001", evidence: [{ source: "imdb-search" }], title: "Example Season 2" },
     { provider: "tvdb", id: "9001", stremioId: "tvdb:9001", evidence: [{ source: "arm" }], title: "Example Season 2", relatedProviderIds: ["tvdb:9001"] },
   ];
-  assert.equal(isSelectedIdentityProtected(media, candidates), true);
+  assert.equal(isSelectedIdentityProtected(media, candidates), false);
 });
 
 test("relation retry still runs when the selected identity is protected", () => {
@@ -376,7 +376,7 @@ test("relation retry remains enabled when no identity was valid before protectio
   assert.equal(isSelectedIdentityProtected(media, candidates), true);
 });
 
-test("relation retry is skipped when the protected IMDb candidate loses to valid TVDB", () => {
+test("relation retry runs when protected IMDb outranks valid TVDB", () => {
   const media = {
     anilistId: 9004,
     format: "TV",
@@ -401,7 +401,32 @@ test("relation retry is skipped when the protected IMDb candidate loses to valid
       title: "Example Season 4",
     },
   ];
-  assert.equal(isSelectedIdentityProtected(media, candidates), false);
+  assert.equal(isSelectedIdentityProtected(media, candidates), false);test("relation retry runs when protected IMDb outranks valid TVDB", () => {
+  const media = {
+    anilistId: 9004,
+    format: "TV",
+    title: { english: "Example Season 4", romaji: "Example Season 4" },
+    startDate: { year: 2026 },
+    relations: { edges: [] },
+  };
+  const candidates = [
+    {
+      provider: "imdb",
+      id: "tt9004",
+      stremioId: "tt9004",
+      evidence: [{ source: "imdb-search" }],
+      title: "Example Season 4",
+      relatedProviderIds: ["imdb:tt9004"],
+    },
+    {
+      provider: "tvdb",
+      id: "9004",
+      stremioId: "tvdb:9004",
+      evidence: [{ source: "arm" }],
+      title: "Example Season 4",
+    },
+  ];
+  assert.equal(isSelectedIdentityProtected(media, candidates), true);
 });
 
 
