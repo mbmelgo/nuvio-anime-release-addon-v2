@@ -1210,7 +1210,6 @@ function selectCatalogIdentity(media, records, { excludeIds = new Set() } = {}) 
   const canonicalSeriesSelected = selectProviderIdentity(
     media,
     providerCandidates.filter((candidate) => candidate.canonicalSeries === true),
-    { excludeIds },
   );
   const tmdbSelected = selectTMDBIdentity(media, records, { excludeIds });
   const tmdbImdbValidated = tmdbSelected?.provider === "imdb"
@@ -1245,8 +1244,7 @@ function selectCatalogIdentity(media, records, { excludeIds = new Set() } = {}) 
     }
     : null;
   const cachedProductionIdentity = getVerifiedProductionFallbackCandidate(media);
-  const selected = canonicalSeriesSelected
-    || independentlyVerifiedImdb
+  const selected = independentlyVerifiedImdb
     || nuvioTmdbRoute
     || effectiveTmdbSelected
     || providerSelected
@@ -1486,6 +1484,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
           continue;
         }
         const {
+          canonicalSeriesSelected,
           tmdbSelected,
           selected,
         } = selectCatalogIdentity(
@@ -1493,6 +1492,27 @@ export async function buildRollingCatalog(id, date, skip, search, {
           mappings.get(mediaId) || [],
           { excludeIds: usedIdentities },
         );
+        if (canonicalSeriesSelected) {
+          metas.push({
+            ...baseMeta,
+            id: canonicalSeriesSelected.stremioId,
+            extra: {
+              ...baseMeta.extra,
+              identityProvider: canonicalSeriesSelected.provider,
+              identityId: canonicalSeriesSelected.id,
+              identityCanonicalSeries: true,
+              identityCanonicalSeriesAnilistId: canonicalSeriesSelected.canonicalSeriesAnilistId,
+              identityCanonicalSeriesMalId: canonicalSeriesSelected.canonicalSeriesMalId,
+              identityCanonicalSeriesTitle: canonicalSeriesSelected.canonicalSeriesTitle,
+              identityEvidence: canonicalSeriesSelected.evidence,
+              episode: row.episode,
+              airingAt: row.airingAt,
+              ...(futureOnly ? { nextEpisode: row.episode, nextAiringAt: row.airingAt } : {}),
+            },
+            type: "series",
+          });
+          continue;
+        }
         const malId = getCanonicalMalId(media, baseMeta, mappings.get(mediaId) || []);
         let meta;
         if (selected) {
