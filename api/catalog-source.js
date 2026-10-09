@@ -1522,6 +1522,11 @@ export async function buildRollingCatalog(id, date, skip, search, {
         const {
           canonicalSeriesSelected,
           tmdbSelected,
+          providerSelected,
+          independentlyVerifiedImdb,
+          effectiveTmdbSelected,
+          nuvioTmdbRoute,
+          cachedProductionIdentity,
           selected,
         } = selectCatalogIdentity(
           { ...media, anilistId: mediaId },
@@ -1553,7 +1558,16 @@ export async function buildRollingCatalog(id, date, skip, search, {
         let meta;
         if (selected) {
           usedIdentities.add(selected.stremioId);
-          meta = { ...baseMeta, id: selected.stremioId, extra: { ...baseMeta.extra, ...(tmdbSelected ? { tmdbProvider: selected.provider, tmdbId: selected.id, tmdbEvidence: "tmdb-search" } : { identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence }), episode: row.episode, airingAt: row.airingAt, ...(futureOnly ? { nextEpisode: row.episode, nextAiringAt: row.airingAt } : {}) }, type: "series" };
+          const identityExtra = independentlyVerifiedImdb?.stremioId === selected.stremioId
+            || providerSelected?.stremioId === selected.stremioId
+            || cachedProductionIdentity?.stremioId === selected.stremioId
+            ? { identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence }
+            : nuvioTmdbRoute?.stremioId === selected.stremioId
+              ? { tmdbProvider: selected.provider, tmdbId: selected.id, tmdbEvidence: "tmdb-search", identityFallback: "nuvio-tmdb-route" }
+              : effectiveTmdbSelected?.stremioId === selected.stremioId
+                ? { tmdbProvider: selected.provider, tmdbId: selected.id, tmdbEvidence: "tmdb-search" }
+                : { identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence };
+          meta = { ...baseMeta, id: selected.stremioId, extra: { ...baseMeta.extra, ...identityExtra, episode: row.episode, airingAt: row.airingAt, ...(futureOnly ? { nextEpisode: row.episode, nextAiringAt: row.airingAt } : {}) }, type: "series" };
         } else if (Number.isInteger(malId) && malId > 0) {
           meta = { ...baseMeta, id: "mal:" + malId, extra: { ...baseMeta.extra, identityProvider: null, identityId: null, identityEvidence: "canonical-mal-id-fallback", episode: row.episode, airingAt: row.airingAt, ...(futureOnly ? { nextEpisode: row.episode, nextAiringAt: row.airingAt } : {}) }, type: "series" };
         } else {
