@@ -27,7 +27,7 @@ test("provider identity prefers a valid TVDB mapping over IMDb", () => {
   }];
   const selected = selectProviderIdentity(media(), getProviderCandidates(media(), records));
   assert.equal(selected?.provider, "tvdb");
-  assert.equal(selected?.id, "tt0434665");
+  assert.equal(selected?.id, "30984");
 });
 
 test("provider identity rejects a weak related TVDB mapping", () => {
