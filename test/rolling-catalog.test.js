@@ -252,6 +252,7 @@ test("seasonal and rolling catalogs share live identity selection over stale pro
   }];
   const resolveMappings = async (ids) => new Map(ids.map((id) => [Number(id), records]));
   const sharedOptions = {
+    allowProductionIdentityCache: true,
     resolveMappings,
     resolveFribbMappings: async () => new Map(),
     resolveExternalMappings: () => new Map(),
