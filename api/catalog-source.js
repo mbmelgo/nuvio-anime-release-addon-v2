@@ -1279,17 +1279,47 @@ function selectCatalogIdentity(media, records, { excludeIds = new Set(), allowPr
     && !excludeIds.has(cachedCandidate.stremioId)
     ? cachedCandidate
     : null;
+  // A canonical IMDb title search is stronger evidence than a TMDB ID
+  // borrowed through an Anime Mapper relation. Keep TMDB-first priority for
+  // direct/authoritative TMDB matches, but do not let a relation-only route
+  // override a verified, non-derived IMDb title match.
+  const relationDerivedTmdbSelected = selectProviderIdentity(
+    media,
+    providerCandidates.filter((candidate) =>
+      candidate.provider === "tmdb"
+      && candidate.evidence?.some((entry) => /relation/i.test(String(entry?.source || ""))),
+    ),
+    { excludeIds },
+  );
+  const verifiedImdbSearch = selectProviderIdentity(
+    media,
+    providerCandidates.filter((candidate) =>
+      candidate.provider === "imdb"
+      && candidate.relation !== true
+      && candidate.derivedTitle !== true
+      && candidate.derivedInstallmentTitle !== true
+      && candidate.evidence?.some((entry) =>
+        entry?.source === "imdb-search" && entry?.relation !== true),
+    ),
+    { excludeIds },
+  );
+  const relationDerivedTmdbImdbOverride = relationDerivedTmdbSelected
+    && verifiedImdbSearch?.validation?.reasons?.includes("title-match")
+    && verifiedImdbSearch.validation.reasons.includes("source-id-match")
+    ? verifiedImdbSearch
+    : null;
   const hasImdbSelection = effectiveTmdbSelected?.provider === "imdb"
     || providerSelected?.provider === "imdb";
-  const selected = hasImdbSelection
-    ? independentlyVerifiedImdb
-      || nuvioTmdbRoute
-      || effectiveTmdbSelected
-      || providerSelected
-      || cachedProductionIdentity
-    : effectiveTmdbSelected
-      || providerSelected
-      || cachedProductionIdentity;
+  const selected = relationDerivedTmdbImdbOverride
+    || (hasImdbSelection
+      ? independentlyVerifiedImdb
+        || nuvioTmdbRoute
+        || effectiveTmdbSelected
+        || providerSelected
+        || cachedProductionIdentity
+      : effectiveTmdbSelected
+        || providerSelected
+        || cachedProductionIdentity);
 
   return {
     providerCandidates,
