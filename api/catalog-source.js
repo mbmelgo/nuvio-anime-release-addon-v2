@@ -1205,6 +1205,77 @@ export function normalizeCatalogOptions(options) {
   return options && typeof options === "object" ? options : {};
 }
 
+function selectCatalogIdentity(media, records, { excludeIds = new Set(), allowProductionIdentityCache = false } = {}) {
+  const providerCandidates = getProviderCandidates(media, records);
+  const canonicalSeriesSelected = selectProviderIdentity(
+    media,
+    providerCandidates.filter((candidate) => candidate.canonicalSeries === true),
+  );
+  const tmdbSelected = selectTMDBIdentity(media, records, { excludeIds });
+  const tmdbImdbValidated = tmdbSelected?.provider === "imdb"
+    ? selectProviderIdentity(
+      media,
+      providerCandidates.filter((candidate) =>
+        candidate.provider === "imdb" && candidate.id === tmdbSelected.id),
+      { excludeIds },
+    )
+    : null;
+  const effectiveTmdbSelected = tmdbSelected?.provider === "imdb"
+    ? tmdbImdbValidated
+    : tmdbSelected;
+  const providerSelected = selectProviderIdentity(media, providerCandidates, { excludeIds });
+  const independentlyVerifiedImdb = selectProviderIdentity(
+    media,
+    providerCandidates.filter((candidate) =>
+      candidate.provider === "imdb" && hasStrongDirectProviderEvidence(candidate)),
+    { excludeIds },
+  );
+  // Preserve the seasonal catalog's established rule: a TMDB-derived IMDb
+  // ID is not an independent IMDb verification, so use Nuvio's native TMDB
+  // route unless a stronger direct IMDb identity is available.
+  const nuvioTmdbRoute = tmdbSelected?.tmdbId
+    && tmdbSelected.provider === "imdb"
+    && !independentlyVerifiedImdb
+    ? {
+      ...tmdbSelected,
+      provider: "tmdb",
+      id: String(tmdbSelected.tmdbId),
+      stremioId: `tmdb:${tmdbSelected.tmdbId}`,
+    }
+    : null;
+  const cachedCandidate = allowProductionIdentityCache
+    ? getVerifiedProductionFallbackCandidate(media)
+    : null;
+  const cachedProductionIdentity = cachedCandidate
+    && !excludeIds.has(cachedCandidate.id)
+    && !excludeIds.has(cachedCandidate.stremioId)
+    ? cachedCandidate
+    : null;
+  const hasImdbSelection = effectiveTmdbSelected?.provider === "imdb"
+    || providerSelected?.provider === "imdb";
+  const selected = hasImdbSelection
+    ? independentlyVerifiedImdb
+      || nuvioTmdbRoute
+      || effectiveTmdbSelected
+      || providerSelected
+      || cachedProductionIdentity
+    : effectiveTmdbSelected
+      || providerSelected
+      || cachedProductionIdentity;
+
+  return {
+    providerCandidates,
+    canonicalSeriesSelected,
+    tmdbSelected,
+    providerSelected,
+    independentlyVerifiedImdb,
+    effectiveTmdbSelected,
+    nuvioTmdbRoute,
+    cachedProductionIdentity,
+    selected,
+  };
+}
+
 export async function canonicalizeCatalogPage(mediaRows, options = {}) {
   const normalizedOptions = normalizeCatalogOptions(options);
   const normalizedRows = Array.isArray(mediaRows)
@@ -1244,13 +1315,19 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
       });
       continue;
     }
-    const providerCandidates = getProviderCandidates(
+    const {
+      providerCandidates,
+      canonicalSeriesSelected,
+      tmdbSelected,
+      providerSelected,
+      independentlyVerifiedImdb,
+      effectiveTmdbSelected,
+      nuvioTmdbRoute,
+      selected: resolvedIdentity,
+    } = selectCatalogIdentity(
       { ...row, anilistId },
       mappings.get(anilistId) || [],
-    );
-    const canonicalSeriesSelected = selectProviderIdentity(
-      { ...row, anilistId },
-      providerCandidates.filter((candidate) => candidate.canonicalSeries === true),
+      { excludeIds: usedIdentities, allowProductionIdentityCache: normalizedOptions.allowProductionIdentityCache === true },
     );
     if (canonicalSeriesSelected) {
       metas.push({
@@ -1269,46 +1346,6 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
       });
       continue;
     }
-    const tmdbSelected = selectTMDBIdentity({ ...row, anilistId }, mappings.get(anilistId) || [], { excludeIds: usedIdentities });
-    const tmdbImdbValidated = tmdbSelected?.provider === "imdb"
-      ? selectProviderIdentity(
-        { ...row, anilistId },
-        providerCandidates.filter((candidate) =>
-          candidate.provider === "imdb" && candidate.id === tmdbSelected.id),
-        { excludeIds: usedIdentities },
-      )
-      : null;
-    const effectiveTmdbSelected = tmdbSelected?.provider === "imdb"
-      ? tmdbImdbValidated
-      : tmdbSelected;
-    const providerSelected = selectProviderIdentity(
-      { ...row, anilistId },
-      providerCandidates,
-      { excludeIds: usedIdentities },
-    );
-    const independentlyVerifiedImdb = selectProviderIdentity(
-      { ...row, anilistId },
-      providerCandidates.filter((candidate) =>
-        candidate.provider === "imdb"
-        && hasStrongDirectProviderEvidence(candidate),
-      ),
-      { excludeIds: usedIdentities },
-    );
-    // Nuvio can resolve a tmdb: ID through its metadata addons and has a
-    // standalone TMDB fallback when those addons return no meta. A TMDB
-    // mapping's IMDb external ID does not carry that fallback behavior when
-    // it is not independently verified. Prefer the native TMDB route in that
-    // case; keep IMDb when independent evidence exists.
-    const nuvioTmdbRoute = tmdbSelected?.tmdbId
-      && tmdbSelected.provider === "imdb"
-      && !independentlyVerifiedImdb
-      ? {
-        ...tmdbSelected,
-        provider: "tmdb",
-        id: String(tmdbSelected.tmdbId),
-        stremioId: `tmdb:${tmdbSelected.tmdbId}`,
-      }
-      : null;
     if (effectiveTmdbSelected?.provider === "imdb" || providerSelected?.provider === "imdb") {
       const selected = independentlyVerifiedImdb
         || nuvioTmdbRoute
@@ -1331,7 +1368,7 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
       metas.push({ ...meta, id: effectiveTmdbSelected.stremioId, extra: { ...meta.extra, tmdbProvider: effectiveTmdbSelected.provider, tmdbId: effectiveTmdbSelected.id, tmdbEvidence: "tmdb-search" } });
       continue;
     }
-    const selected = providerSelected;
+    const selected = resolvedIdentity;
     if (selected) {
       usedIdentities.add(selected.stremioId);
       metas.push({ ...meta, id: selected.stremioId, extra: { ...meta.extra, identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence } });
@@ -1383,12 +1420,22 @@ export async function buildRollingCatalog(id, date, skip, search, {
   maxPages = MAX_SCHEDULE_PAGES,
   pageSize = NUVIO_PAGE_SIZE,
   resolveMappings = resolveAniListMappings,
+  resolveFribbMappings = resolveAniListMappingsFribb,
+  resolveExternalMappings = resolveAniListExternalMappings,
+  resolveAnimapMappings = resolveAniListMappingsAnimap,
+  resolveIdMapperMappings = resolveAniListMappingsIdMapper,
+  resolveTMDBMappings = resolveAniListMappingsByTMDB,
+  resolveAnimeMapperMappings = resolveAniListMappingsByAnimeMapper,
+  resolveAnimeMapperRelatedProviderIds = resolveAniListRelatedProviderIdsByAnimeMapper,
+  resolveCanonicalSeriesMappings = null,
+  resolveAniBridgeMappings = resolveAniListMappingsByAniBridge,
+  resolveTsvMappings = resolveAniListMappingsFromAnimeApiTsv,
+  resolveImdbMappings = resolveAniListMappingsByImdbSearch,
+  validateImdbMappings = validateImdbMappingsByKnownIds,
   resolveSecondaryMappings = resolveAniListMappingsSecondary,
   resolveAlternativeMappings = resolveAniListMappingsByMalIds,
-    resolveCanonicalSeriesMappings = null,
-    resolveImdbMappings = resolveAniListMappingsByImdbSearch,
-    diagnostics = null,
-  } = {}) {
+  diagnostics = null,
+} = {}) {
   const range = getRollingCatalogRange(id, date);
   const canonicalSeriesResolver = resolveCanonicalSeriesMappings
     || (resolveMappings === resolveAniListMappings
@@ -1424,7 +1471,25 @@ export async function buildRollingCatalog(id, date, skip, search, {
       for (const row of eligibleRows) { const mediaId = Number(row.media.id); if (seenMediaIds.has(mediaId)) continue; seenMediaIds.add(mediaId); uniqueEligibleRows.push(row); }
       const searchedRows = filterAiringRowsBySearch(uniqueEligibleRows, search);
       const mappingStart = diagnostics ? performance.now() : 0;
-    const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), { resolveMappings, resolveSecondaryMappings, resolveAlternativeMappings, resolveCanonicalSeriesMappings: canonicalSeriesResolver, resolveImdbMappings, diagnostics, allowProductionIdentityCache: true });
+    const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), {
+      resolveMappings,
+      resolveFribbMappings,
+      resolveExternalMappings,
+      resolveAnimapMappings,
+      resolveIdMapperMappings,
+      resolveTMDBMappings,
+      resolveAnimeMapperMappings,
+      resolveAnimeMapperRelatedProviderIds,
+      resolveCanonicalSeriesMappings: canonicalSeriesResolver,
+      resolveAniBridgeMappings,
+      resolveTsvMappings,
+      resolveImdbMappings,
+      validateImdbMappings,
+      resolveSecondaryMappings,
+      resolveAlternativeMappings,
+      diagnostics,
+      allowProductionIdentityCache: true,
+    });
     if (diagnostics) diagnostics.identityResolution = performance.now() - mappingStart;
       const metas = [];
       const usedIdentities = new Set();
@@ -1459,10 +1524,19 @@ export async function buildRollingCatalog(id, date, skip, search, {
           });
           continue;
         }
-        const providerCandidates = getProviderCandidates(media, mappings.get(mediaId) || []);
-        const canonicalSeriesSelected = selectProviderIdentity(
+        const {
+          canonicalSeriesSelected,
+          tmdbSelected,
+          providerSelected,
+          independentlyVerifiedImdb,
+          effectiveTmdbSelected,
+          nuvioTmdbRoute,
+          cachedProductionIdentity,
+          selected,
+        } = selectCatalogIdentity(
           { ...media, anilistId: mediaId },
-          providerCandidates.filter((candidate) => candidate.canonicalSeries === true),
+          mappings.get(mediaId) || [],
+          { excludeIds: usedIdentities, allowProductionIdentityCache: true },
         );
         if (canonicalSeriesSelected) {
           metas.push({
@@ -1485,39 +1559,18 @@ export async function buildRollingCatalog(id, date, skip, search, {
           });
           continue;
         }
-        const tmdbSelected = selectTMDBIdentity({ ...media, anilistId: mediaId }, mappings.get(mediaId) || [], { excludeIds: usedIdentities });
-        const providerSelected = selectProviderIdentity(
-          { ...media, anilistId: mediaId },
-          providerCandidates,
-          { excludeIds: usedIdentities },
-        );
-        const independentlyVerifiedImdb = selectProviderIdentity(
-          { ...media, anilistId: mediaId },
-          providerCandidates.filter((candidate) =>
-            candidate.provider === "imdb"
-            && hasStrongDirectProviderEvidence(candidate),
-          ),
-          { excludeIds: usedIdentities },
-        );
-        const cachedProductionIdentity = getVerifiedProductionFallbackCandidate(media);
-        const nuvioTmdbRoute = tmdbSelected?.tmdbId
-          && !independentlyVerifiedImdb
-          && providerSelected?.provider === "imdb"
-          ? { ...tmdbSelected, provider: "tmdb", id: String(tmdbSelected.tmdbId), stremioId: `tmdb:${tmdbSelected.tmdbId}` }
-          : null;
-        const selected = (cachedProductionIdentity?.provider === "imdb" ? cachedProductionIdentity : null)
-          || independentlyVerifiedImdb
-          || nuvioTmdbRoute
-          || (tmdbSelected?.provider === "imdb" ? tmdbSelected : null)
-          || (providerSelected?.provider === "imdb" ? providerSelected : null)
-          || tmdbSelected
-          || providerSelected
-          || cachedProductionIdentity;
         const malId = getCanonicalMalId(media, baseMeta, mappings.get(mediaId) || []);
         let meta;
         if (selected) {
           usedIdentities.add(selected.stremioId);
-          meta = { ...baseMeta, id: selected.stremioId, extra: { ...baseMeta.extra, ...(tmdbSelected ? { tmdbProvider: selected.provider, tmdbId: selected.id, tmdbEvidence: "tmdb-search" } : { identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence }), episode: row.episode, airingAt: row.airingAt, ...(futureOnly ? { nextEpisode: row.episode, nextAiringAt: row.airingAt } : {}) }, type: "series" };
+          const identityExtra = independentlyVerifiedImdb?.stremioId === selected.stremioId
+            ? { identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence }
+            : nuvioTmdbRoute?.stremioId === selected.stremioId
+              ? { tmdbProvider: selected.provider, tmdbId: selected.id, tmdbEvidence: "tmdb-search", identityFallback: "nuvio-tmdb-route" }
+              : effectiveTmdbSelected?.stremioId === selected.stremioId
+                ? { tmdbProvider: selected.provider, tmdbId: selected.id, tmdbEvidence: "tmdb-search" }
+                : { identityProvider: selected.provider, identityId: selected.id, identityEvidence: selected.evidence };
+          meta = { ...baseMeta, id: selected.stremioId, extra: { ...baseMeta.extra, ...identityExtra, episode: row.episode, airingAt: row.airingAt, ...(futureOnly ? { nextEpisode: row.episode, nextAiringAt: row.airingAt } : {}) }, type: "series" };
         } else if (Number.isInteger(malId) && malId > 0) {
           meta = { ...baseMeta, id: "mal:" + malId, extra: { ...baseMeta.extra, identityProvider: null, identityId: null, identityEvidence: "canonical-mal-id-fallback", episode: row.episode, airingAt: row.airingAt, ...(futureOnly ? { nextEpisode: row.episode, nextAiringAt: row.airingAt } : {}) }, type: "series" };
         } else {
@@ -1536,7 +1589,7 @@ export async function buildCatalog(id, info, skip, search, diagnostics = null) {
       filter,
       skip,
       search,
-      canonicalizePage: (rows, pageDiagnostics) => canonicalizeCatalogPage(rows, { diagnostics: pageDiagnostics }),
+      canonicalizePage: (rows, pageDiagnostics) => canonicalizeCatalogPage(rows, { diagnostics: pageDiagnostics, allowProductionIdentityCache: true }),
       diagnostics,
     });
   }

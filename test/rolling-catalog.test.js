@@ -218,6 +218,74 @@ test("rolling catalogs enforce the exact requested time range after schedule cac
 });
 
 
+test("seasonal and rolling catalogs share live identity selection over stale production cache", async () => {
+  const now = new Date("2026-10-01T00:00:00.000Z");
+  const media = {
+    id: 210482,
+    idMal: 61469,
+    format: "ONA",
+    isAdult: false,
+    title: {
+      english: "STEEL BALL RUN JoJo's Bizarre Adventure 2nd - 3rd STAGE",
+      romaji: "JoJo no Kimyou na Bouken: Steel Ball Run - 2nd & 3rd STAGE",
+      native: "ジョジョの奇妙な冒険 スティール・ボール・ラン 2nd＆3rd STAGE",
+    },
+    synonyms: ["JoJo's Bizarre Adventure: Part 7–Steel Ball Run"],
+    startDate: { year: 2026, month: 1, day: 1 },
+    endDate: { year: null },
+    status: "RELEASING",
+    genres: ["Action", "Adventure"],
+    coverImage: { large: "https://example.test/steel-ball-run.jpg" },
+    relations: { edges: [] },
+  };
+  const records = [{
+    source: "anime-mapper",
+    anilistId: 210482,
+    type: "ONA",
+    imdbIds: [],
+    tvdbId: 262954,
+    tmdbTvId: null,
+    tmdbMovieIds: [],
+    title: media.title.english,
+    titles: [media.title.english, media.title.romaji],
+    year: 2026,
+  }];
+  const resolveMappings = async (ids) => new Map(ids.map((id) => [Number(id), records]));
+  const sharedOptions = {
+    allowProductionIdentityCache: true,
+    resolveMappings,
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveTMDBMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveAnimeMapperRelatedProviderIds: async () => new Map(),
+    resolveCanonicalSeriesMappings: async () => new Map(),
+    resolveAniBridgeMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
+    resolveImdbMappings: async () => new Map(),
+    resolveSecondaryMappings: async () => new Map(),
+    resolveAlternativeMappings: async () => new Map(),
+  };
+
+  const seasonal = await canonicalizeCatalogPage([media], sharedOptions);
+  const rolling = await buildRollingCatalog("previous_7_days", now, 0, "", {
+    ...sharedOptions,
+    fetchPage: async () => [schedule(
+      media.id,
+      now.getTime() - 60_000,
+      3,
+      media.title.english,
+      media.idMal,
+    )].map((entry) => ({ ...entry, media: { ...media, coverImage: media.coverImage } })),
+    maxPages: 1,
+  });
+
+  assert.equal(seasonal[0].id, "tvdb:262954");
+  assert.equal(rolling[0].id, seasonal[0].id);
+});
+
 test("rolling catalogs prefer independently verified IMDb identity over a conflicting TMDB-derived IMDb identity", async () => {
   const now = new Date("2026-10-01T00:00:00.000Z");
   const rows = [schedule(209463, now.getTime() + 60_000, 1, "From Far Away", 12345)];
@@ -229,7 +297,7 @@ test("rolling catalogs prefer independently verified IMDb identity over a confli
       source: "test-direct",
       anilistId: 209463,
       type: "TV",
-      imdbIds: [],
+      imdbIds: ["tt18268600"],
       tvdbId: 12345,
       tmdbTvId: null,
       tmdbMovieIds: [],
@@ -252,7 +320,7 @@ test("rolling catalogs prefer independently verified IMDb identity over a confli
       tmdbAuthoritative: true,
     }]]]),
     resolveImdbMappings: async () => new Map([[209463, [{
-      source: "imdb-search",
+      source: "anime-mapper",
       anilistId: 209463,
       type: "TV",
       imdbIds: ["tt18268600"],
@@ -332,6 +400,15 @@ test("rolling catalog uses verified production identity cache when live provider
     fetchPage: async () => [row],
     maxPages: 1,
     resolveMappings: async () => new Map(),
+    resolveFribbMappings: async () => new Map(),
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: async () => new Map(),
+    resolveIdMapperMappings: async () => new Map(),
+    resolveTMDBMappings: async () => new Map(),
+    resolveAnimeMapperMappings: async () => new Map(),
+    resolveAnimeMapperRelatedProviderIds: async () => new Map(),
+    resolveAniBridgeMappings: async () => new Map(),
+    resolveTsvMappings: async () => new Map(),
     resolveSecondaryMappings: async () => new Map(),
     resolveAlternativeMappings: async () => new Map(),
     resolveCanonicalSeriesMappings: async () => new Map(),
