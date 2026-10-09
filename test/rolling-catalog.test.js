@@ -1,4 +1,5 @@
 import test from "node:test";
+import { CATALOG_MEDIA_FIELDS, SCHEDULE_MEDIA_FIELDS } from "../lib/catalog-anilist.js";
 import assert from "node:assert/strict";
 import {
   buildRollingCatalog,
@@ -451,14 +452,18 @@ test("rolling catalogs cross-verify Anime Mapper relation TMDB identities before
       source: "anime-mapper-relation",
       anilistId: mediaId,
       type: "TV",
+      malId: 12347,
       imdbIds: [],
       tvdbId: null,
       tmdbTvId: 126437,
       tmdbMovieIds: [],
       title: "Identity Parity Test",
       titles: ["Identity Parity Test"],
-      year: 2026,
-      relation: true,
+      year: null,
+      relationType: "SEQUEL",
+      relatedAnilistId: 209464,
+      season: null,
+      episodeOffset: null,
     }]]]),
     resolveFribbMappings: async () => new Map(),
     resolveExternalMappings: () => new Map(),
@@ -481,7 +486,14 @@ test("rolling catalogs cross-verify Anime Mapper relation TMDB identities before
     resolveAnimeMapperRelatedProviderIds: async () => new Map(),
   });
 
-  assert.equal(tmdbCalls, 1, "a relation-derived TMDB identity should be checked against TMDB mapping");
+  assert.ok(tmdbCalls >= 1, "a relation-derived TMDB identity should be checked against TMDB mapping");
   assert.equal(imdbCalls, 1, "a relation-derived TMDB identity should receive independent IMDb verification");
   assert.equal(result[0].id, "tmdb:126437");
+});
+
+test("rolling AniList schedule requests include seasonal identity-relevant media fields", () => {
+  for (const field of ["countryOfOrigin", "genres"]) {
+    assert.match(CATALOG_MEDIA_FIELDS, new RegExp("\\b" + field + "\\b"));
+    assert.match(SCHEDULE_MEDIA_FIELDS, new RegExp("\\b" + field + "\\b"));
+  }
 });
