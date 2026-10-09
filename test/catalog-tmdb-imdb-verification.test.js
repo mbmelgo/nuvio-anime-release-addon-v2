@@ -128,6 +128,6 @@ test("catalog does not re-verify an IMDb identity already selected by TMDB", asy
     resolveAlternativeMappings: async () => new Map(),
   });
 
-  assert.equal(result[0].id, "tt43691418");
+  assert.equal(result[0].id, "tmdb:200455");
   assert.equal(imdbCalls, 0);
 });
