@@ -167,7 +167,7 @@ async function resolveMappingsForRows(
     resolveSecondaryMappings = resolveAniListMappingsSecondary,
     resolveAlternativeMappings = resolveAniListMappingsByMalIds,
     diagnostics = null,
-    allowProductionIdentityCache = true,
+    allowProductionIdentityCache = false,
   } = {},
 ) {
   const ids = rows.map((row) => Number(row.id));
@@ -1205,7 +1205,7 @@ export function normalizeCatalogOptions(options) {
   return options && typeof options === "object" ? options : {};
 }
 
-function selectCatalogIdentity(media, records, { excludeIds = new Set() } = {}) {
+function selectCatalogIdentity(media, records, { excludeIds = new Set(), allowProductionIdentityCache = false } = {}) {
   const providerCandidates = getProviderCandidates(media, records);
   const canonicalSeriesSelected = selectProviderIdentity(
     media,
@@ -1243,7 +1243,9 @@ function selectCatalogIdentity(media, records, { excludeIds = new Set() } = {}) 
       stremioId: `tmdb:${tmdbSelected.tmdbId}`,
     }
     : null;
-  const cachedProductionIdentity = getVerifiedProductionFallbackCandidate(media);
+  const cachedProductionIdentity = allowProductionIdentityCache
+    ? getVerifiedProductionFallbackCandidate(media)
+    : null;
   const hasImdbSelection = effectiveTmdbSelected?.provider === "imdb"
     || providerSelected?.provider === "imdb";
   const selected = hasImdbSelection
@@ -1320,7 +1322,7 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
     } = selectCatalogIdentity(
       { ...row, anilistId },
       mappings.get(anilistId) || [],
-      { excludeIds: usedIdentities },
+      { excludeIds: usedIdentities, allowProductionIdentityCache: normalizedOptions.allowProductionIdentityCache === true },
     );
     if (canonicalSeriesSelected) {
       metas.push({
@@ -1524,7 +1526,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
         } = selectCatalogIdentity(
           { ...media, anilistId: mediaId },
           mappings.get(mediaId) || [],
-          { excludeIds: usedIdentities },
+          { excludeIds: usedIdentities, allowProductionIdentityCache: true },
         );
         if (canonicalSeriesSelected) {
           metas.push({
@@ -1570,7 +1572,7 @@ export async function buildCatalog(id, info, skip, search, diagnostics = null) {
       filter,
       skip,
       search,
-      canonicalizePage: (rows, pageDiagnostics) => canonicalizeCatalogPage(rows, { diagnostics: pageDiagnostics }),
+      canonicalizePage: (rows, pageDiagnostics) => canonicalizeCatalogPage(rows, { diagnostics: pageDiagnostics, allowProductionIdentityCache: true }),
       diagnostics,
     });
   }
