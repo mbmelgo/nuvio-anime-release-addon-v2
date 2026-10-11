@@ -192,7 +192,7 @@ Catalog names and season labels are generated dynamically.
 
 ## 🚀 Current release
 
-**Production:** `v1.96.0`  
+**Production:** `v1.97.0`  
 **Development:** `v1.97.0` — bound stalled IMDb identity lookups with provider fallbacks preserved
 
 Post-release production catalog snapshots are captured automatically after each controlled release and retained on versioned `catalog-snapshots/*` branches.
