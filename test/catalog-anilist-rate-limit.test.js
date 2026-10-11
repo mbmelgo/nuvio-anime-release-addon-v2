@@ -100,3 +100,27 @@ test("AniList reuses successful catalog responses across sequential requests", a
     clearAniListRateLimitState();
   }
 });
+
+
+test("AniList bounds stalled response bodies after headers arrive", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true,
+    status: 200,
+    headers: new Headers(),
+    async json() { return new Promise(() => {}); },
+  });
+
+  clearAniListRateLimitState();
+  try {
+    const result = await Promise.race([
+      queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1, "", { fetchTimeoutMs: 20 })
+        .then(() => "settled", () => "rejected"),
+      new Promise((resolve) => setTimeout(() => resolve("timed-out"), 250)),
+    ]);
+    assert.equal(result, "rejected", "AniList JSON body reads must share the request timeout boundary");
+  } finally {
+    globalThis.fetch = originalFetch;
+    clearAniListRateLimitState();
+  }
+});
