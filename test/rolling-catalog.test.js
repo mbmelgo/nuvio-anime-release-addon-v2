@@ -616,3 +616,45 @@ test("authoritative TMDB mapping retains priority over an IMDb title-search cand
   assert.equal(seasonal[0].id, "tmdb:126438");
   assert.equal(rolling[0].id, seasonal[0].id);
 });
+
+
+test("rolling catalog diagnostics accumulate identity-resolution stages across schedule pages", async () => {
+  const now = new Date("2026-10-01T00:00:00.000Z");
+  const pages = [
+    [schedule(801, now.getTime() + 1, 1, "Diagnostic Page One")],
+    [schedule(802, now.getTime() + 2, 1, "Diagnostic Page Two")],
+  ];
+  const diagnostics = {};
+
+  const result = await buildRollingCatalog("upcoming_5_days", now, 1, "", {
+    fetchPage: async (_start, _end, _futureOnly, page) => pages[page - 1] || [],
+    maxPages: 2,
+    pageSize: 1,
+    diagnostics,
+    resolveMappings: async (ids) => {
+      await new Promise((resolve) => setTimeout(resolve, 12));
+      return new Map(ids.map((id) => [id, [{
+        source: "test",
+        anilistId: id,
+        type: "TV",
+        imdbIds: [`tt${10000000 + id}`],
+        tvdbId: null,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: `Diagnostic Page ${id === 801 ? "One" : "Two"}`,
+        titles: [`Diagnostic Page ${id === 801 ? "One" : "Two"}`],
+        year: 2026,
+      }]]));
+    },
+  });
+
+  assert.equal(result.length, 1);
+  assert.ok(
+    diagnostics.arm >= 18,
+    `expected ARM timings from both pages to accumulate; got ${diagnostics.arm}ms`,
+  );
+  assert.ok(
+    diagnostics.identityResolution >= diagnostics.arm,
+    "total identity-resolution time should include the accumulated ARM stage",
+  );
+});
