@@ -482,3 +482,25 @@ test("IMDb known-identity validation rejects a TMDB IMDb feature for a TV identi
 
   assert.equal(result.has(185874), false);
 });
+
+
+test("IMDb fallback bounds stalled upstream requests and returns control to later identity fallbacks", async () => {
+  clearImdbSearchCache();
+  const result = await Promise.race([
+    resolveAniListMappingsByImdbSearch([{
+      id: 999123,
+      format: "TV",
+      startDate: { year: 2026 },
+      title: { english: "Timeout Regression Example", romaji: "Timeout Regression Example", native: null },
+      synonyms: [],
+    }], {
+      endpoint: "https://example.test/suggestion/x/",
+      fetchTimeoutMs: 500,
+      rowTimeoutMs: 20,
+      fetchImpl: async () => new Promise(() => {}),
+    }).then(() => "settled"),
+    new Promise((resolve) => setTimeout(() => resolve("timed-out"), 250)),
+  ]);
+
+  assert.equal(result, "settled", "IMDb lookup should not hold catalog identity resolution indefinitely");
+});
