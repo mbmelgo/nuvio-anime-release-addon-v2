@@ -212,3 +212,18 @@ test("TMDB resolver reuses an AniList IMDb link instead of making an external-ID
   assert.deepEqual(mappings.get(7000)?.[0]?.imdbIds, ["tt1234567"]);
   assert.equal(fetchImpl.calls.length, 1);
 });
+
+
+test("TMDB resolver bounds the total fallback wait when the upstream stalls", async () => {
+  resetTMDBMappingCache();
+  let calls = 0;
+  const fetchImpl = async () => { calls += 1; return new Promise(() => {}); };
+  const startedAt = Date.now();
+  const result = await Promise.race([
+    resolveAniListMappingsByTMDB([{ id: 991001, format: "TV", title: { english: "Slow Provider Test" }, startDate: { year: 2026 } }], { token: "test-token", fetchImpl, timeoutMs: 30 }),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("TMDB fallback exceeded its total time budget")), 250)),
+  ]);
+  assert.deepEqual([...result], []);
+  assert.ok(Date.now() - startedAt < 250);
+  assert.equal(calls, 1);
+});
