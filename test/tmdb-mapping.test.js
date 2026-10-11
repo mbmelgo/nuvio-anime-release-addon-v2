@@ -245,3 +245,19 @@ test("TMDB resolver deadline also bounds a stalled response body", async () => {
   assert.ok(Date.now() - startedAt < 250);
   assert.equal(calls, 1);
 });
+
+
+test("TMDB row timeout does not prevent later rows from being resolved", async () => {
+  resetTMDBMappingCache();
+  let calls = 0;
+  const fetchImpl = async () => { calls += 1; return new Promise(() => {}); };
+  const result = await Promise.race([
+    resolveAniListMappingsByTMDB([
+      { id: 991003, format: "TV", title: { english: "First Stalled Row" }, startDate: { year: 2026 } },
+      { id: 991004, format: "TV", title: { english: "Second Stalled Row" }, startDate: { year: 2026 } },
+    ], { token: "test-token", fetchImpl, timeoutMs: 30, concurrency: 1 }),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("TMDB row queue stopped progressing")), 250)),
+  ]);
+  assert.deepEqual([...result], []);
+  assert.equal(calls, 2);
+});
