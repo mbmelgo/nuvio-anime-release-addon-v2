@@ -238,10 +238,18 @@ async function resolveMappingsForRows(
       { ...row, anilistId: Number(row.id) },
       mappings.get(Number(row.id)) || [],
     );
+    const independentlyVerifiedImdb = selectProviderIdentity(
+      { ...row, anilistId: Number(row.id) },
+      candidates.filter((candidate) =>
+        candidate.provider === "imdb" && hasStrongDirectProviderEvidence(candidate),
+      ),
+    );
     // A relation-derived TMDB ID is a candidate, not an authoritative TMDB
     // lookup. Verify it through TMDB rather than letting the provider label
-    // alone suppress the canonical TMDB mapping stage.
-    return !selected || selected.provider !== "tmdb" || !tmdbSelected;
+    // alone suppress the canonical TMDB mapping stage. A strong direct IMDb
+    // identity is terminal under the selection policy, so TMDB lookup cannot
+    // change the selected ID and is unnecessary for that row.
+    return !independentlyVerifiedImdb && (!selected || selected.provider !== "tmdb" || !tmdbSelected);
   });
   if (tmdbRows.length) {
     try {
