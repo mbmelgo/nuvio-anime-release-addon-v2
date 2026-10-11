@@ -504,3 +504,27 @@ test("IMDb fallback bounds stalled upstream requests and returns control to late
 
   assert.equal(result, "settled", "IMDb lookup should not hold catalog identity resolution indefinitely");
 });
+
+
+test("IMDb fallback bounds the total resolver duration across many unresolved rows", async () => {
+  clearImdbSearchCache();
+  const result = await Promise.race([
+    resolveAniListMappingsByImdbSearch([1, 2, 3].map((id) => ({
+      id: 999200 + id,
+      format: "TV",
+      startDate: { year: 2026 },
+      title: { english: `Resolver Deadline Example ${id}`, romaji: `Resolver Deadline Example ${id}`, native: null },
+      synonyms: [],
+    })), {
+      endpoint: "https://example.test/suggestion/x/",
+      concurrency: 1,
+      fetchTimeoutMs: 500,
+      rowTimeoutMs: 500,
+      resolverTimeoutMs: 20,
+      fetchImpl: async () => new Promise(() => {}),
+    }).then(() => "settled"),
+    new Promise((resolve) => setTimeout(() => resolve("timed-out"), 250)),
+  ]);
+
+  assert.equal(result, "settled", "IMDb fallback should stop scheduling lookups at its batch deadline");
+});
