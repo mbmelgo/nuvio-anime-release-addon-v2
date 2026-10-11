@@ -1546,7 +1546,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
       const seenMediaIds = new Set();
       for (const row of eligibleRows) { const mediaId = Number(row.media.id); if (seenMediaIds.has(mediaId)) continue; seenMediaIds.add(mediaId); uniqueEligibleRows.push(row); }
       const searchedRows = filterAiringRowsBySearch(uniqueEligibleRows, search);
-      const pageDiagnostics = diagnostics ? {} : null;
+      const identityDiagnostics = diagnostics ? {} : null;
       const mappingStart = diagnostics ? performance.now() : 0;
       const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), {
         resolveMappings,
@@ -1564,12 +1564,12 @@ export async function buildRollingCatalog(id, date, skip, search, {
         validateImdbMappings,
         resolveSecondaryMappings,
         resolveAlternativeMappings,
-        diagnostics: pageDiagnostics,
+        diagnostics: identityDiagnostics,
         allowProductionIdentityCache: true,
       });
       if (diagnostics) {
-        pageDiagnostics.identityResolution = performance.now() - mappingStart;
-        mergeCatalogDiagnosticStages(diagnostics, pageDiagnostics);
+        identityDiagnostics.identityResolution = performance.now() - mappingStart;
+        mergeCatalogDiagnosticStages(diagnostics, identityDiagnostics);
       }
       const metas = [];
       const usedIdentities = new Set();
