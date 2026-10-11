@@ -261,3 +261,23 @@ test("TMDB row timeout does not prevent later rows from being resolved", async (
   assert.deepEqual([...result], []);
   assert.equal(calls, 2);
 });
+
+
+test("TMDB resolver uses a higher but bounded default concurrency for cold batches", async () => {
+  let active = 0;
+  let maxActive = 0;
+  const fetchImpl = async (url) => {
+    const parsed = new URL(url);
+    active += 1;
+    maxActive = Math.max(maxActive, active);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    active -= 1;
+    const title = parsed.searchParams.get("query");
+    return { ok: true, status: 200, async json() { return { results: [{ id: 880001, name: title, original_name: title, first_air_date: "2026-01-01" }] }; } };
+  };
+  const rows = Array.from({ length: 16 }, (_, index) => ({ id: 880000 + index, title: { english: `Cold Batch ${index}` }, format: "TV", startDate: { year: 2026 }, externalLinks: [{ site: "IMDb", url: `https://www.imdb.com/title/tt${8800000 + index}/` }] }));
+  const mappings = await resolveAniListMappingsByTMDB(rows, { token: "test-token", fetchImpl });
+  assert.equal(mappings.size, rows.length);
+  assert.equal(maxActive, 8);
+  assert.ok(maxActive <= 8);
+});
