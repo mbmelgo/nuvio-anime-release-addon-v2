@@ -80,3 +80,27 @@ test("IDMapper resolver caches successful results but retries negative results",
   assert.equal(second.has(202390), true);
   assert.equal(second.has(202391), false);
 });
+
+
+test("IDMapper bounds the total fallback wait when the upstream stalls", async () => {
+  clearIdMapperCache();
+  let calls = 0;
+  const fetchImpl = async () => {
+    calls += 1;
+    return new Promise(() => {});
+  };
+
+  const startedAt = Date.now();
+  const result = await Promise.race([
+    resolveAniListMappingsIdMapper([301, 302, 303, 304, 305], {
+      fetchImpl,
+      timeoutMs: 30,
+      concurrency: 2,
+    }),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("IDMapper fallback exceeded its total time budget")), 250)),
+  ]);
+
+  assert.deepEqual([...result], []);
+  assert.ok(Date.now() - startedAt < 250);
+  assert.ok(calls <= 3, `expected expired deadline to stop scheduling requests, got ${calls}`);
+});
