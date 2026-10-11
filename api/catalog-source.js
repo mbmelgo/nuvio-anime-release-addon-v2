@@ -88,6 +88,16 @@ export function formatCatalogDiagnostics(durationMs, coldStart, stages = {}, pro
   };
 }
 
+export function mergeCatalogDiagnosticStages(target, pageStages) {
+  if (!target || !pageStages) return target;
+  for (const [name, value] of Object.entries(pageStages)) {
+    const duration = Number(value);
+    if (!Number.isFinite(duration)) continue;
+    target[name] = (Number.isFinite(Number(target[name])) ? Number(target[name]) : 0) + duration;
+  }
+  return target;
+}
+
 export default async function handler(req, res) {
   const url = new URL(req.url, `https://${req.headers.host || "localhost"}`);
   const parts = url.pathname.split("/").filter(Boolean);
@@ -1536,27 +1546,31 @@ export async function buildRollingCatalog(id, date, skip, search, {
       const seenMediaIds = new Set();
       for (const row of eligibleRows) { const mediaId = Number(row.media.id); if (seenMediaIds.has(mediaId)) continue; seenMediaIds.add(mediaId); uniqueEligibleRows.push(row); }
       const searchedRows = filterAiringRowsBySearch(uniqueEligibleRows, search);
+      const pageDiagnostics = diagnostics ? {} : null;
       const mappingStart = diagnostics ? performance.now() : 0;
-    const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), {
-      resolveMappings,
-      resolveFribbMappings,
-      resolveExternalMappings,
-      resolveAnimapMappings,
-      resolveIdMapperMappings,
-      resolveTMDBMappings,
-      resolveAnimeMapperMappings,
-      resolveAnimeMapperRelatedProviderIds,
-      resolveCanonicalSeriesMappings: canonicalSeriesResolver,
-      resolveAniBridgeMappings,
-      resolveTsvMappings,
-      resolveImdbMappings,
-      validateImdbMappings,
-      resolveSecondaryMappings,
-      resolveAlternativeMappings,
-      diagnostics,
-      allowProductionIdentityCache: true,
-    });
-    if (diagnostics) diagnostics.identityResolution = performance.now() - mappingStart;
+      const mappings = await resolveMappingsForRows(searchedRows.map((row) => row.media), {
+        resolveMappings,
+        resolveFribbMappings,
+        resolveExternalMappings,
+        resolveAnimapMappings,
+        resolveIdMapperMappings,
+        resolveTMDBMappings,
+        resolveAnimeMapperMappings,
+        resolveAnimeMapperRelatedProviderIds,
+        resolveCanonicalSeriesMappings: canonicalSeriesResolver,
+        resolveAniBridgeMappings,
+        resolveTsvMappings,
+        resolveImdbMappings,
+        validateImdbMappings,
+        resolveSecondaryMappings,
+        resolveAlternativeMappings,
+        diagnostics: pageDiagnostics,
+        allowProductionIdentityCache: true,
+      });
+      if (diagnostics) {
+        pageDiagnostics.identityResolution = performance.now() - mappingStart;
+        mergeCatalogDiagnosticStages(diagnostics, pageDiagnostics);
+      }
       const metas = [];
       const usedIdentities = new Set();
       for (const row of searchedRows) {
