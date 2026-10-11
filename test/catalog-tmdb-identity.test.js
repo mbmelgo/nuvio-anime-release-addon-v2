@@ -317,3 +317,41 @@ test("catalog queries TMDB even when an earlier IMDb mapping is already valid", 
   assert.equal(metas[0].extra.identityProvider, "imdb");
   assert.equal(tmdbCalls, 1);
 });
+
+
+test("catalog skips TMDB lookup when strong direct IMDb evidence already determines identity", async () => {
+  let tmdbCalls = 0;
+  const metas = await canonicalizeCatalogPage([{
+    id: 12347,
+    title: { english: "Direct IMDb Anime", romaji: "Direct IMDb Anime" },
+    format: "TV",
+    startDate: { year: 2026 },
+  }], {
+    resolveMappings: async () => new Map([[12347, [{
+      source: "anibridge",
+      anilistId: 12347,
+      type: "TV",
+      imdbIds: ["tt7654321"],
+      tvdbId: null,
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+      title: "Direct IMDb Anime",
+      titles: ["Direct IMDb Anime"],
+      year: 2026,
+    }]]]),
+    resolveTMDBMappings: async () => { tmdbCalls += 1; return new Map(); },
+    validateImdbMappings: validateKnownImdb,
+    resolveFribbMappings: empty,
+    resolveExternalMappings: () => new Map(),
+    resolveAniBridgeMappings: empty,
+    resolveAnimapMappings: empty,
+    resolveIdMapperMappings: empty,
+    resolveAnimeMapperMappings: empty,
+    resolveTsvMappings: empty,
+    resolveImdbMappings: empty,
+    resolveSecondaryMappings: empty,
+    resolveAlternativeMappings: empty,
+  });
+  assert.equal(metas[0].id, "tt7654321");
+  assert.equal(tmdbCalls, 0);
+});
