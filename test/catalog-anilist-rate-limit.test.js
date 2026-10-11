@@ -100,3 +100,65 @@ test("AniList reuses successful catalog responses across sequential requests", a
     clearAniListRateLimitState();
   }
 });
+
+
+test("AniList bounds stalled response bodies after headers arrive", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true,
+    status: 200,
+    headers: new Headers(),
+    async json() { return new Promise(() => {}); },
+  });
+
+  clearAniListRateLimitState();
+  try {
+    const result = await Promise.race([
+      queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1, "", { fetchTimeoutMs: 20 })
+        .then(() => "settled", () => "rejected"),
+      new Promise((resolve) => setTimeout(() => resolve("timed-out"), 250)),
+    ]);
+    assert.equal(result, "rejected", "AniList JSON body reads must share the request timeout boundary");
+  } finally {
+    globalThis.fetch = originalFetch;
+    clearAniListRateLimitState();
+  }
+});
+
+
+test("AniList preserves 429 cooldown when the response body stalls", async () => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    return {
+      ok: false,
+      status: 429,
+      headers: new Headers({ "Retry-After": "60" }),
+      async json() { return new Promise(() => {}); },
+    };
+  };
+
+  clearAniListRateLimitState();
+  try {
+    const result = await Promise.race([
+      (async () => {
+        await assert.rejects(
+          queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1, "", { fetchTimeoutMs: 20 }),
+          /HTTP 429/,
+        );
+        await assert.rejects(
+          queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1),
+          /cooldown active/,
+        );
+        return "settled";
+      })(),
+      new Promise((resolve) => setTimeout(() => resolve("timed-out"), 250)),
+    ]);
+    assert.equal(result, "settled", "429 cooldown should not depend on its response body finishing");
+    assert.equal(calls, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    clearAniListRateLimitState();
+  }
+});
