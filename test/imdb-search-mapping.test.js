@@ -528,3 +528,26 @@ test("IMDb fallback bounds the total resolver duration across many unresolved ro
 
   assert.equal(result, "settled", "IMDb fallback should stop scheduling lookups at its batch deadline");
 });
+
+
+test("IMDb fallback bounds stalled response bodies after headers arrive", async () => {
+  clearImdbSearchCache();
+  const result = await Promise.race([
+    resolveAniListMappingsByImdbSearch([{
+      id: 999321,
+      format: "TV",
+      startDate: { year: 2026 },
+      title: { english: "Stalled Body Regression Example", romaji: "Stalled Body Regression Example", native: null },
+      synonyms: [],
+    }], {
+      endpoint: "https://example.test/suggestion/x/",
+      fetchTimeoutMs: 20,
+      rowTimeoutMs: 80,
+      resolverTimeoutMs: 120,
+      fetchImpl: async () => ({ ok: true, status: 200, json: async () => new Promise(() => {}) }),
+    }).then(() => "settled"),
+    new Promise((resolve) => setTimeout(() => resolve("timed-out"), 250)),
+  ]);
+
+  assert.equal(result, "settled", "IMDb JSON body reads must share the upstream timeout boundary");
+});
