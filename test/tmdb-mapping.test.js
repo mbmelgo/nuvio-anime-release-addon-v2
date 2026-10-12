@@ -283,6 +283,44 @@ test("TMDB resolver uses a bounded 12-worker default for cold batches", async ()
 });
 
 
+test("TMDB resolver reports bounded aggregate diagnostics without exposing row identities", async () => {
+  const stats = {};
+  const fetchImpl = async (url) => {
+    const parsed = new URL(url);
+    const query = parsed.searchParams.get("query");
+    if (query === "Rate Limited") return { ok: false, status: 429, async json() { return {}; } };
+    if (query === "No Match") return { ok: true, status: 200, async json() { return { results: [] }; } };
+    return {
+      ok: true,
+      status: 200,
+      async json() {
+        return { results: [{ id: 880001, name: "Found Anime", original_name: "Found Anime", first_air_date: "2026-01-01" }] };
+      },
+    };
+  };
+  const mappings = await resolveAniListMappingsByTMDB([
+    { id: 880001, title: { english: "Found Anime" }, format: "TV", startDate: { year: 2026 }, externalLinks: [{ site: "IMDb", url: "https://www.imdb.com/title/tt8800001/" }] },
+    { id: 880002, title: { english: "No Match" }, format: "TV", startDate: { year: 2026 } },
+    { id: 880003, title: { english: "Rate Limited" }, format: "TV", startDate: { year: 2026 } },
+  ], { token: "test-token", fetchImpl, concurrency: 1, diagnostics: stats });
+
+  assert.equal(mappings.size, 1);
+  assert.deepEqual(stats, {
+    rowsRequested: 3,
+    rowsStarted: 3,
+    rowsResolved: 1,
+    rowsNoMatch: 1,
+    rowsSkippedDeadline: 0,
+    invalidRows: 0,
+    rowErrors: 1,
+    httpErrors: 1,
+    http429: 1,
+    timeouts: 0,
+    rowsDeadlineExhausted: 0,
+  });
+  assert.equal(JSON.stringify(stats).includes("880001"), false);
+});
+
 test("TMDB resolver enforces a shared deadline across the whole batch", async () => {
   resetTMDBMappingCache();
   let calls = 0;
