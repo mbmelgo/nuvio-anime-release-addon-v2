@@ -10,6 +10,7 @@ import {
   validateReleaseTarget,
   validateLastDeploymentMetadata,
 } from "../scripts/release-integrity.mjs";
+import catalogSourceHandler from "../api/catalog-source.js";
 import {
   PRODUCTION_CATALOG_IDS,
   validateCatalog,
@@ -27,6 +28,13 @@ async function collectJsFiles(dir) {
   }
   return files;
 }
+
+test("catalog handler uses the Web Request API and returns a standard Response", async () => {
+  const response = await catalogSourceHandler.fetch(new Request("https://example.test/api/catalog-source"));
+  assert.equal(response.status, 404);
+  assert.deepEqual(await response.json(), { error: "Not found" });
+  assert.equal(response.headers.get("content-type"), "application/json; charset=utf-8");
+});
 
 test("runtime source does not use deprecated url.parse API", async () => {
   const files = await collectJsFiles(".");
@@ -55,7 +63,7 @@ test("every retained Vercel runtime module has a serverless default export", asy
   const runtimeFiles = ["api/catalog-source.js", "api/home-selector.js", "api/resolver-manifest.js"];
   for (const file of runtimeFiles) {
     const source = await readFile(file, "utf8");
-    assert.match(source, /export default (?:async )?function\s+\w+\s*\(/, `${file} must export a default handler`);
+    assert.match(source, /export default (?:\{[\s\S]*?fetch\s*\(|(?:async )?function\s+\w+\s*\()/, `${file} must export a supported default handler`);
   }
 });
 
