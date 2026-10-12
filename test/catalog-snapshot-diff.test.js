@@ -83,6 +83,42 @@ test("classifies provider and identity quality changes", () => {
   assert.ok(changes[1].changeTypes.includes("provider_changed"));
 });
 
+test("classifies loss of canonical-series resolution as degradation even when provider rank improves", () => {
+  const before = snapshot("1.100.0", {
+    previous_season: [item({
+      id: "tt34869012",
+      extra: {
+        anilistId: 213359,
+        malId: 64435,
+        identityProvider: "imdb",
+        identityId: "tt34869012",
+        identityCanonicalSeries: true,
+        identityCanonicalSeriesTitle: "Theatre of Darkness: Yamishibai 8",
+      },
+    })],
+  });
+  const after = snapshot("1.101.0", {
+    previous_season: [item({
+      id: "tmdb:56559",
+      extra: {
+        anilistId: 213359,
+        malId: 64435,
+        identityProvider: "tmdb",
+        identityId: "56559",
+        identityCanonicalSeries: false,
+        identityCanonicalSeriesTitle: null,
+      },
+    })],
+  });
+
+  const diff = compareCatalogSnapshots(before, after);
+  const change = diff.catalogs.previous_season.changes[0];
+
+  assert.ok(change.changeTypes.includes("canonical_series_changed"));
+  assert.ok(change.changeTypes.includes("identity_degraded"));
+  assert.ok(!change.changeTypes.includes("identity_improved"));
+});
+
 test("ranks provider identities with TMDB first, IMDb second, and TVDB third", () => {
   const before = snapshot("1.88.0", {
     current_season: [
