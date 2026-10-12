@@ -269,10 +269,12 @@ async function resolveMappingsForRows(
         tmdbResolverBudget.deadlineAt = Date.now() + DEFAULT_TMDB_RESOLVER_TIMEOUT_MS;
       }
       const tmdbResolverStats = diagnostics ? {} : null;
-      const tmdbOptions = {
-        ...(tmdbResolverBudget ? { resolverDeadlineAt: tmdbResolverBudget.deadlineAt } : {}),
-        ...(tmdbResolverStats ? { diagnostics: tmdbResolverStats } : {}),
-      };
+      const tmdbOptions = tmdbResolverBudget || tmdbResolverStats
+        ? {
+            ...(tmdbResolverBudget ? { resolverDeadlineAt: tmdbResolverBudget.deadlineAt } : {}),
+            ...(tmdbResolverStats ? { diagnostics: tmdbResolverStats } : {}),
+          }
+        : undefined;
       mappings = mergeMappings(mappings, await resolveTMDBMappings(tmdbRows, tmdbOptions));
       if (diagnostics) {
         diagnostics.tmdb = performance.now() - stageStart;
