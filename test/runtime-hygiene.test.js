@@ -10,6 +10,7 @@ import {
   validateReleaseTarget,
   validateLastDeploymentMetadata,
 } from "../scripts/release-integrity.mjs";
+import catalogSourceHandler from "../api/catalog-source.js";
 import {
   PRODUCTION_CATALOG_IDS,
   validateCatalog,
