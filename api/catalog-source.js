@@ -125,14 +125,15 @@ export function mergeCatalogDiagnosticStages(target, pageStages) {
 }
 
 export default async function handler(req, res) {
-  const url = new URL(req.url, `https://${req.headers.host || "localhost"}`);
-  const parts = url.pathname.split("/").filter(Boolean);
-  const rawExtraPath = req.query?.extra ?? parts.slice(3).join("/");
-  const pathExtra = parseCatalogExtraPath(rawExtraPath);
-  const query = { ...pathExtra, ...(req.query || {}) };
-  const resource = query.resource || parts[0];
-  const type = query.type || parts[1];
-  const rawId = query.id || parts[2]?.replace(/\.json$/, "");
+  // Vercel's legacy IncomingMessage adapter currently parses req.url through
+  // deprecated url.parse(). Rewrites already pass route values through req.query,
+  // so use those normalized parameters instead of touching the adapter getter.
+  const queryParams = req.query || {};
+  const pathExtra = parseCatalogExtraPath(queryParams.extra ?? "");
+  const query = { ...pathExtra, ...queryParams };
+  const resource = query.resource;
+  const type = query.type;
+  const rawId = query.id ? String(query.id).replace(/\.json$/, "") : "";
   const id = rawId ? decodeURIComponent(String(rawId).replace(/\.json$/, "")) : "";
   const now = new Date();
   const seasonInfo = getSeasonInfo(now);
