@@ -234,7 +234,7 @@ test("reports identity evidence provenance changes independently of provider ran
         anilistId: 100,
         identityProvider: "imdb",
         identityId: "tt100",
-        identityEvidence: [{ source: "imdb-search", relation: false }],
+        identityEvidence: [{ source: "imdb-search", relation: false, season: 2, episodeOffset: 0 }],
       },
     })],
   });
@@ -254,7 +254,7 @@ test("reports identity evidence provenance changes independently of provider ran
   const change = diff.catalogs.current_season.changes[0];
   assert.ok(change.changeTypes.includes("identity_evidence_changed"));
   assert.deepEqual(change.before.identityEvidence, [
-    { source: "imdb-search", relation: false },
+    { source: "imdb-search", relation: false, season: "2", episodeOffset: 0 },
   ]);
   assert.deepEqual(change.after.identityEvidence, [
     { source: "anime-mapper-relation", relation: false },
@@ -271,7 +271,7 @@ test("reports canonical-series and fallback metadata changes", () => {
           anilistId: 100,
           identityProvider: "tmdb",
           identityId: "110837",
-          identityEvidence: [{ source: "arm", relation: false }],
+          identityEvidence: [{ source: "arm", relation: false, season: 2, episodeOffset: 0 }],
         },
       }),
       item({
@@ -304,7 +304,7 @@ test("reports canonical-series and fallback metadata changes", () => {
           anilistId: 101,
           identityProvider: "imdb",
           identityId: "tt39122769",
-          identityEvidence: [{ source: "previous-production-snapshot", relation: false }],
+          identityEvidence: [{ source: "previous-production-snapshot", relation: false, version: "1.74.0" }],
           identityFallback: "previous-production-snapshot",
         },
       }),
@@ -317,6 +317,12 @@ test("reports canonical-series and fallback metadata changes", () => {
   assert.ok(changes[0].changeTypes.includes("identity_evidence_changed"));
   assert.ok(changes[1].changeTypes.includes("identity_evidence_changed"));
   assert.ok(changes[1].changeTypes.includes("identity_fallback_changed"));
+  assert.deepEqual(changes[0].before.identityEvidence, [
+    { source: "arm", relation: false, season: "2", episodeOffset: 0 },
+  ]);
+  assert.deepEqual(changes[1].after.identityEvidence, [
+    { source: "previous-production-snapshot", relation: false, version: "1.74.0" },
+  ]);
   assert.equal(diff.catalogs.current_season.summary.canonicalSeriesChanged, 1);
   assert.equal(diff.catalogs.current_season.summary.identityFallbackChanged, 1);
 });
@@ -348,18 +354,19 @@ test("CLI generates JSON and Markdown from snapshot directories", async () => {
       ]) {
         const metas = catalog === "current_season"
           ? [{
-              id: version === "1.51.0" ? "tt100" : "tmdb:900",
+              id: version === "1.51.0" ? "tt100" : "tt39122769",
               type: "series",
               name: "Example Anime",
               releaseInfo: "2026",
               extra: {
                 anilistId: 100,
-                identityProvider: version === "1.51.0" ? "imdb" : "tmdb",
-                identityId: version === "1.51.0" ? "tt100" : "900",
-                identityEvidence: [{
-                  source: version === "1.51.0" ? "imdb-search" : "anime-mapper-relation",
-                  relation: false,
-                }],
+                identityProvider: "imdb",
+                identityId: version === "1.51.0" ? "tt100" : "tt39122769",
+                identityCanonicalSeries: version === "1.52.0",
+                identityCanonicalSeriesTitle: version === "1.52.0" ? "Example Anime" : null,
+                identityEvidence: version === "1.51.0"
+                  ? [{ source: "imdb-search", relation: false, season: 2, episodeOffset: 0 }]
+                  : [{ source: "previous-production-snapshot", relation: false, version: "1.74.0" }],
               },
             }]
           : [];
@@ -378,10 +385,12 @@ test("CLI generates JSON and Markdown from snapshot directories", async () => {
     assert.equal(diff.beforeReleaseVersion, "1.51.0");
     assert.equal(diff.afterReleaseVersion, "1.52.0");
     assert.equal(diff.catalogs.current_season.summary.identityEvidenceChanged, 1);
+    assert.equal(diff.catalogs.current_season.summary.canonicalSeriesChanged, 1);
     const markdown = fs.readFileSync(path.join(outputDir, "release-diff.md"), "utf8");
     assert.match(markdown, /Catalog release diff: v1\.51\.0 → v1\.52\.0/);
     assert.match(markdown, /Evidence/);
-    assert.match(markdown, /imdb-search → anime-mapper-relation/);
+    assert.match(markdown, /imdb-search \(season 2, episode offset 0\) → previous-production-snapshot \(v1\.74\.0\)/);
+    assert.match(markdown, /canonical series: no → yes \(Example Anime\)/);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
