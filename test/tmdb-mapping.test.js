@@ -311,10 +311,11 @@ test("TMDB resolver reports bounded aggregate diagnostics without exposing row i
     rowsResolved: 1,
     rowsNoMatch: 1,
     rowsSkippedDeadline: 0,
+    rowsSkippedUnavailable: 0,
     invalidRows: 0,
     rowErrors: 1,
     httpErrors: 1,
-    http429: 1,
+    http429Errors: 1,
     timeouts: 0,
     rowsDeadlineExhausted: 0,
   });
