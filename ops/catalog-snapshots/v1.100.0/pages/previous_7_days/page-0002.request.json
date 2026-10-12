@@ -1,0 +1,17 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://nuvio-anime-release-addon-v2.vercel.app/catalog/series/previous_7_days.json?skip=50",
+    "catalog": "previous_7_days",
+    "page": 2,
+    "query": {
+      "skip": 50
+    },
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "bodyFile": "page-0002.json"
+  }
+}
