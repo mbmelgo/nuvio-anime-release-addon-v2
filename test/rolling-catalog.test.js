@@ -658,3 +658,41 @@ test("rolling catalog diagnostics accumulate identity-resolution stages across s
     "total identity-resolution time should include the accumulated ARM stage",
   );
 });
+
+
+test("rolling catalog shares one TMDB resolver deadline across schedule pages", async () => {
+  const now = new Date("2026-10-01T00:00:00.000Z");
+  const pages = [
+    [schedule(9801, now.getTime() + 60_000, 1, "Shared Deadline Page One", 19801)],
+    [schedule(9802, now.getTime() + 120_000, 1, "Shared Deadline Page Two", 19802)],
+  ];
+  const deadlines = [];
+  const empty = async () => new Map();
+  const result = await buildRollingCatalog("upcoming_5_days", now, 1, "", {
+    fetchPage: async (_start, _end, _futureOnly, page) => pages[page - 1] || [],
+    maxPages: 2,
+    pageSize: 1,
+    resolveMappings: empty,
+    resolveFribbMappings: empty,
+    resolveExternalMappings: empty,
+    resolveAniBridgeMappings: empty,
+    resolveTMDBMappings: async (_rows, options) => {
+      deadlines.push(options?.resolverDeadlineAt);
+      return new Map();
+    },
+    resolveAnimapMappings: empty,
+    resolveIdMapperMappings: empty,
+    resolveAnimeMapperMappings: empty,
+    resolveAnimeMapperRelatedProviderIds: empty,
+    resolveTsvMappings: empty,
+    resolveImdbMappings: empty,
+    resolveSecondaryMappings: empty,
+    resolveAlternativeMappings: empty,
+    resolveCanonicalSeriesMappings: empty,
+  });
+
+  assert.equal(result.length, 1);
+  assert.equal(deadlines.length, 2);
+  assert.ok(deadlines.every((deadline) => Number.isFinite(deadline)));
+  assert.equal(deadlines[0], deadlines[1], "all schedule pages must share the same TMDB budget");
+});
