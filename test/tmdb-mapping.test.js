@@ -283,11 +283,50 @@ test("TMDB resolver uses a bounded 12-worker default for cold batches", async ()
 });
 
 
+test("TMDB resolver reports bounded aggregate diagnostics without exposing row identities", async () => {
+  const stats = {};
+  const fetchImpl = async (url) => {
+    const parsed = new URL(url);
+    const query = parsed.searchParams.get("query");
+    if (query === "Rate Limited") return { ok: false, status: 429, async json() { return {}; } };
+    if (query === "No Match") return { ok: true, status: 200, async json() { return { results: [] }; } };
+    return {
+      ok: true,
+      status: 200,
+      async json() {
+        return { results: [{ id: 880001, name: "Found Anime", original_name: "Found Anime", first_air_date: "2026-01-01" }] };
+      },
+    };
+  };
+  const mappings = await resolveAniListMappingsByTMDB([
+    { id: 880001, title: { english: "Found Anime" }, format: "TV", startDate: { year: 2026 }, externalLinks: [{ site: "IMDb", url: "https://www.imdb.com/title/tt8800001/" }] },
+    { id: 880002, title: { english: "No Match" }, format: "TV", startDate: { year: 2026 } },
+    { id: 880003, title: { english: "Rate Limited" }, format: "TV", startDate: { year: 2026 } },
+  ], { token: "test-token", fetchImpl, concurrency: 1, diagnostics: stats });
+
+  assert.equal(mappings.size, 1);
+  assert.deepEqual(stats, {
+    rowsRequested: 3,
+    rowsStarted: 3,
+    rowsResolved: 1,
+    rowsNoMatch: 1,
+    rowsSkippedDeadline: 0,
+    rowsSkippedUnavailable: 0,
+    invalidRows: 0,
+    rowErrors: 1,
+    httpErrors: 1,
+    http429Errors: 1,
+    timeouts: 0,
+    rowsDeadlineExhausted: 0,
+  });
+  assert.equal(JSON.stringify(stats).includes("880001"), false);
+});
+
 test("TMDB resolver enforces a shared deadline across the whole batch", async () => {
   resetTMDBMappingCache();
-  let calls = 0;
+  const callTimes = [];
   const fetchImpl = async () => {
-    calls += 1;
+    callTimes.push(Date.now());
     return new Promise(() => {});
   };
   const rows = Array.from({ length: 12 }, (_, index) => ({
@@ -296,28 +335,36 @@ test("TMDB resolver enforces a shared deadline across the whole batch", async ()
     title: { english: `Batch Deadline ${index}` },
     startDate: { year: 2026 },
   }));
+  const stats = {};
   const startedAt = Date.now();
+  const deadlineAt = startedAt + 60;
   const result = await Promise.race([
     resolveAniListMappingsByTMDB(rows, {
       token: "test-token",
       fetchImpl,
       concurrency: 2,
       timeoutMs: 1000,
-      resolverTimeoutMs: 60,
+      resolverTimeoutMs: 1000,
+      resolverDeadlineAt: deadlineAt,
+      diagnostics: stats,
     }),
     new Promise((_, reject) => setTimeout(() => reject(new Error("TMDB batch exceeded its shared time budget")), 250)),
   ]);
   assert.deepEqual([...result], []);
   assert.ok(Date.now() - startedAt < 250);
-  assert.ok(calls <= 2, "rows should not keep starting after the shared deadline");
+  assert.ok(callTimes.every((time) => time < deadlineAt), "no row may start after the shared deadline");
+  assert.equal(stats.rowsRequested, 12);
+  assert.equal(stats.rowsStarted + stats.rowsSkippedDeadline + stats.invalidRows, stats.rowsRequested);
+  assert.ok(stats.rowsDeadlineExhausted > 0);
+  assert.ok(stats.timeouts > 0);
 });
 
 
 test("TMDB resolver honors a shared absolute deadline across batches", async () => {
   resetTMDBMappingCache();
-  let calls = 0;
+  const callTimes = [];
   const fetchImpl = async () => {
-    calls += 1;
+    callTimes.push(Date.now());
     return new Promise(() => {});
   };
   const rows = Array.from({ length: 12 }, (_, index) => ({
@@ -327,6 +374,7 @@ test("TMDB resolver honors a shared absolute deadline across batches", async () 
     startDate: { year: 2026 },
   }));
   const startedAt = Date.now();
+  const deadlineAt = startedAt + 60;
   const result = await Promise.race([
     resolveAniListMappingsByTMDB(rows, {
       token: "test-token",
@@ -334,11 +382,11 @@ test("TMDB resolver honors a shared absolute deadline across batches", async () 
       concurrency: 2,
       timeoutMs: 1000,
       resolverTimeoutMs: 1000,
-      resolverDeadlineAt: Date.now() + 60,
+      resolverDeadlineAt: deadlineAt,
     }),
     new Promise((_, reject) => setTimeout(() => reject(new Error("TMDB resolver exceeded the shared absolute deadline")), 250)),
   ]);
   assert.deepEqual([...result], []);
   assert.ok(Date.now() - startedAt < 250);
-  assert.ok(calls <= 2, "queued rows must not start after the shared deadline");
+  assert.ok(callTimes.every((time) => time < deadlineAt), "no row may start after the shared absolute deadline");
 });

@@ -268,11 +268,24 @@ async function resolveMappingsForRows(
       if (tmdbResolverBudget && !Number.isFinite(tmdbResolverBudget.deadlineAt)) {
         tmdbResolverBudget.deadlineAt = Date.now() + DEFAULT_TMDB_RESOLVER_TIMEOUT_MS;
       }
-      const tmdbOptions = tmdbResolverBudget
-        ? { resolverDeadlineAt: tmdbResolverBudget.deadlineAt }
+      const tmdbResolverStats = diagnostics ? {} : null;
+      const tmdbOptions = tmdbResolverBudget || tmdbResolverStats
+        ? {
+            ...(tmdbResolverBudget ? { resolverDeadlineAt: tmdbResolverBudget.deadlineAt } : {}),
+            ...(tmdbResolverStats ? { diagnostics: tmdbResolverStats } : {}),
+          }
         : undefined;
       mappings = mergeMappings(mappings, await resolveTMDBMappings(tmdbRows, tmdbOptions));
-      if (diagnostics) diagnostics.tmdb = performance.now() - stageStart;
+      if (diagnostics) {
+        diagnostics.tmdb = performance.now() - stageStart;
+        if (Number.isFinite(tmdbResolverStats?.rowsRequested)) {
+          // Aggregate counters only: no AniList IDs, titles, or provider credentials.
+          console.info("[identity] TMDB resolver summary", {
+            catalogRows: tmdbRows.length,
+            ...tmdbResolverStats,
+          });
+        }
+      }
     } catch (error) {
       console.error("[identity] TMDB mapping failed; trying AniMap", error);
     }
