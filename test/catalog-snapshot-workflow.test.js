@@ -29,9 +29,9 @@ test("release diff discovers previous snapshot branches from fetched local refs"
   );
   assert.match(
     workflow,
-    /node scripts\\/find-previous-catalog-snapshot\\.js "\\$RELEASE_VERSION"/,
+    /node scripts\/find-previous-catalog-snapshot\.js "\$RELEASE_VERSION"/,
   );
-  assert.doesNotMatch(workflow, /git fetch --quiet origin[^\\n]*\\|\\| true/);
+  assert.doesNotMatch(workflow, /git fetch --quiet origin[^\n]*\|\| true/);
   assert.doesNotMatch(
     workflow,
     /git ls-remote --heads origin refs\/heads\/catalog-snapshots\/v\*/,
