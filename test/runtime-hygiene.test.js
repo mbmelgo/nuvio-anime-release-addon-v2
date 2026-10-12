@@ -181,19 +181,19 @@ test("production manifest validator enforces the exact five-catalog contract", (
 test("production rolling catalog validators enforce their distinct metadata contracts", () => {
   assert.equal(validateCatalog({
     metas: [{ id: "tt1234567", type: "series", extra: { nextEpisode: 2, nextAiringAt: 123 } }],
-  }, "upcoming_5_days"), true);
+  }, "upcoming_3_days"), true);
 
   assert.throws(() => validateCatalog({
     metas: [{ id: "tmdb:12345", type: "series", extra: { nextEpisode: 2 } }],
-  }, "upcoming_5_days"), /next episode and next airing/);
+  }, "upcoming_3_days"), /next episode and next airing/);
 
   assert.equal(validateCatalog({
     metas: [{ id: "tvdb:12345", type: "series", extra: {} }],
-  }, "previous_7_days"), true);
+  }, "previous_3_days"), true);
 
   assert.throws(() => validateCatalog({
     metas: [{ id: "tt1234567", type: "series", extra: { nextEpisode: 2, nextAiringAt: 123 } }],
-  }, "previous_7_days"), /future-only/);
+  }, "previous_3_days"), /future-only/);
 });
 
 
