@@ -28,6 +28,20 @@ async function collectJsFiles(dir) {
   return files;
 }
 
+test("catalog handler does not require the deprecated Vercel req.url getter", async () => {
+  const response = {
+    statusCode: null,
+    headers: {},
+    body: null,
+    status(code) { this.statusCode = code; return this; },
+    setHeader(name, value) { this.headers[name] = value; },
+    json(body) { this.body = body; return body; },
+  };
+  await catalogSourceHandler({ method: "GET", query: {} }, response);
+  assert.equal(response.statusCode, 404);
+  assert.deepEqual(response.body, { error: "Not found" });
+});
+
 test("runtime source does not use deprecated url.parse API", async () => {
   const files = await collectJsFiles(".");
   const offenders = [];
