@@ -28,12 +28,66 @@ test("release diff discovers previous snapshot branches from fetched local refs"
     workflow,
     /git fetch --quiet origin[\s\S]*?refs\/heads\/catalog-snapshots\/v\*:refs\/remotes\/origin\/catalog-snapshots\/v\*/,
   );
-  assert.match(
-    workflow,
-    /"git", "for-each-ref", "--format=%\(refname:short\)", "refs\/remotes\/origin\/catalog-snapshots\/v\*"/,
-  );
+  assert.match(workflow, /node scripts\/find-previous-catalog-snapshot\.js "\$RELEASE_VERSION"/);
+  assert.doesNotMatch(workflow, /git fetch --quiet origin[^\n]*\|\| true/);
   assert.doesNotMatch(
     workflow,
     /git ls-remote --heads origin refs\/heads\/catalog-snapshots\/v\*/,
   );
+});
+
+
+test("snapshot version selection uses semantic numeric ordering and ignores invalid refs", async () => {
+  const { spawnSync } = await import("node:child_process");
+  const script = new URL("../scripts/find-previous-catalog-snapshot.js", import.meta.url);
+  const result = spawnSync(
+    process.execPath,
+    [script.pathname, "1.100.0"],
+    {
+      encoding: "utf8",
+      input: [
+        "origin/catalog-snapshots/v1.9.0",
+        "origin/catalog-snapshots/v1.99.0",
+        "origin/catalog-snapshots/v1.99.1",
+        "origin/catalog-snapshots/v1.100.0",
+        "origin/catalog-snapshots/v1.101.0",
+        "origin/catalog-snapshots/vgarbage",
+        "origin/catalog-snapshots/v1.999999999999999999999.0.0",
+      ].join("\\n"),
+    },
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout.trim(), "1.99.1");
+});
+
+test("snapshot version selection returns no version when no valid earlier ref exists", async () => {
+  const { spawnSync } = await import("node:child_process");
+  const script = new URL("../scripts/find-previous-catalog-snapshot.js", import.meta.url);
+  const result = spawnSync(
+    process.execPath,
+    [script.pathname, "1.100.0"],
+    {
+      encoding: "utf8",
+      input: [
+        "origin/catalog-snapshots/v1.100.0",
+        "origin/catalog-snapshots/v1.101.0",
+        "origin/catalog-snapshots/vmalformed",
+      ].join("\\n"),
+    },
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout.trim(), "");
+});
+
+test("snapshot version selection rejects an invalid current version", async () => {
+  const { spawnSync } = await import("node:child_process");
+  const script = new URL("../scripts/find-previous-catalog-snapshot.js", import.meta.url);
+  const result = spawnSync(process.execPath, [script.pathname, "v1.100.0"], {
+    encoding: "utf8",
+    input: "origin/catalog-snapshots/v1.99.0",
+  });
+
+  assert.equal(result.status, 2);
 });
