@@ -30,7 +30,7 @@ function resolverOptions({ tmdbId = 30984, imdbId = "tt0434665" } = {}) {
     canonicalTitle: "Bleach",
     canonicalType: "TV",
     canonicalYear: 2004,
-    mappings: { anilist: 269, tmdb: tmdbId },
+    canonicalExternal: { anilist: 269, tmdb: tmdbId },
   }]]);
   return {
     resolveMappings: emptyMap,
