@@ -54,7 +54,7 @@ The catalog keeps the AniList source id in the item's extra metadata so downstre
 
 ### 🔎 Release snapshot comparison
 
-Production catalog snapshots can be compared deterministically by stable AniList/MAL identity, with a conservative normalized-title fallback when neither source ID is available.
+Production catalog snapshots can be compared deterministically by stable AniList/MAL identity, with a conservative normalized-title fallback when neither source ID is available. Snapshot comparison also maps the historical `upcoming_5_days` and `previous_7_days` filenames to the current three-day rolling catalog IDs when comparing releases across the catalog rename.
 
 The comparator reports:
 
