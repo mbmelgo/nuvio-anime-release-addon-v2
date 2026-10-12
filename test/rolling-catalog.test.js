@@ -440,6 +440,63 @@ test("rolling catalogs use native TMDB route for an unverified TMDB IMDb mapping
   assert.equal(result[0].extra.tmdbProvider, "tmdb");
 });
 
+test("rolling canonical series prefers canonical TMDB over canonical IMDb title search", async () => {
+  const now = new Date("2026-10-01T00:00:00.000Z");
+  const mediaId = 152677;
+  const root = {
+    source: "anime-mapper-canonical",
+    anilistId: mediaId,
+    canonicalAnilistId: 142000,
+    canonicalMalId: 53800,
+    canonicalTitle: "The Detective Is Already Dead",
+    canonicalType: "TV",
+    canonicalYear: 2021,
+    canonicalExternal: { tmdb: 117061 },
+  };
+  const empty = async () => new Map();
+  const result = await buildRollingCatalog("upcoming_3_days", now, 0, "", {
+    fetchPage: async () => [{
+      ...schedule(mediaId, now.getTime() + 60_000, 1, "The Detective Is Already Dead Season 2", 53801),
+      media: {
+        ...schedule(mediaId, now.getTime() + 60_000, 1, "The Detective Is Already Dead Season 2", 53801).media,
+        relations: { edges: [{ relationType: "PREQUEL", node: { id: 142000, format: "TV" } }] },
+      },
+    }],
+    maxPages: 1,
+    resolveMappings: empty,
+    resolveFribbMappings: empty,
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: empty,
+    resolveIdMapperMappings: empty,
+    resolveTMDBMappings: empty,
+    resolveAnimeMapperMappings: empty,
+    resolveAnimeMapperRelatedProviderIds: empty,
+    resolveCanonicalSeriesMappings: async () => new Map([[mediaId, root]]),
+    resolveAniBridgeMappings: empty,
+    resolveTsvMappings: empty,
+    resolveImdbMappings: async (rows) => rows.some((row) => row.title?.english === root.canonicalTitle)
+      ? new Map([[mediaId, [{
+        source: "imdb-search-canonical-series",
+        anilistId: mediaId,
+        type: "TV",
+        imdbIds: ["tt13884052"],
+        tvdbId: null,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: root.canonicalTitle,
+        titles: [root.canonicalTitle],
+        year: root.canonicalYear,
+        relation: false,
+      }]]])
+      : new Map(),
+    resolveSecondaryMappings: empty,
+    resolveAlternativeMappings: empty,
+  });
+
+  assert.equal(result[0].id, "tmdb:117061");
+  assert.equal(result[0].extra.identityProvider, "tmdb");
+});
+
 test("seasonal and rolling catalogs cross-verify relation-derived TMDB identities consistently", async () => {
   const now = new Date("2026-10-01T00:00:00.000Z");
   const mediaId = 209465;
