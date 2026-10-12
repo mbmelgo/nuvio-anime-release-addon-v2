@@ -52,6 +52,7 @@ test("snapshot version selection uses semantic numeric ordering and ignores inva
         "origin/catalog-snapshots/v1.100.0",
         "origin/catalog-snapshots/v1.101.0",
         "origin/catalog-snapshots/vgarbage",
+        "origin/catalog-snapshots/v01.99.0",
         "origin/catalog-snapshots/v1.999999999999999999999.0.0",
       ].join("\n"),
     },
