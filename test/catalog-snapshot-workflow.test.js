@@ -53,7 +53,7 @@ test("snapshot version selection uses semantic numeric ordering and ignores inva
         "origin/catalog-snapshots/v1.101.0",
         "origin/catalog-snapshots/vgarbage",
         "origin/catalog-snapshots/v1.999999999999999999999.0.0",
-      ].join("\\n"),
+      ].join("\n"),
     },
   );
 
@@ -73,7 +73,7 @@ test("snapshot version selection returns no version when no valid earlier ref ex
         "origin/catalog-snapshots/v1.100.0",
         "origin/catalog-snapshots/v1.101.0",
         "origin/catalog-snapshots/vmalformed",
-      ].join("\\n"),
+      ].join("\n"),
     },
   );
 
