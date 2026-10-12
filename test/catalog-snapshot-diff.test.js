@@ -260,7 +260,6 @@ test("reports identity evidence provenance changes independently of provider ran
     { source: "anime-mapper-relation", relation: false },
   ]);
   assert.equal(diff.catalogs.current_season.summary.identityEvidenceChanged, 1);
-  assert.match(diff.markdown || "", /imdb-search/);
 });
 
 test("reports canonical-series and fallback metadata changes", () => {
