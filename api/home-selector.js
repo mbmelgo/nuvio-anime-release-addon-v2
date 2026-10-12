@@ -7,16 +7,14 @@ const SAMPLE_IMAGES = [
   ["Seasonal Catalogs", "/docs/images/readme-nuvio-home.png", "Representative seasonal catalog view"],
   ["Season Listing", "/docs/images/readme-nuvio-season.png", "Representative season listing"],
   ["Metadata Detail Flow", "/docs/images/readme-nuvio-detail.png", "Representative anime detail flow"],
-  ["Upcoming — 5 days", "/docs/images/nuvio-upcoming-5-days.png", "Nuvio-style upcoming rolling catalog"],
-  ["Previous — 7 days", "/docs/images/nuvio-previous-7-days.png", "Nuvio-style previous rolling catalog"],
 ];
 
 const CATALOGS = [
   ["Upcoming Season", "upcoming_season", "Anime scheduled for the next season"],
   ["Current Season", "current_season", "Anime in the current season"],
   ["Previous Season", "previous_season", "Anime from the immediately preceding season"],
-  ["Upcoming — 5 days", "upcoming_5_days", "Unique anime with an upcoming airing in the next five days"],
-  ["Previous — 7 days", "previous_7_days", "Unique anime with an airing in the previous seven days"],
+  ["Upcoming — 3 days", "upcoming_3_days", "Unique anime with an upcoming airing within the next three days"],
+  ["Previous — 3 days", "previous_3_days", "Unique anime with an airing within the previous three days"],
 ];
 
 export default function handler(req, res) {
@@ -50,7 +48,7 @@ export default function handler(req, res) {
 
     <section class="panel">
       <h2>Supported catalogs</h2>
-      <p class="note">Three seasonal and two rolling catalogs are exposed. Rolling catalogs use AniList airing schedules, deduplicate by anime, and include only non-adult TV, TV Short, ONA, OVA, Special, and Movie entries.</p>
+      <p class="note">Three seasonal and two rolling catalogs are exposed. Rolling catalogs cover the next three days or previous three days, use AniList airing schedules, deduplicate by anime, and include only non-adult TV, TV Short, ONA, OVA, Special, and Movie entries.</p>
       ${CATALOGS.map(([name, id, description]) => `
       <div class="catalog">
         <div><h3>${name}</h3><p>${description}</p></div>
