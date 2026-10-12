@@ -25,8 +25,8 @@ The season windows are calculated from the current date rather than hard-coded t
 
 Two rolling catalogs complement the seasonal views:
 
-- **Upcoming — 5 days** — unique anime with an upcoming airing within the next five days.
-- **Previous — 7 days** — unique anime with an airing within the previous seven days.
+- **Upcoming — 3 days** — unique anime with an upcoming airing within the next three days.
+- **Previous — 3 days** — unique anime with an airing within the previous three days.
 
 Rolling catalogs use AniList airing schedules, deduplicate by anime, and paginate the resulting unique catalog for Nuvio.
 
@@ -105,13 +105,13 @@ The repository includes representative Nuvio-style screenshots for the addon vie
 
 ### Rolling catalogs
 
-#### Upcoming — 5 days
+#### Upcoming — 3 days
 
-![Upcoming — 5 days sample](docs/images/nuvio-upcoming-5-days.png)
+![Upcoming — 3 days sample](docs/images/nuvio-nuvio-upcoming-5-days.png)
 
-#### Previous — 7 days
+#### Previous — 3 days
 
-![Previous — 7 days sample](docs/images/nuvio-previous-7-days.png)
+![Previous — 3 days sample](docs/images/nuvio-nuvio-previous-7-days.png)
 
 The rolling views are intentionally shown separately so the upcoming and previous release sets are clear.
 
@@ -185,8 +185,8 @@ The landing page provides the manifest, current catalog endpoints, release infor
 | Upcoming Season | `/catalog/series/upcoming_season.json` |
 | Current Season | `/catalog/series/current_season.json` |
 | Previous Season | `/catalog/series/previous_season.json` |
-| Upcoming — 5 days | `/catalog/series/upcoming_5_days.json` |
-| Previous — 7 days | `/catalog/series/previous_7_days.json` |
+| Upcoming — 3 days | `/catalog/series/upcoming_3_days.json` |
+| Previous — 3 days | `/catalog/series/previous_3_days.json` |
 
 Catalog names and season labels are generated dynamically.
 
