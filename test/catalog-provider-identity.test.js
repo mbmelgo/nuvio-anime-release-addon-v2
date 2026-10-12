@@ -282,7 +282,7 @@ test("catalog verifies IMDb after a TMDB-only match before accepting TMDB identi
 });
 
 
-test("catalog prefers strong direct IMDb identity over a TMDB-derived IMDb identity", async () => {
+test("catalog prefers canonical TMDB identity for Bleach TYBW over a direct IMDb mapping", async () => {
   const metas = await canonicalizeCatalogPage([{
     ...row(185874, 60636),
     title: {
@@ -334,8 +334,8 @@ test("catalog prefers strong direct IMDb identity over a TMDB-derived IMDb ident
     resolveAlternativeMappings: empty,
   });
 
-  assert.equal(metas[0].id, "tt14986406");
-  assert.equal(metas[0].extra.identityProvider, "imdb");
+  assert.equal(metas[0].id, "tmdb:30984");
+  assert.equal(metas[0].extra.identityProvider, "tmdb");
 });
 
 
