@@ -335,6 +335,7 @@ test("TMDB resolver enforces a shared deadline across the whole batch", async ()
     title: { english: `Batch Deadline ${index}` },
     startDate: { year: 2026 },
   }));
+  const stats = {};
   const startedAt = Date.now();
   const result = await Promise.race([
     resolveAniListMappingsByTMDB(rows, {
@@ -343,12 +344,17 @@ test("TMDB resolver enforces a shared deadline across the whole batch", async ()
       concurrency: 2,
       timeoutMs: 1000,
       resolverTimeoutMs: 60,
+      diagnostics: stats,
     }),
     new Promise((_, reject) => setTimeout(() => reject(new Error("TMDB batch exceeded its shared time budget")), 250)),
   ]);
   assert.deepEqual([...result], []);
   assert.ok(Date.now() - startedAt < 250);
   assert.ok(calls <= 2, "rows should not keep starting after the shared deadline");
+  assert.equal(stats.rowsRequested, 12);
+  assert.equal(stats.rowsStarted + stats.rowsSkippedDeadline + stats.invalidRows, stats.rowsRequested);
+  assert.ok(stats.rowsDeadlineExhausted > 0);
+  assert.ok(stats.timeouts > 0);
 });
 
 
