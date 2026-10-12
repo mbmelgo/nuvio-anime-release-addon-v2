@@ -345,3 +345,46 @@ test("canonical series identity falls back to IMDb when the canonical TMDB ID is
   assert.equal(selected?.provider, "imdb");
   assert.equal(selected?.id, "tt0434665");
 });
+
+
+test("canonical series identity ignores invalid TMDB IDs and retains the IMDb fallback", () => {
+  const row = media({
+    anilistId: 185874,
+    title: { english: "BLEACH: Thousand-Year Blood War - The Calamity", romaji: "BLEACH: Sennen Kessen-hen - Kashin-tan" },
+    startDate: { year: 2026 },
+  });
+  const records = [
+    {
+      source: "anime-mapper-canonical-series",
+      anilistId: 185874,
+      type: "TV",
+      imdbIds: [],
+      tmdbTvId: 0,
+      tmdbMovieIds: [],
+      title: "Bleach",
+      titles: ["Bleach"],
+      year: 2004,
+      canonicalSeries: true,
+      canonicalSeriesAnilistId: 269,
+      canonicalSeriesMalId: 269,
+      canonicalSeriesTitle: "Bleach",
+    },
+    {
+      source: "imdb-search-canonical-series",
+      anilistId: 185874,
+      type: "TV",
+      imdbIds: ["tt0434665"],
+      title: "Bleach",
+      titles: ["Bleach"],
+      year: 2004,
+      canonicalSeries: true,
+      canonicalSeriesAnilistId: 269,
+      canonicalSeriesMalId: 269,
+      canonicalSeriesTitle: "Bleach",
+    },
+  ];
+
+  const selected = selectProviderIdentity(row, getProviderCandidates(row, records));
+  assert.equal(selected?.provider, "imdb");
+  assert.equal(selected?.id, "tt0434665");
+});
