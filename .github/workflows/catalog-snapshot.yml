@@ -285,6 +285,8 @@ jobs:
           RELEASE_VERSION: ${{ steps.release.outputs.version }}
         run: |
           set -euo pipefail
+          # Explicitly fetch snapshot refs: checkout's default refspec only tracks the release branch.
+          git fetch --quiet origin '+refs/heads/catalog-snapshots/v*:refs/remotes/origin/catalog-snapshots/v*' || true
           before_version="$(python - <<'PY'
           import re
           import subprocess
@@ -293,12 +295,12 @@ jobs:
           current = os.environ["RELEASE_VERSION"]
           current_tuple = tuple(map(int, current.split(".")))
           raw_refs = subprocess.check_output(
-              ["git", "ls-remote", "--heads", "origin", "refs/heads/catalog-snapshots/v*"],
+              ["git", "for-each-ref", "--format=%(refname:short)", "refs/remotes/origin/catalog-snapshots/v*"],
               text=True,
           )
           versions = []
-          for line in raw_refs.splitlines():
-              ref = line.split("\t", 1)[-1].removeprefix("refs/heads/catalog-snapshots/")
+          for ref in raw_refs.splitlines():
+              ref = ref.removeprefix("origin/catalog-snapshots/")
               match = re.fullmatch(r"v(\d+)\.(\d+)\.(\d+)", ref)
               if match:
                   versions.append(tuple(map(int, match.groups())))

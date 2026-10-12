@@ -21,3 +21,19 @@ test("catalog snapshots capture the canonical series protocol across every page"
   assert.match(workflow, /glob\("page-\[0-9\]\[0-9\]\[0-9\]\[0-9\]\.json"\)/);
   assert.match(workflow, /request metadata count does not match response page count/);
 });
+
+
+test("release diff discovers previous snapshot branches from fetched local refs", () => {
+  assert.match(
+    workflow,
+    /git fetch --quiet origin[\s\S]*?refs\/heads\/catalog-snapshots\/v\*:refs\/remotes\/origin\/catalog-snapshots\/v\*/,
+  );
+  assert.match(
+    workflow,
+    /"git", "for-each-ref", "--format=%\(refname:short\)", "refs\/remotes\/origin\/catalog-snapshots\/v\*"/,
+  );
+  assert.doesNotMatch(
+    workflow,
+    /git ls-remote --heads origin refs\/heads\/catalog-snapshots\/v\*/,
+  );
+});
