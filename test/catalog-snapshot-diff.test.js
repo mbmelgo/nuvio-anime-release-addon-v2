@@ -386,13 +386,10 @@ test("CLI generates JSON and Markdown from snapshot directories", async () => {
         path.join(directory, "capture-metadata.json"),
         JSON.stringify({ releaseVersion: version }),
       );
-      for (const catalog of [
-        "current_season",
-        "previous_season",
-        "upcoming_season",
-        "upcoming_5_days",
-        "previous_7_days",
-      ]) {
+      const catalogNames = version === "1.51.0"
+        ? ["current_season", "previous_season", "upcoming_season", "upcoming_5_days", "previous_7_days"]
+        : ["current_season", "previous_season", "upcoming_season", "upcoming_3_days", "previous_3_days"];
+      for (const catalog of catalogNames) {
         const metas = catalog === "current_season"
           ? [{
               id: version === "1.51.0" ? "tt100" : "tt39122769",
@@ -425,6 +422,7 @@ test("CLI generates JSON and Markdown from snapshot directories", async () => {
     const diff = JSON.parse(fs.readFileSync(path.join(outputDir, "release-diff.json"), "utf8"));
     assert.equal(diff.beforeReleaseVersion, "1.51.0");
     assert.equal(diff.afterReleaseVersion, "1.52.0");
+    assert.deepEqual(Object.keys(diff.catalogs).sort(), ["current_season", "previous_3_days", "previous_season", "upcoming_3_days", "upcoming_season"]);
     assert.equal(diff.catalogs.current_season.summary.identityEvidenceChanged, 1);
     assert.equal(diff.catalogs.current_season.summary.canonicalSeriesChanged, 1);
     const markdown = fs.readFileSync(path.join(outputDir, "release-diff.md"), "utf8");
