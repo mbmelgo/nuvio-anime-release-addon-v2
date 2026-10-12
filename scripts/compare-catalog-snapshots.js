@@ -58,20 +58,20 @@ function renderMarkdown(diff) {
   const lines = [
     `# Catalog release diff: v${diff.beforeReleaseVersion} → v${diff.afterReleaseVersion}`,
     "",
-    "| Catalog | Before | After | Added | Removed | Matched | Unchanged | Improved | Degraded | Provider | Evidence | Canonical | Fallback | Title | Season | Year | Order |",
+    "| Catalog | Before | After | Added | Removed | Matched | Unchanged | Provider rank ↑ | Provider rank ↓ | Provider | Evidence | Canonical | Fallback | Title | Season | Year | Order |",
     "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
   ];
 
   for (const catalog of Object.values(diff.catalogs)) {
     const s = catalog.summary;
     lines.push(
-      `| ${catalog.catalog} | ${s.before} | ${s.after} | ${s.added} | ${s.removed} | ${s.matched} | ${s.unchanged} | ${s.identityImproved} | ${s.identityDegraded} | ${s.providerChanged} | ${s.identityEvidenceChanged} | ${s.canonicalSeriesChanged} | ${s.identityFallbackChanged} | ${s.titleChanged} | ${s.seasonChanged} | ${s.yearChanged} | ${s.orderingChanged} |`,
+      `| ${catalog.catalog} | ${s.before} | ${s.after} | ${s.added} | ${s.removed} | ${s.matched} | ${s.unchanged} | ${s.providerRankImproved} | ${s.providerRankDegraded} | ${s.providerChanged} | ${s.identityEvidenceChanged} | ${s.canonicalSeriesChanged} | ${s.identityFallbackChanged} | ${s.titleChanged} | ${s.seasonChanged} | ${s.yearChanged} | ${s.orderingChanged} |`,
     );
   }
 
   const t = diff.totals;
   lines.push(
-    `| **Total** | **${t.before}** | **${t.after}** | **${t.added}** | **${t.removed}** | **${t.matched}** | **${t.unchanged}** | **${t.identityImproved}** | **${t.identityDegraded}** | **${t.providerChanged}** | **${t.identityEvidenceChanged}** | **${t.canonicalSeriesChanged}** | **${t.identityFallbackChanged}** | **${t.titleChanged}** | **${t.seasonChanged}** | **${t.yearChanged}** | **${t.orderingChanged}** |`,
+    `| **Total** | **${t.before}** | **${t.after}** | **${t.added}** | **${t.removed}** | **${t.matched}** | **${t.unchanged}** | **${t.providerRankImproved}** | **${t.providerRankDegraded}** | **${t.providerChanged}** | **${t.identityEvidenceChanged}** | **${t.canonicalSeriesChanged}** | **${t.identityFallbackChanged}** | **${t.titleChanged}** | **${t.seasonChanged}** | **${t.yearChanged}** | **${t.orderingChanged}** |`,
   );
 
   const changed = Object.values(diff.catalogs)
