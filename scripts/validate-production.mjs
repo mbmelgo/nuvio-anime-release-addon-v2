@@ -2,8 +2,8 @@ export const PRODUCTION_CATALOG_IDS = [
   "upcoming_season",
   "current_season",
   "previous_season",
-  "upcoming_5_days",
-  "previous_7_days",
+  "upcoming_3_days",
+  "previous_3_days",
 ];
 
 const ID_PATTERN = /^(tt\d+|tvdb:[1-9]\d*|tmdb:[1-9]\d*|mal:[1-9]\d*|anilist:[1-9]\d*)$/;
@@ -35,15 +35,15 @@ export function validateCatalog(catalog, catalogId) {
     if (!ID_PATTERN.test(String(meta.id || ""))) throw new Error(`${catalogId}: invalid catalog identity ${meta.id}.`);
   }
 
-  if (catalogId === "upcoming_5_days") {
+  if (catalogId === "upcoming_3_days") {
     if (catalog.metas.some((meta) => !Number.isInteger(Number(meta?.extra?.nextEpisode)) || !Number.isInteger(Number(meta?.extra?.nextAiringAt)))) {
-      throw new Error("upcoming_5_days: entries must expose next episode and next airing metadata.");
+      throw new Error("upcoming_3_days: entries must expose next episode and next airing metadata.");
     }
   }
 
-  if (catalogId === "previous_7_days") {
+  if (catalogId === "previous_3_days") {
     if (catalog.metas.some((meta) => Object.hasOwn(meta?.extra || {}, "nextEpisode") || Object.hasOwn(meta?.extra || {}, "nextAiringAt"))) {
-      throw new Error("previous_7_days: future-only airing metadata must not be present.");
+      throw new Error("previous_3_days: future-only airing metadata must not be present.");
     }
   }
 

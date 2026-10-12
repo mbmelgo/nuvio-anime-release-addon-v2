@@ -8,7 +8,7 @@ test("rolling catalog search resolves only matching rows", async () => {
   const calls = [];
 
   const result = await buildRollingCatalog(
-    "upcoming_5_days",
+    "upcoming_3_days",
     new Date("2026-10-04T00:00:00+08:00"),
     0,
     "Target Anime",

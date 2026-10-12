@@ -66,7 +66,7 @@ test("catalog definitions expose exactly the supported five catalogs with one co
 
   assert.deepEqual(
     definitions.map(({ id }) => id),
-    ["upcoming_season", "current_season", "previous_season", "upcoming_5_days", "previous_7_days"],
+    ["upcoming_season", "current_season", "previous_season", "upcoming_3_days", "previous_3_days"],
   );
   assert.equal(new Set(definitions.map(({ id }) => id)).size, definitions.length);
 
@@ -144,7 +144,7 @@ test("upcoming rolling catalog returns unique contract-valid anime and coherent 
     schedule(4, now.getTime() + 300_000, 1, { isAdult: true }),
   ];
 
-  const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+  const result = await buildRollingCatalog("upcoming_3_days", now, 0, "", {
     fetchPage: async () => rows,
     maxPages: 1,
     resolveMappings: async (ids) => new Map(ids.map((id) => [id, [{ source: "test", anilistId: id, type: "TV", imdbIds: [`tt${10000000 + id}`], tvdbId: null, tmdbTvId: null, tmdbMovieIds: [] }]])),
@@ -173,7 +173,7 @@ test("rolling catalogs apply the same canonical series identity as seasonal cata
     canonicalTitle: "JoJo's Bizarre Adventure",
     canonicalYear: 2012,
   }]]);
-  const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+  const result = await buildRollingCatalog("upcoming_3_days", now, 0, "", {
     fetchPage: async () => rows,
     maxPages: 1,
     resolveMappings: async () => new Map(),
@@ -205,7 +205,7 @@ test("previous rolling catalog returns unique contract-valid anime without futur
     schedule(2, now.getTime() - 180_000, 3),
   ];
 
-  const result = await buildRollingCatalog("previous_7_days", now, 0, "", {
+  const result = await buildRollingCatalog("previous_3_days", now, 0, "", {
     fetchPage: async () => rows,
     maxPages: 1,
     resolveMappings: async (ids) => new Map(ids.map((id) => [id, [{ source: "test", anilistId: id, type: "TV", imdbIds: [`tt${10000000 + id}`], tvdbId: null, tmdbTvId: null, tmdbMovieIds: [] }]])),

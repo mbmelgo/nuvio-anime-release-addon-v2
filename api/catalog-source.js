@@ -4,8 +4,8 @@ import {
   NUVIO_PAGE_SIZE,
   buildCatalogMediaVariables,
   catalogDefinitions as getCatalogDefinitions,
-  getNext5DaysRangeManila,
-  getPrevious7DaysRangeManila,
+  getNext3DaysRangeManila,
+  getPrevious3DaysRangeManila,
   getSeasonInfo as getSeasonInfoValue,
   parseCatalogExtraPath,
 } from "../lib/catalog-config.js";
@@ -36,8 +36,8 @@ export {
   ANILIST_PAGE_SIZE,
   NUVIO_PAGE_SIZE,
   buildCatalogMediaVariables,
-  getNext5DaysRangeManila,
-  getPrevious7DaysRangeManila,
+  getNext3DaysRangeManila,
+  getPrevious3DaysRangeManila,
   parseCatalogExtraPath,
   filterCatalogMetasBySearch,
   toMetaFromAniList,
@@ -1527,8 +1527,8 @@ export async function fetchValidatedSeasonCatalogPage({
 }
 
 export function getRollingCatalogRange(id, date) {
-  if (id === "upcoming_5_days") return getNext5DaysRangeManila(date);
-  if (id === "previous_7_days") return getPrevious7DaysRangeManila(date);
+  if (id === "upcoming_3_days") return getNext3DaysRangeManila(date);
+  if (id === "previous_3_days") return getPrevious3DaysRangeManila(date);
   return null;
 }
 
@@ -1564,7 +1564,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
       ? resolveAniListCanonicalSeriesByAnimeMapper
       : async () => new Map());
   if (!range) return [];
-  const futureOnly = id === "upcoming_5_days";
+  const futureOnly = id === "upcoming_3_days";
   const sort = futureOnly ? "TIME" : "TIME_DESC";
   // Share one TMDB budget across all AniList pages consumed by this rolling request.
   const tmdbResolverBudget = { deadlineAt: null };
