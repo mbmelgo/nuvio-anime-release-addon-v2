@@ -324,9 +324,9 @@ test("TMDB resolver reports bounded aggregate diagnostics without exposing row i
 
 test("TMDB resolver enforces a shared deadline across the whole batch", async () => {
   resetTMDBMappingCache();
-  let calls = 0;
+  const callTimes = [];
   const fetchImpl = async () => {
-    calls += 1;
+    callTimes.push(Date.now());
     return new Promise(() => {});
   };
   const rows = Array.from({ length: 12 }, (_, index) => ({
@@ -337,20 +337,22 @@ test("TMDB resolver enforces a shared deadline across the whole batch", async ()
   }));
   const stats = {};
   const startedAt = Date.now();
+  const deadlineAt = startedAt + 60;
   const result = await Promise.race([
     resolveAniListMappingsByTMDB(rows, {
       token: "test-token",
       fetchImpl,
       concurrency: 2,
       timeoutMs: 1000,
-      resolverTimeoutMs: 60,
+      resolverTimeoutMs: 1000,
+      resolverDeadlineAt: deadlineAt,
       diagnostics: stats,
     }),
     new Promise((_, reject) => setTimeout(() => reject(new Error("TMDB batch exceeded its shared time budget")), 250)),
   ]);
   assert.deepEqual([...result], []);
   assert.ok(Date.now() - startedAt < 250);
-  assert.ok(calls <= 2, "rows should not keep starting after the shared deadline");
+  assert.ok(callTimes.every((time) => time < deadlineAt), "no row may start after the shared deadline");
   assert.equal(stats.rowsRequested, 12);
   assert.equal(stats.rowsStarted + stats.rowsSkippedDeadline + stats.invalidRows, stats.rowsRequested);
   assert.ok(stats.rowsDeadlineExhausted > 0);
