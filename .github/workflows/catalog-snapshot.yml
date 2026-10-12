@@ -87,8 +87,8 @@ jobs:
               "current_season",
               "previous_season",
               "upcoming_season",
-              "upcoming_5_days",
-              "previous_7_days",
+              "upcoming_3_days",
+              "previous_3_days",
           }
           actual = [entry.get("id") for entry in manifest.get("catalogs", [])]
           types = [entry.get("type") for entry in manifest.get("catalogs", [])]
@@ -100,7 +100,7 @@ jobs:
               raise SystemExit(f"Unexpected catalog protocol types: {types!r}")
           PY
 
-          for catalog in current_season previous_season upcoming_season upcoming_5_days previous_7_days; do
+          for catalog in current_season previous_season upcoming_season upcoming_3_days previous_3_days; do
             mkdir -p "$snapshot_dir/pages/$catalog"
             page=1
             skip=0
@@ -222,8 +222,8 @@ jobs:
               "current_season",
               "previous_season",
               "upcoming_season",
-              "upcoming_5_days",
-              "previous_7_days",
+              "upcoming_3_days",
+              "previous_3_days",
           ]
           hashes = {}
           item_counts = {}
