@@ -60,7 +60,7 @@ The comparator reports:
 
 - added and removed entries
 - unchanged entries
-- identity improvements and degradations
+- provider-rank changes, reported separately from actual identity changes
 - provider changes and identity changes
 - title, year, and explicitly exposed season changes
 - ordering changes among matched entries
