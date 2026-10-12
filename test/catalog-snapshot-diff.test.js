@@ -56,7 +56,7 @@ test("matches by AniList before MAL or title fallback", () => {
   assert.ok(change.changeTypes.includes("identity_changed"));
 });
 
-test("classifies provider and identity quality changes", () => {
+test("reports provider-rank changes separately from identity changes", () => {
   const before = snapshot("1.51.0", {
     current_season: [
       item(),
@@ -77,13 +77,13 @@ test("classifies provider and identity quality changes", () => {
   });
 
   const changes = diffChanges(compareCatalogSnapshots(before, after));
-  assert.ok(changes[0].changeTypes.includes("identity_degraded"));
+  assert.ok(changes[0].changeTypes.includes("provider_rank_degraded"));
   assert.ok(changes[0].changeTypes.includes("provider_changed"));
-  assert.ok(changes[1].changeTypes.includes("identity_improved"));
+  assert.ok(changes[1].changeTypes.includes("provider_rank_improved"));
   assert.ok(changes[1].changeTypes.includes("provider_changed"));
 });
 
-test("classifies loss of canonical-series resolution as degradation even when provider rank improves", () => {
+test("does not call canonical-series flag loss a quality degradation when provider rank improves", () => {
   const before = snapshot("1.100.0", {
     previous_season: [item({
       id: "tt34869012",
