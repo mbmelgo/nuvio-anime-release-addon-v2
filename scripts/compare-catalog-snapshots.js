@@ -35,8 +35,18 @@ function loadSnapshot(directory) {
   }
 
   const catalogs = {};
+  const legacyCatalogNames = {
+    upcoming_3_days: "upcoming_5_days",
+    previous_3_days: "previous_7_days",
+  };
   for (const catalog of DEFAULT_CATALOGS) {
-    catalogs[catalog] = readJson(path.join(directory, `${catalog}.json`));
+    const currentPath = path.join(directory, `${catalog}.json`);
+    const legacyPath = path.join(directory, `${legacyCatalogNames[catalog] || ""}.json`);
+    const sourcePath = fs.existsSync(currentPath) ? currentPath : legacyPath;
+    if (!fs.existsSync(sourcePath)) {
+      throw new Error(`Missing snapshot for ${catalog} (also checked its legacy catalog name)`);
+    }
+    catalogs[catalog] = readJson(sourcePath);
   }
 
   return {
