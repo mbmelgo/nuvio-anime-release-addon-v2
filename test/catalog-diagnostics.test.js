@@ -2,6 +2,41 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { formatCatalogDiagnostics, mergeCatalogDiagnosticStages, normalizeCatalogOptions } from "../api/catalog-source.js";
 
+test("TMDB resolver log summary includes stage duration and only aggregate counters", async () => {
+  const { formatTMDBResolverSummary } = await import("../api/catalog-source.js");
+  assert.deepEqual(formatTMDBResolverSummary(48, 1234.6, {
+    rowsRequested: 48,
+    rowsStarted: 48,
+    rowsResolved: 30,
+    rowsNoMatch: 17,
+    rowsSkippedDeadline: 0,
+    rowsSkippedUnavailable: 0,
+    invalidRows: 0,
+    rowErrors: 1,
+    httpErrors: 1,
+    http429Errors: 1,
+    timeouts: 1,
+    rowsDeadlineExhausted: 1,
+    anilistId: 178083,
+    title: "must not be logged",
+  }), {
+    catalogRows: 48,
+    tmdbDurationMs: 1235,
+    rowsRequested: 48,
+    rowsStarted: 48,
+    rowsResolved: 30,
+    rowsNoMatch: 17,
+    rowsSkippedDeadline: 0,
+    rowsSkippedUnavailable: 0,
+    invalidRows: 0,
+    rowErrors: 1,
+    httpErrors: 1,
+    http429Errors: 1,
+    timeouts: 1,
+    rowsDeadlineExhausted: 1,
+  });
+});
+
 test("catalog diagnostics expose stable duration and cold-start headers", () => {
   assert.deepEqual(
     formatCatalogDiagnostics(12.7, true, { arm: 4.4, canonical: 9.8 }),
