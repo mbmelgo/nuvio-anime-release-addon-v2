@@ -125,8 +125,8 @@ export function mergeCatalogDiagnosticStages(target, pageStages) {
 }
 
 export default async function handler(req, res) {
-  // Vercel's legacy IncomingMessage adapter currently parses req.url through
-  // deprecated url.parse(). Rewrites already pass route values through req.query,
+  // Vercel's legacy IncomingMessage adapter uses a deprecated parser when its
+  // request URL accessor is read. Rewrites already pass route values through req.query,
   // so use those normalized parameters instead of touching the adapter getter.
   const queryParams = req.query || {};
   const pathExtra = parseCatalogExtraPath(queryParams.extra ?? "");
