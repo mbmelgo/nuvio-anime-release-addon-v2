@@ -627,18 +627,41 @@ async function resolveMappingsForRows(
     }
     if (canonicalRows.length) {
       const canonicalImdb = await resolveImdbMappings(canonicalRows);
-      for (const [currentId, records] of canonicalImdb instanceof Map ? canonicalImdb : []) {
-        const root = canonicalByCurrentId.get(Number(currentId));
+      for (const [currentId, root] of canonicalByCurrentId) {
         if (!root) continue;
-        const canonicalRecords = (Array.isArray(records) ? records : []).map((record) => ({
-          ...record,
-          source: "imdb-search-canonical-series",
-          canonicalSeries: true,
-          canonicalSeriesAnilistId: root.canonicalAnilistId,
-          canonicalSeriesMalId: root.canonicalMalId,
-          canonicalSeriesTitle: root.canonicalTitle,
-          relation: false,
-        }));
+        const records = canonicalImdb instanceof Map ? canonicalImdb.get(Number(currentId)) : [];
+        const canonicalTmdbId = Number(root?.mappings?.tmdb);
+        const canonicalTmdbRecords = Number.isInteger(canonicalTmdbId) && canonicalTmdbId > 0
+          ? [{
+              source: "anime-mapper-canonical-series",
+              anilistId: Number(currentId),
+              type: "TV",
+              imdbIds: [],
+              tvdbId: null,
+              tmdbTvId: canonicalTmdbId,
+              tmdbMovieIds: [],
+              title: root.canonicalTitle,
+              titles: [root.canonicalTitle],
+              year: root.canonicalYear || null,
+              canonicalSeries: true,
+              canonicalSeriesAnilistId: root.canonicalAnilistId,
+              canonicalSeriesMalId: root.canonicalMalId,
+              canonicalSeriesTitle: root.canonicalTitle,
+              relation: false,
+            }]
+          : [];
+        const canonicalRecords = [
+          ...canonicalTmdbRecords,
+          ...(Array.isArray(records) ? records : []).map((record) => ({
+            ...record,
+            source: "imdb-search-canonical-series",
+            canonicalSeries: true,
+            canonicalSeriesAnilistId: root.canonicalAnilistId,
+            canonicalSeriesMalId: root.canonicalMalId,
+            canonicalSeriesTitle: root.canonicalTitle,
+            relation: false,
+          })),
+        ];
         const currentRow = rows.find((row) => Number(row?.id) === Number(currentId));
         const currentCandidates = currentRow
           ? getProviderCandidates(
@@ -1419,20 +1442,33 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
     const rawMeta = toCatalogIdentity(toMetaFromAniList(anilistId, row));
     if (!rawMeta) { unresolvedIds.push(anilistId); continue; }
     const meta = normalizeSeasonalCatalogMetaTypes([rawMeta])[0];
-    const canonicalSeriesRecord = (mappings.get(anilistId) || []).find((record) =>
+    const canonicalSeriesRecords = (mappings.get(anilistId) || []).filter((record) =>
       record?.canonicalSeries === true
-      && Array.isArray(record?.imdbIds)
-      && record.imdbIds.some((id) => /^tt\d+$/.test(String(id))),
+      && (
+        (Number.isInteger(Number(record?.tmdbTvId)) && Number(record.tmdbTvId) > 0)
+        || (Array.isArray(record?.imdbIds) && record.imdbIds.some((id) => /^tt\d+$/.test(String(id))))
+      ),
+    );
+    const canonicalSeriesRecord = canonicalSeriesRecords.find((record) =>
+      Number.isInteger(Number(record?.tmdbTvId)) && Number(record.tmdbTvId) > 0,
+    ) || canonicalSeriesRecords.find((record) =>
+      Array.isArray(record?.imdbIds) && record.imdbIds.some((id) => /^tt\d+$/.test(String(id))),
     );
     if (canonicalSeriesRecord) {
-      const canonicalImdbId = canonicalSeriesRecord.imdbIds.find((id) => /^tt\d+$/.test(String(id)));
+      const canonicalProvider = Number.isInteger(Number(canonicalSeriesRecord.tmdbTvId))
+        && Number(canonicalSeriesRecord.tmdbTvId) > 0
+        ? "tmdb"
+        : "imdb";
+      const canonicalProviderId = canonicalProvider === "tmdb"
+        ? String(Number(canonicalSeriesRecord.tmdbTvId))
+        : String(canonicalSeriesRecord.imdbIds.find((id) => /^tt\d+$/.test(String(id))));
       metas.push({
         ...meta,
-        id: canonicalImdbId,
+        id: canonicalProvider === "tmdb" ? `tmdb:${canonicalProviderId}` : canonicalProviderId,
         extra: {
           ...meta.extra,
-          identityProvider: "imdb",
-          identityId: canonicalImdbId,
+          identityProvider: canonicalProvider,
+          identityId: canonicalProviderId,
           identityCanonicalSeries: true,
           identityCanonicalSeriesAnilistId: canonicalSeriesRecord.canonicalSeriesAnilistId,
           identityCanonicalSeriesMalId: canonicalSeriesRecord.canonicalSeriesMalId,
