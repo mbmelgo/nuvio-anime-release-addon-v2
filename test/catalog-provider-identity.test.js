@@ -335,7 +335,7 @@ test("catalog prefers canonical TMDB identity for Bleach TYBW over a direct IMDb
   });
 
   assert.equal(metas[0].id, "tmdb:30984");
-  assert.equal(metas[0].extra.identityProvider, "imdb");
+  assert.equal(metas[0].extra.identityProvider, "tmdb");
 });
 
 
