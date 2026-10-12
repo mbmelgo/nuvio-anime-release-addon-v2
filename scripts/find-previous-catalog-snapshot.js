@@ -15,7 +15,7 @@ for (const rawRef of refs) {
   const ref = rawRef.trim();
   if (!ref) continue;
 
-  const match = /^(?:origin\/catalog-snapshots\/|refs\/remotes\/origin\/catalog-snapshots\/)?v(\d+)\.(\d+)\.(\d+)$/.exec(ref);
+  const match = /^(?:origin\/catalog-snapshots\/|refs\/remotes\/origin\/catalog-snapshots\/)?v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(ref);
   if (!match) continue;
 
   const version = match.slice(1).map(Number);
@@ -29,7 +29,7 @@ if (candidates.length) {
 }
 
 function parseVersion(value) {
-  const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(value);
+  const match = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(value);
   if (!match) return null;
   const version = match.slice(1).map(Number);
   return version.every(Number.isSafeInteger) ? version : null;
