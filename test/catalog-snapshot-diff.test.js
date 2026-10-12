@@ -56,7 +56,7 @@ test("matches by AniList before MAL or title fallback", () => {
   assert.ok(change.changeTypes.includes("identity_changed"));
 });
 
-test("classifies provider and identity quality changes", () => {
+test("reports provider-rank changes separately from identity changes", () => {
   const before = snapshot("1.51.0", {
     current_season: [
       item(),
@@ -77,10 +77,51 @@ test("classifies provider and identity quality changes", () => {
   });
 
   const changes = diffChanges(compareCatalogSnapshots(before, after));
-  assert.ok(changes[0].changeTypes.includes("identity_degraded"));
+  assert.ok(changes[0].changeTypes.includes("provider_rank_degraded"));
   assert.ok(changes[0].changeTypes.includes("provider_changed"));
-  assert.ok(changes[1].changeTypes.includes("identity_improved"));
+  assert.ok(changes[1].changeTypes.includes("provider_rank_improved"));
   assert.ok(changes[1].changeTypes.includes("provider_changed"));
+});
+
+test("does not call canonical-series flag loss a quality degradation when provider rank improves", () => {
+  const before = snapshot("1.100.0", {
+    previous_season: [item({
+      id: "tt34869012",
+      extra: {
+        anilistId: 213359,
+        malId: 64435,
+        identityProvider: "imdb",
+        identityId: "tt34869012",
+        identityCanonicalSeries: true,
+        identityCanonicalSeriesTitle: "Theatre of Darkness: Yamishibai 8",
+      },
+    })],
+  });
+  const after = snapshot("1.101.0", {
+    previous_season: [item({
+      id: "tmdb:56559",
+      extra: {
+        anilistId: 213359,
+        malId: 64435,
+        identityProvider: "tmdb",
+        identityId: "56559",
+        identityCanonicalSeries: false,
+        identityCanonicalSeriesTitle: null,
+      },
+    })],
+  });
+
+  const diff = compareCatalogSnapshots(before, after);
+  const change = diff.catalogs.previous_season.changes[0];
+
+  assert.equal(diff.schemaVersion, 2);
+  assert.ok(change.changeTypes.includes("canonical_series_changed"));
+  assert.ok(change.changeTypes.includes("provider_rank_improved"));
+  assert.ok(!change.changeTypes.includes("provider_rank_degraded"));
+  assert.equal(change.changeTypes.includes("identity_improved"), false);
+  assert.equal(change.changeTypes.includes("identity_degraded"), false);
+  assert.equal(diff.catalogs.previous_season.summary.providerRankImproved, 1);
+  assert.equal(diff.catalogs.previous_season.summary.providerRankDegraded, 0);
 });
 
 test("ranks provider identities with TMDB first, IMDb second, and TVDB third", () => {
@@ -102,10 +143,10 @@ test("ranks provider identities with TMDB first, IMDb second, and TVDB third", (
   });
 
   const changes = diffChanges(compareCatalogSnapshots(before, after));
-  assert.ok(changes[0].changeTypes.includes("identity_improved"), "TMDB must outrank TVDB");
-  assert.ok(changes[1].changeTypes.includes("identity_degraded"), "TVDB must rank below IMDb");
-  assert.ok(changes[2].changeTypes.includes("identity_improved"), "IMDb must outrank MAL");
-  assert.ok(changes[3].changeTypes.includes("identity_improved"), "MAL must outrank AniList");
+  assert.ok(changes[0].changeTypes.includes("provider_rank_improved"), "TMDB must outrank TVDB");
+  assert.ok(changes[1].changeTypes.includes("provider_rank_degraded"), "TVDB must rank below IMDb");
+  assert.ok(changes[2].changeTypes.includes("provider_rank_improved"), "IMDb must outrank MAL");
+  assert.ok(changes[3].changeTypes.includes("provider_rank_improved"), "MAL must outrank AniList");
 });
 
 test("treats unranked providers as the lowest-priority identity", () => {
@@ -116,8 +157,8 @@ test("treats unranked providers as the lowest-priority identity", () => {
     current_season: [item({ id: "tmdb:100", extra: { anilistId: 100, malId: 200, identityProvider: "tmdb", identityId: "100" } })],
   });
   const change = diffChanges(compareCatalogSnapshots(before, after))[0];
-  assert.ok(change.changeTypes.includes("identity_improved"));
-  assert.ok(!change.changeTypes.includes("identity_degraded"));
+  assert.ok(change.changeTypes.includes("provider_rank_improved"));
+  assert.ok(!change.changeTypes.includes("provider_rank_degraded"));
 });
 
 test("detects title, year, and explicit season changes without inventing season data", () => {
@@ -388,6 +429,8 @@ test("CLI generates JSON and Markdown from snapshot directories", async () => {
     assert.equal(diff.catalogs.current_season.summary.canonicalSeriesChanged, 1);
     const markdown = fs.readFileSync(path.join(outputDir, "release-diff.md"), "utf8");
     assert.match(markdown, /Catalog release diff: v1\.51\.0 → v1\.52\.0/);
+    assert.match(markdown, /Provider rank ↑/);
+    assert.match(markdown, /Provider rank ↓/);
     assert.match(markdown, /Evidence/);
     assert.match(markdown, /imdb-search \(season 2, episode offset 0\) → previous-production-snapshot \(v1\.74\.0\)/);
     assert.match(markdown, /canonical series: no → yes \(Example Anime\)/);
