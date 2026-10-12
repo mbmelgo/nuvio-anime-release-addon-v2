@@ -346,7 +346,24 @@ test("CLI generates JSON and Markdown from snapshot directories", async () => {
         "upcoming_5_days",
         "previous_7_days",
       ]) {
-        fs.writeFileSync(path.join(directory, `${catalog}.json`), JSON.stringify({ metas: [] }));
+        const metas = catalog === "current_season"
+          ? [{
+              id: version === "1.51.0" ? "tt100" : "tmdb:900",
+              type: "series",
+              name: "Example Anime",
+              releaseInfo: "2026",
+              extra: {
+                anilistId: 100,
+                identityProvider: version === "1.51.0" ? "imdb" : "tmdb",
+                identityId: version === "1.51.0" ? "tt100" : "900",
+                identityEvidence: [{
+                  source: version === "1.51.0" ? "imdb-search" : "anime-mapper-relation",
+                  relation: false,
+                }],
+              },
+            }]
+          : [];
+        fs.writeFileSync(path.join(directory, `${catalog}.json`), JSON.stringify({ metas }));
       }
     }
 
@@ -360,10 +377,11 @@ test("CLI generates JSON and Markdown from snapshot directories", async () => {
     const diff = JSON.parse(fs.readFileSync(path.join(outputDir, "release-diff.json"), "utf8"));
     assert.equal(diff.beforeReleaseVersion, "1.51.0");
     assert.equal(diff.afterReleaseVersion, "1.52.0");
-    assert.match(
-      fs.readFileSync(path.join(outputDir, "release-diff.md"), "utf8"),
-      /Catalog release diff: v1\.51\.0 → v1\.52\.0/,
-    );
+    assert.equal(diff.catalogs.current_season.summary.identityEvidenceChanged, 1);
+    const markdown = fs.readFileSync(path.join(outputDir, "release-diff.md"), "utf8");
+    assert.match(markdown, /Catalog release diff: v1\.51\.0 → v1\.52\.0/);
+    assert.match(markdown, /Evidence/);
+    assert.match(markdown, /imdb-search → anime-mapper-relation/);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
