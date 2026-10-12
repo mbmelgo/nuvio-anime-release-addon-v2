@@ -88,6 +88,32 @@ export function formatCatalogDiagnostics(durationMs, coldStart, stages = {}, pro
   };
 }
 
+const TMDB_RESOLVER_SUMMARY_FIELDS = Object.freeze([
+  "rowsRequested",
+  "rowsStarted",
+  "rowsResolved",
+  "rowsNoMatch",
+  "rowsSkippedDeadline",
+  "rowsSkippedUnavailable",
+  "invalidRows",
+  "rowErrors",
+  "httpErrors",
+  "http429Errors",
+  "timeouts",
+  "rowsDeadlineExhausted",
+]);
+
+export function formatTMDBResolverSummary(catalogRows, durationMs, stats = {}) {
+  const summary = {
+    catalogRows: Math.max(0, Math.round(Number(catalogRows) || 0)),
+    tmdbDurationMs: Math.max(0, Math.round(Number(durationMs) || 0)),
+  };
+  for (const field of TMDB_RESOLVER_SUMMARY_FIELDS) {
+    summary[field] = Math.max(0, Math.round(Number(stats?.[field]) || 0));
+  }
+  return summary;
+}
+
 export function mergeCatalogDiagnosticStages(target, pageStages) {
   if (!target || !pageStages) return target;
   for (const [name, value] of Object.entries(pageStages)) {
@@ -280,10 +306,10 @@ async function resolveMappingsForRows(
         diagnostics.tmdb = performance.now() - stageStart;
         if (Number.isFinite(tmdbResolverStats?.rowsRequested)) {
           // Aggregate counters only: no AniList IDs, titles, or provider credentials.
-          console.info("[identity] TMDB resolver summary", {
-            catalogRows: tmdbRows.length,
-            ...tmdbResolverStats,
-          });
+          console.info(
+            "[identity] TMDB resolver summary",
+            formatTMDBResolverSummary(tmdbRows.length, diagnostics.tmdb, tmdbResolverStats),
+          );
         }
       }
     } catch (error) {
