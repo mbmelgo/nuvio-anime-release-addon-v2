@@ -281,3 +281,33 @@ test("TMDB resolver uses a higher but bounded default concurrency for cold batch
   assert.equal(maxActive, 8);
   assert.ok(maxActive <= 8);
 });
+
+
+test("TMDB resolver enforces a shared deadline across the whole batch", async () => {
+  resetTMDBMappingCache();
+  let calls = 0;
+  const fetchImpl = async () => {
+    calls += 1;
+    return new Promise(() => {});
+  };
+  const rows = Array.from({ length: 12 }, (_, index) => ({
+    id: 992000 + index,
+    format: "TV",
+    title: { english: `Batch Deadline ${index}` },
+    startDate: { year: 2026 },
+  }));
+  const startedAt = Date.now();
+  const result = await Promise.race([
+    resolveAniListMappingsByTMDB(rows, {
+      token: "test-token",
+      fetchImpl,
+      concurrency: 2,
+      timeoutMs: 1000,
+      resolverTimeoutMs: 60,
+    }),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("TMDB batch exceeded its shared time budget")), 250)),
+  ]);
+  assert.deepEqual([...result], []);
+  assert.ok(Date.now() - startedAt < 250);
+  assert.ok(calls <= 2, "rows should not keep starting after the shared deadline");
+});
