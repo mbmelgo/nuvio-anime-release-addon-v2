@@ -88,7 +88,7 @@ function renderMarkdown(diff) {
         details.push(`evidence: ${formatIdentityEvidence(change.before)} → ${formatIdentityEvidence(change.after)}`);
       }
       if (change.changeTypes.includes("canonical_series_changed")) {
-        details.push(`canonical series: ${change.before?.identityCanonicalSeries ? "yes" : "no"} → ${change.after?.identityCanonicalSeries ? "yes" : "no"}`);
+        details.push(`canonical series: ${formatCanonicalSeries(change.before)} → ${formatCanonicalSeries(change.after)}`);
       }
       if (change.changeTypes.includes("identity_fallback_changed")) {
         details.push(`fallback: ${change.before?.identityFallback || "none"} → ${change.after?.identityFallback || "none"}`);
@@ -107,5 +107,18 @@ function renderMarkdown(diff) {
 function formatIdentityEvidence(meta) {
   const entries = Array.isArray(meta?.identityEvidence) ? meta.identityEvidence : [];
   if (!entries.length) return "none";
-  return entries.map((entry) => `${entry.source || "unknown"}${entry.version ? ` (v${entry.version})` : ""}${entry.relation ? " (relation)" : ""}`).join(", ");
+  return entries.map((entry) => {
+    const qualifiers = [];
+    if (entry.season) qualifiers.push(`season ${entry.season}`);
+    if (entry.episodeOffset !== undefined) qualifiers.push(`episode offset ${entry.episodeOffset}`);
+    if (entry.version) qualifiers.push(`v${entry.version}`);
+    if (entry.relation) qualifiers.push("relation");
+    return `${entry.source || "unknown"}${qualifiers.length ? ` (${qualifiers.join(", ")})` : ""}`;
+  }).join(", ");
+}
+
+function formatCanonicalSeries(meta) {
+  if (!meta?.identityCanonicalSeries) return "no";
+  const title = String(meta.identityCanonicalSeriesTitle || "").trim();
+  return title ? `yes (${title})` : "yes";
 }
