@@ -115,8 +115,8 @@ test("does not call canonical-series flag loss a quality degradation when provid
   const change = diff.catalogs.previous_season.changes[0];
 
   assert.ok(change.changeTypes.includes("canonical_series_changed"));
-  assert.ok(change.changeTypes.includes("identity_degraded"));
-  assert.ok(!change.changeTypes.includes("identity_improved"));
+  assert.ok(change.changeTypes.includes("provider_rank_improved"));
+  assert.ok(!change.changeTypes.includes("provider_rank_degraded"));
 });
 
 test("ranks provider identities with TMDB first, IMDb second, and TVDB third", () => {
@@ -138,10 +138,10 @@ test("ranks provider identities with TMDB first, IMDb second, and TVDB third", (
   });
 
   const changes = diffChanges(compareCatalogSnapshots(before, after));
-  assert.ok(changes[0].changeTypes.includes("identity_improved"), "TMDB must outrank TVDB");
-  assert.ok(changes[1].changeTypes.includes("identity_degraded"), "TVDB must rank below IMDb");
-  assert.ok(changes[2].changeTypes.includes("identity_improved"), "IMDb must outrank MAL");
-  assert.ok(changes[3].changeTypes.includes("identity_improved"), "MAL must outrank AniList");
+  assert.ok(changes[0].changeTypes.includes("provider_rank_improved"), "TMDB must outrank TVDB");
+  assert.ok(changes[1].changeTypes.includes("provider_rank_degraded"), "TVDB must rank below IMDb");
+  assert.ok(changes[2].changeTypes.includes("provider_rank_improved"), "IMDb must outrank MAL");
+  assert.ok(changes[3].changeTypes.includes("provider_rank_improved"), "MAL must outrank AniList");
 });
 
 test("treats unranked providers as the lowest-priority identity", () => {
@@ -152,8 +152,8 @@ test("treats unranked providers as the lowest-priority identity", () => {
     current_season: [item({ id: "tmdb:100", extra: { anilistId: 100, malId: 200, identityProvider: "tmdb", identityId: "100" } })],
   });
   const change = diffChanges(compareCatalogSnapshots(before, after))[0];
-  assert.ok(change.changeTypes.includes("identity_improved"));
-  assert.ok(!change.changeTypes.includes("identity_degraded"));
+  assert.ok(change.changeTypes.includes("provider_rank_improved"));
+  assert.ok(!change.changeTypes.includes("provider_rank_degraded"));
 });
 
 test("detects title, year, and explicit season changes without inventing season data", () => {
