@@ -91,3 +91,11 @@ test("catalog snapshot workflow compares against the previous snapshot and publi
   assert.match(workflow, /uses: actions\/upload-artifact@v4/);
   assert.match(workflow, /name: catalog-diff-v\$\{\{ steps\.diff\.outputs\.before_version \}\}-to-v\$\{\{ steps\.release\.outputs\.version \}\}/);
 });
+
+test("homepage advertises the current three-day rolling catalogs and endpoints", async () => {
+  const homeSource = fs.readFileSync(new URL("../api/home-selector.js", import.meta.url), "utf8");
+  assert.match(homeSource, /\["Upcoming — 3 days", "upcoming_3_days", "Unique anime with an upcoming airing within the next three days"\]/);
+  assert.match(homeSource, /\["Previous — 3 days", "previous_3_days", "Unique anime with an airing within the previous three days"\]/);
+  assert.doesNotMatch(homeSource, /upcoming_5_days|previous_7_days|Upcoming — 5 days|Previous — 7 days/);
+  assert.doesNotMatch(homeSource, /nuvio-upcoming-5-days|nuvio-previous-7-days/);
+});
