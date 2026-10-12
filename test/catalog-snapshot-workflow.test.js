@@ -30,7 +30,7 @@ test("release diff discovers previous snapshot branches from fetched local refs"
   );
   assert.match(
     workflow,
-    /git for-each-ref --format=.*refs\\/remotes\\/origin\\/catalog-snapshots\\/v\\*/,
+    /"git", "for-each-ref", "--format=%\\(refname:short\\)", "refs\\/remotes\\/origin\\/catalog-snapshots\\/v\\*"//,
   );
   assert.doesNotMatch(
     workflow,
