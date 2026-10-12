@@ -22,20 +22,22 @@ test("catalog snapshots capture the canonical series protocol across every page"
   assert.match(workflow, /request metadata count does not match response page count/);
 });
 
-
 test("release diff discovers previous snapshot branches from fetched local refs", () => {
   assert.match(
     workflow,
     /git fetch --quiet origin[\s\S]*?refs\/heads\/catalog-snapshots\/v\*:refs\/remotes\/origin\/catalog-snapshots\/v\*/,
   );
-  assert.match(workflow, /node scripts\/find-previous-catalog-snapshot\.js "\$RELEASE_VERSION"/);
+  assert.match(
+    workflow,
+    /node scripts\\/find-previous-catalog-snapshot\\.js "\\$RELEASE_VERSION"/,
+  );
+  assert.doesNotMatch(workflow, /git fetch --quiet origin[^\\n]*\\|\\| true/);
   assert.doesNotMatch(workflow, /git fetch --quiet origin[^\n]*\|\| true/);
   assert.doesNotMatch(
     workflow,
     /git ls-remote --heads origin refs\/heads\/catalog-snapshots\/v\*/,
   );
 });
-
 
 test("snapshot version selection uses semantic numeric ordering and ignores invalid refs", async () => {
   const { spawnSync } = await import("node:child_process");
