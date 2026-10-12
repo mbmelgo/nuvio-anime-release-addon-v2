@@ -63,7 +63,7 @@ test("every retained Vercel runtime module has a serverless default export", asy
   const runtimeFiles = ["api/catalog-source.js", "api/home-selector.js", "api/resolver-manifest.js"];
   for (const file of runtimeFiles) {
     const source = await readFile(file, "utf8");
-    assert.match(source, /export default (?:async )?function\s+\w+\s*\(/, `${file} must export a default handler`);
+    assert.match(source, /export default (?:\{[\s\S]*?fetch\s*\(|(?:async )?function\s+\w+\s*\()/, `${file} must export a supported default handler`);
   }
 });
 
