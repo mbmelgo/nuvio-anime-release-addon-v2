@@ -107,5 +107,5 @@ function renderMarkdown(diff) {
 function formatIdentityEvidence(meta) {
   const entries = Array.isArray(meta?.identityEvidence) ? meta.identityEvidence : [];
   if (!entries.length) return "none";
-  return entries.map((entry) => `${entry.source || "unknown"}${entry.relation ? " (relation)" : ""}`).join(", ");
+  return entries.map((entry) => `${entry.source || "unknown"}${entry.version ? ` (v${entry.version})` : ""}${entry.relation ? " (relation)" : ""}`).join(", ");
 }
