@@ -107,13 +107,13 @@ The repository includes representative Nuvio-style screenshots for the addon vie
 
 #### Upcoming — 3 days
 
-![Upcoming — 3 days sample](docs/images/nuvio-upcoming-5-days.png)
+The rolling endpoints above reflect the current three-day window. Historical five-day and seven-day showcase screenshots are intentionally omitted to avoid showing outdated catalog windows.
 
 #### Previous — 3 days
 
-![Previous — 3 days sample](docs/images/nuvio-previous-7-days.png)
 
-The rolling views are intentionally shown separately so the upcoming and previous release sets are clear.
+
+The upcoming and previous rolling catalogs use separate endpoints and independent three-day windows.
 
 ### Metadata detail flow
 
