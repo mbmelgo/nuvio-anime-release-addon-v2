@@ -429,6 +429,8 @@ test("CLI generates JSON and Markdown from snapshot directories", async () => {
     assert.equal(diff.catalogs.current_season.summary.canonicalSeriesChanged, 1);
     const markdown = fs.readFileSync(path.join(outputDir, "release-diff.md"), "utf8");
     assert.match(markdown, /Catalog release diff: v1\.51\.0 → v1\.52\.0/);
+    assert.match(markdown, /Provider rank ↑/);
+    assert.match(markdown, /Provider rank ↓/);
     assert.match(markdown, /Evidence/);
     assert.match(markdown, /imdb-search \(season 2, episode offset 0\) → previous-production-snapshot \(v1\.74\.0\)/);
     assert.match(markdown, /canonical series: no → yes \(Example Anime\)/);
