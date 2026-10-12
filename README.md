@@ -107,11 +107,11 @@ The repository includes representative Nuvio-style screenshots for the addon vie
 
 #### Upcoming — 3 days
 
-![Upcoming — 3 days sample](docs/images/nuvio-nuvio-upcoming-5-days.png)
+![Upcoming — 3 days sample](docs/images/nuvio-upcoming-5-days.png)
 
 #### Previous — 3 days
 
-![Previous — 3 days sample](docs/images/nuvio-nuvio-previous-7-days.png)
+![Previous — 3 days sample](docs/images/nuvio-previous-7-days.png)
 
 The rolling views are intentionally shown separately so the upcoming and previous release sets are clear.
 
