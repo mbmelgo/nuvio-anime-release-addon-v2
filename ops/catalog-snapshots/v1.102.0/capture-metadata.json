@@ -96,5 +96,10 @@
       "page-0003.request.json": "234a6c82f5a6a06e4c1dcd96d519cef6676fb24eb60df5368acece2b459e61d2",
       "page-0004.request.json": "1e0b13da81e4d3c0baa21c729d4852fee48f55e81381277aa74fc61d430fde7d"
     }
+  },
+  "comparison": {
+    "schemaVersion": 2,
+    "recomputedAt": "2026-10-12T09:52:00Z",
+    "reason": "Provider-rank changes are now reported separately from identity quality."
   }
 }
