@@ -8,7 +8,11 @@ const workflow = fs.readFileSync(
 );
 
 test("catalog snapshots capture the canonical series protocol across every page", () => {
-  assert.match(workflow, /catalog\/series\/\$catalog\.json\?skip=\$skip/);
+  assert.match(
+    workflow,
+    /node scripts\\/find-previous-catalog-snapshot\\.js "\\$RELEASE_VERSION"/,
+  );
+  assert.doesNotMatch(workflow, /git fetch --quiet origin[^\\n]*\\|\\| true/);
   assert.doesNotMatch(workflow, /catalog\/anime\/\$catalog\.json\?skip=\$skip/);
   assert.match(workflow, /"protocolType": "series"/);
   assert.match(workflow, /"legacyProtocolType": "anime"/);
@@ -31,7 +35,6 @@ test("release diff discovers previous snapshot branches from fetched local refs"
     workflow,
     /node scripts\/find-previous-catalog-snapshot\.js "\$RELEASE_VERSION"/,
   );
-  assert.doesNotMatch(workflow, /git fetch --quiet origin[^\n]*\|\| true/);
   assert.doesNotMatch(
     workflow,
     /git ls-remote --heads origin refs\/heads\/catalog-snapshots\/v\*/,
