@@ -38,16 +38,16 @@ test("seasonal filters remain isolated from rolling catalog ids", () => {
   assert.deepEqual(getCatalogFilter("current_season", info), { season: info.ongoing, sort: ["ID"] });
   assert.deepEqual(getCatalogFilter("previous_season", info), { season: info.previous, sort: ["ID"] });
   assert.deepEqual(getCatalogFilter("upcoming_season", info), { season: info.upcoming, sort: ["ID"] });
-  assert.equal(getCatalogFilter("upcoming_5_days", info), null);
-  assert.equal(getCatalogFilter("previous_7_days", info), null);
+  assert.equal(getCatalogFilter("upcoming_3_days", info), null);
+  assert.equal(getCatalogFilter("previous_3_days", info), null);
 });
 
-test("rolling ranges are exactly 5 days upcoming and 7 days previous", () => {
+test("rolling ranges are exactly 3 days for both upcoming and previous", () => {
   const now = new Date("2026-10-01T00:00:00.000Z");
-  const upcoming = getRollingCatalogRange("upcoming_5_days", now);
-  const previous = getRollingCatalogRange("previous_7_days", now);
-  assert.equal(upcoming.end - upcoming.start, 5 * 24 * 60 * 60 * 1000);
-  assert.equal(previous.end - previous.start, 7 * 24 * 60 * 60 * 1000);
+  const upcoming = getRollingCatalogRange("upcoming_3_days", now);
+  const previous = getRollingCatalogRange("previous_3_days", now);
+  assert.equal(upcoming.end - upcoming.start, 3 * 24 * 60 * 60 * 1000);
+  assert.equal(previous.end - previous.start, 3 * 24 * 60 * 60 * 1000);
   assert.equal(upcoming.start, now.getTime());
   assert.equal(previous.end, now.getTime());
 });
@@ -60,7 +60,7 @@ test("upcoming rolling catalog prefers MAL and falls back to AniList", async () 
     schedule(10, now.getTime() + 180_000, 3, "MAL Anime", 10010),
     schedule(30, now.getTime() + 240_000, 1, "Another MAL Anime", 10030),
   ];
-  const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+  const result = await buildRollingCatalog("upcoming_3_days", now, 0, "", {
     fetchPage: async () => rows,
     maxPages: 1,
     resolveMappings: async (ids) => new Map(ids.map((id) => [id, [{ source: "test", anilistId: id, type: "TV", imdbIds: [`tt${10000000 + id}`], tvdbId: null, tmdbTvId: null, tmdbMovieIds: [] }]])),
@@ -78,7 +78,7 @@ test("previous rolling catalog keeps most-recent schedule order and deduplicates
     schedule(30, now.getTime() - 180_000, 3, "Anime 30", 10030),
     schedule(20, now.getTime() - 240_000, 7, "Anime 20", 10020),
   ];
-  const result = await buildRollingCatalog("previous_7_days", now, 0, "", {
+  const result = await buildRollingCatalog("previous_3_days", now, 0, "", {
     fetchPage: async () => rows,
     maxPages: 1,
     resolveMappings: async (ids) => new Map(ids.map((id) => [id, [{ source: "test", anilistId: id, type: "TV", imdbIds: [`tt${10000000 + id}`], tvdbId: null, tmdbTvId: null, tmdbMovieIds: [] }]])),
@@ -93,7 +93,7 @@ test("rolling pagination fills a Nuvio page across schedule pages after deduplic
     [schedule(3, now.getTime() + 4, 1), schedule(2, now.getTime() + 5, 2), schedule(4, now.getTime() + 6, 1), schedule(4, now.getTime() + 6, 1)],
   ];
   const calls = [];
-  const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+  const result = await buildRollingCatalog("upcoming_3_days", now, 0, "", {
     fetchPage: async (start, end, futureOnly, page, sort) => {
       calls.push({ start, end, futureOnly, page, sort });
       return pages[page - 1] || [];
@@ -113,7 +113,7 @@ test("rolling search is applied before logical pagination so later schedule page
     [schedule(3, now.getTime() + 3, 1, "Target Anime 2")],
   ];
   const calls = [];
-  const result = await buildRollingCatalog("upcoming_5_days", now, 0, "target", {
+  const result = await buildRollingCatalog("upcoming_3_days", now, 0, "target", {
     fetchPage: async (...args) => {
       calls.push(args[3]);
       return pages[args[3] - 1] || [];
@@ -161,7 +161,7 @@ test("rolling catalogs exclude adult and unsupported-format media", async () => 
       media: { ...schedule(4, now.getTime() + 4, 1, "Unsupported Manga").media, format: "MANGA", isAdult: false },
     },
   ];
-  const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+  const result = await buildRollingCatalog("upcoming_3_days", now, 0, "", {
     fetchPage: async () => rows,
     maxPages: 1,
     resolveMappings: async (ids) => new Map(ids.map((id) => [id, [{ source: "test", anilistId: id, type: "TV", imdbIds: [`tt${10000000 + id}`], tvdbId: null, tmdbTvId: null, tmdbMovieIds: [] }]])),
@@ -173,7 +173,7 @@ test("rolling catalogs exclude adult and unsupported-format media", async () => 
 test("rolling catalog preserves an entry with AniList fallback when no provider or MAL identity exists", async () => {
   const now = new Date("2026-10-01T00:00:00.000Z");
   const rows = [schedule(900998, now.getTime() + 60_000, 1, "No Provider Rolling Example")];
-  const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+  const result = await buildRollingCatalog("upcoming_3_days", now, 0, "", {
     fetchPage: async () => rows,
     maxPages: 1,
     resolveMappings: async () => new Map(),
@@ -200,9 +200,9 @@ test("rolling catalogs enforce the exact requested time range after schedule cac
   const rows = [
     schedule(1, now.getTime() - 1, 1),
     schedule(2, now.getTime() + 60_000, 1, "Inside"),
-    schedule(3, now.getTime() + (5 * 24 * 60 * 60 * 1000) + 1, 1),
+    schedule(3, now.getTime() + (3 * 24 * 60 * 60 * 1000) + 1, 1),
   ];
-  const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+  const result = await buildRollingCatalog("upcoming_3_days", now, 0, "", {
     fetchPage: async () => rows,
     maxPages: 1,
     resolveMappings: async (ids) => new Map(ids.map((id) => [id, [{
@@ -271,7 +271,7 @@ test("seasonal and rolling catalogs share live identity selection over stale pro
   };
 
   const seasonal = await canonicalizeCatalogPage([media], sharedOptions);
-  const rolling = await buildRollingCatalog("previous_7_days", now, 0, "", {
+  const rolling = await buildRollingCatalog("previous_3_days", now, 0, "", {
     ...sharedOptions,
     fetchPage: async () => [schedule(
       media.id,
@@ -291,7 +291,7 @@ test("rolling catalogs prefer independently verified IMDb identity over a confli
   const now = new Date("2026-10-01T00:00:00.000Z");
   const rows = [schedule(209463, now.getTime() + 60_000, 1, "From Far Away", 12345)];
 
-  const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+  const result = await buildRollingCatalog("upcoming_3_days", now, 0, "", {
     fetchPage: async () => rows,
     maxPages: 1,
     resolveMappings: async () => new Map([[209463, [{
@@ -397,7 +397,7 @@ test("rolling catalog uses verified production identity cache when live provider
   const now = new Date("2026-10-01T00:00:00.000Z");
   const airingAt = now.getTime() + 60_000;
   const row = schedule(209463, airingAt, 1, "From Far Away");
-  const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+  const result = await buildRollingCatalog("upcoming_3_days", now, 0, "", {
     fetchPage: async () => [row],
     maxPages: 1,
     resolveMappings: async () => new Map(),
@@ -426,7 +426,7 @@ test("rolling catalog uses verified production identity cache when live provider
 
 test("rolling catalogs use native TMDB route for an unverified TMDB IMDb mapping", async () => {
   const now = new Date("2026-10-01T00:00:00.000Z");
-  const result = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+  const result = await buildRollingCatalog("upcoming_3_days", now, 0, "", {
     fetchPage: async () => [schedule(209464, now.getTime() + 60000, 1, "TMDB Route Test", 12346)],
     maxPages: 1,
     resolveMappings: async () => new Map([[209464, [{
@@ -517,7 +517,7 @@ test("seasonal and rolling catalogs cross-verify relation-derived TMDB identitie
   };
 
   const seasonal = await canonicalizeCatalogPage([media], sharedOptions);
-  const rolling = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+  const rolling = await buildRollingCatalog("upcoming_3_days", now, 0, "", {
     ...sharedOptions,
     fetchPage: async () => [{
       ...schedule(mediaId, now.getTime() + 60_000, 1, "Identity Parity Test", 12347),
@@ -604,7 +604,7 @@ test("authoritative TMDB mapping retains priority over an IMDb title-search cand
   };
 
   const seasonal = await canonicalizeCatalogPage([media], sharedOptions);
-  const rolling = await buildRollingCatalog("upcoming_5_days", now, 0, "", {
+  const rolling = await buildRollingCatalog("upcoming_3_days", now, 0, "", {
     ...sharedOptions,
     fetchPage: async () => [{
       ...schedule(mediaId, now.getTime() + 60_000, 1, "Authoritative TMDB Control", 12348),
@@ -626,7 +626,7 @@ test("rolling catalog diagnostics accumulate identity-resolution stages across s
   ];
   const diagnostics = {};
 
-  const result = await buildRollingCatalog("upcoming_5_days", now, 1, "", {
+  const result = await buildRollingCatalog("upcoming_3_days", now, 1, "", {
     fetchPage: async (_start, _end, _futureOnly, page) => pages[page - 1] || [],
     maxPages: 2,
     pageSize: 1,
@@ -668,7 +668,7 @@ test("rolling catalog shares one TMDB resolver deadline across schedule pages", 
   ];
   const deadlines = [];
   const empty = async () => new Map();
-  const result = await buildRollingCatalog("upcoming_5_days", now, 1, "", {
+  const result = await buildRollingCatalog("upcoming_3_days", now, 1, "", {
     fetchPage: async (_start, _end, _futureOnly, page) => pages[page - 1] || [],
     maxPages: 2,
     pageSize: 1,
