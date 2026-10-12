@@ -1667,12 +1667,19 @@ export async function buildRollingCatalog(id, date, skip, search, {
         const media = row.media; const mediaId = Number(media.id);
         const baseMeta = toCatalogIdentity(toMetaFromAniList(mediaId, media));
         if (!baseMeta) continue;
-        const canonicalSeriesRecord = (mappings.get(mediaId) || []).find((record) =>
+        const currentIdentityRecords = mappings.get(mediaId) || [];
+        const canonicalSeriesRecord = currentIdentityRecords.find((record) =>
           record?.canonicalSeries === true
           && Array.isArray(record?.imdbIds)
           && record.imdbIds.some((id) => /^tt\d+$/.test(String(id))),
         );
-        if (canonicalSeriesRecord) {
+        const canonicalTmdbSeriesRecord = currentIdentityRecords.find((record) =>
+          record?.canonicalSeries === true
+          && record?.source === "anime-mapper-canonical-series"
+          && Number.isInteger(Number(record?.tmdbTvId))
+          && Number(record.tmdbTvId) > 0,
+        );
+        if (canonicalSeriesRecord && !canonicalTmdbSeriesRecord) {
           const canonicalImdbId = canonicalSeriesRecord.imdbIds.find((id) => /^tt\d+$/.test(String(id)));
           metas.push({
             ...baseMeta,
