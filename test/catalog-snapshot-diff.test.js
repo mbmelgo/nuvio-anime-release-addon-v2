@@ -114,9 +114,14 @@ test("does not call canonical-series flag loss a quality degradation when provid
   const diff = compareCatalogSnapshots(before, after);
   const change = diff.catalogs.previous_season.changes[0];
 
+  assert.equal(diff.schemaVersion, 2);
   assert.ok(change.changeTypes.includes("canonical_series_changed"));
   assert.ok(change.changeTypes.includes("provider_rank_improved"));
   assert.ok(!change.changeTypes.includes("provider_rank_degraded"));
+  assert.equal(change.changeTypes.includes("identity_improved"), false);
+  assert.equal(change.changeTypes.includes("identity_degraded"), false);
+  assert.equal(diff.catalogs.previous_season.summary.providerRankImproved, 1);
+  assert.equal(diff.catalogs.previous_season.summary.providerRankDegraded, 0);
 });
 
 test("ranks provider identities with TMDB first, IMDb second, and TVDB third", () => {
