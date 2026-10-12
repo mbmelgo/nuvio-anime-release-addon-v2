@@ -630,7 +630,7 @@ async function resolveMappingsForRows(
       for (const [currentId, root] of canonicalByCurrentId) {
         if (!root) continue;
         const records = canonicalImdb instanceof Map ? canonicalImdb.get(Number(currentId)) : [];
-        const canonicalTmdbId = Number(root?.mappings?.tmdb);
+        const canonicalTmdbId = Number(root?.canonicalExternal?.tmdb);
         const canonicalTmdbRecords = Number.isInteger(canonicalTmdbId) && canonicalTmdbId > 0
           ? [{
               source: "anime-mapper-canonical-series",
