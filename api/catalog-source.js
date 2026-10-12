@@ -17,7 +17,7 @@ import { resolveAniListMappingsFribb } from "../lib/fribb-mapping.js";
 import { resolveAniListExternalMappings } from "../lib/external-provider-mapping.js";
 import { resolveAniListMappingsAnimap } from "../lib/animap-mapping.js";
 import { resolveAniListMappingsIdMapper } from "../lib/idmapper-mapping.js";
-import { resolveAniListMappingsByTMDB, selectTMDBIdentity } from "../lib/tmdb-mapping.js";
+import { DEFAULT_TMDB_RESOLVER_TIMEOUT_MS, resolveAniListMappingsByTMDB, selectTMDBIdentity } from "../lib/tmdb-mapping.js";
 import { resolveAniListMappingsByAnimeMapper, resolveAniListRelatedProviderIdsByAnimeMapper, resolveAniListCanonicalSeriesByAnimeMapper } from "../lib/anime-mapper-mapping.js";
 import { resolveAniListMappingsByAniBridge } from "../lib/anibridge-mapping.js";
 import {
@@ -178,6 +178,7 @@ async function resolveMappingsForRows(
     resolveAlternativeMappings = resolveAniListMappingsByMalIds,
     diagnostics = null,
     allowProductionIdentityCache = false,
+    tmdbResolverBudget = null,
   } = {},
 ) {
   const ids = rows.map((row) => Number(row.id));
@@ -264,7 +265,13 @@ async function resolveMappingsForRows(
   if (tmdbRows.length) {
     try {
       const stageStart = diagnostics ? performance.now() : 0;
-      mappings = mergeMappings(mappings, await resolveTMDBMappings(tmdbRows));
+      if (tmdbResolverBudget && !Number.isFinite(tmdbResolverBudget.deadlineAt)) {
+        tmdbResolverBudget.deadlineAt = Date.now() + DEFAULT_TMDB_RESOLVER_TIMEOUT_MS;
+      }
+      const tmdbOptions = tmdbResolverBudget
+        ? { resolverDeadlineAt: tmdbResolverBudget.deadlineAt }
+        : undefined;
+      mappings = mergeMappings(mappings, await resolveTMDBMappings(tmdbRows, tmdbOptions));
       if (diagnostics) diagnostics.tmdb = performance.now() - stageStart;
     } catch (error) {
       console.error("[identity] TMDB mapping failed; trying AniMap", error);
@@ -1520,6 +1527,8 @@ export async function buildRollingCatalog(id, date, skip, search, {
   if (!range) return [];
   const futureOnly = id === "upcoming_5_days";
   const sort = futureOnly ? "TIME" : "TIME_DESC";
+  // Share one TMDB budget across all AniList pages consumed by this rolling request.
+  const tmdbResolverBudget = { deadlineAt: null };
   return collectValidatedCatalogPage({
     skip, pageSize, maxPages,
     fetchPage: async (page) => {
@@ -1564,6 +1573,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
         validateImdbMappings,
         resolveSecondaryMappings,
         resolveAlternativeMappings,
+        tmdbResolverBudget,
         diagnostics: identityDiagnostics,
         allowProductionIdentityCache: true,
       });

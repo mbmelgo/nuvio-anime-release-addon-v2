@@ -311,3 +311,34 @@ test("TMDB resolver enforces a shared deadline across the whole batch", async ()
   assert.ok(Date.now() - startedAt < 250);
   assert.ok(calls <= 2, "rows should not keep starting after the shared deadline");
 });
+
+
+test("TMDB resolver honors a shared absolute deadline across batches", async () => {
+  resetTMDBMappingCache();
+  let calls = 0;
+  const fetchImpl = async () => {
+    calls += 1;
+    return new Promise(() => {});
+  };
+  const rows = Array.from({ length: 12 }, (_, index) => ({
+    id: 993000 + index,
+    format: "TV",
+    title: { english: `Shared Absolute Deadline ${index}` },
+    startDate: { year: 2026 },
+  }));
+  const startedAt = Date.now();
+  const result = await Promise.race([
+    resolveAniListMappingsByTMDB(rows, {
+      token: "test-token",
+      fetchImpl,
+      concurrency: 2,
+      timeoutMs: 1000,
+      resolverTimeoutMs: 1000,
+      resolverDeadlineAt: Date.now() + 60,
+    }),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("TMDB resolver exceeded the shared absolute deadline")), 250)),
+  ]);
+  assert.deepEqual([...result], []);
+  assert.ok(Date.now() - startedAt < 250);
+  assert.ok(calls <= 2, "queued rows must not start after the shared deadline");
+});
