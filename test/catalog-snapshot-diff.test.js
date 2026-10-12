@@ -225,6 +225,103 @@ function diffChanges(diff) {
   return diff.catalogs.current_season.changes.filter((change) => change.before && change.after);
 }
 
+
+test("reports identity evidence provenance changes independently of provider rank", () => {
+  const before = snapshot("1.99.0", {
+    current_season: [item({
+      id: "tt100",
+      extra: {
+        anilistId: 100,
+        identityProvider: "imdb",
+        identityId: "tt100",
+        identityEvidence: [{ source: "imdb-search", relation: false }],
+      },
+    })],
+  });
+  const after = snapshot("1.100.0", {
+    current_season: [item({
+      id: "tmdb:900",
+      extra: {
+        anilistId: 100,
+        identityProvider: "tmdb",
+        identityId: "900",
+        identityEvidence: [{ source: "anime-mapper-relation", relation: false }],
+      },
+    })],
+  });
+
+  const diff = compareCatalogSnapshots(before, after);
+  const change = diff.catalogs.current_season.changes[0];
+  assert.ok(change.changeTypes.includes("identity_evidence_changed"));
+  assert.deepEqual(change.before.identityEvidence, [
+    { source: "imdb-search", relation: false },
+  ]);
+  assert.deepEqual(change.after.identityEvidence, [
+    { source: "anime-mapper-relation", relation: false },
+  ]);
+  assert.equal(diff.catalogs.current_season.summary.identityEvidenceChanged, 1);
+  assert.match(diff.markdown || "", /imdb-search/);
+});
+
+test("reports canonical-series and fallback metadata changes", () => {
+  const before = snapshot("1.99.0", {
+    current_season: [
+      item({
+        id: "tmdb:110837",
+        extra: {
+          anilistId: 100,
+          identityProvider: "tmdb",
+          identityId: "110837",
+          identityEvidence: [{ source: "arm", relation: false }],
+        },
+      }),
+      item({
+        id: "tmdb:301944",
+        extra: {
+          anilistId: 101,
+          identityProvider: "tmdb",
+          identityId: "301944",
+          identityEvidence: [{ source: "anime-mapper-relation", relation: true }],
+        },
+      }),
+    ],
+  });
+  const after = snapshot("1.100.0", {
+    current_season: [
+      item({
+        id: "tt13192574",
+        extra: {
+          anilistId: 100,
+          identityProvider: "imdb",
+          identityId: "tt13192574",
+          identityCanonicalSeries: true,
+          identityCanonicalSeriesTitle: "Example Anime",
+          identityEvidence: [{ source: "imdb-search-canonical-series", relation: false }],
+        },
+      }),
+      item({
+        id: "tt39122769",
+        extra: {
+          anilistId: 101,
+          identityProvider: "imdb",
+          identityId: "tt39122769",
+          identityEvidence: [{ source: "previous-production-snapshot", relation: false }],
+          identityFallback: "previous-production-snapshot",
+        },
+      }),
+    ],
+  });
+
+  const diff = compareCatalogSnapshots(before, after);
+  const changes = diff.catalogs.current_season.changes.filter((entry) => entry.before && entry.after);
+  assert.ok(changes[0].changeTypes.includes("canonical_series_changed"));
+  assert.ok(changes[0].changeTypes.includes("identity_evidence_changed"));
+  assert.ok(changes[1].changeTypes.includes("identity_evidence_changed"));
+  assert.ok(changes[1].changeTypes.includes("identity_fallback_changed"));
+  assert.equal(diff.catalogs.current_season.summary.canonicalSeriesChanged, 1);
+  assert.equal(diff.catalogs.current_season.summary.identityFallbackChanged, 1);
+});
+
 test("CLI generates JSON and Markdown from snapshot directories", async () => {
   const fs = await import("node:fs");
   const os = await import("node:os");
