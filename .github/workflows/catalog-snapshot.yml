@@ -285,33 +285,10 @@ jobs:
           RELEASE_VERSION: ${{ steps.release.outputs.version }}
         run: |
           set -euo pipefail
-          # Explicitly fetch snapshot refs: checkout's default refspec only tracks the release branch.
-          git fetch --quiet origin '+refs/heads/catalog-snapshots/v*:refs/remotes/origin/catalog-snapshots/v*' || true
-          before_version="$(python - <<'PY'
-          import re
-          import subprocess
-          import os
-
-          current = os.environ["RELEASE_VERSION"]
-          current_tuple = tuple(map(int, current.split(".")))
-          raw_refs = subprocess.check_output(
-              ["git", "for-each-ref", "--format=%(refname:short)", "refs/remotes/origin/catalog-snapshots/v*"],
-              text=True,
-          )
-          versions = []
-          for ref in raw_refs.splitlines():
-              ref = ref.removeprefix("origin/catalog-snapshots/")
-              match = re.fullmatch(r"v(\d+)\.(\d+)\.(\d+)", ref)
-              if match:
-                  versions.append(tuple(map(int, match.groups())))
-
-          candidates = [version for version in versions if version < current_tuple]
-          if not candidates:
-              print("")
-          else:
-              print(".".join(map(str, max(candidates))))
-          PY
-          )"
+          # Snapshot history is required for a trustworthy comparison. Fail closed if fetching refs fails.
+          git fetch --quiet origin '+refs/heads/catalog-snapshots/v*:refs/remotes/origin/catalog-snapshots/v*'
+          before_version="$(git for-each-ref --format='%(refname:short)' 'refs/remotes/origin/catalog-snapshots/v*' |
+            node scripts/find-previous-catalog-snapshot.js "$RELEASE_VERSION")"
 
           if [ -z "$before_version" ]; then
             echo "No previous catalog snapshot exists; skipping release diff."
