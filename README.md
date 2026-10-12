@@ -192,7 +192,7 @@ Catalog names and season labels are generated dynamically.
 
 ## 🚀 Current release
 
-**Production:** `v1.101.0`  
+**Production:** `v1.102.0`  
 **Development:** `v1.102.0` — adds opt-in aggregate TMDB resolver diagnostics
 
 Post-release production catalog snapshots are captured automatically after each controlled release and retained on versioned `catalog-snapshots/*` branches.
