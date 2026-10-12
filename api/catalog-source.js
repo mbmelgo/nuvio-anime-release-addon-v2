@@ -124,16 +124,19 @@ export function mergeCatalogDiagnosticStages(target, pageStages) {
   return target;
 }
 
-export default async function handler(req, res) {
-  // Vercel's legacy IncomingMessage adapter uses a deprecated parser when its
-  // request URL accessor is read. Rewrites already pass route values through req.query,
-  // so use those normalized parameters instead of touching the adapter getter.
-  const queryParams = req.query || {};
-  const pathExtra = parseCatalogExtraPath(queryParams.extra ?? "");
+export default {
+  async fetch(request) {
+  // Use Vercel's Web-standard Request interface to avoid the legacy
+  // IncomingMessage adapter and its deprecated URL parsing path.
+  const url = new URL(request.url);
+  const parts = url.pathname.split("/").filter(Boolean);
+  const queryParams = Object.fromEntries(url.searchParams.entries());
+  const rawExtraPath = queryParams.extra ?? parts.slice(3).join("/");
+  const pathExtra = parseCatalogExtraPath(rawExtraPath);
   const query = { ...pathExtra, ...queryParams };
-  const resource = query.resource;
-  const type = query.type;
-  const rawId = query.id ? String(query.id).replace(/\.json$/, "") : "";
+  const resource = query.resource || parts[0];
+  const type = query.type || parts[1];
+  const rawId = query.id || parts[2]?.replace(/\.json$/, "");
   const id = rawId ? decodeURIComponent(String(rawId).replace(/\.json$/, "")) : "";
   const now = new Date();
   const seasonInfo = getSeasonInfo(now);
@@ -143,25 +146,26 @@ export default async function handler(req, res) {
   const coldStart = !catalogRequestSeen;
   catalogRequestSeen = true;
 
-  if (req.method === "OPTIONS") return send(res, {}, 200);
+  if (request.method === "OPTIONS") return send({}, 200);
 
   if (resource === "catalog" && ["series", "anime"].includes(String(type || "").toLowerCase())) {
     if (!catalogDefinitions(seasonInfo).some((catalog) => catalog.id === id)) {
-      return send(res, { metas: [] }, 404);
+      return send({ metas: [] }, 404);
     }
     try {
       const skip = Math.max(0, Number(query.skip || 0) || 0);
       const search = String(query.search || "").trim();
       const metas = await buildCatalog(id, seasonInfo, skip, search, diagnosticsStages);
-      return send(res, { metas }, 200, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null, diagnosticsEnabled);
+      return send({ metas }, 200, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null, diagnosticsEnabled);
     } catch (error) {
       console.error("[catalog] request failed", { id, skip: query.skip, search: query.search, error });
-      return send(res, { metas: [] }, 500, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null, diagnosticsEnabled);
+      return send({ metas: [] }, 500, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null, diagnosticsEnabled);
     }
   }
 
-  return send(res, { error: "Not found" }, 404);
-}
+  return send({ error: "Not found" }, 404);
+  },
+};
 
 export function filterAiringRowsBySearch(rows, search) {
   const normalizedRows = Array.isArray(rows) ? rows : [];
@@ -1729,13 +1733,14 @@ export async function buildCatalog(id, info, skip, search, diagnostics = null) {
   return [];
 }
 
-function send(res, body, status = 200, extraHeaders = null, diagnosticsEnabled = false) {
-  res.status(status);
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  res.setHeader("Cache-Control", diagnosticsEnabled ? "no-store" : "public, s-maxage=3600, stale-while-revalidate=86400, stale-if-error=86400");
-  for (const [name, value] of Object.entries(extraHeaders || {})) res.setHeader(name, value);
-  return res.json(body);
+function send(body, status = 200, extraHeaders = null, diagnosticsEnabled = false) {
+  const headers = new Headers({
+    "Content-Type": "application/json; charset=utf-8",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Cache-Control": diagnosticsEnabled ? "no-store" : "public, s-maxage=3600, stale-while-revalidate=86400, stale-if-error=86400",
+  });
+  for (const [name, value] of Object.entries(extraHeaders || {})) headers.set(name, value);
+  return new Response(JSON.stringify(body), { status, headers });
 }
