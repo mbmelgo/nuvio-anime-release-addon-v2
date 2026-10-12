@@ -58,20 +58,20 @@ function renderMarkdown(diff) {
   const lines = [
     `# Catalog release diff: v${diff.beforeReleaseVersion} → v${diff.afterReleaseVersion}`,
     "",
-    "| Catalog | Before | After | Added | Removed | Matched | Unchanged | Improved | Degraded | Provider | Title | Season | Year | Order |",
-    "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+    "| Catalog | Before | After | Added | Removed | Matched | Unchanged | Improved | Degraded | Provider | Evidence | Canonical | Fallback | Title | Season | Year | Order |",
+    "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
   ];
 
   for (const catalog of Object.values(diff.catalogs)) {
     const s = catalog.summary;
     lines.push(
-      `| ${catalog.catalog} | ${s.before} | ${s.after} | ${s.added} | ${s.removed} | ${s.matched} | ${s.unchanged} | ${s.identityImproved} | ${s.identityDegraded} | ${s.providerChanged} | ${s.titleChanged} | ${s.seasonChanged} | ${s.yearChanged} | ${s.orderingChanged} |`,
+      `| ${catalog.catalog} | ${s.before} | ${s.after} | ${s.added} | ${s.removed} | ${s.matched} | ${s.unchanged} | ${s.identityImproved} | ${s.identityDegraded} | ${s.providerChanged} | ${s.identityEvidenceChanged} | ${s.canonicalSeriesChanged} | ${s.identityFallbackChanged} | ${s.titleChanged} | ${s.seasonChanged} | ${s.yearChanged} | ${s.orderingChanged} |`,
     );
   }
 
   const t = diff.totals;
   lines.push(
-    `| **Total** | **${t.before}** | **${t.after}** | **${t.added}** | **${t.removed}** | **${t.matched}** | **${t.unchanged}** | **${t.identityImproved}** | **${t.identityDegraded}** | **${t.providerChanged}** | **${t.titleChanged}** | **${t.seasonChanged}** | **${t.yearChanged}** | **${t.orderingChanged}** |`,
+    `| **Total** | **${t.before}** | **${t.after}** | **${t.added}** | **${t.removed}** | **${t.matched}** | **${t.unchanged}** | **${t.identityImproved}** | **${t.identityDegraded}** | **${t.providerChanged}** | **${t.identityEvidenceChanged}** | **${t.canonicalSeriesChanged}** | **${t.identityFallbackChanged}** | **${t.titleChanged}** | **${t.seasonChanged}** | **${t.yearChanged}** | **${t.orderingChanged}** |`,
   );
 
   const changed = Object.values(diff.catalogs)
@@ -83,8 +83,18 @@ function renderMarkdown(diff) {
     lines.push("", "## Changes", "");
     for (const change of changed) {
       const title = change.after?.name || change.before?.name || change.key;
+      const details = [];
+      if (change.changeTypes.includes("identity_evidence_changed")) {
+        details.push(`evidence: ${formatIdentityEvidence(change.before)} → ${formatIdentityEvidence(change.after)}`);
+      }
+      if (change.changeTypes.includes("canonical_series_changed")) {
+        details.push(`canonical series: ${change.before?.identityCanonicalSeries ? "yes" : "no"} → ${change.after?.identityCanonicalSeries ? "yes" : "no"}`);
+      }
+      if (change.changeTypes.includes("identity_fallback_changed")) {
+        details.push(`fallback: ${change.before?.identityFallback || "none"} → ${change.after?.identityFallback || "none"}`);
+      }
       lines.push(
-        `- **${change.catalog} — ${title}** — ${change.changeTypes.join(", ")} (${change.matchMethod || "no match"})`,
+        `- **${change.catalog} — ${title}** — ${change.changeTypes.join(", ")} (${change.matchMethod || "no match"})${details.length ? ` — ${details.join("; ")}` : ""}`,
       );
     }
   } else {
@@ -92,4 +102,10 @@ function renderMarkdown(diff) {
   }
 
   return lines.join("\n");
+}
+
+function formatIdentityEvidence(meta) {
+  const entries = Array.isArray(meta?.identityEvidence) ? meta.identityEvidence : [];
+  if (!entries.length) return "none";
+  return entries.map((entry) => `${entry.source || "unknown"}${entry.relation ? " (relation)" : ""}`).join(", ");
 }
