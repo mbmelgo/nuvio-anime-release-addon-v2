@@ -271,16 +271,17 @@ test("release workflow grants read access to commit statuses", async () => {
 
 test("production dispatch honors an explicit release target SHA over workflow HEAD", async () => {
   const workflow = await readFile(".github/workflows/sync-version.yml", "utf8");
-  const deployMarker = 'elif [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.deploy_prod }}" == "true" ]]; then';
-  const finalizeMarker = 'elif [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.finalize_release }}" == "true" ]]; then';
+  const deployMarker = 'elif [[ "$EVENT_NAME" == "workflow_dispatch" && "$DEPLOY_PROD" == "true" ]]; then';
+  const finalizeMarker = 'elif [[ "$EVENT_NAME" == "workflow_dispatch" && "$FINALIZE_RELEASE" == "true" ]]; then';
   const deployStart = workflow.indexOf(deployMarker);
   const finalizeStart = workflow.indexOf(finalizeMarker, deployStart);
   assert.ok(deployStart >= 0);
   assert.ok(finalizeStart > deployStart);
   const deployBlock = workflow.slice(deployStart, finalizeStart);
-  assert.ok(deployBlock.includes('target="$(printf \'%s\' \'${{ inputs.release_target_sha }}\' | xargs)"'));
-  assert.ok(deployBlock.includes('if [ -z "$target" ]; then target="$GITHUB_SHA"; fi'));
-  assert.ok(deployBlock.includes('echo "release_target_sha=$target"'));
+  assert.ok(deployBlock.includes('target="$(normalize_target)"'));
+  assert.ok(workflow.includes('target="$(printf \'%s\' "$RELEASE_TARGET_SHA_INPUT" | tr -d \'[:space:]\')"'));
+  assert.ok(workflow.includes('if [[ ! "$target" =~ ^[0-9a-fA-F]{40}$ ]]; then'));
+  assert.ok(workflow.includes('if [[ -z "$target" ]]; then target="$GITHUB_SHA"; fi'));
 });
 
 test("release target validator requires an exact SHA and expected version", () => {

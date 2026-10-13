@@ -43,3 +43,22 @@ test("release pipeline only allocates a runner for release or manual requests", 
   assert.ok(sync.includes("-f release_version="));
   assert.ok(sync.includes("-f release_sha="));
 });
+
+test("release workflow shell blocks do not contain inline GitHub expressions", () => {
+  const sync = read("../.github/workflows/sync-version.yml");
+  const lines = sync.split("\n");
+  const scripts = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    const match = lines[index].match(/^(\s*)run:\s*[|>]\s*$/);
+    if (!match) continue;
+    const indent = match[1].length;
+    const body = [];
+    for (let next = index + 1; next < lines.length; next += 1) {
+      const line = lines[next];
+      if (line.trim() && line.match(/^\s*/)[0].length <= indent) break;
+      body.push(line);
+    }
+    scripts.push(body.join("\n"));
+  }
+  assert.ok(scripts.every((script) => !script.includes("$" + "{{")));
+});
