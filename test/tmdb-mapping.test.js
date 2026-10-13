@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { resolveAniListMappingsByTMDB, resetTMDBMappingCache } from "../lib/tmdb-mapping.js";
+import { resolveAniListMappingsByTMDB, resetTMDBMappingCache, selectTMDBIdentity } from "../lib/tmdb-mapping.js";
 
 function mockFetch(routes) {
   const calls = [];
@@ -389,4 +389,85 @@ test("TMDB resolver honors a shared absolute deadline across batches", async () 
   assert.deepEqual([...result], []);
   assert.ok(Date.now() - startedAt < 250);
   assert.ok(callTimes.every((time) => time < deadlineAt), "no row may start after the shared absolute deadline");
+});
+
+test("TMDB resolver verifies a sequel as a season of a related TMDB series", async () => {
+  const fetchImpl = mockFetch({
+    "/3/search/tv?include_adult=false&language=en-US&page=1&query=The+Prince+of+Tennis+II+U-17+WORLD+CUP%3A+Final+Member+Selection+Match": { results: [] },
+    "/3/search/tv?include_adult=false&language=en-US&page=1&query=Final+Member+Selection+Match": { results: [] },
+    "/3/tv/205493?language=en-US": {
+      id: 205493,
+      seasons: [
+        { season_number: 1, name: "The Prince of Tennis II: U-17 World Cup", air_date: "2022-07-06" },
+        { season_number: 2, name: "SEMIFINAL", air_date: "2024-10-02" },
+        { season_number: 3, name: "Final Member Selection Match", air_date: "2026-10-01" },
+      ],
+    },
+  });
+
+  const mappings = await resolveAniListMappingsByTMDB([{
+    id: 199068,
+    title: { english: "The Prince of Tennis II U-17 WORLD CUP: Final Member Selection Match" },
+    synonyms: ["Final Member Selection Match"],
+    format: "TV",
+    startDate: { year: 2026 },
+    relations: {
+      edges: [{
+        relationType: "PREQUEL",
+        node: {
+          externalLinks: [{
+            site: "The Movie Database",
+            url: "https://www.themoviedb.org/tv/205493-shin-tennis-no-ouji-sama-u-17-world-cup",
+          }],
+        },
+      }],
+    },
+  }], { token: "test-token", fetchImpl });
+
+  const record = mappings.get(199068)?.[0];
+  assert.equal(record.source, "tmdb-season-verified");
+  assert.equal(record.tmdbTvId, 205493);
+  assert.equal(record.tmdbSeasonVerified, true);
+  assert.equal(record.tmdbSeasonNumber, 3);
+  assert.equal(selectTMDBIdentity({
+    id: 199068,
+    format: "TV",
+    title: { english: "The Prince of Tennis II U-17 WORLD CUP: Final Member Selection Match" },
+    startDate: { year: 2026 },
+  }, [record])?.id, "205493");
+  assert.deepEqual(record.imdbIds, []);
+  assert.equal(fetchImpl.calls.length, 3);
+});
+
+test("TMDB resolver does not treat a related series as a season without a matching title", async () => {
+  const fetchImpl = mockFetch({
+    "/3/search/tv?include_adult=false&language=en-US&page=1&query=Unrelated+Sequel": { results: [] },
+    "/3/tv/205493?language=en-US": {
+      id: 205493,
+      seasons: [
+        { season_number: 1, name: "The Prince of Tennis II: U-17 World Cup", air_date: "2022-07-06" },
+        { season_number: 2, name: "SEMIFINAL", air_date: "2024-10-02" },
+      ],
+    },
+  });
+
+  const mappings = await resolveAniListMappingsByTMDB([{
+    id: 199069,
+    title: { english: "Unrelated Sequel" },
+    format: "TV",
+    startDate: { year: 2026 },
+    relations: {
+      edges: [{
+        relationType: "PREQUEL",
+        node: {
+          externalLinks: [{
+            site: "The Movie Database",
+            url: "https://www.themoviedb.org/tv/205493-shin-tennis-no-ouji-sama-u-17-world-cup",
+          }],
+        },
+      }],
+    },
+  }], { token: "test-token", fetchImpl });
+
+  assert.equal(mappings.has(199069), false);
 });
