@@ -408,7 +408,6 @@ test("TMDB resolver verifies a sequel as a season of a related TMDB series", asy
   const mappings = await resolveAniListMappingsByTMDB([{
     id: 199068,
     title: { english: "The Prince of Tennis II U-17 WORLD CUP: Final Member Selection Match" },
-    synonyms: ["Final Member Selection Match"],
     format: "TV",
     startDate: { year: 2026 },
     relations: {
@@ -436,7 +435,7 @@ test("TMDB resolver verifies a sequel as a season of a related TMDB series", asy
     startDate: { year: 2026 },
   }, [record])?.id, "205493");
   assert.deepEqual(record.imdbIds, []);
-  assert.equal(fetchImpl.calls.length, 3);
+  assert.equal(fetchImpl.calls.length, 2);
 });
 
 test("TMDB resolver does not treat a related series as a season without a matching title", async () => {
@@ -513,4 +512,38 @@ test("TMDB resolver discovers a shared series through a related title when AniLi
   assert.equal(record?.source, "tmdb-season-verified");
   assert.equal(record?.tmdbTvId, 205493);
   assert.equal(record?.tmdbSeasonNumber, 3);
+});
+
+test("TMDB resolver rejects a season-title subset when the season year disagrees", async () => {
+  const fetchImpl = mockFetch({
+    "/3/search/tv?include_adult=false&language=en-US&page=1&query=The+Prince+of+Tennis+II+U-17+WORLD+CUP%3A+Final+Member+Selection+Match": { results: [] },
+    "/3/search/tv?include_adult=false&language=en-US&page=1&query=Final+Member+Selection+Match": { results: [] },
+    "/3/search/tv?include_adult=false&language=en-US&page=1&query=the+prince+of+tennis+ii+u+17+world+cup+semifinal": {
+      results: [{ id: 205493, name: "The Prince of Tennis II: U-17 World Cup", original_name: "Shin Tennis no Ouji-sama: U-17 WORLD CUP", first_air_date: "2022-07-06" }],
+    },
+    "/3/tv/205493?language=en-US": {
+      id: 205493,
+      seasons: [
+        { season_number: 3, name: "Final Member Selection Match", air_date: "2024-10-01" },
+      ],
+    },
+  });
+
+  const mappings = await resolveAniListMappingsByTMDB([{
+    id: 199070,
+    title: { english: "The Prince of Tennis II U-17 WORLD CUP: Final Member Selection Match" },
+    format: "TV",
+    startDate: { year: 2026 },
+    relations: {
+      edges: [{
+        relationType: "PREQUEL",
+        node: {
+          title: { english: "The Prince of Tennis II U-17 World Cup Semifinal" },
+          externalLinks: [{ site: "Official Site", url: "https://tenipuri.jp/u17/" }],
+        },
+      }],
+    },
+  }], { token: "test-token", fetchImpl });
+
+  assert.equal(mappings.has(199070), false);
 });
