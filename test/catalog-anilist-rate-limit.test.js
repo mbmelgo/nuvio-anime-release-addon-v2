@@ -101,6 +101,42 @@ test("AniList reuses successful catalog responses across sequential requests", a
   }
 });
 
+test("AniList serves unexpired cached responses during a global 429 cooldown", async () => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    if (calls === 1) {
+      return {
+        ok: true,
+        status: 200,
+        headers: new Headers(),
+        async json() { return { data: { Page: { media: [{ id: 123 }] } } }; },
+      };
+    }
+    return {
+      ok: false,
+      status: 429,
+      headers: new Headers({ "Retry-After": "60" }),
+      async json() { return {}; },
+    };
+  };
+
+  clearAniListRateLimitState();
+  try {
+    const filter = { season: "FALL", seasonYear: 2026, sort: ["ID"] };
+    assert.deepEqual(await queryAnime(filter, 1), [{ id: 123 }]);
+    await assert.rejects(queryAnime(filter, 2), /HTTP 429/);
+
+    assert.deepEqual(await queryAnime(filter, 1), [{ id: 123 }]);
+    await assert.rejects(queryAnime(filter, 3), /cooldown active/);
+    assert.equal(calls, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+    clearAniListRateLimitState();
+  }
+});
+
 
 test("AniList bounds stalled response bodies after headers arrive", async () => {
   const originalFetch = globalThis.fetch;
