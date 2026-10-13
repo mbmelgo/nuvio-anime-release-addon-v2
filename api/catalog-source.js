@@ -101,6 +101,13 @@ const TMDB_RESOLVER_SUMMARY_FIELDS = Object.freeze([
   "http429Errors",
   "timeouts",
   "rowsDeadlineExhausted",
+  "relatedSeasonRowsAttempted",
+  "relatedSeasonSearches",
+  "relatedSeasonCandidateSeries",
+  "relatedSeasonDetailsLookups",
+  "relatedSeasonTitleMatches",
+  "relatedSeasonResolved",
+  "relatedSeasonLookupErrors",
 ]);
 
 export function formatTMDBResolverSummary(catalogRows, durationMs, stats = {}) {
