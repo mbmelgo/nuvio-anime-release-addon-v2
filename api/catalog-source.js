@@ -289,9 +289,20 @@ async function resolveMappingsForRows(
     // A relation-derived TMDB ID is a candidate, not an authoritative TMDB
     // lookup. Verify it through TMDB rather than letting the provider label
     // alone suppress the canonical TMDB mapping stage. A strong direct IMDb
-    // identity is terminal under the selection policy, so TMDB lookup cannot
-    // change the selected ID and is unnecessary for that row.
-    return !independentlyVerifiedImdb && (!selected || selected.provider !== "tmdb" || !tmdbSelected);
+    // identity is normally terminal. Still inspect related TMDB series when
+    // season metadata confirms the installment belongs to one of their seasons.
+    const hasRelatedTMDBSeries = Array.isArray(row?.relations?.edges)
+      && row.relations.edges.some((edge) =>
+        ["PARENT", "PREQUEL", "SEQUEL", "SPIN_OFF", "SIDE_STORY"].includes(
+          String(edge?.relationType || "").toUpperCase(),
+        )
+        && (Array.isArray(edge?.node?.externalLinks) ? edge.node.externalLinks : [])
+          .some((link) => /themoviedb\.org\/tv\/\d+/i.test(String(link?.url || ""))),
+      );
+    const needsRelatedSeasonVerification = hasRelatedTMDBSeries
+      && (!selected || selected.provider !== "tmdb");
+    return needsRelatedSeasonVerification
+      || (!independentlyVerifiedImdb && (!selected || selected.provider !== "tmdb" || !tmdbSelected));
   });
   if (tmdbRows.length) {
     try {

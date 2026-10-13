@@ -388,3 +388,43 @@ test("canonical series identity ignores invalid TMDB IDs and retains the IMDb fa
   assert.equal(selected?.provider, "imdb");
   assert.equal(selected?.id, "tt0434665");
 });
+
+test("provider identity accepts a related TMDB series when season metadata explicitly verifies membership", () => {
+  const row = media({
+    id: 199068,
+    anilistId: 199068,
+    title: {
+      english: "The Prince of Tennis II U-17 WORLD CUP: Final Member Selection Match",
+      romaji: "Shin Tennis no Ouji-sama: U-17 WORLD CUP - Final Member Selection Match",
+    },
+    startDate: { year: 2026 },
+    relations: {
+      edges: [{
+        relationType: "PREQUEL",
+        node: {
+          title: { english: "The Prince of Tennis II: U-17 World Cup SEMIFINAL" },
+          externalLinks: [{ site: "The Movie Database", url: "https://www.themoviedb.org/tv/205493" }],
+        },
+      }],
+    },
+    relatedProviderIds: ["tmdb:205493"],
+  });
+  const records = [{
+    source: "tmdb-season-verified",
+    anilistId: 199068,
+    type: "TV",
+    imdbIds: [],
+    tmdbTvId: 205493,
+    tmdbMovieIds: [],
+    title: "The Prince of Tennis II U-17 WORLD CUP: Final Member Selection Match",
+    year: 2026,
+    tmdbAuthoritative: true,
+    tmdbSeasonVerified: true,
+    tmdbSeasonNumber: 3,
+    tmdbMatchScore: 150,
+  }];
+
+  const selected = selectProviderIdentity(row, getProviderCandidates(row, records));
+  assert.equal(selected?.provider, "tmdb");
+  assert.equal(selected?.id, "205493");
+});
