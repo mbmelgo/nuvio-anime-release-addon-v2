@@ -124,13 +124,12 @@ test("AniList serves unexpired cached responses during a global 429 cooldown", a
 
   clearAniListRateLimitState();
   try {
-    const cachedFilter = { season: "FALL", seasonYear: 2026, sort: ["ID"] };
-    const limitedFilter = { season: "WINTER", seasonYear: 2027, sort: ["ID"] };
-    assert.deepEqual(await queryAnime(cachedFilter, 1), [{ id: 123 }]);
-    await assert.rejects(queryAnime(limitedFilter, 1), /HTTP 429/);
+    const filter = { season: "FALL", seasonYear: 2026, sort: ["ID"] };
+    assert.deepEqual(await queryAnime(filter, 1), [{ id: 123 }]);
+    await assert.rejects(queryAnime(filter, 2), /HTTP 429/);
 
-    assert.deepEqual(await queryAnime(cachedFilter, 1), [{ id: 123 }]);
-    await assert.rejects(queryAnime({ season: "SPRING", seasonYear: 2027, sort: ["ID"] }, 1), /cooldown active/);
+    assert.deepEqual(await queryAnime(filter, 1), [{ id: 123 }]);
+    await assert.rejects(queryAnime(filter, 3), /cooldown active/);
     assert.equal(calls, 2);
   } finally {
     globalThis.fetch = originalFetch;
