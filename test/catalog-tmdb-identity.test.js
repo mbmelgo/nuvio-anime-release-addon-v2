@@ -434,3 +434,79 @@ test("catalog checks TMDB season membership for direct IMDb identities with rela
   assert.equal(metas[0].id, "tmdb:205493");
   assert.equal(metas[0].extra.tmdbId, "205493");
 });
+
+test("catalog verifies a related TMDB candidate when direct IMDb evidence would otherwise skip the TMDB stage", async () => {
+  let tmdbCalls = 0;
+  const row = {
+    id: 199068,
+    idMal: 199068,
+    title: {
+      english: "The Prince of Tennis II U-17 WORLD CUP: Final Member Selection Match",
+      romaji: "Shin Tennis no Ouji-sama: U-17 WORLD CUP Kesshou Member Ketteisen",
+    },
+    format: "TV",
+    startDate: { year: 2026 },
+    relations: {
+      edges: [{
+        relationType: "PREQUEL",
+        node: {
+          id: 165810,
+          title: { english: "The Prince of Tennis II U-17 World Cup Semifinal" },
+          externalLinks: [{ site: "Official Site", url: "https://tenipuri.jp/u17/" }],
+        },
+      }],
+    },
+  };
+
+  const metas = await canonicalizeCatalogPage([row], {
+    resolveMappings: async () => new Map([[199068, [{
+      source: "anime-mapper",
+      anilistId: 199068,
+      type: "TV",
+      imdbIds: ["tt45257943"],
+      tvdbId: null,
+      tmdbTvId: 205493,
+      tmdbMovieIds: [],
+      title: row.title.english,
+      titles: [row.title.english],
+      year: 2026,
+      relation: true,
+    }]]]),
+    resolveTMDBMappings: async (rows) => {
+      tmdbCalls += 1;
+      assert.deepEqual(rows.map((item) => item.id), [199068]);
+      return new Map([[199068, [{
+        source: "tmdb-season-verified",
+        anilistId: 199068,
+        type: "TV",
+        imdbIds: [],
+        tvdbId: null,
+        tmdbTvId: 205493,
+        tmdbMovieIds: [],
+        title: row.title.english,
+        titles: [row.title.english],
+        year: 2026,
+        tmdbAuthoritative: true,
+        tmdbMatchScore: 150,
+        tmdbSeasonVerified: true,
+        tmdbSeasonNumber: 3,
+      }]]]);
+    },
+    validateImdbMappings: validateKnownImdb,
+    resolveFribbMappings: empty,
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: empty,
+    resolveIdMapperMappings: empty,
+    resolveAnimeMapperMappings: empty,
+    resolveAnimeMapperRelatedProviderIds: async () => new Map(),
+    resolveTsvMappings: empty,
+    resolveImdbMappings: empty,
+    resolveSecondaryMappings: empty,
+    resolveAlternativeMappings: empty,
+    resolveAniBridgeMappings: empty,
+    resolveCanonicalSeriesMappings: async () => new Map(),
+  });
+
+  assert.equal(tmdbCalls, 1);
+  assert.equal(metas[0].id, "tmdb:205493");
+});
