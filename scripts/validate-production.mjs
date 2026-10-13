@@ -57,11 +57,49 @@ export async function validateProduction(baseUrl, expectedVersion, fetchImpl = f
   const manifest = await manifestResponse.json();
   validateManifest(manifest, expectedVersion);
 
-  for (const catalogId of PRODUCTION_CATALOG_IDS) {
-    const response = await fetchImpl(`${base}/catalog/series/${catalogId}.json`);
-    if (!response.ok) throw new Error(`${catalogId}: HTTP ${response.status}`);
-    const catalog = await response.json();
-    validateCatalog(catalog, catalogId);
+  for (const catalogInfo of manifest.catalogs) {
+    const { id: catalogId } = catalogInfo;
+    const pageSize = Number(catalogInfo.pageSize);
+    if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 1000) {
+      throw new Error(`${catalogId}: manifest page size is invalid.`);
+    }
+
+    const seenIds = new Set();
+    let skip = 0;
+    let page = 0;
+    let reachedEnd = false;
+    while (page < 1000) {
+      const response = await fetchImpl(`${base}/catalog/series/${catalogId}.json?skip=${skip}`);
+      if (!response.ok) throw new Error(`${catalogId}: HTTP ${response.status} at skip=${skip}`);
+      const catalog = await response.json();
+      if (!Array.isArray(catalog?.metas)) {
+        throw new Error(`${catalogId}: catalog metas must be an array.`);
+      }
+
+      if (catalog.metas.length === 0) {
+        if (skip === 0) validateCatalog(catalog, catalogId);
+        reachedEnd = true;
+        break;
+      }
+
+      validateCatalog(catalog, catalogId);
+      for (const meta of catalog.metas) {
+        const id = String(meta.id);
+        if (seenIds.has(id)) {
+          throw new Error(`${catalogId}: duplicate catalog identity across pages: ${id}.`);
+        }
+        seenIds.add(id);
+      }
+
+      page += 1;
+      if (catalog.metas.length < pageSize) {
+        reachedEnd = true;
+        break;
+      }
+      skip += pageSize;
+    }
+
+    if (!reachedEnd) throw new Error(`${catalogId}: exceeded the 1000-page validation limit.`);
   }
 
   const metaResponse = await fetchImpl(`${base}/meta/series/mal%3A39535.json`);
