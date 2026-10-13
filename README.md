@@ -192,7 +192,7 @@ Catalog names and season labels are generated dynamically.
 
 ## 🚀 Current release
 
-**Production:** `v1.117.0`  
+**Production:** `v1.118.0`  
 **Development:** `v1.118.0` — serves cached AniList catalog responses during upstream rate-limit cooldowns
 
 Post-release production catalog snapshots are captured automatically after each controlled release and retained on versioned `catalog-snapshots/*` branches.
