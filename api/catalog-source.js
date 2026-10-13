@@ -1797,8 +1797,8 @@ export async function buildCatalog(id, info, skip, search, diagnostics = null) {
   return [];
 }
 
-export function getCatalogCacheControl(id, diagnosticsEnabled = false) {
-  if (diagnosticsEnabled) return "no-store";
+export function getCatalogCacheControl(id, diagnosticsEnabled = false, status = 200) {
+  if (diagnosticsEnabled || Number(status) >= 500) return "no-store";
   if (id === "upcoming_3_days" || id === "previous_3_days") {
     // Rolling membership changes as airings cross the now boundary. Keep CDN
     // freshness bounded and do not permit a long stale fallback for these feeds.
@@ -1813,7 +1813,7 @@ function send(body, status = 200, extraHeaders = null, diagnosticsEnabled = fals
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
-    "Cache-Control": getCatalogCacheControl(catalogId, diagnosticsEnabled),
+    "Cache-Control": getCatalogCacheControl(catalogId, diagnosticsEnabled, status),
   });
   for (const [name, value] of Object.entries(extraHeaders || {})) headers.set(name, value);
   return new Response(JSON.stringify(body), { status, headers });
