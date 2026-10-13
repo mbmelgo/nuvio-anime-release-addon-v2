@@ -282,6 +282,7 @@ test("production dispatch honors an explicit release target SHA over workflow HE
   assert.ok(workflow.includes('target="$(printf \'%s\' "$RELEASE_TARGET_SHA_INPUT" | tr -d \'[:space:]\')"'));
   assert.ok(workflow.includes('if [[ ! "$target" =~ ^[0-9a-fA-F]{40}$ ]]; then'));
   assert.ok(workflow.includes('if [[ -z "$target" ]]; then target="$GITHUB_SHA"; fi'));
+});
 
 test("release target validator requires an exact SHA and expected version", () => {
   assert.equal(validateReleaseTarget({
