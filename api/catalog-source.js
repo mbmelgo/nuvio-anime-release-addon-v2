@@ -303,7 +303,7 @@ async function resolveMappingsForRows(
         ),
       );
     const needsRelatedSeasonVerification = hasRelatedInstallmentTitle
-      && (!selected || selected.provider !== "tmdb");
+      && !tmdbSelected;
     return needsRelatedSeasonVerification
       || (!independentlyVerifiedImdb && (!selected || selected.provider !== "tmdb" || !tmdbSelected));
   });
