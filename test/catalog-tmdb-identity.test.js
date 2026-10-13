@@ -459,19 +459,34 @@ test("catalog verifies a related TMDB candidate when direct IMDb evidence would 
   };
 
   const metas = await canonicalizeCatalogPage([row], {
-    resolveMappings: async () => new Map([[199068, [{
-      source: "anime-mapper",
-      anilistId: 199068,
-      type: "TV",
-      imdbIds: ["tt45257943"],
-      tvdbId: null,
-      tmdbTvId: 205493,
-      tmdbMovieIds: [],
-      title: row.title.english,
-      titles: [row.title.english],
-      year: 2026,
-      relation: true,
-    }]]]),
+    resolveMappings: async () => new Map([[199068, [
+      {
+        source: "anime-mapper",
+        anilistId: 199068,
+        type: "TV",
+        imdbIds: ["tt45257943"],
+        tvdbId: null,
+        tmdbTvId: null,
+        tmdbMovieIds: [],
+        title: row.title.english,
+        titles: [row.title.english],
+        year: 2026,
+      },
+      {
+        source: "tmdb-search",
+        anilistId: 199068,
+        type: "TV",
+        imdbIds: ["tt45257943"],
+        tvdbId: null,
+        tmdbTvId: 205493,
+        tmdbMovieIds: [],
+        title: "The Prince of Tennis II U-17 World Cup",
+        titles: ["The Prince of Tennis II U-17 World Cup"],
+        year: 2022,
+        tmdbAuthoritative: true,
+        tmdbMatchScore: 130,
+      },
+    ]]]),
     resolveTMDBMappings: async (rows) => {
       tmdbCalls += 1;
       assert.deepEqual(rows.map((item) => item.id), [199068]);
