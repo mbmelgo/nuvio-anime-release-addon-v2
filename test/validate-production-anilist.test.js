@@ -53,7 +53,7 @@ test("production validation inspects every catalog page for duplicate identities
 
   await assert.rejects(
     validateProduction("https://example.test", "1.109.0", fetchImpl),
-    /current_season: duplicate catalog identities detected/,
+    /current_season: duplicate catalog identity across pages/,
   );
   assert.ok(requests.includes("/catalog/series/current_season.json?skip=50"));
 });
