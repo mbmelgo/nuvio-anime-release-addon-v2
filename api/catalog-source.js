@@ -163,7 +163,7 @@ export default {
       const skip = Math.max(0, Number(query.skip || 0) || 0);
       const search = String(query.search || "").trim();
       const metas = await buildCatalog(id, seasonInfo, skip, search, diagnosticsStages);
-      return send({ metas }, 200, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null, diagnosticsEnabled);
+      return send({ metas }, 200, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null, diagnosticsEnabled, id);
     } catch (error) {
       console.error("[catalog] request failed", { id, skip: query.skip, search: query.search, error });
       return send({ metas: [] }, 500, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null, diagnosticsEnabled);
@@ -1797,13 +1797,23 @@ export async function buildCatalog(id, info, skip, search, diagnostics = null) {
   return [];
 }
 
-function send(body, status = 200, extraHeaders = null, diagnosticsEnabled = false) {
+export function getCatalogCacheControl(id, diagnosticsEnabled = false) {
+  if (diagnosticsEnabled) return "no-store";
+  if (id === "upcoming_3_days" || id === "previous_3_days") {
+    // Rolling membership changes as airings cross the now boundary. Keep CDN
+    // freshness bounded and do not permit a long stale fallback for these feeds.
+    return "public, s-maxage=30, stale-while-revalidate=30";
+  }
+  return "public, s-maxage=3600, stale-while-revalidate=86400, stale-if-error=86400";
+}
+
+function send(body, status = 200, extraHeaders = null, diagnosticsEnabled = false, catalogId = "") {
   const headers = new Headers({
     "Content-Type": "application/json; charset=utf-8",
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
-    "Cache-Control": diagnosticsEnabled ? "no-store" : "public, s-maxage=3600, stale-while-revalidate=86400, stale-if-error=86400",
+    "Cache-Control": getCatalogCacheControl(catalogId, diagnosticsEnabled),
   });
   for (const [name, value] of Object.entries(extraHeaders || {})) headers.set(name, value);
   return new Response(JSON.stringify(body), { status, headers });

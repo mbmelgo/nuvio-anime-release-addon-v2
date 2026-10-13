@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatCatalogDiagnostics, mergeCatalogDiagnosticStages, normalizeCatalogOptions } from "../api/catalog-source.js";
+import { formatCatalogDiagnostics, getCatalogCacheControl, mergeCatalogDiagnosticStages, normalizeCatalogOptions } from "../api/catalog-source.js";
 
 test("TMDB resolver log summary includes stage duration and only aggregate counters", async () => {
   const { formatTMDBResolverSummary } = await import("../api/catalog-source.js");
@@ -95,4 +95,12 @@ test("rolling page diagnostic stages accumulate instead of overwriting earlier p
     tmdb: 4,
     productionIdentityCache: 3,
   });
+});
+
+
+test("rolling catalogs use short shared caching without long stale fallbacks", () => {
+  assert.equal(getCatalogCacheControl("upcoming_3_days"), "public, s-maxage=30, stale-while-revalidate=30");
+  assert.equal(getCatalogCacheControl("previous_3_days"), "public, s-maxage=30, stale-while-revalidate=30");
+  assert.equal(getCatalogCacheControl("current_season"), "public, s-maxage=3600, stale-while-revalidate=86400, stale-if-error=86400");
+  assert.equal(getCatalogCacheControl("upcoming_3_days", true), "no-store");
 });
