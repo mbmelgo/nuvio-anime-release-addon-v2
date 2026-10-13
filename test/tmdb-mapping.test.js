@@ -435,7 +435,7 @@ test("TMDB resolver verifies a sequel as a season of a related TMDB series", asy
     startDate: { year: 2026 },
   }, [record])?.id, "205493");
   assert.deepEqual(record.imdbIds, []);
-  assert.equal(fetchImpl.calls.length, 3);
+  assert.equal(fetchImpl.calls.length, 2);
 });
 
 test("TMDB resolver does not treat a related series as a season without a matching title", async () => {
