@@ -67,6 +67,7 @@ export async function validateProduction(baseUrl, expectedVersion, fetchImpl = f
     const seenIds = new Set();
     let skip = 0;
     let page = 0;
+    let reachedEnd = false;
     while (page < 1000) {
       const response = await fetchImpl(`${base}/catalog/series/${catalogId}.json?skip=${skip}`);
       if (!response.ok) throw new Error(`${catalogId}: HTTP ${response.status} at skip=${skip}`);
@@ -77,6 +78,7 @@ export async function validateProduction(baseUrl, expectedVersion, fetchImpl = f
 
       if (catalog.metas.length === 0) {
         if (skip === 0) validateCatalog(catalog, catalogId);
+        reachedEnd = true;
         break;
       }
 
@@ -90,11 +92,14 @@ export async function validateProduction(baseUrl, expectedVersion, fetchImpl = f
       }
 
       page += 1;
-      if (catalog.metas.length < pageSize) break;
+      if (catalog.metas.length < pageSize) {
+        reachedEnd = true;
+        break;
+      }
       skip += pageSize;
     }
 
-    if (page === 1000) throw new Error(`${catalogId}: exceeded the 1000-page validation limit.`);
+    if (!reachedEnd) throw new Error(`${catalogId}: exceeded the 1000-page validation limit.`);
   }
 
   const metaResponse = await fetchImpl(`${base}/meta/series/mal%3A39535.json`);
