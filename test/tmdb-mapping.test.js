@@ -476,7 +476,7 @@ test("TMDB resolver discovers a shared series through a related title when AniLi
   const fetchImpl = mockFetch({
     "/3/search/tv?include_adult=false&language=en-US&page=1&query=The+Prince+of+Tennis+II+U-17+WORLD+CUP%3A+Final+Member+Selection+Match": { results: [] },
     "/3/search/tv?include_adult=false&language=en-US&page=1&query=Final+Member+Selection+Match": { results: [] },
-    "/3/search/tv?include_adult=false&language=en-US&page=1&query=The+Prince+of+Tennis+II+U-17+World+Cup+Semifinal": {
+    "/3/search/tv?include_adult=false&language=en-US&page=1&query=the+prince+of+tennis+ii+u+17+world+cup+semifinal": {
       results: [{ id: 205493, name: "The Prince of Tennis II: U-17 World Cup", original_name: "Shin Tennis no Ouji-sama: U-17 WORLD CUP", first_air_date: "2022-07-06" }],
     },
     "/3/tv/205493?language=en-US": {
