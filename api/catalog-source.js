@@ -291,15 +291,18 @@ async function resolveMappingsForRows(
     // alone suppress the canonical TMDB mapping stage. A strong direct IMDb
     // identity is normally terminal. Still inspect related TMDB series when
     // season metadata confirms the installment belongs to one of their seasons.
-    const hasRelatedTMDBSeries = Array.isArray(row?.relations?.edges)
+    const hasRelatedInstallmentTitle = Array.isArray(row?.relations?.edges)
       && row.relations.edges.some((edge) =>
         ["PARENT", "PREQUEL", "SEQUEL", "SPIN_OFF", "SIDE_STORY"].includes(
           String(edge?.relationType || "").toUpperCase(),
         )
-        && (Array.isArray(edge?.node?.externalLinks) ? edge.node.externalLinks : [])
-          .some((link) => /themoviedb\.org\/tv\/\d+/i.test(String(link?.url || ""))),
+        && (
+          (Array.isArray(edge?.node?.externalLinks) ? edge.node.externalLinks : [])
+            .some((link) => /themoviedb\.org\/tv\/\d+/i.test(String(link?.url || "")))
+          || Boolean(edge?.node?.title?.english || edge?.node?.title?.romaji || edge?.node?.title?.native)
+        ),
       );
-    const needsRelatedSeasonVerification = hasRelatedTMDBSeries
+    const needsRelatedSeasonVerification = hasRelatedInstallmentTitle
       && (!selected || selected.provider !== "tmdb");
     return needsRelatedSeasonVerification
       || (!independentlyVerifiedImdb && (!selected || selected.provider !== "tmdb" || !tmdbSelected));
