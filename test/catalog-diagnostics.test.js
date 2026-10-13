@@ -17,6 +17,13 @@ test("TMDB resolver log summary includes stage duration and only aggregate count
     http429Errors: 1,
     timeouts: 1,
     rowsDeadlineExhausted: 1,
+    relatedSeasonRowsAttempted: 0,
+    relatedSeasonSearches: 0,
+    relatedSeasonCandidateSeries: 0,
+    relatedSeasonDetailsLookups: 0,
+    relatedSeasonTitleMatches: 0,
+    relatedSeasonResolved: 0,
+    relatedSeasonLookupErrors: 0,
     anilistId: 178083,
     title: "must not be logged",
   }), {
@@ -34,6 +41,13 @@ test("TMDB resolver log summary includes stage duration and only aggregate count
     http429Errors: 1,
     timeouts: 1,
     rowsDeadlineExhausted: 1,
+    relatedSeasonRowsAttempted: 0,
+    relatedSeasonSearches: 0,
+    relatedSeasonCandidateSeries: 0,
+    relatedSeasonDetailsLookups: 0,
+    relatedSeasonTitleMatches: 0,
+    relatedSeasonResolved: 0,
+    relatedSeasonLookupErrors: 0,
   });
 });
 
