@@ -58,31 +58,48 @@ jobs:
       - name: Determine release request
         id: gate
         env:
+          EVENT_NAME: ${{ github.event_name }}
+          DEPLOY_PROD: ${{ inputs.deploy_prod }}
+          FINALIZE_RELEASE: ${{ inputs.finalize_release }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          RELEASE_TARGET_SHA_INPUT: ${{ inputs.release_target_sha }}
           COMMIT_MESSAGE: ${{ github.event.head_commit.message || '' }}
         run: |
           set -euo pipefail
-          if [[ "${{ github.event_name }}" == "push" && "$COMMIT_MESSAGE" == *"[deploy-prod]"* ]]; then
+          normalize_target() {
+            local target
+            target="$(printf '%s' "$RELEASE_TARGET_SHA_INPUT" | tr -d '[:space:]')"
+            if [[ -z "$target" ]]; then target="$GITHUB_SHA"; fi
+            if [[ ! "$target" =~ ^[0-9a-fA-F]{40}$ ]]; then
+              echo "Release target SHA must be a full 40-character commit SHA." >&2
+              return 1
+            fi
+            printf '%s' "$target"
+          }
+          if [[ "$EVENT_NAME" == "push" && "$COMMIT_MESSAGE" == *"[deploy-prod]"* ]]; then
             echo "release=true" >> "$GITHUB_OUTPUT"
             echo "redeploy=true" >> "$GITHUB_OUTPUT"
             echo "release_target_sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.event_name }}" == "push" && "$COMMIT_MESSAGE" =~ \[finalize-prod:([0-9a-fA-F]{40})\] ]]; then
+          elif [[ "$EVENT_NAME" == "push" && "$COMMIT_MESSAGE" =~ \[finalize-prod:([0-9a-fA-F]{40})\] ]]; then
             echo "release=true" >> "$GITHUB_OUTPUT"
             echo "redeploy=false" >> "$GITHUB_OUTPUT"
             echo "release_target_sha=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.deploy_prod }}" == "true" ]]; then
-            target="$(printf '%s' '${{ inputs.release_target_sha }}' | xargs)"
-            if [ -z "$target" ]; then target="$GITHUB_SHA"; fi
+          elif [[ "$EVENT_NAME" == "workflow_dispatch" && "$DEPLOY_PROD" == "true" ]]; then
+            target="$(normalize_target)"
             echo "release=true" >> "$GITHUB_OUTPUT"
             echo "redeploy=true" >> "$GITHUB_OUTPUT"
             echo "release_target_sha=$target" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.finalize_release }}" == "true" ]]; then
-            test -n "${{ inputs.release_target_sha }}"
+          elif [[ "$EVENT_NAME" == "workflow_dispatch" && "$FINALIZE_RELEASE" == "true" ]]; then
+            target="$(printf '%s' "$RELEASE_TARGET_SHA_INPUT" | tr -d '[:space:]')"
+            if [[ ! "$target" =~ ^[0-9a-fA-F]{40}$ ]]; then
+              echo "Finalize release requires a full 40-character commit SHA." >&2
+              exit 1
+            fi
             echo "release=true" >> "$GITHUB_OUTPUT"
             echo "redeploy=false" >> "$GITHUB_OUTPUT"
-            echo "release_target_sha=${{ inputs.release_target_sha }}" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.dry_run }}" == "true" ]]; then
-            target="$(printf '%s' '${{ inputs.release_target_sha }}' | xargs)"
-            if [ -z "$target" ]; then target="$GITHUB_SHA"; fi
+            echo "release_target_sha=$target" >> "$GITHUB_OUTPUT"
+          elif [[ "$EVENT_NAME" == "workflow_dispatch" && "$DRY_RUN" == "true" ]]; then
+            target="$(normalize_target)"
             echo "release=true" >> "$GITHUB_OUTPUT"
             echo "redeploy=false" >> "$GITHUB_OUTPUT"
             echo "release_target_sha=$target" >> "$GITHUB_OUTPUT"
@@ -90,29 +107,34 @@ jobs:
             echo "release=false" >> "$GITHUB_OUTPUT"
             echo "redeploy=false" >> "$GITHUB_OUTPUT"
           fi
-
       - name: Validate repository release metadata
         if: steps.gate.outputs.release == 'true' || inputs.dry_run == true
         run: node scripts/release-integrity.mjs
 
       - name: Validate release state
         if: steps.gate.outputs.release == 'true' || inputs.dry_run == true
+        env:
+          REDEPLOY: ${{ steps.gate.outputs.redeploy }}
+          RELEASE_TARGET_SHA: ${{ steps.gate.outputs.release_target_sha }}
         run: |
           python - <<'PY'
           import json
+          import os
           import re
           from pathlib import Path
-
           import subprocess
+
           state = json.loads(Path("ops/release-state.json").read_text())
           expected = state["nextReleaseVersion"]
           if state["paused"] or state["deploymentsSincePause"] >= state["deploymentLimit"]:
               raise SystemExit("Deployment checkpoint reached.")
 
-          if "${{ steps.gate.outputs.redeploy }}" == "true":
+          target = os.environ["RELEASE_TARGET_SHA"]
+          if not re.fullmatch(r"[0-9a-fA-F]{40}", target):
+              raise SystemExit("Release target SHA must be a full 40-character commit SHA.")
+          if os.environ["REDEPLOY"] == "true":
               version = re.search(r'ADDON_VERSION = "([^"]+)"', Path("api/version.js").read_text()).group(1)
           else:
-              target = "${{ steps.gate.outputs.release_target_sha }}"
               subprocess.run(["git", "fetch", "--quiet", "origin", target], check=True)
               version = re.search(
                   r'ADDON_VERSION = "([^"]+)"',
@@ -121,17 +143,15 @@ jobs:
 
           if version != expected:
               raise SystemExit(f"Release target version {version} does not match next release baseline {expected}.")
-
-          if not re.fullmatch(r"[0-9a-fA-F]{40}", "${{ steps.gate.outputs.release_target_sha }}"):
-              raise SystemExit("Release target SHA must be a full 40-character commit SHA.")
           PY
-
       - name: Revalidate current release state before deployment
         if: steps.gate.outputs.release == 'true' && inputs.dry_run != true
+        env:
+          RELEASE_TARGET_SHA: ${{ steps.gate.outputs.release_target_sha }}
         run: |
           set -euo pipefail
           git fetch --quiet origin main
-          target_version="$(git show "${{ steps.gate.outputs.release_target_sha }}:api/version.js" | sed -nE 's/export const ADDON_VERSION = "([^"]+)";/\1/p')"
+          target_version="$(git show "${RELEASE_TARGET_SHA}:api/version.js" | sed -nE 's/export const ADDON_VERSION = "([^"]+)";/\1/p')"
           CURRENT_STATE="$(git show origin/main:ops/release-state.json)" TARGET_VERSION="$target_version" node --input-type=module <<'NODE'
           import { validateReleaseConcurrencyState } from "./scripts/release-integrity.mjs";
           const state = JSON.parse(process.env.CURRENT_STATE);
@@ -142,9 +162,10 @@ jobs:
         id: existing_vercel
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TARGET_SHA: ${{ steps.gate.outputs.release_target_sha }}
         run: |
           set -euo pipefail
-          target="${{ steps.gate.outputs.release_target_sha }}"
+          target="$RELEASE_TARGET_SHA"
           status_payload="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${target}/status")"
           deployment_id="$(printf '%s' "$status_payload" | node scripts/resolve-vercel-deployment-id.mjs || true)"
           if [ -n "$deployment_id" ]; then
@@ -164,15 +185,19 @@ jobs:
 
       - name: Production smoke test
         if: steps.gate.outputs.release == 'true' || inputs.dry_run == true
+        env:
+          REDEPLOY: ${{ steps.gate.outputs.redeploy }}
+          RELEASE_TARGET_SHA: ${{ steps.gate.outputs.release_target_sha }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
-          if [ "${{ steps.gate.outputs.redeploy }}" = "true" ]; then
+          if [ "$REDEPLOY" = "true" ]; then
             expected="$(sed -nE 's/export const ADDON_VERSION = "([^"]+)";/\1/p' api/version.js)"
           else
-            git fetch --quiet origin "${{ steps.gate.outputs.release_target_sha }}"
-            expected="$(git show "${{ steps.gate.outputs.release_target_sha }}:api/version.js" | sed -nE 's/export const ADDON_VERSION = "([^"]+)";/\1/p')"
+            git fetch --quiet origin "$RELEASE_TARGET_SHA"
+            expected="$(git show "${RELEASE_TARGET_SHA}:api/version.js" | sed -nE 's/export const ADDON_VERSION = "([^"]+)";/\1/p')"
           fi
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
+          if [ "$DRY_RUN" = "true" ]; then
             production_expected="$(curl --fail --silent --show-error https://nuvio-anime-release-addon-v2.vercel.app/manifest.json | sed -nE 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p')"
             test -n "$production_expected"
           else
@@ -214,18 +239,21 @@ jobs:
             sleep 5
           done
           exit 1
-
       - name: Extended production validation
         if: steps.gate.outputs.release == 'true' || inputs.dry_run == true
+        env:
+          REDEPLOY: ${{ steps.gate.outputs.redeploy }}
+          RELEASE_TARGET_SHA: ${{ steps.gate.outputs.release_target_sha }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
-          if [ "${{ steps.gate.outputs.redeploy }}" = "true" ]; then
+          if [ "$REDEPLOY" = "true" ]; then
             expected="$(sed -nE 's/export const ADDON_VERSION = "([^"]+)";/\1/p' api/version.js)"
           else
-            git fetch --quiet origin "${{ steps.gate.outputs.release_target_sha }}"
-            expected="$(git show "${{ steps.gate.outputs.release_target_sha }}:api/version.js" | sed -nE 's/export const ADDON_VERSION = "([^"]+)";/\1/p')"
+            git fetch --quiet origin "$RELEASE_TARGET_SHA"
+            expected="$(git show "${RELEASE_TARGET_SHA}:api/version.js" | sed -nE 's/export const ADDON_VERSION = "([^"]+)";/\1/p')"
           fi
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
+          if [ "$DRY_RUN" = "true" ]; then
             production_expected="$(curl --fail --silent --show-error https://nuvio-anime-release-addon-v2.vercel.app/manifest.json | sed -nE 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p')"
             test -n "$production_expected"
           else
@@ -244,9 +272,10 @@ jobs:
         id: vercel_deployment
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TARGET_SHA: ${{ steps.gate.outputs.release_target_sha }}
         run: |
           set -euo pipefail
-          target="${{ steps.gate.outputs.release_target_sha }}"
+          target="$RELEASE_TARGET_SHA"
           status_payload="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${target}/status")"
           deployment_id="$(printf '%s' "$status_payload" | node scripts/resolve-vercel-deployment-id.mjs)"
           test -n "$deployment_id"
@@ -259,15 +288,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           VERCEL_DEPLOYMENT_ID: ${{ steps.vercel_deployment.outputs.deployment_id }}
+          REDEPLOY: ${{ steps.gate.outputs.redeploy }}
+          RELEASE_TARGET_SHA: ${{ steps.gate.outputs.release_target_sha }}
         run: |
           set -euo pipefail
           release_version="$(python -c 'import json;print(json.load(open("ops/release-state.json"))["nextReleaseVersion"])')"
           tag="v$release_version"
 
-          if [[ "${{ steps.gate.outputs.redeploy }}" == "true" ]]; then
+          if [[ "$REDEPLOY" == "true" ]]; then
             target="$(node scripts/release-target.mjs deploy "$GITHUB_SHA")"
           else
-            target="$(node scripts/release-target.mjs finalize "${{ steps.gate.outputs.release_target_sha }}")"
+            target="$(node scripts/release-target.mjs finalize "$RELEASE_TARGET_SHA")"
             git cat-file -e "$target^{commit}"
           fi
 
@@ -418,6 +449,7 @@ jobs:
         if: steps.gate.outputs.release == 'true' && inputs.dry_run != true
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TARGET_SHA: ${{ steps.gate.outputs.release_target_sha }}
         run: |
           set -euo pipefail
           release_version="$(python -c 'import json;print(json.load(open("ops/release-state.json"))["lastDeploymentVersion"])')"
@@ -425,4 +457,4 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --ref main \
             -f release_version="$release_version" \
-            -f release_sha="${{ steps.gate.outputs.release_target_sha }}"
+            -f release_sha="$RELEASE_TARGET_SHA"
