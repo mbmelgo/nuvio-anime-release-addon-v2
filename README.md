@@ -192,7 +192,7 @@ Catalog names and season labels are generated dynamically.
 
 ## 🚀 Current release
 
-**Production:** `v1.109.0`  
+**Production:** `v1.110.0`  
 **Development:** `v1.110.0` — updates the landing page to the current three-day rolling catalogs
 
 Post-release production catalog snapshots are captured automatically after each controlled release and retained on versioned `catalog-snapshots/*` branches.
