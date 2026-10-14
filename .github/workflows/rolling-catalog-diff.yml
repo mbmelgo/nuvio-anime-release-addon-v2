@@ -94,7 +94,7 @@ jobs:
           PY
           done
 
-          git fetch origin catalog-rolling-snapshot 2>/dev/null || true
+          git fetch origin refs/heads/catalog-rolling-snapshot:refs/remotes/origin/catalog-rolling-snapshot 2>/dev/null || true
           if git show-ref --verify --quiet refs/remotes/origin/catalog-rolling-snapshot; then
             mkdir -p "$work/before"
             git archive origin/catalog-rolling-snapshot | tar -x -C "$work/before"
