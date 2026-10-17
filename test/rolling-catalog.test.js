@@ -35,9 +35,10 @@ test("seasonal filters remain isolated from rolling catalog ids", () => {
     previous: { season: "SUMMER", year: 2026 },
     upcoming: { season: "WINTER", year: 2027 },
   };
-  assert.deepEqual(getCatalogFilter("current_season", info), { season: info.ongoing, sort: ["ID"] });
-  assert.deepEqual(getCatalogFilter("previous_season", info), { season: info.previous, sort: ["ID"] });
-  assert.deepEqual(getCatalogFilter("upcoming_season", info), { season: info.upcoming, sort: ["ID"] });
+  assert.deepEqual(getCatalogFilter("current_season", info), { season: info.ongoing, sort: ["ID"], formats: ["TV", "TV_SHORT", "ONA", "OVA", "SPECIAL"] });
+  assert.deepEqual(getCatalogFilter("previous_season", info), { season: info.previous, sort: ["ID"], formats: ["TV", "TV_SHORT", "ONA", "OVA", "SPECIAL"] });
+  assert.deepEqual(getCatalogFilter("upcoming_season", info), { season: info.upcoming, sort: ["ID"], formats: ["TV", "TV_SHORT", "ONA", "OVA", "SPECIAL"] });
+  assert.deepEqual(getCatalogFilter("current_season_movies", info), { season: info.ongoing, sort: ["ID"], formats: ["MOVIE"] });
   assert.equal(getCatalogFilter("upcoming_3_days", info), null);
   assert.equal(getCatalogFilter("previous_3_days", info), null);
 });
