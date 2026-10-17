@@ -753,3 +753,81 @@ test("rolling catalog shares one TMDB resolver deadline across schedule pages", 
   assert.ok(deadlines.every((deadline) => Number.isFinite(deadline)));
   assert.equal(deadlines[0], deadlines[1], "all schedule pages must share the same TMDB budget");
 });
+
+
+
+test("rolling catalog prefers a canonical TMDB series ID regardless of which resolver supplied the canonical record", async () => {
+  const now = new Date("2026-10-01T00:00:00.000Z");
+  const mediaId = 185874;
+  const row = {
+    ...schedule(
+      mediaId,
+      now.getTime() + 60_000,
+      1,
+      "BLEACH: Thousand-Year Blood War - The Calamity",
+      60636,
+    ),
+    media: {
+      ...schedule(
+        mediaId,
+        now.getTime() + 60_000,
+        1,
+        "BLEACH: Thousand-Year Blood War - The Calamity",
+        60636,
+      ).media,
+      relations: {
+        edges: [{
+          relationType: "PREQUEL",
+          node: {
+            id: 269,
+            idMal: 269,
+            format: "TV",
+            title: { english: "Bleach", romaji: "Bleach", native: "ブリーチ" },
+            startDate: { year: 2004 },
+            externalLinks: [],
+          },
+        }],
+      },
+    },
+  };
+  const emptyMap = async () => new Map();
+  const result = await buildRollingCatalog("upcoming_3_days", now, 0, "", {
+    fetchPage: async () => [row],
+    maxPages: 1,
+    resolveMappings: async () => new Map([[mediaId, [{
+      source: "imdb-search-canonical-series",
+      anilistId: mediaId,
+      type: "TV",
+      imdbIds: ["tt0434665"],
+      tvdbId: null,
+      tmdbTvId: 30984,
+      tmdbMovieIds: [],
+      title: "Bleach",
+      titles: ["Bleach"],
+      year: 2004,
+      canonicalSeries: true,
+      canonicalSeriesAnilistId: 269,
+      canonicalSeriesMalId: 269,
+      canonicalSeriesTitle: "Bleach",
+    }]]]),
+    resolveFribbMappings: emptyMap,
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: emptyMap,
+    resolveIdMapperMappings: emptyMap,
+    resolveTMDBMappings: emptyMap,
+    resolveAnimeMapperMappings: emptyMap,
+    resolveAnimeMapperRelatedProviderIds: emptyMap,
+    resolveCanonicalSeriesMappings: emptyMap,
+    resolveAniBridgeMappings: emptyMap,
+    resolveTsvMappings: emptyMap,
+    resolveImdbMappings: emptyMap,
+    validateImdbMappings: async () => new Set(),
+    resolveSecondaryMappings: emptyMap,
+    resolveAlternativeMappings: emptyMap,
+  });
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0].id, "tmdb:30984");
+  assert.equal(result[0].extra.identityProvider, "tmdb");
+  assert.equal(result[0].extra.identityCanonicalSeries, true);
+});

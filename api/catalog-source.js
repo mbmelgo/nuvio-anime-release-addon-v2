@@ -1696,11 +1696,32 @@ export async function buildRollingCatalog(id, date, skip, search, {
         );
         const canonicalTmdbSeriesRecord = currentIdentityRecords.find((record) =>
           record?.canonicalSeries === true
-          && record?.source === "anime-mapper-canonical-series"
           && Number.isInteger(Number(record?.tmdbTvId))
           && Number(record.tmdbTvId) > 0,
         );
-        if (canonicalSeriesRecord && !canonicalTmdbSeriesRecord) {
+        if (canonicalTmdbSeriesRecord) {
+          const canonicalTmdbId = String(Number(canonicalTmdbSeriesRecord.tmdbTvId));
+          metas.push({
+            ...baseMeta,
+            id: `tmdb:${canonicalTmdbId}`,
+            extra: {
+              ...baseMeta.extra,
+              identityProvider: "tmdb",
+              identityId: canonicalTmdbId,
+              identityCanonicalSeries: true,
+              identityCanonicalSeriesAnilistId: canonicalTmdbSeriesRecord.canonicalSeriesAnilistId,
+              identityCanonicalSeriesMalId: canonicalTmdbSeriesRecord.canonicalSeriesMalId,
+              identityCanonicalSeriesTitle: canonicalTmdbSeriesRecord.canonicalSeriesTitle,
+              identityEvidence: [{ source: canonicalTmdbSeriesRecord.source || "canonical-series-tmdb", season: null, episodeOffset: null, relation: false }],
+              episode: row.episode,
+              airingAt: row.airingAt,
+              ...(futureOnly ? { nextEpisode: row.episode, nextAiringAt: row.airingAt } : {}),
+            },
+            type: "series",
+          });
+          continue;
+        }
+        if (canonicalSeriesRecord) {
           const canonicalImdbId = canonicalSeriesRecord.imdbIds.find((id) => /^tt\d+$/.test(String(id)));
           metas.push({
             ...baseMeta,
