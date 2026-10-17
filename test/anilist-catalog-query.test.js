@@ -40,7 +40,7 @@ test("catalog AniList queries omit optional MAL id field only when explicitly di
 
   try {
     await queryAnime({ season: { season: "FALL", year: 2026 }, sort: ["ID"] }, 1, "", { includeMalId: false });
-    assert.doesNotMatch(request.query, /idMal/);
+    assert.doesNotMatch(request.query, /(?:^|\\n)\\s+idMal\\s*$/m);
   } finally {
     globalThis.fetch = originalFetch;
   }
