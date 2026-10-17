@@ -16,7 +16,7 @@ const CATALOGS = [
   ["Upcoming Season Movies", "upcoming_season_movies", "Movies scheduled for the next season"],
   ["Current Season Movies", "current_season_movies", "Movies scheduled for the current season"],
   ["Previous Season Movies", "previous_season_movies", "Movies from the immediately preceding season"],
-  ["Upcoming — 3 days", "upcoming_3_days", "Unique episodic anime with an upcoming airing within the next three days"],
+  ["Upcoming — 3 days", "upcoming_3_days", "Unique anime with an upcoming airing within the next three days"],
   ["Previous — 3 days", "previous_3_days", "Unique anime with an airing within the previous three days"],
 ];
 
