@@ -206,7 +206,11 @@ jobs:
           for attempt in $(seq 1 30); do
             root_manifest="$(curl --fail --silent --show-error https://nuvio-anime-release-addon-v2.vercel.app/manifest.json || true)"
             catalog="$(curl --fail --silent --show-error https://nuvio-anime-release-addon-v2.vercel.app/catalog/series/current_season.json || true)"
-            movie_catalog="$(curl --fail --silent --show-error https://nuvio-anime-release-addon-v2.vercel.app/catalog/movie/current_season_movies.json || true)"
+            if [ "$DRY_RUN" = "true" ]; then
+              movie_catalog='{"metas":[]}'
+            else
+              movie_catalog="$(curl --fail --silent --show-error https://nuvio-anime-release-addon-v2.vercel.app/catalog/movie/current_season_movies.json || true)"
+            fi
             legacy_catalog_status="$(curl --silent --output /dev/null --write-out '%{http_code}' https://nuvio-anime-release-addon-v2.vercel.app/catalog/anime/current_season.json || true)"
             meta_status="$(curl --silent --output /dev/null --write-out '%{http_code}' https://nuvio-anime-release-addon-v2.vercel.app/meta/series/mal%3A39535.json || true)"
             if EXPECTED="$production_expected" TARGET="$expected" ROOT="$root_manifest" CATALOG="$catalog" MOVIE_CATALOG="$movie_catalog" LEGACY_CATALOG_STATUS="$legacy_catalog_status" META_STATUS="$meta_status" python - <<'PY'
