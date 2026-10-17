@@ -14,6 +14,20 @@ test("production validator accepts canonical AniList fallback identities for ser
   }, "current_season_movies"), /not a movie/);
 });
 
+test("legacy production manifest is accepted only for explicit dry-run compatibility", () => {
+  const ids = ["upcoming_season", "current_season", "previous_season", "upcoming_3_days", "previous_3_days"];
+  const manifest = {
+    version: "1.120.0",
+    id: "com.marki.nuvio.anime-releases",
+    identityMode: "provider",
+    resources: [{ name: "catalog", types: ["series"] }],
+    types: ["series"],
+    catalogs: ids.map((id) => ({ id, type: "series", pageSize: 50 })),
+  };
+  assert.throws(() => validateManifest(manifest, "1.120.0"), /catalog contract/);
+  assert.equal(validateManifest(manifest, "1.120.0", { allowLegacy: true }), true);
+});
+
 test("production manifest validator requires matching movie and series catalog types", () => {
   const ids = ["upcoming_season", "current_season", "previous_season", "upcoming_season_movies", "current_season_movies", "previous_season_movies", "upcoming_3_days", "previous_3_days"];
   const manifest = {
