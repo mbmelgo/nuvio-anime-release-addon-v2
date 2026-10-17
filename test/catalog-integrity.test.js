@@ -239,7 +239,7 @@ test("catalog search matches all supported title identities without changing cat
 
 
 test("movie metadata is typed as movie while TV metadata remains series", () => {
- const movie = toMetaFromAniList(31970593, media(31970593, { format: "MOVIE", title: "Witch on the Holy Night" }));
+ const movie = toMetaFromAniList(143103, media(143103, { format: "MOVIE", title: "Witch on the Holy Night" }));
  const series = toMetaFromAniList(269, media(269, { format: "TV", title: "Bleach" }));
  assert.equal(movie.type, "movie"); assert.equal(movie.extra.format, "MOVIE"); assert.equal(series.type, "series");
 });
