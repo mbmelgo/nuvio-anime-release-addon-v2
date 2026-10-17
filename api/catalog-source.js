@@ -630,7 +630,7 @@ async function resolveMappingsForRows(
     // explicit canonical relations and rows whose current identity is not
     // independently verified, while skipping identities it cannot change.
     const canonicalStart = diagnostics ? performance.now() : 0;
-    const canonicalCandidates = rows.filter((row) => shouldResolveCanonicalSeries(row, mappings));
+    const canonicalCandidates = rows.filter((row) => row.format !== "MOVIE" && shouldResolveCanonicalSeries(row, mappings));
     const canonicalRoots = canonicalCandidates.length
       ? await resolveCanonicalSeriesMappings(canonicalCandidates)
       : new Map();
