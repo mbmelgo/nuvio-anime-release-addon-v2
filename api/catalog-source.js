@@ -1375,6 +1375,11 @@ function selectCatalogIdentity(media, records, { excludeIds = new Set(), allowPr
       candidate.provider === "imdb" && hasStrongDirectProviderEvidence(candidate)),
     { excludeIds },
   );
+  const strongDirectProviderSelected = selectProviderIdentity(
+    media,
+    providerCandidates.filter((candidate) => hasStrongDirectProviderEvidence(candidate)),
+    { excludeIds },
+  );
   // Preserve the seasonal catalog's established rule: a TMDB-derived IMDb
   // ID is not an independent IMDb verification, so use Nuvio's native TMDB
   // route unless a stronger direct IMDb identity is available.
@@ -1454,7 +1459,7 @@ function selectCatalogIdentity(media, records, { excludeIds = new Set(), allowPr
   const relationDerivedTmdbCachedOverride = relationDerivedTmdbSelected
     && providerSelected?.provider === relationDerivedTmdbSelected.provider
     && providerSelected?.id === relationDerivedTmdbSelected.id
-    && !independentlyVerifiedImdb
+    && !strongDirectProviderSelected
     && !hasStrongDirectProviderEvidence(relationDerivedTmdbSelected)
     && verifiedCachedCandidate?.validation?.reasons?.includes("title-match")
     && verifiedCachedCandidate.validation.reasons.includes("source-id-match")
