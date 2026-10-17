@@ -1628,27 +1628,15 @@ export async function fetchValidatedSeasonCatalogPage({
   diagnostics = null,
 }) {
   const normalizedSkip = Math.max(0, Number(skip) || 0);
-  const targetCount = normalizedSkip + NUVIO_PAGE_SIZE, collected = [], seenIds = new Set();
-  const formats = Array.isArray(filter?.formats) && filter.formats.length ? filter.formats : ["TV", "TV_SHORT", "ONA", "OVA", "SPECIAL", "MOVIE"];
-  const maxPages = Math.max(1, Math.ceil(targetCount / ANILIST_PAGE_SIZE) + 100);
+  const anilistPage = Math.floor(normalizedSkip / NUVIO_PAGE_SIZE) + 1;
+  const pageOffset = normalizedSkip % NUVIO_PAGE_SIZE;
   const fetchStart = diagnostics ? performance.now() : 0;
-  for (let page = 1; page <= maxPages && collected.length < targetCount; page += 1) {
-    const rows = await fetchPage({ ...filter, formats }, page, search, { includeMalId: true });
-    const pageRows = Array.isArray(rows) ? rows : []; let newIds = 0;
-    for (const row of pageRows) {
-      const id = Number(row?.id);
-      if (!Number.isInteger(id) || id <= 0 || seenIds.has(id)) continue;
-      seenIds.add(id); newIds += 1;
-      if (formats.includes(row?.format)) collected.push(row);
-      if (collected.length >= targetCount) break;
-    }
-    if (pageRows.length < ANILIST_PAGE_SIZE || newIds === 0) break;
-  }
+  const rows = await fetchPage(filter, anilistPage, search, { includeMalId: true });
   if (diagnostics) diagnostics.anilist = performance.now() - fetchStart;
   const canonicalStart = diagnostics ? performance.now() : 0;
-  const canonical = await canonicalizePage(collected.slice(normalizedSkip, targetCount), diagnostics);
+  const canonical = await canonicalizePage(rows, diagnostics);
   if (diagnostics) diagnostics.identity = performance.now() - canonicalStart;
-  return canonical;
+  return canonical.slice(pageOffset, pageOffset + NUVIO_PAGE_SIZE);
 }
 
 export function getRollingCatalogRange(id, date) {
