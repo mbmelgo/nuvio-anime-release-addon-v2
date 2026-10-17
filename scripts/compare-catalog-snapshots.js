@@ -39,11 +39,16 @@ function loadSnapshot(directory) {
     upcoming_3_days: "upcoming_5_days",
     previous_3_days: "previous_7_days",
   };
+  const legacySnapshot = Number(metadata.schemaVersion || 0) < 4;
   for (const catalog of DEFAULT_CATALOGS) {
     const currentPath = path.join(directory, `${catalog}.json`);
     const legacyPath = path.join(directory, `${legacyCatalogNames[catalog] || ""}.json`);
     const sourcePath = fs.existsSync(currentPath) ? currentPath : legacyPath;
     if (!fs.existsSync(sourcePath)) {
+      if (legacySnapshot && catalog.endsWith("_movies")) {
+        catalogs[catalog] = { metas: [] };
+        continue;
+      }
       throw new Error(`Missing snapshot for ${catalog} (also checked its legacy catalog name)`);
     }
     catalogs[catalog] = readJson(sourcePath);
