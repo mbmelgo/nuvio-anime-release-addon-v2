@@ -1696,7 +1696,6 @@ export async function buildRollingCatalog(id, date, skip, search, {
         );
         const canonicalTmdbSeriesRecord = currentIdentityRecords.find((record) =>
           record?.canonicalSeries === true
-          && record?.source === "anime-mapper-canonical-series"
           && Number.isInteger(Number(record?.tmdbTvId))
           && Number(record.tmdbTvId) > 0,
         );
