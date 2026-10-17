@@ -753,3 +753,81 @@ test("rolling catalog shares one TMDB resolver deadline across schedule pages", 
   assert.ok(deadlines.every((deadline) => Number.isFinite(deadline)));
   assert.equal(deadlines[0], deadlines[1], "all schedule pages must share the same TMDB budget");
 });
+
+
+test("rolling catalog prefers a canonical TMDB series ID regardless of which resolver supplied the canonical record", async () => {
+  const now = new Date("2026-10-01T00:00:00.000Z");
+  const baseRow = schedule(
+    185874,
+    now.getTime() + 60_000,
+    1,
+    "BLEACH: Thousand-Year Blood War - The Calamity",
+    60636,
+  );
+  const row = {
+    ...baseRow,
+    media: {
+      ...baseRow.media,
+      relations: {
+        edges: [{
+          relationType: "PREQUEL",
+          node: {
+            id: 269,
+            idMal: 269,
+            format: "TV",
+            title: { english: "Bleach", romaji: "Bleach", native: "ブリーチ" },
+            startDate: { year: 2004 },
+            externalLinks: [],
+          },
+        }],
+      },
+    },
+  };
+  const emptyMap = async () => new Map();
+  const result = await buildRollingCatalog("upcoming_3_days", now, 0, "", {
+    fetchPage: async () => [row],
+    maxPages: 1,
+    resolveMappings: emptyMap,
+    resolveFribbMappings: emptyMap,
+    resolveExternalMappings: () => new Map(),
+    resolveAnimapMappings: emptyMap,
+    resolveIdMapperMappings: emptyMap,
+    resolveTMDBMappings: emptyMap,
+    resolveAnimeMapperMappings: emptyMap,
+    resolveAnimeMapperRelatedProviderIds: emptyMap,
+    resolveCanonicalSeriesMappings: async () => new Map([[185874, {
+      source: "anime-mapper-canonical",
+      anilistId: 185874,
+      canonicalAnilistId: 269,
+      canonicalMalId: 269,
+      canonicalTitle: "Bleach",
+      canonicalType: "TV",
+      canonicalYear: 2004,
+      canonicalExternal: { anilist: 269, tmdb: null },
+    }]]),
+    resolveAniBridgeMappings: emptyMap,
+    resolveTsvMappings: emptyMap,
+    resolveImdbMappings: async (rows) => new Map((rows || [])
+      .filter((item) => Number(item?.id) === 269)
+      .map((item) => [269, [{
+        source: "imdb-search",
+        anilistId: 269,
+        type: "TV",
+        imdbIds: ["tt0434665"],
+        tvdbId: null,
+        tmdbTvId: 30984,
+        tmdbMovieIds: [],
+        title: "Bleach",
+        titles: ["Bleach"],
+        year: 2004,
+      }]])),
+    validateImdbMappings: async () => new Set(),
+    resolveSecondaryMappings: emptyMap,
+    resolveAlternativeMappings: emptyMap,
+  });
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0].id, "tmdb:30984");
+  assert.equal(result[0].extra.identityProvider, "tmdb");
+  assert.equal(result[0].extra.identityCanonicalSeries, true);
+});
