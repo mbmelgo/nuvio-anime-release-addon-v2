@@ -155,8 +155,10 @@ export default {
 
   if (request.method === "OPTIONS") return send({}, 200);
 
-  if (resource === "catalog" && ["series", "anime"].includes(String(type || "").toLowerCase())) {
-    if (!catalogDefinitions(seasonInfo).some((catalog) => catalog.id === id)) {
+  if (resource === "catalog" && ["series", "movie", "anime"].includes(String(type || "").toLowerCase())) {
+    const requestedType = String(type || "").toLowerCase();
+    const definition = catalogDefinitions(seasonInfo).find((catalog) => catalog.id === id);
+    if (!definition || (requestedType === "anime" ? definition.type !== "series" : definition.type !== requestedType)) {
       return send({ metas: [] }, 404);
     }
     try {
@@ -185,15 +187,19 @@ export function filterAiringRowsBySearch(rows, search) {
   );
 }
 
+const SERIES_FORMATS = ["TV", "TV_SHORT", "ONA", "OVA", "SPECIAL"];
+const MOVIE_FORMATS = ["MOVIE"];
 export function getCatalogFilter(id, info) {
-  if (id === "current_season") return { season: info.ongoing, sort: ["ID"] };
-  if (id === "previous_season") return { season: info.previous, sort: ["ID"] };
-  if (id === "upcoming_season") return { season: info.upcoming, sort: ["ID"] };
+  if (id === "current_season") return { season: info.ongoing, sort: ["ID"], formats: SERIES_FORMATS };
+  if (id === "previous_season") return { season: info.previous, sort: ["ID"], formats: SERIES_FORMATS };
+  if (id === "upcoming_season") return { season: info.upcoming, sort: ["ID"], formats: SERIES_FORMATS };
+  if (id === "current_season_movies") return { season: info.ongoing, sort: ["ID"], formats: MOVIE_FORMATS };
+  if (id === "previous_season_movies") return { season: info.previous, sort: ["ID"], formats: MOVIE_FORMATS };
+  if (id === "upcoming_season_movies") return { season: info.upcoming, sort: ["ID"], formats: MOVIE_FORMATS };
   return null;
 }
-
 export function normalizeSeasonalCatalogMetaTypes(metas) {
-  return metas.map((meta) => ({ ...meta, type: "series" }));
+  return metas.map((meta) => ({ ...meta, type: meta.extra?.format === "MOVIE" ? "movie" : "series" }));
 }
 
 async function resolveMappingsForRows(
@@ -624,7 +630,7 @@ async function resolveMappingsForRows(
     // explicit canonical relations and rows whose current identity is not
     // independently verified, while skipping identities it cannot change.
     const canonicalStart = diagnostics ? performance.now() : 0;
-    const canonicalCandidates = rows.filter((row) => shouldResolveCanonicalSeries(row, mappings));
+    const canonicalCandidates = rows.filter((row) => row.format !== "MOVIE" && shouldResolveCanonicalSeries(row, mappings));
     const canonicalRoots = canonicalCandidates.length
       ? await resolveCanonicalSeriesMappings(canonicalCandidates)
       : new Map();
@@ -1508,13 +1514,13 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
     const rawMeta = toCatalogIdentity(toMetaFromAniList(anilistId, row));
     if (!rawMeta) { unresolvedIds.push(anilistId); continue; }
     const meta = normalizeSeasonalCatalogMetaTypes([rawMeta])[0];
-    const canonicalSeriesRecords = (mappings.get(anilistId) || []).filter((record) =>
+    const canonicalSeriesRecords = (row.format === "MOVIE" ? [] : (mappings.get(anilistId) || []).filter((record) =>
       record?.canonicalSeries === true
       && (
         (Number.isInteger(Number(record?.tmdbTvId)) && Number(record.tmdbTvId) > 0)
         || (Array.isArray(record?.imdbIds) && record.imdbIds.some((id) => /^tt\d+$/.test(String(id))))
       ),
-    );
+    ));
     const canonicalSeriesRecord = canonicalSeriesRecords.find((record) =>
       Number.isInteger(Number(record?.tmdbTvId)) && Number(record.tmdbTvId) > 0,
     ) || canonicalSeriesRecords.find((record) =>
@@ -1641,7 +1647,7 @@ export function getRollingCatalogRange(id, date) {
 
 export function isEligibleRollingMedia(media) {
   return media?.isAdult === false
-    && ["TV", "TV_SHORT", "ONA", "OVA", "SPECIAL", "MOVIE"].includes(media?.format);
+    && ["TV", "TV_SHORT", "ONA", "OVA", "SPECIAL"].includes(media?.format);
 }
 
 export async function buildRollingCatalog(id, date, skip, search, {

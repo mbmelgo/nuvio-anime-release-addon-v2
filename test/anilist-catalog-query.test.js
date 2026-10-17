@@ -16,8 +16,10 @@ test("catalog AniList queries request all seasonal anime formats without a statu
     assert.equal(request.variables.season, "FALL");
     assert.equal(request.variables.seasonYear, 2026);
     assert.equal(request.variables.sort[0], "ID");
+    assert.deepEqual(request.variables.formats, ["TV", "TV_SHORT", "ONA", "OVA", "SPECIAL", "MOVIE"]);
     assert.equal(Object.hasOwn(request.variables, "status"), false);
-    assert.match(request.query, /format_in:\[TV,TV_SHORT,ONA,OVA,SPECIAL,MOVIE\]/);
+    assert.match(request.query, /format_in:\$formats/);
+    assert.deepEqual(request.variables.formats, ["TV", "TV_SHORT", "ONA", "OVA", "SPECIAL", "MOVIE"]);
     assert.doesNotMatch(request.query, /status:\$status/);
     assert.match(request.query, /perPage:50/);
     assert.match(request.query, /isAdult:false/);

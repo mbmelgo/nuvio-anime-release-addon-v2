@@ -488,3 +488,31 @@ test("catalog prefers native TMDB route for Mofusand when IMDb is only TMDB/sear
   assert.equal(metas[0].extra.tmdbProvider, "tmdb");
   assert.equal(metas[0].extra.tmdbId, "308934");
 });
+
+
+test("movie provider identity selects the TMDB movie ID rather than a TV ID", async () => {
+  const { getProviderCandidates, selectProviderIdentity } = await import("../lib/provider-identity.js");
+  const media = {
+    anilistId: 31970593,
+    format: "MOVIE",
+    title: { english: "Witch on the Holy Night", romaji: "Mahoutsukai no Yoru" },
+    startDate: { year: 2025 },
+    relations: { edges: [] },
+  };
+  const records = [{
+    source: "tmdb-search",
+    anilistId: 31970593,
+    type: "MOVIE",
+    mediaType: "movie",
+    imdbIds: ["tt31970593"],
+    tmdbTvId: 999,
+    tmdbMovieIds: [1236857],
+    title: "Witch on the Holy Night",
+    titles: ["Witch on the Holy Night"],
+    year: 2025,
+  }];
+  const candidates = getProviderCandidates(media, records);
+  assert.equal(candidates.some((candidate) => candidate.provider === "tmdb" && candidate.id === "1236857"), true);
+  assert.equal(candidates.some((candidate) => candidate.provider === "tmdb" && candidate.id === "999"), false);
+  assert.equal(selectProviderIdentity(media, candidates)?.id, "1236857");
+});
