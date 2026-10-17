@@ -244,15 +244,17 @@ test("movie metadata is typed as movie while TV metadata remains series", () => 
  assert.equal(movie.type, "movie"); assert.equal(movie.extra.format, "MOVIE"); assert.equal(series.type, "series");
 });
 
-test("seasonal pagination scans pages before filtering by format and applying skip", async () => {
- const calls = [], pages = {
-  1: Array.from({length:50},(_,i)=>media(i+1,{format:i===49?"MOVIE":"TV"})),
-  2: Array.from({length:50},(_,i)=>media(i+51,{format:"MOVIE"})),
- };
+test("seasonal movie catalog passes a movie-only AniList format filter", async () => {
+ const calls = [];
+ const rows = Array.from({length:50},(_,i)=>media(i+1,{format:"MOVIE"}));
  const result = await fetchValidatedSeasonCatalogPage({
   filter:{season:SEASON_INFO.ongoing,sort:["ID"],formats:["MOVIE"]}, skip:1,
-  fetchPage:async(_filter,page)=>{calls.push(page);return pages[page]||[];},
-  canonicalizePage:async(rows)=>rows.map(row=>toMetaFromAniList(row.id,row)),
+  fetchPage:async(filter,page)=>{calls.push({filter,page});return rows;},
+  canonicalizePage:async(sourceRows)=>sourceRows.map(row=>toMetaFromAniList(row.id,row)),
  });
- assert.deepEqual(calls,[1,2]); assert.equal(result.length,50); assert.ok(result.every(meta=>meta.type==="movie"));
+ assert.equal(calls.length,1);
+ assert.deepEqual(calls[0].filter.formats,["MOVIE"]);
+ assert.equal(calls[0].page,1);
+ assert.equal(result.length,49);
+ assert.ok(result.every(meta=>meta.type==="movie"));
 });
