@@ -189,6 +189,7 @@ jobs:
           REDEPLOY: ${{ steps.gate.outputs.redeploy }}
           RELEASE_TARGET_SHA: ${{ steps.gate.outputs.release_target_sha }}
           DRY_RUN: ${{ inputs.dry_run }}
+          ALLOW_LEGACY_PRODUCTION_CONTRACT: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
           if [ "$REDEPLOY" = "true" ]; then
