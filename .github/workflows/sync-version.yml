@@ -223,7 +223,7 @@ jobs:
           assert root.get("identityMode") == "provider"
           assert root.get("resources") == [{"name": "catalog", "types": ["series", "movie"]}]
           assert root.get("types") == ["series", "movie"]
-          assert root.get("catalogs") and all(c.get("type") == ("movie" if c.get("id", "").endswith("_movies") else "series") for c in root["catalogs"])
+          assert root.get("catalogs") and all(c.get("type") == ("movie" if str(c.get("id", "")).endswith("_movies") else "series") for c in root["catalogs"])
           assert os.environ["LEGACY_CATALOG_STATUS"] == "200"
           assert os.environ["META_STATUS"] == "404"
 
