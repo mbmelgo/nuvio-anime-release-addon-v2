@@ -493,7 +493,7 @@ test("catalog prefers native TMDB route for Mofusand when IMDb is only TMDB/sear
 test("movie provider identity selects the TMDB movie ID rather than a TV ID", async () => {
   const { getProviderCandidates, selectProviderIdentity } = await import("../lib/provider-identity.js");
   const media = {
-    anilistId: 31970593,
+    anilistId: 143103,
     format: "MOVIE",
     title: { english: "Witch on the Holy Night", romaji: "Mahoutsukai no Yoru" },
     startDate: { year: 2025 },
@@ -501,18 +501,18 @@ test("movie provider identity selects the TMDB movie ID rather than a TV ID", as
   };
   const records = [{
     source: "tmdb-search",
-    anilistId: 31970593,
+    anilistId: 143103,
     type: "MOVIE",
     mediaType: "movie",
-    imdbIds: ["tt31970593"],
-    tmdbTvId: 999,
-    tmdbMovieIds: [1236857],
+    imdbIds: ["tt12345678"],
+    tmdbTvId: 789,
+    tmdbMovieIds: [456],
     title: "Witch on the Holy Night",
     titles: ["Witch on the Holy Night"],
     year: 2025,
   }];
   const candidates = getProviderCandidates(media, records);
-  assert.equal(candidates.some((candidate) => candidate.provider === "tmdb" && candidate.id === "1236857"), true);
-  assert.equal(candidates.some((candidate) => candidate.provider === "tmdb" && candidate.id === "999"), false);
-  assert.equal(selectProviderIdentity(media, candidates)?.id, "1236857");
+  assert.equal(candidates.some((candidate) => candidate.provider === "tmdb" && candidate.id === "456"), true);
+  assert.equal(candidates.some((candidate) => candidate.provider === "tmdb" && candidate.id === "789"), false);
+  assert.equal(selectProviderIdentity(media, candidates)?.id, "456");
 });
