@@ -57,13 +57,15 @@ test("release workflow contains one production smoke test and one release finali
 test("release smoke test validates the provider catalog identity", () => {
   assert.match(deployWorkflow, /https:\/\/nuvio-anime-release-addon-v2\.vercel\.app\/manifest\.json/);
   assert.match(deployWorkflow, /https:\/\/nuvio-anime-release-addon-v2\.vercel\.app\/catalog\/series\/current_season\.json/);
+  assert.match(deployWorkflow, /https:\/\/nuvio-anime-release-addon-v2\.vercel\.app\/catalog\/movie\/current_season_movies\.json/);
   assert.match(deployWorkflow, /\/catalog\/anime\/current_season\.json/);
   assert.match(deployWorkflow, /com\.marki\.nuvio\.anime-releases/);
   assert.doesNotMatch(deployWorkflow, /com\.marki\.nuvio\.anime-releases\.v5/);
   assert.doesNotMatch(deployWorkflow, /\/v5\//);
   assert.match(deployWorkflow, /identityMode.*provider/);
-  assert.ok(deployWorkflow.includes('r"^(tt\\d+|tvdb:[1-9]\\d*|tmdb:[1-9]\\d*|mal:[1-9]\\d*)$"'));
+  assert.ok(deployWorkflow.includes('r"^(tt\\d+|tvdb:[1-9]\\d*|tmdb:[1-9]\\d*|mal:[1-9]\\d*|anilist:[1-9]\\d*)$"'));
   assert.match(deployWorkflow, /assert all\(m\.get\("type"\) == "series" for m in metas\)/);
+  assert.match(deployWorkflow, /assert all\(m\.get\("type"\) == "movie" for m in movie_metas\)/);
 });
 
 

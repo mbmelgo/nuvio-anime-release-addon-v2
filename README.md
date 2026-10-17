@@ -326,7 +326,7 @@ Annotated Git tag + GitHub Release
 Release-state update
 ```
 
-Release metadata is validated across `api/version.js`, `package.json`, `README.md`, and `ops/release-state.json`. Production validation checks all five supported catalogs for valid, unique Nuvio series identities and catalog-specific rolling metadata.
+Release metadata is validated across `api/version.js`, `package.json`, `README.md`, and `ops/release-state.json`. Production validation checks all eight supported catalogs for valid, unique identities with the correct movie or series type, plus catalog-specific rolling metadata.
 
 ## 📄 Scope
 
