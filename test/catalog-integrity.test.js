@@ -52,7 +52,7 @@ function schedule(id, airingAt, episode, options = {}) {
 function assertCatalogMeta(meta) {
   assert.ok(meta && typeof meta === "object");
   assert.match(meta.id, /^(tt\d+|tvdb:[1-9]\d*|tmdb:[1-9]\d*|mal:[1-9]\d*|anilist:[1-9]\d*)$/);
-  assert.equal(meta.type, "series");
+  assert.ok(["series", "movie"].includes(meta.type));
   assert.equal(typeof meta.name, "string");
   assert.ok(meta.name.length > 0);
   assert.equal(meta.posterShape, "poster");
@@ -66,12 +66,12 @@ test("catalog definitions expose exactly the supported five catalogs with one co
 
   assert.deepEqual(
     definitions.map(({ id }) => id),
-    ["upcoming_season", "current_season", "previous_season", "upcoming_3_days", "previous_3_days"],
+    ["upcoming_season", "current_season", "previous_season", "upcoming_season_movies", "current_season_movies", "previous_season_movies", "upcoming_3_days", "previous_3_days"],
   );
   assert.equal(new Set(definitions.map(({ id }) => id)).size, definitions.length);
 
   for (const definition of definitions) {
-    assert.equal(definition.type, "series");
+    assert.equal(definition.type, definition.id.endsWith("_movies") ? "movie" : "series");
     assert.equal(definition.pageSize, NUVIO_PAGE_SIZE);
     assert.deepEqual(definition.extra.map(({ name }) => name), ["search", "skip"]);
   }
@@ -126,10 +126,11 @@ test("seasonal pagination returns a unique, bounded, contract-valid catalog page
   for (const meta of result) assertCatalogMeta(meta);
 });
 
-test("rolling catalogs enforce the shared eligibility boundary", () => {
-  for (const format of ["TV", "TV_SHORT", "ONA", "OVA", "SPECIAL", "MOVIE"]) {
+test("rolling catalogs enforce the episodic eligibility boundary", () => {
+  for (const format of ["TV", "TV_SHORT", "ONA", "OVA", "SPECIAL"]) {
     assert.equal(isEligibleRollingMedia(media(1, { format, isAdult: false })), true);
   }
+  assert.equal(isEligibleRollingMedia(media(1, { format: "MOVIE", isAdult: false })), false);
   assert.equal(isEligibleRollingMedia(media(1, { format: "MANGA", isAdult: false })), false);
   assert.equal(isEligibleRollingMedia(media(1, { format: "TV", isAdult: true })), false);
 });
@@ -234,4 +235,24 @@ test("catalog search matches all supported title identities without changing cat
     assert.equal(result[0].extra.anilistId, 1);
   }
   assert.equal(filterCatalogMetasBySearch(metas, "").length, 2);
+});
+
+
+test("movie metadata is typed as movie while TV metadata remains series", () => {
+ const movie = toMetaFromAniList(31970593, media(31970593, { format: "MOVIE", title: "Witch on the Holy Night" }));
+ const series = toMetaFromAniList(269, media(269, { format: "TV", title: "Bleach" }));
+ assert.equal(movie.type, "movie"); assert.equal(movie.extra.format, "MOVIE"); assert.equal(series.type, "series");
+});
+
+test("seasonal pagination scans pages before filtering by format and applying skip", async () => {
+ const calls = [], pages = {
+  1: Array.from({length:50},(_,i)=>media(i+1,{format:i===49?"MOVIE":"TV"})),
+  2: Array.from({length:50},(_,i)=>media(i+51,{format:"MOVIE"})),
+ };
+ const result = await fetchValidatedSeasonCatalogPage({
+  filter:{season:SEASON_INFO.ongoing,sort:["ID"],formats:["MOVIE"]}, skip:1,
+  fetchPage:async(_filter,page)=>{calls.push(page);return pages[page]||[];},
+  canonicalizePage:async(rows)=>rows.map(row=>toMetaFromAniList(row.id,row)),
+ });
+ assert.deepEqual(calls,[1,2]); assert.equal(result.length,50); assert.ok(result.every(meta=>meta.type==="movie"));
 });
