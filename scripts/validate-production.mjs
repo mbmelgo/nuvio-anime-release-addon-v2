@@ -2,9 +2,22 @@ export const PRODUCTION_CATALOG_IDS = [
   "upcoming_season",
   "current_season",
   "previous_season",
+  "upcoming_season_movies",
+  "current_season_movies",
+  "previous_season_movies",
   "upcoming_3_days",
   "previous_3_days",
 ];
+
+const MOVIE_CATALOG_IDS = new Set([
+  "upcoming_season_movies",
+  "current_season_movies",
+  "previous_season_movies",
+]);
+
+export function catalogTypeForId(catalogId) {
+  return MOVIE_CATALOG_IDS.has(catalogId) ? "movie" : "series";
+}
 
 const ID_PATTERN = /^(tt\d+|tvdb:[1-9]\d*|tmdb:[1-9]\d*|mal:[1-9]\d*|anilist:[1-9]\d*)$/;
 
@@ -13,17 +26,20 @@ export function validateManifest(manifest, expectedVersion) {
   if (manifest.version !== expectedVersion) throw new Error(`Manifest version ${manifest.version} does not match expected ${expectedVersion}.`);
   if (manifest.id !== "com.marki.nuvio.anime-releases") throw new Error("Manifest addon id is invalid.");
   if (manifest.identityMode !== "provider") throw new Error("Manifest identity mode must be provider.");
-  if (JSON.stringify(manifest.resources) !== JSON.stringify([{ name: "catalog", types: ["series"] }])) {
+  if (JSON.stringify(manifest.resources) !== JSON.stringify([{ name: "catalog", types: ["series", "movie"] }])) {
     throw new Error("Manifest resources do not match the Nuvio catalog contract.");
   }
-  if (JSON.stringify(manifest.types) !== JSON.stringify(["series"])) throw new Error("Manifest types do not match the Nuvio catalog contract.");
-  const ids = (manifest.catalogs || []).map((catalog) => catalog.id);
-  if (JSON.stringify(ids) !== JSON.stringify(PRODUCTION_CATALOG_IDS)) throw new Error("Manifest catalogs do not match the five supported catalogs.");
-  if ((manifest.catalogs || []).some((catalog) => catalog.type !== "series")) throw new Error("Manifest contains a non-anime catalog.");
+  if (JSON.stringify(manifest.types) !== JSON.stringify(["series", "movie"])) throw new Error("Manifest types do not match the Nuvio catalog contract.");
+  const catalogs = manifest.catalogs || [];
+  const ids = catalogs.map((catalog) => catalog.id);
+  if (JSON.stringify(ids) !== JSON.stringify(PRODUCTION_CATALOG_IDS)) throw new Error("Manifest catalogs do not match the eight supported catalogs.");
+  if (catalogs.some((catalog) => catalog.type !== catalogTypeForId(catalog.id))) {
+    throw new Error("Manifest catalog types do not match their catalog IDs.");
+  }
   return true;
 }
 
-export function validateCatalog(catalog, catalogId) {
+export function validateCatalog(catalog, catalogId, expectedType = catalogTypeForId(catalogId)) {
   if (!catalog || typeof catalog !== "object") throw new Error(`${catalogId}: catalog is not an object.`);
   if (!Array.isArray(catalog.metas)) throw new Error(`${catalogId}: catalog metas must be an array.`);
   if (catalogId === "current_season" && catalog.metas.length === 0) throw new Error("current_season: catalog has no metas.");
@@ -31,7 +47,7 @@ export function validateCatalog(catalog, catalogId) {
   const ids = catalog.metas.map((meta) => meta?.id);
   if (new Set(ids).size !== ids.length) throw new Error(`${catalogId}: duplicate catalog identities detected.`);
   for (const meta of catalog.metas) {
-    if (meta?.type !== "series") throw new Error(`${catalogId}: catalog entry is not a series.`);
+    if (meta?.type !== expectedType) throw new Error(`${catalogId}: catalog entry is not a ${expectedType}.`);
     if (!ID_PATTERN.test(String(meta.id || ""))) throw new Error(`${catalogId}: invalid catalog identity ${meta.id}.`);
   }
 
@@ -69,7 +85,8 @@ export async function validateProduction(baseUrl, expectedVersion, fetchImpl = f
     let page = 0;
     let reachedEnd = false;
     while (page < 1000) {
-      const response = await fetchImpl(`${base}/catalog/series/${catalogId}.json?skip=${skip}`);
+      const catalogType = catalogTypeForId(catalogId);
+      const response = await fetchImpl(`${base}/catalog/${catalogType}/${catalogId}.json?skip=${skip}`);
       if (!response.ok) throw new Error(`${catalogId}: HTTP ${response.status} at skip=${skip}`);
       const catalog = await response.json();
       if (!Array.isArray(catalog?.metas)) {
@@ -77,12 +94,12 @@ export async function validateProduction(baseUrl, expectedVersion, fetchImpl = f
       }
 
       if (catalog.metas.length === 0) {
-        if (skip === 0) validateCatalog(catalog, catalogId);
+        if (skip === 0) validateCatalog(catalog, catalogId, catalogTypeForId(catalogId));
         reachedEnd = true;
         break;
       }
 
-      validateCatalog(catalog, catalogId);
+      validateCatalog(catalog, catalogId, catalogTypeForId(catalogId));
       for (const meta of catalog.metas) {
         const id = String(meta.id);
         if (seenIds.has(id)) {
