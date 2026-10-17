@@ -12,8 +12,11 @@ const SAMPLE_IMAGES = [
 const CATALOGS = [
   ["Upcoming Season", "upcoming_season", "Anime scheduled for the next season"],
   ["Current Season", "current_season", "Anime in the current season"],
-  ["Previous Season", "previous_season", "Anime from the immediately preceding season"],
-  ["Upcoming — 3 days", "upcoming_3_days", "Unique anime with an upcoming airing within the next three days"],
+  ["Previous Season", "previous_season", "Episodic anime from the immediately preceding season"],
+  ["Upcoming Season Movies", "upcoming_season_movies", "Movies scheduled for the next season"],
+  ["Current Season Movies", "current_season_movies", "Movies scheduled for the current season"],
+  ["Previous Season Movies", "previous_season_movies", "Movies from the immediately preceding season"],
+  ["Upcoming — 3 days", "upcoming_3_days", "Unique episodic anime with an upcoming airing within the next three days"],
   ["Previous — 3 days", "previous_3_days", "Unique anime with an airing within the previous three days"],
 ];
 
@@ -48,11 +51,11 @@ export default function handler(req, res) {
 
     <section class="panel">
       <h2>Supported catalogs</h2>
-      <p class="note">Three seasonal and two rolling catalogs are exposed. Rolling catalogs cover the next three days or previous three days, use AniList airing schedules, deduplicate by anime, and include only non-adult TV, TV Short, ONA, OVA, Special, and Movie entries.</p>
+      <p class="note">Three episodic seasonal catalogs, three seasonal movie catalogs, and two rolling episodic catalogs are exposed. Rolling catalogs use AniList airing schedules and include non-adult TV, TV Short, ONA, OVA, and Special entries.</p>
       ${CATALOGS.map(([name, id, description]) => `
       <div class="catalog">
         <div><h3>${name}</h3><p>${description}</p></div>
-        <a href="${BASE_URL}/catalog/series/${id}.json">${BASE_URL}/catalog/series/${id}.json</a>
+        <a href="${BASE_URL}/catalog/${id.endsWith("_movies") ? "movie" : "series"}/${id}.json">${BASE_URL}/catalog/${id.endsWith("_movies") ? "movie" : "series"}/${id}.json</a>
       </div>`).join("")}
     </section>
 
