@@ -831,3 +831,62 @@ test("rolling catalog prefers a canonical TMDB series ID regardless of which res
   assert.equal(result[0].extra.identityProvider, "tmdb");
   assert.equal(result[0].extra.identityCanonicalSeries, true);
 });
+
+test("rolling catalog reuses a semantically verified production identity over a relation-only provider mapping", async () => {
+  const now = new Date("2026-10-17T00:00:00.000Z");
+  const title = "Mission: Yozakura Family Season 2 Part 2";
+  const row = schedule(213657, now.getTime() + 60_000, 1, title, 64503);
+  row.media.relations = {
+    edges: [{
+      relationType: "SEQUEL",
+      node: {
+        id: 207084,
+        title: { english: "Mission: Yozakura Family" },
+        format: "TV",
+        startDate: { year: 2024 },
+        externalLinks: [{ site: "The Movie Database", url: "https://www.themoviedb.org/tv/216467" }],
+      },
+    }],
+  };
+
+  const emptyMap = async () => new Map();
+  const result = await buildRollingCatalog("upcoming_3_days", now, 0, "", {
+    fetchPage: async () => [row],
+    maxPages: 1,
+    resolveMappings: async (ids) => new Map(ids
+      .filter((id) => id === 213657)
+      .map((id) => [id, [{
+        source: "anime-mapper-relation",
+        anilistId: id,
+        type: "TV",
+        imdbIds: [],
+        tvdbId: null,
+        tmdbTvId: 216467,
+        tmdbMovieIds: [],
+        title,
+        titles: [title],
+        year: 2026,
+        relation: false,
+      }]])),
+    resolveFribbMappings: emptyMap,
+    resolveExternalMappings: emptyMap,
+    resolveAnimapMappings: emptyMap,
+    resolveIdMapperMappings: emptyMap,
+    resolveTMDBMappings: emptyMap,
+    resolveAnimeMapperMappings: emptyMap,
+    resolveAnimeMapperRelatedProviderIds: emptyMap,
+    resolveCanonicalSeriesMappings: emptyMap,
+    resolveAniBridgeMappings: emptyMap,
+    resolveTsvMappings: emptyMap,
+    resolveImdbMappings: emptyMap,
+    validateImdbMappings: emptyMap,
+    resolveSecondaryMappings: emptyMap,
+    resolveAlternativeMappings: emptyMap,
+  });
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0].id, "tt31131310");
+  assert.equal(result[0].extra.identityProvider, "imdb");
+  assert.ok(result[0].extra.identityEvidence.some((entry) => entry.source === "previous-production-snapshot"));
+});
+
