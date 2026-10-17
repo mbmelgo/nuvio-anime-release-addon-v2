@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 3,
+  "protocolType": "series",
+  "legacyProtocolType": "anime",
+  "requestCapture": "per-page GET request metadata and raw JSON response",
+  "releaseVersion": "1.119.0",
+  "capturedAt": "2026-10-17T08:05:03.308255Z",
+  "productionBaseUrl": "https://nuvio-anime-release-addon-v2.vercel.app",
+  "pagination": {
+    "pageSize": 50,
+    "queryParameter": "skip",
+    "termination": "empty-page",
+    "maxPages": 1000
+  },
+  "catalogs": [
+    "current_season",
+    "previous_season",
+    "upcoming_season",
+    "upcoming_3_days",
+    "previous_3_days"
+  ],
+  "itemCounts": {
+    "current_season": 99,
+    "previous_season": 107,
+    "upcoming_season": 60,
+    "upcoming_3_days": 57,
+    "previous_3_days": 46
+  },
+  "pageCounts": {
+    "current_season": 3,
+    "previous_season": 4,
+    "upcoming_season": 3,
+    "upcoming_3_days": 3,
+    "previous_3_days": 2
+  },
+  "sha256": {
+    "current_season": "4608dbf463543fae9bf433a57883b754f47265cd8e14ef972912d3c9396abf48",
+    "previous_season": "4eedf5ec01a5b8e61177c629769abb809be59a055e1b266bf76333ad4a6c323e",
+    "upcoming_season": "55782d3daada34b4f566a4afc1db0726e66b8d36ff611273c469504541b2be16",
+    "upcoming_3_days": "60ba1284e2b7919a249d1b380d4d479b1bbd87cb33032b03dcab801aaba20af9",
+    "previous_3_days": "f2f64d1df6724429febdc422c8e2ebdf542d6cc9dd0b99e45dba8afac5542aeb",
+    "manifest": "eb3e9d89ef3a68037dc6765c656bdf6d32b1af359b38a14358fd8b68d116cbec"
+  },
+  "pageSha256": {
+    "current_season": {
+      "page-0001.json": "47ff421cd5613d708a413567bea95631bcff8f6a3731eedb4b53440d52f0f6fe",
+      "page-0002.json": "ed2dc84237d72ae97e26929b40d6e9cb3b97e30beeda07f4270ff16ab645bd67",
+      "page-0003.json": "900fd9f08899d41cab8734b696e0a528df81e7e6bf7790dc5b3d25b2c3a2219a"
+    },
+    "current_season:requests": {
+      "page-0001.request.json": "a3c2bf6ea1259120547114d38b045d6c7df172f7bac9789048f1e426eb83d7ad",
+      "page-0002.request.json": "de4b162a3777069f0cebf87bdd6ba6f2f6aaa907d78b7b0380fc4e4571a4e8de",
+      "page-0003.request.json": "1a9000fdff0ba39e4c1b7bffae5ee40cfbfbe608006c1d5806f7c220a2540581"
+    },
+    "previous_season": {
+      "page-0001.json": "588e601beee0583d949547b9be948aed62a3f77b128b8d5ee10b0a07deaf3ad7",
+      "page-0002.json": "7e51be77c759ad2f37828561909722511d64043dd90ef8fa1ef911e5c895b628",
+      "page-0003.json": "ba904b7345f777ed10576d697391eb1e9c1e86b5bb36a730e4ace69c196dafe8",
+      "page-0004.json": "900fd9f08899d41cab8734b696e0a528df81e7e6bf7790dc5b3d25b2c3a2219a"
+    },
+    "previous_season:requests": {
+      "page-0001.request.json": "2552020e08988359c6f15d7c2aa2d812066ba4ee15b239f61d98854775cae85a",
+      "page-0002.request.json": "abc4054aa420ae306c748e31ac115d7c83500121192a081dc4159bdc6d043d66",
+      "page-0003.request.json": "1e548e5f0df256bb2dc244ca18711a105d605bba273b60c07ac702c0ea4f9c68",
+      "page-0004.request.json": "44f8e1dedfcd33b1fc2d0d63e46d77dd81c5c1a32102bd470a96c033ab918ee2"
+    },
+    "upcoming_season": {
+      "page-0001.json": "5c83178cde06e0bc6d7d153e8ee47bc3d6c4e5e5cef8c731cb20a9578578672d",
+      "page-0002.json": "5d12a6e157a0cce5050b0719b41b270d35a01096ea247bff646b9353e1020b50",
+      "page-0003.json": "900fd9f08899d41cab8734b696e0a528df81e7e6bf7790dc5b3d25b2c3a2219a"
+    },
+    "upcoming_season:requests": {
+      "page-0001.request.json": "d1bb0f89496738939deb0769fdfda8c769328a891324fb5e6003c4c3a2d4b452",
+      "page-0002.request.json": "904b32c9019805a87c1e289b21c2e523f984475a5216bf9d28822d135979ff85",
+      "page-0003.request.json": "3b5569a348f2eec2113e63ca601fcc77c74fa9f2a56d71f0c27a86614fe3e933"
+    },
+    "upcoming_3_days": {
+      "page-0001.json": "854d9805e50424d53cda6bd0d37d9a3f7c2a263cbf7308843b9f6ad760febc3a",
+      "page-0002.json": "40450b3afe25097f88a0292f5234f1afb45ad680487c958937953dce89b09382",
+      "page-0003.json": "900fd9f08899d41cab8734b696e0a528df81e7e6bf7790dc5b3d25b2c3a2219a"
+    },
+    "upcoming_3_days:requests": {
+      "page-0001.request.json": "4698ea22f0d2bcc9ded50cba00543525a3ed95a2035582d5b69e2253d4299012",
+      "page-0002.request.json": "9dbac8e29f6d71b99a8e68acf94aa9434711a6c2c7cf575eddf4200f17ca9911",
+      "page-0003.request.json": "b74eff8e023baffda10c18389c0211d2f2a7f1cf4f247f00cdf612fccfd0ad43"
+    },
+    "previous_3_days": {
+      "page-0001.json": "f684ebb48ccddfd5849333e3f2d5325539aca20bece80910de29a9998566a0f3",
+      "page-0002.json": "900fd9f08899d41cab8734b696e0a528df81e7e6bf7790dc5b3d25b2c3a2219a"
+    },
+    "previous_3_days:requests": {
+      "page-0001.request.json": "6bf16cc7894ae881a592f3383c0f3d7b21cbc02218c9d0ca59fad66fe027d3b8",
+      "page-0002.request.json": "f81747661dae8397156b68fd89167b6db1692a9f636570df8817779296555514"
+    }
+  }
+}
