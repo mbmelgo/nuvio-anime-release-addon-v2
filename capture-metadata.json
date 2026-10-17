@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "protocolType": "series",
+  "releaseVersion": "1.0.18",
+  "capturedAt": "2026-10-17T15:50:53.186253+00:00",
+  "productionBaseUrl": "https://nuvio-anime-release-addon-v2.vercel.app",
+  "catalogs": [
+    "current_season",
+    "previous_season",
+    "upcoming_season",
+    "upcoming_3_days",
+    "previous_3_days"
+  ],
+  "cacheNote": "Requests sent with Cache-Control: no-cache; see saved response headers for CDN cache evidence."
+}
