@@ -195,7 +195,7 @@ Catalog names and season labels are generated dynamically.
 
 ## 🚀 Current release
 
-**Production:** `v1.121.0`  
+**Production:** `v1.122.0`  
 **Development:** `v1.122.0` — preserves canonical-series identity for numbered anime installments and serves cached AniList catalog responses during upstream rate-limit cooldowns
 
 Post-release production catalog snapshots are captured automatically after each controlled release and retained on versioned `catalog-snapshots/*` branches.
