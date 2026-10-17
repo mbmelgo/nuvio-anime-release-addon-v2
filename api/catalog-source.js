@@ -1318,6 +1318,10 @@ function getVerifiedProductionFallbackCandidate(row) {
     provider,
     id: providerId,
     stremioId: id,
+    title: cached.title || null,
+    titles: cached.title ? [cached.title] : [],
+    year: Number.isInteger(Number(cached.year)) ? Number(cached.year) : null,
+    anilistId: Number(row?.id),
     evidence: [{ source: cached.source, relation: false, version: cached.version || PRODUCTION_IDENTITY_CACHE_VERSION }],
   };
 }
@@ -1371,6 +1375,11 @@ function selectCatalogIdentity(media, records, { excludeIds = new Set(), allowPr
       candidate.provider === "imdb" && hasStrongDirectProviderEvidence(candidate)),
     { excludeIds },
   );
+  const strongDirectProviderSelected = selectProviderIdentity(
+    media,
+    providerCandidates.filter((candidate) => hasStrongDirectProviderEvidence(candidate)),
+    { excludeIds },
+  );
   // Preserve the seasonal catalog's established rule: a TMDB-derived IMDb
   // ID is not an independent IMDb verification, so use Nuvio's native TMDB
   // route unless a stronger direct IMDb identity is available.
@@ -1391,6 +1400,32 @@ function selectCatalogIdentity(media, records, { excludeIds = new Set(), allowPr
     && !excludeIds.has(cachedCandidate.id)
     && !excludeIds.has(cachedCandidate.stremioId)
     ? cachedCandidate
+    : null;
+  // A historical production identity can stabilize catalogs when current
+  // sources return only a relation-derived provider candidate. Validate the
+  // cached ID against the current AniList title/year before allowing it to
+  // override that weaker candidate; never use this to replace direct evidence.
+  const cachedCandidateRecord = cachedCandidate ? {
+    source: cachedCandidate.evidence?.[0]?.source || "previous-production-snapshot",
+    anilistId: Number(media?.anilistId ?? media?.id),
+    type: String(media?.format || "").toUpperCase() === "MOVIE" ? "MOVIE" : "TV",
+    imdbIds: cachedCandidate.provider === "imdb" ? [cachedCandidate.id] : [],
+    tvdbId: cachedCandidate.provider === "tvdb" ? Number(cachedCandidate.id) : null,
+    tmdbTvId: cachedCandidate.provider === "tmdb" && String(media?.format || "").toUpperCase() !== "MOVIE"
+      ? Number(cachedCandidate.id)
+      : null,
+    tmdbMovieIds: cachedCandidate.provider === "tmdb" && String(media?.format || "").toUpperCase() === "MOVIE"
+      ? [Number(cachedCandidate.id)]
+      : [],
+    title: cachedCandidate.title,
+    titles: cachedCandidate.titles,
+    year: cachedCandidate.year,
+    relation: false,
+    relatedProviderIds: media?.relatedProviderIds,
+    relatedProviderTitles: media?.relatedProviderTitles,
+  } : null;
+  const verifiedCachedCandidate = cachedCandidateRecord
+    ? selectProviderIdentity(media, getProviderCandidates(media, [cachedCandidateRecord]), { excludeIds })
     : null;
   // A canonical IMDb title search is stronger evidence than a TMDB ID
   // borrowed through an Anime Mapper relation. Keep TMDB-first priority for
@@ -1421,9 +1456,19 @@ function selectCatalogIdentity(media, records, { excludeIds = new Set(), allowPr
     && verifiedImdbSearch.validation.reasons.includes("source-id-match")
     ? verifiedImdbSearch
     : null;
+  const relationDerivedTmdbCachedOverride = relationDerivedTmdbSelected
+    && providerSelected?.provider === relationDerivedTmdbSelected.provider
+    && providerSelected?.id === relationDerivedTmdbSelected.id
+    && !strongDirectProviderSelected
+    && !hasStrongDirectProviderEvidence(relationDerivedTmdbSelected)
+    && verifiedCachedCandidate?.validation?.reasons?.includes("title-match")
+    && verifiedCachedCandidate.validation.reasons.includes("source-id-match")
+    ? verifiedCachedCandidate
+    : null;
   const hasImdbSelection = effectiveTmdbSelected?.provider === "imdb"
     || providerSelected?.provider === "imdb";
   const selected = relationDerivedTmdbImdbOverride
+    || relationDerivedTmdbCachedOverride
     || (hasImdbSelection
       ? independentlyVerifiedImdb
         || nuvioTmdbRoute
