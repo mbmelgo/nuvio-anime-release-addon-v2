@@ -384,11 +384,11 @@ test("CLI generates JSON and Markdown from snapshot directories", async () => {
       fs.mkdirSync(directory, { recursive: true });
       fs.writeFileSync(
         path.join(directory, "capture-metadata.json"),
-        JSON.stringify({ releaseVersion: version }),
+        JSON.stringify({ schemaVersion: version === "1.51.0" ? 3 : 4, releaseVersion: version, catalogs: version === "1.51.0" ? ["current_season", "previous_season", "upcoming_season", "upcoming_5_days", "previous_7_days"] : ["current_season", "previous_season", "upcoming_season", "upcoming_season_movies", "current_season_movies", "previous_season_movies", "upcoming_3_days", "previous_3_days"] }),
       );
       const catalogNames = version === "1.51.0"
         ? ["current_season", "previous_season", "upcoming_season", "upcoming_5_days", "previous_7_days"]
-        : ["current_season", "previous_season", "upcoming_season", "upcoming_3_days", "previous_3_days"];
+        : ["current_season", "previous_season", "upcoming_season", "upcoming_season_movies", "current_season_movies", "previous_season_movies", "upcoming_3_days", "previous_3_days"];
       for (const catalog of catalogNames) {
         const metas = catalog === "current_season"
           ? [{
@@ -422,7 +422,7 @@ test("CLI generates JSON and Markdown from snapshot directories", async () => {
     const diff = JSON.parse(fs.readFileSync(path.join(outputDir, "release-diff.json"), "utf8"));
     assert.equal(diff.beforeReleaseVersion, "1.51.0");
     assert.equal(diff.afterReleaseVersion, "1.52.0");
-    assert.deepEqual(Object.keys(diff.catalogs).sort(), ["current_season", "previous_3_days", "previous_season", "upcoming_3_days", "upcoming_season"]);
+    assert.deepEqual(Object.keys(diff.catalogs).sort(), ["current_season", "current_season_movies", "previous_3_days", "previous_season", "previous_season_movies", "upcoming_3_days", "upcoming_season", "upcoming_season_movies"]);
     assert.equal(diff.catalogs.current_season.summary.identityEvidenceChanged, 1);
     assert.equal(diff.catalogs.current_season.summary.canonicalSeriesChanged, 1);
     const markdown = fs.readFileSync(path.join(outputDir, "release-diff.md"), "utf8");
