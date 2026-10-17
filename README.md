@@ -76,7 +76,7 @@ The command writes:
 - `release-diff.json` — machine-readable comparison
 - `release-diff.md` — human-readable summary
 
-The `Compare catalog snapshots` GitHub Actions workflow automatically performs the same comparison when a new `catalog-snapshots/vX.Y.Z` branch is updated and uploads both files as an artifact. No production deployment or credentials are required. Production releases also trigger a full snapshot of all five catalogs and all paginated results.
+The `Compare catalog snapshots` GitHub Actions workflow automatically performs the same comparison when a new `catalog-snapshots/vX.Y.Z` branch is updated and uploads both files as an artifact. No production deployment or credentials are required. Production releases also trigger a full snapshot of all eight catalogs and all paginated results.
 
 ### 🎞️ Supported anime formats
 
@@ -89,7 +89,7 @@ Seasonal catalog discovery includes:
 - Special
 - Movie
 
-Adult entries are excluded.
+Movies are exposed through dedicated seasonal movie catalogs; rolling catalogs contain episodic anime only. Adult entries are excluded.
 
 ## 🖼️ What it looks like
 
@@ -185,6 +185,9 @@ The landing page provides the manifest, current catalog endpoints, release infor
 | Upcoming Season | `/catalog/series/upcoming_season.json` |
 | Current Season | `/catalog/series/current_season.json` |
 | Previous Season | `/catalog/series/previous_season.json` |
+| Upcoming Season Movies | `/catalog/movie/upcoming_season_movies.json` |
+| Current Season Movies | `/catalog/movie/current_season_movies.json` |
+| Previous Season Movies | `/catalog/movie/previous_season_movies.json` |
 | Upcoming — 3 days | `/catalog/series/upcoming_3_days.json` |
 | Previous — 3 days | `/catalog/series/previous_3_days.json` |
 
