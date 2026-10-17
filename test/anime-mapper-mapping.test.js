@@ -4,6 +4,7 @@ import {
   clearAnimeMapperCache,
   resolveAniListMappingsByAnimeMapper,
   resolveAniListRelatedProviderIdsByAnimeMapper,
+  resolveAniListCanonicalSeriesByAnimeMapper,
 } from "../lib/anime-mapper-mapping.js";
 
 function response(record) {
@@ -185,4 +186,79 @@ test("Anime Mapper relation protection uses enough concurrency for catalog-scale
 
   assert.equal(result.size, 12);
   assert.ok(maxActive >= 6, `expected at least 6 concurrent protection lookups, saw ${maxActive}`);
+});
+
+
+test("Anime Mapper canonicalizes a numbered sequel through an explicit AniList relation when provider IDs differ", async () => {
+  clearAnimeMapperCache();
+  const result = await resolveAniListCanonicalSeriesByAnimeMapper([{
+    id: 195539,
+    idMal: 61990,
+    format: "ONA",
+    titleEnglish: "Cyberpunk: Edgerunners 2",
+    titleRomaji: "Cyberpunk: Edgerunners 2",
+    relations: {
+      edges: [{
+        relationType: "OTHER",
+        node: {
+          id: 120377,
+          idMal: 42310,
+          format: "ONA",
+          title: { english: "Cyberpunk: Edgerunners", romaji: "Cyberpunk: Edgerunners" },
+        },
+      }],
+    },
+  }], {
+    baseUrl: "https://mapper.test",
+    fetchImpl: async (url) => {
+      if (url.endsWith("/061/61990.json")) {
+        return response({
+          mappings: { anilist: 195539, tmdb: 326788 },
+          title: { english: "Cyberpunk: Edgerunners 2" },
+        });
+      }
+      assert.equal(url, "https://mapper.test/042/42310.json");
+      return response({
+        mappings: { anilist: 120377, tmdb: 333333 },
+        title: { english: "Cyberpunk: Edgerunners" },
+      });
+    },
+  });
+
+  const record = result.get(195539);
+  assert.equal(record.canonicalAnilistId, 120377);
+  assert.equal(record.canonicalMalId, 42310);
+  assert.equal(record.canonicalTitle, "Cyberpunk: Edgerunners");
+});
+
+test("Anime Mapper does not canonicalize related anime with different installment titles", async () => {
+  clearAnimeMapperCache();
+  const result = await resolveAniListCanonicalSeriesByAnimeMapper([{
+    id: 195540,
+    idMal: 61991,
+    format: "ONA",
+    titleEnglish: "Cyberpunk: Edgerunners: MADNESS",
+    relations: {
+      edges: [{
+        relationType: "OTHER",
+        node: {
+          id: 120377,
+          idMal: 42310,
+          format: "ONA",
+          title: { english: "Cyberpunk: Edgerunners" },
+        },
+      }],
+    },
+  }], {
+    baseUrl: "https://mapper.test",
+    fetchImpl: async (url) => {
+      assert.equal(url, "https://mapper.test/061/61991.json");
+      return response({
+        mappings: { anilist: 195540, tmdb: 326789 },
+        title: { english: "Cyberpunk: Edgerunners: MADNESS" },
+      });
+    },
+  });
+
+  assert.equal(result.has(195540), false);
 });

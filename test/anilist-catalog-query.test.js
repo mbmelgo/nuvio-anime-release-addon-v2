@@ -40,7 +40,7 @@ test("catalog AniList queries omit optional MAL id field only when explicitly di
 
   try {
     await queryAnime({ season: { season: "FALL", year: 2026 }, sort: ["ID"] }, 1, "", { includeMalId: false });
-    assert.doesNotMatch(request.query, /idMal/);
+    assert.doesNotMatch(request.query, /(?:^|\n)\s+idMal\s*$/m);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -105,8 +105,8 @@ test("airing schedule queries include relation titles needed by rolling identity
     await queryAiringSchedulePage(Date.now() - 1000, Date.now(), false, 1);
     assert.match(request.query, /relations\s*\{/);
     assert.match(request.query, /relationType/);
-    assert.match(request.query, /node\s*\{\s*id\s+format\s+title/);
-    assert.match(request.query, /node\s*\{\s*id\s+format\s+title[\s\S]*externalLinks\s*\{\s*site url\s*\}/);
+    assert.match(request.query, /node\s*\{\s*id\s+idMal\s+format\s+title/);
+    assert.match(request.query, /node\s*\{\s*id\s+idMal\s+format\s+title[\s\S]*externalLinks\s*\{\s*site url\s*\}/);
     assert.doesNotMatch(request.query, /isAdult\s+externalLinks\s*\{\s*site url\s*\}/);
     assert.match(request.query, /countryOfOrigin/);
     assert.match(request.query, /genres/);
