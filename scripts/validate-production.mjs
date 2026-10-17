@@ -9,6 +9,14 @@ export const PRODUCTION_CATALOG_IDS = [
   "previous_3_days",
 ];
 
+const LEGACY_PRODUCTION_CATALOG_IDS = [
+  "upcoming_season",
+  "current_season",
+  "previous_season",
+  "upcoming_3_days",
+  "previous_3_days",
+];
+
 const MOVIE_CATALOG_IDS = new Set([
   "upcoming_season_movies",
   "current_season_movies",
@@ -21,20 +29,30 @@ export function catalogTypeForId(catalogId) {
 
 const ID_PATTERN = /^(tt\d+|tvdb:[1-9]\d*|tmdb:[1-9]\d*|mal:[1-9]\d*|anilist:[1-9]\d*)$/;
 
-export function validateManifest(manifest, expectedVersion) {
+export function validateManifest(manifest, expectedVersion, { allowLegacy = false } = {}) {
   if (!manifest || typeof manifest !== "object") throw new Error("Manifest is not an object.");
   if (manifest.version !== expectedVersion) throw new Error(`Manifest version ${manifest.version} does not match expected ${expectedVersion}.`);
   if (manifest.id !== "com.marki.nuvio.anime-releases") throw new Error("Manifest addon id is invalid.");
   if (manifest.identityMode !== "provider") throw new Error("Manifest identity mode must be provider.");
-  if (JSON.stringify(manifest.resources) !== JSON.stringify([{ name: "catalog", types: ["series", "movie"] }])) {
-    throw new Error("Manifest resources do not match the Nuvio catalog contract.");
-  }
-  if (JSON.stringify(manifest.types) !== JSON.stringify(["series", "movie"])) throw new Error("Manifest types do not match the Nuvio catalog contract.");
   const catalogs = manifest.catalogs || [];
   const ids = catalogs.map((catalog) => catalog.id);
-  if (JSON.stringify(ids) !== JSON.stringify(PRODUCTION_CATALOG_IDS)) throw new Error("Manifest catalogs do not match the eight supported catalogs.");
-  if (catalogs.some((catalog) => catalog.type !== catalogTypeForId(catalog.id))) {
-    throw new Error("Manifest catalog types do not match their catalog IDs.");
+  const newContract = JSON.stringify(manifest.resources) === JSON.stringify([{ name: "catalog", types: ["series", "movie"] }])
+    && JSON.stringify(manifest.types) === JSON.stringify(["series", "movie"])
+    && JSON.stringify(ids) === JSON.stringify(PRODUCTION_CATALOG_IDS)
+    && catalogs.every((catalog) => catalog.type === catalogTypeForId(catalog.id));
+  const legacyContract = allowLegacy
+    && JSON.stringify(manifest.resources) === JSON.stringify([{ name: "catalog", types: ["series"] }])
+    && JSON.stringify(manifest.types) === JSON.stringify(["series"])
+    && JSON.stringify(ids) === JSON.stringify(LEGACY_PRODUCTION_CATALOG_IDS)
+    && catalogs.every((catalog) => catalog.type === "series");
+  if (!newContract && !legacyContract) {
+    if (JSON.stringify(ids) !== JSON.stringify(PRODUCTION_CATALOG_IDS) && JSON.stringify(ids) !== JSON.stringify(LEGACY_PRODUCTION_CATALOG_IDS)) {
+      throw new Error("Manifest catalogs do not match the eight supported catalogs.");
+    }
+    if (catalogs.some((catalog) => catalog.type !== catalogTypeForId(catalog.id))) {
+      throw new Error("Manifest catalog types do not match their catalog IDs.");
+    }
+    throw new Error("Manifest resources do not match the Nuvio catalog contract.");
   }
   return true;
 }
@@ -66,12 +84,12 @@ export function validateCatalog(catalog, catalogId, expectedType = catalogTypeFo
   return true;
 }
 
-export async function validateProduction(baseUrl, expectedVersion, fetchImpl = fetch) {
+export async function validateProduction(baseUrl, expectedVersion, fetchImpl = fetch, { allowLegacy = false } = {}) {
   const base = String(baseUrl).replace(/\/$/, "");
   const manifestResponse = await fetchImpl(`${base}/manifest.json`);
   if (!manifestResponse.ok) throw new Error(`Manifest request failed: HTTP ${manifestResponse.status}`);
   const manifest = await manifestResponse.json();
-  validateManifest(manifest, expectedVersion);
+  validateManifest(manifest, expectedVersion, { allowLegacy });
 
   for (const catalogInfo of manifest.catalogs) {
     const { id: catalogId } = catalogInfo;
@@ -128,7 +146,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const baseUrl = process.env.PRODUCTION_BASE_URL || "https://nuvio-anime-release-addon-v2.vercel.app";
   const expectedVersion = process.env.EXPECTED_VERSION;
   if (!expectedVersion) throw new Error("EXPECTED_VERSION is required.");
-  await validateProduction(baseUrl, expectedVersion);
+  await validateProduction(baseUrl, expectedVersion, fetch, { allowLegacy: process.env.ALLOW_LEGACY_PRODUCTION_CONTRACT === "true" });
   console.log("Production validation passed.");
 }
 
