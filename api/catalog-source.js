@@ -1452,6 +1452,9 @@ function selectCatalogIdentity(media, records, { excludeIds = new Set(), allowPr
     ? verifiedImdbSearch
     : null;
   const relationDerivedTmdbCachedOverride = relationDerivedTmdbSelected
+    && providerSelected?.provider === relationDerivedTmdbSelected.provider
+    && providerSelected?.id === relationDerivedTmdbSelected.id
+    && !independentlyVerifiedImdb
     && !hasStrongDirectProviderEvidence(relationDerivedTmdbSelected)
     && verifiedCachedCandidate?.validation?.reasons?.includes("title-match")
     && verifiedCachedCandidate.validation.reasons.includes("source-id-match")
