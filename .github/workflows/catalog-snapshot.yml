@@ -87,20 +87,27 @@ jobs:
               "current_season",
               "previous_season",
               "upcoming_season",
+              "upcoming_season_movies",
+              "current_season_movies",
+              "previous_season_movies",
               "upcoming_3_days",
               "previous_3_days",
           }
-          actual = [entry.get("id") for entry in manifest.get("catalogs", [])]
-          types = [entry.get("type") for entry in manifest.get("catalogs", [])]
+          catalogs = manifest.get("catalogs", [])
+          actual = [entry.get("id") for entry in catalogs]
           if set(actual) != expected or len(actual) != len(expected):
               raise SystemExit(f"Unexpected production catalog contract: {actual!r}")
-          if manifest.get("types") != ["series"] or manifest.get("resources") != [{"name": "catalog", "types": ["series"]}]:
-              raise SystemExit("Unexpected production series protocol contract")
-          if any(value != "series" for value in types):
-              raise SystemExit(f"Unexpected catalog protocol types: {types!r}")
+          if manifest.get("types") != ["series", "movie"] or manifest.get("resources") != [{"name": "catalog", "types": ["series", "movie"]}]:
+              raise SystemExit("Unexpected production movie/series protocol contract")
+          for entry in catalogs:
+              expected_type = "movie" if entry.get("id", "").endswith("_movies") else "series"
+              if entry.get("type") != expected_type:
+                  raise SystemExit(f"Unexpected catalog type for {entry.get('id')}: {entry.get('type')!r}")
           PY
 
-          for catalog in current_season previous_season upcoming_season upcoming_3_days previous_3_days; do
+          for entry in series:current_season series:previous_season series:upcoming_season movie:upcoming_season_movies movie:current_season_movies movie:previous_season_movies series:upcoming_3_days series:previous_3_days; do
+            catalog_type="${entry%%:*}"
+            catalog="${entry#*:}"
             mkdir -p "$snapshot_dir/pages/$catalog"
             page=1
             skip=0
@@ -109,7 +116,7 @@ jobs:
             while true; do
               output="$snapshot_dir/pages/$catalog/page-$(printf '%04d' "$page").json"
               echo "Capturing $catalog page $page (skip=$skip)"
-              request_url="$PRODUCTION_BASE_URL/catalog/series/$catalog.json?skip=$skip"
+              request_url="$PRODUCTION_BASE_URL/catalog/$catalog_type/$catalog.json?skip=$skip"
               http_status="$(curl --silent --show-error --location --retry 5 --retry-delay 2 --retry-all-errors \
                 --write-out '%{http_code}' \
                 -o "$output" \
@@ -222,6 +229,9 @@ jobs:
               "current_season",
               "previous_season",
               "upcoming_season",
+              "upcoming_season_movies",
+              "current_season_movies",
+              "previous_season_movies",
               "upcoming_3_days",
               "previous_3_days",
           ]
@@ -256,8 +266,9 @@ jobs:
           hashes["manifest"] = hashlib.sha256((directory / "manifest.json").read_bytes()).hexdigest()
 
           metadata = {
-              "schemaVersion": 3,
-              "protocolType": "series",
+              "schemaVersion": 4,
+              "protocolType": "mixed",
+              "protocolTypes": ["series", "movie"],
               "legacyProtocolType": "anime",
               "requestCapture": "per-page GET request metadata and raw JSON response",
               "releaseVersion": release_version,
