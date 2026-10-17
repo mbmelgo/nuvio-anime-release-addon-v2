@@ -13,9 +13,9 @@ test("catalog pagination uses 50 upstream records and 50 Nuvio records for all c
     upcoming: { season: "WINTER", year: 2027 },
   });
 
-  assert.equal(definitions.length, 5);
+  assert.equal(definitions.length, 8);
   for (const definition of definitions) {
-    assert.equal(definition.type, "series");
+    assert.equal(definition.type, definition.id.endsWith("_movies") ? "movie" : "series");
     assert.equal(definition.pageSize, 50);
   }
 });
