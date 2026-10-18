@@ -104,3 +104,28 @@ test("snapshot comparison treats newly introduced movie catalogs as empty in leg
   assert.equal(diff.catalogs.upcoming_season_movies.summary.before, 0);
   assert.equal(diff.catalogs.upcoming_season_movies.summary.after, 0);
 });
+
+
+const rollingWorkflow = fs.readFileSync(
+  new URL("../.github/workflows/rolling-catalog-diff.yml", import.meta.url),
+  "utf8",
+);
+
+test("rolling catalog diff captures all eight mixed-protocol production catalogs", () => {
+  for (const catalog of [
+    "current_season",
+    "previous_season",
+    "upcoming_season",
+    "upcoming_season_movies",
+    "current_season_movies",
+    "previous_season_movies",
+    "upcoming_3_days",
+    "previous_3_days",
+  ]) {
+    assert.ok(rollingWorkflow.includes(catalog), `missing rolling catalog ${catalog}`);
+  }
+  assert.ok(rollingWorkflow.includes('"protocolType": "mixed"'));
+  assert.ok(rollingWorkflow.includes('"protocolTypes": ["series", "movie"]'));
+  assert.ok(rollingWorkflow.includes('/catalog/$catalog_type/$catalog.json?skip=$skip'));
+  assert.ok(rollingWorkflow.includes("movie:current_season_movies"));
+});

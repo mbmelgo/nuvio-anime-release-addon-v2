@@ -41,18 +41,26 @@ jobs:
           python - "$current/manifest.json" <<'PY'
           import json, sys
           manifest = json.load(open(sys.argv[1]))
-          expected = {"current_season", "previous_season", "upcoming_season", "upcoming_3_days", "previous_3_days"}
+          expected = {
+              "current_season", "previous_season", "upcoming_season",
+              "upcoming_season_movies", "current_season_movies", "previous_season_movies",
+              "upcoming_3_days", "previous_3_days",
+          }
           catalogs = manifest.get("catalogs", [])
           ids = [c.get("id") for c in catalogs]
           if set(ids) != expected or len(ids) != len(expected):
               raise SystemExit(f"Unexpected catalog contract: {ids!r}")
-          if manifest.get("types") != ["series"] or manifest.get("resources") != [{"name": "catalog", "types": ["series"]}]:
-              raise SystemExit("Unexpected production protocol contract")
-          if any(c.get("type") != "series" for c in catalogs):
-              raise SystemExit("Catalog type is not series")
+          if manifest.get("types") != ["series", "movie"] or manifest.get("resources") != [{"name": "catalog", "types": ["series", "movie"]}]:
+              raise SystemExit("Unexpected production mixed-protocol contract")
+          for entry in catalogs:
+              expected_type = "movie" if entry.get("id", "").endswith("_movies") else "series"
+              if entry.get("type") != expected_type:
+                  raise SystemExit(f"Unexpected type for {entry.get('id')}: {entry.get('type')!r}")
           PY
 
-          for catalog in current_season previous_season upcoming_season upcoming_3_days previous_3_days; do
+          for entry in series:current_season series:previous_season series:upcoming_season movie:upcoming_season_movies movie:current_season_movies movie:previous_season_movies series:upcoming_3_days series:previous_3_days; do
+            catalog_type="${entry%%:*}"
+            catalog="${entry#*:}"
             mkdir -p "$current/pages/$catalog"
             skip=0
             page=1
@@ -60,7 +68,7 @@ jobs:
             while [ "$page" -le 1000 ]; do
               file="$current/pages/$catalog/page-$(printf '%04d' "$page").json"
               headers="$current/pages/$catalog/page-$(printf '%04d' "$page").headers"
-              url="$BASE_URL/catalog/series/$catalog.json?skip=$skip"
+              url="$BASE_URL/catalog/$catalog_type/$catalog.json?skip=$skip"
               status="$(curl --silent --show-error --location --retry 3 --retry-all-errors \
                 -H 'Cache-Control: no-cache' -D "$headers" -o "$file" -w '%{http_code}' "$url")"
               test "$status" = 200 || { echo "$catalog skip=$skip returned HTTP $status" >&2; exit 1; }
@@ -111,12 +119,13 @@ jobs:
           from pathlib import Path
           root, version = Path(sys.argv[1]), sys.argv[2]
           (root / "capture-metadata.json").write_text(json.dumps({
-              "schemaVersion": 1,
-              "protocolType": "series",
+              "schemaVersion": 4,
+              "protocolType": "mixed",
+              "protocolTypes": ["series", "movie"],
               "releaseVersion": version,
               "capturedAt": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
               "productionBaseUrl": "https://nuvio-anime-release-addon-v2.vercel.app",
-              "catalogs": ["current_season", "previous_season", "upcoming_season", "upcoming_3_days", "previous_3_days"],
+              "catalogs": ["current_season", "previous_season", "upcoming_season", "upcoming_season_movies", "current_season_movies", "previous_season_movies", "upcoming_3_days", "previous_3_days"],
               "cacheNote": "Requests sent with Cache-Control: no-cache; see saved response headers for CDN cache evidence."
           }, indent=2) + "\n")
           PY
@@ -154,7 +163,7 @@ jobs:
           cp -R "$work/next/." .
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add capture-metadata.json manifest.json current_season.json previous_season.json upcoming_season.json upcoming_3_days.json previous_3_days.json pages
+          git add capture-metadata.json manifest.json current_season.json previous_season.json upcoming_season.json upcoming_season_movies.json current_season_movies.json previous_season_movies.json upcoming_3_days.json previous_3_days.json pages
           git commit -m "chore: update rolling catalog baseline"
           git push --force origin HEAD:catalog-rolling-snapshot
 
