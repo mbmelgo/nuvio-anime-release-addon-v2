@@ -11,48 +11,51 @@ function mapping(site, externalId, kitsuId) {
   };
 }
 
-test("Kitsu fallback prefers the ID source matching the current MAL/AniList fallback", async () => {
+test("Kitsu fallback queries one external ID at a time and prefers the current fallback source", async () => {
   const calls = [];
   const fetchImpl = async (url) => {
-    calls.push(String(url));
     const parsed = new URL(url);
-    assert.equal(parsed.searchParams.get("page[limit]"), "20");
     const site = parsed.searchParams.get("filter[externalSite]");
-    const ids = parsed.searchParams.get("filter[externalId]").split(",");
-    const data = [];
-    for (const id of ids) {
-      if (site === "anilist/anime" && id === "10001") data.push(mapping(site, id, 7001));
-      if (site === "anilist/anime" && id === "10002") data.push(mapping(site, id, 7002));
-      if (site === "myanimelist/anime" && id === "20001") data.push(mapping(site, id, 8001));
-      if (site === "myanimelist/anime" && id === "20002") data.push(mapping(site, id, 8002));
-    }
-    return { ok: true, status: 200, json: async () => ({ data }) };
+    const id = parsed.searchParams.get("filter[externalId]");
+    const offset = Number(parsed.searchParams.get("page[offset]"));
+    assert.equal(parsed.searchParams.get("page[limit]"), "20");
+    assert.ok(!id.includes(","));
+    calls.push({ site, id, offset });
+    let data = [];
+    if (site === "anilist/anime" && id === "10002") data = [mapping(site, id, 7002)];
+    if (site === "anilist/anime" && id === "10003") data = [mapping(site, id, 7003)];
+    if (site === "myanimelist/anime" && id === "20001") data = [mapping(site, id, 8001)];
+    if (site === "myanimelist/anime" && id === "20002") data = [mapping(site, id, 8002)];
+    return { ok: true, status: 200, json: async () => ({ data, meta: { count: data.length } }) };
   };
 
   const result = await resolveAniListKitsuMappings([
     { id: 10001, idMal: 20001, currentFallbackId: "mal:20001" },
     { id: 10002, idMal: 20002, currentFallbackId: "anilist:10002" },
+    { id: 10003, idMal: 20003, currentFallbackId: "mal:20003" },
   ], { fetchImpl });
 
   assert.equal(result.get(10001), "8001");
   assert.equal(result.get(10002), "7002");
-  assert.equal(calls.length, 2);
-  assert.ok(calls.every((url) => url.startsWith("https://kitsu.io/api/edge/mappings?")));
+  assert.equal(result.get(10003), "7003");
+  assert.equal(calls.length, 4);
+  assert.ok(calls.every((call) => call.offset === 0));
+  assert.ok(calls.every((call) => call.site === "anilist/anime" || call.site === "myanimelist/anime"));
 });
 
 test("ambiguous preferred Kitsu mappings do not replace the existing identity", async () => {
   const fetchImpl = async (url) => {
     const parsed = new URL(url);
     const site = parsed.searchParams.get("filter[externalSite]");
-    const ids = parsed.searchParams.get("filter[externalId]").split(",");
-    const data = [];
-    for (const id of ids) {
-      if (site === "myanimelist/anime" && id === "21001") {
-        data.push(mapping(site, id, 9001), mapping(site, id, 9002));
-      }
-      if (site === "anilist/anime" && id === "11001") data.push(mapping(site, id, 9003));
+    const id = parsed.searchParams.get("filter[externalId]");
+    const offset = Number(parsed.searchParams.get("page[offset]"));
+    if (site === "myanimelist/anime" && id === "21001") {
+      const data = offset === 0
+        ? [mapping(site, id, 9001), mapping(site, id, 9002)]
+        : [];
+      return { ok: true, status: 200, json: async () => ({ data, meta: { count: 2 } }) };
     }
-    return { ok: true, status: 200, json: async () => ({ data }) };
+    return { ok: true, status: 200, json: async () => ({ data: [], meta: { count: 0 } }) };
   };
 
   const result = await resolveAniListKitsuMappings([
@@ -60,6 +63,31 @@ test("ambiguous preferred Kitsu mappings do not replace the existing identity", 
   ], { fetchImpl });
 
   assert.equal(result.has(11001), false);
+});
+
+test("Kitsu mapping pagination detects conflicting mappings beyond the first page", async () => {
+  const offsets = [];
+  const fetchImpl = async (url) => {
+    const parsed = new URL(url);
+    const site = parsed.searchParams.get("filter[externalSite]");
+    const id = parsed.searchParams.get("filter[externalId]");
+    const offset = Number(parsed.searchParams.get("page[offset]"));
+    if (site === "myanimelist/anime" && id === "31001") {
+      offsets.push(offset);
+      const data = offset === 0
+        ? [mapping(site, id, 9101)]
+        : [mapping(site, id, 9102)];
+      return { ok: true, status: 200, json: async () => ({ data, meta: { count: 2 } }) };
+    }
+    return { ok: true, status: 200, json: async () => ({ data: [], meta: { count: 0 } }) };
+  };
+
+  const result = await resolveAniListKitsuMappings([
+    { id: 12001, idMal: 31001, currentFallbackId: "mal:31001" },
+  ], { fetchImpl });
+
+  assert.equal(result.has(12001), false);
+  assert.deepEqual(offsets.sort((a, b) => a - b), [0, 1]);
 });
 
 test("post-processing replaces only MAL/AniList fallback IDs and records the fallback evidence", async () => {
@@ -84,9 +112,9 @@ test("post-processing replaces only MAL/AniList fallback IDs and records the fal
   assert.equal(result[3], metas[3]);
 });
 
-test("Kitsu lookup errors preserve the original fallback IDs", async () => {
+test("Kitsu lookup errors preserve the original fallback IDs and inferred MAL ID", async () => {
   const metas = [
-    { id: "mal:401", extra: { anilistId: 201, malId: 401 } },
+    { id: "mal:401", extra: { anilistId: 201 } },
   ];
   const result = await applyKitsuFallback(metas, async (targets) => {
     assert.equal(targets[0].idMal, "401");
@@ -136,29 +164,4 @@ test("catalog applies Kitsu only after the existing identity pipeline returns a 
   assert.equal(result[0].id, "kitsu:770001");
   assert.equal(result[0].extra.identityFallbackFrom, "mal:990002");
   assert.equal(result[0].extra.identityProvider, "kitsu");
-});
-
-test("Kitsu mapping pagination detects conflicting mappings beyond the first page", async () => {
-  const offsets = [];
-  const fetchImpl = async (url) => {
-    const parsed = new URL(url);
-    const site = parsed.searchParams.get("filter[externalSite]");
-    const externalId = parsed.searchParams.get("filter[externalId]");
-    const offset = Number(parsed.searchParams.get("page[offset]"));
-    if (site === "myanimelist/anime" && externalId === "31001") {
-      offsets.push(offset);
-      const data = offset === 0
-        ? [mapping(site, 31001, 9101)]
-        : [mapping(site, 31001, 9102)];
-      return { ok: true, status: 200, json: async () => ({ data, meta: { count: 2 } }) };
-    }
-    return { ok: true, status: 200, json: async () => ({ data: [], meta: { count: 0 } }) };
-  };
-
-  const result = await resolveAniListKitsuMappings([
-    { id: 12001, idMal: 31001, currentFallbackId: "mal:31001" },
-  ], { fetchImpl });
-
-  assert.equal(result.has(12001), false);
-  assert.deepEqual(offsets.sort((a, b) => a - b), [0, 1]);
 });
