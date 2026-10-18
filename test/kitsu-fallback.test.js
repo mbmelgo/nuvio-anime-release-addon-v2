@@ -135,3 +135,28 @@ test("catalog applies Kitsu only after the existing identity pipeline returns a 
   assert.equal(result[0].extra.identityFallbackFrom, "mal:990002");
   assert.equal(result[0].extra.identityProvider, "kitsu");
 });
+
+test("Kitsu mapping pagination detects conflicting mappings beyond the first page", async () => {
+  const offsets = [];
+  const fetchImpl = async (url) => {
+    const parsed = new URL(url);
+    const site = parsed.searchParams.get("filter[externalSite]");
+    const externalId = parsed.searchParams.get("filter[externalId]");
+    const offset = Number(parsed.searchParams.get("page[offset]"));
+    if (site === "myanimelist/anime" && externalId === "31001") {
+      offsets.push(offset);
+      const data = offset === 0
+        ? [mapping(site, 31001, 9101)]
+        : [mapping(site, 31001, 9102)];
+      return { ok: true, status: 200, json: async () => ({ data, meta: { count: 2 } }) };
+    }
+    return { ok: true, status: 200, json: async () => ({ data: [], meta: { count: 0 } }) };
+  };
+
+  const result = await resolveAniListKitsuMappings([
+    { id: 12001, idMal: 31001, currentFallbackId: "mal:31001" },
+  ], { fetchImpl });
+
+  assert.equal(result.has(12001), false);
+  assert.deepEqual(offsets.sort((a, b) => a - b), [0, 1]);
+});
