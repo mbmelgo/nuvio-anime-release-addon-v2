@@ -16,6 +16,7 @@ test("Kitsu fallback prefers the ID source matching the current MAL/AniList fall
   const fetchImpl = async (url) => {
     calls.push(String(url));
     const parsed = new URL(url);
+    assert.equal(parsed.searchParams.get("page[limit]"), "20");
     const site = parsed.searchParams.get("filter[externalSite]");
     const ids = parsed.searchParams.get("filter[externalId]").split(",");
     const data = [];
