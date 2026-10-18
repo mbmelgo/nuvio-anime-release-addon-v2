@@ -196,7 +196,7 @@ Catalog names and season labels are generated dynamically.
 ## 🚀 Current release
 
 **Production:** `v1.122.0`  
-**Development:** `v1.123.0` — adds a post-selection Kitsu ID fallback for MAL/AniList-only catalog entries without changing TMDB/IMDb/TVDB provider priority; preserves canonical-series identity and cached AniList catalog responses during upstream rate-limit cooldowns
+**Development:** `v1.123.0` — adds a post-selection Kitsu ID fallback when the existing pipeline returns a MAL or AniList identity; leaves TMDB/IMDb/TVDB provider priority unchanged and preserves canonical-series identity and cached AniList catalog responses during upstream rate-limit cooldowns
 
 Post-release production catalog snapshots are captured automatically after each controlled release and retained on versioned `catalog-snapshots/*` branches.
 
