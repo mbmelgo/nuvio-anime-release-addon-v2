@@ -11,6 +11,7 @@ import {
 } from "../lib/catalog-config.js";
 import { collectValidatedCatalogPage } from "../lib/catalog-pagination.js";
 import { filterCatalogMetasBySearch, toMetaFromAniList } from "../lib/catalog-meta.js";
+import { applyKitsuFallback, resolveAniListKitsuMappings } from "../lib/kitsu-fallback.js";
 import { queryAnime, queryAiringSchedulePage } from "../lib/catalog-anilist.js";
 import { resolveAniListMappings } from "../lib/arm-mapping.js";
 import { resolveAniListMappingsFribb } from "../lib/fribb-mapping.js";
@@ -1617,7 +1618,15 @@ export async function canonicalizeCatalogPage(mediaRows, options = {}) {
     metas.push({ ...meta, id: "anilist:" + anilistId, extra: { ...meta.extra, identityProvider: null, identityId: null, identityEvidence: "anilist-id-fallback" } });
   }
   if (unresolvedIds.length) throw new Error("Identity resolution exhausted; unresolved AniList IDs: " + (unresolvedIds.join(",") || "unknown"));
-  return metas;
+  // This is intentionally post-processing: do not change provider selection or its validation rules.
+  const finalMetas = normalizedOptions.enableKitsuFallback === true
+    ? await applyKitsuFallback(
+      metas,
+      normalizedOptions.resolveKitsuMappings || resolveAniListKitsuMappings,
+      normalizedOptions.diagnostics,
+    )
+    : metas;
+  return finalMetas;
 }
 export async function fetchValidatedSeasonCatalogPage({
   filter,
@@ -1669,6 +1678,8 @@ export async function buildRollingCatalog(id, date, skip, search, {
   validateImdbMappings = validateImdbMappingsByKnownIds,
   resolveSecondaryMappings = resolveAniListMappingsSecondary,
   resolveAlternativeMappings = resolveAniListMappingsByMalIds,
+  resolveKitsuMappings = resolveAniListKitsuMappings,
+  enableKitsuFallback = false,
   diagnostics = null,
 } = {}) {
   const range = getRollingCatalogRange(id, date);
@@ -1848,7 +1859,10 @@ export async function buildRollingCatalog(id, date, skip, search, {
         }
         metas.push(meta);
       }
-      return filterCatalogMetasBySearch(metas, search);
+      const finalMetas = enableKitsuFallback
+        ? await applyKitsuFallback(metas, resolveKitsuMappings, diagnostics)
+        : metas;
+      return filterCatalogMetasBySearch(finalMetas, search);
     },
   });
 }
@@ -1859,12 +1873,12 @@ export async function buildCatalog(id, info, skip, search, diagnostics = null) {
       filter,
       skip,
       search,
-      canonicalizePage: (rows, pageDiagnostics) => canonicalizeCatalogPage(rows, { diagnostics: pageDiagnostics, allowProductionIdentityCache: true }),
+      canonicalizePage: (rows, pageDiagnostics) => canonicalizeCatalogPage(rows, { diagnostics: pageDiagnostics, allowProductionIdentityCache: true, enableKitsuFallback: true }),
       diagnostics,
     });
   }
   if (getRollingCatalogRange(id, new Date())) {
-    return buildRollingCatalog(id, new Date(), skip, search, { diagnostics });
+    return buildRollingCatalog(id, new Date(), skip, search, { diagnostics, enableKitsuFallback: true });
   }
   return [];
 }
