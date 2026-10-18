@@ -207,3 +207,27 @@ test("canonical series resolver does not merge JoJo installments through a share
   const result = await resolveAniListCanonicalSeriesByAnimeMapper([{ id: 210482, idMal: 61469, type: "ONA", title: { english: "Steel Ball Run: JoJo's Bizarre Adventure" } }], { fetchImpl });
   assert.equal(result.has(210482), false);
 });
+
+
+test("canonical series resolver does not collapse a year-disambiguated revival into the original series", async () => {
+  clearAnimeMapperCache();
+  const fetchImpl = createFetch({
+    63219: record(63219, 205116, "Aware! Meisaku-kun (2026)", [
+      { malId: 32956, title: { english: "Aware! Meisaku-kun" }, format: "TV", seasonYear: 2016, relationType: "PARENT" },
+    ], 2026, "TV", { tmdb: 12345, tvdb: 54321, trakt: 67890 }),
+    32956: record(32956, 21727, "Aware! Meisaku-kun", [], 2016, "TV", { tmdb: 12345, tvdb: 54321, trakt: 67890 }),
+  });
+
+  const result = await resolveAniListCanonicalSeriesByAnimeMapper([
+    {
+      id: 205116,
+      idMal: 63219,
+      format: "TV_SHORT",
+      title: { english: "Aware! Meisaku-kun (2026)" },
+      synonyms: [],
+      startDate: { year: 2026 },
+    },
+  ], { fetchImpl });
+
+  assert.equal(result.has(205116), false);
+});
