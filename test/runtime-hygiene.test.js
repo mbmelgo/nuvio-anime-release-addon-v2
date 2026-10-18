@@ -257,7 +257,7 @@ test("release workflow keeps dry runs non-mutating and deploys idempotently", as
   assert.ok(workflow.includes("steps.existing_vercel.outputs.needs_deploy == 'true'"));
   assert.ok(workflow.includes("inputs.dry_run != true"));
   assert.match(workflow, /Create annotated release tag, GitHub Release, and update release state[\s\S]*inputs\.dry_run != true/);
-  assert.ok(workflow.includes('re.match(r"^(tt\\d+|tvdb:[1-9]\\d*|tmdb:[1-9]\\d*|mal:[1-9]\\d*|anilist:[1-9]\\d*)$"'));
+  assert.ok(workflow.includes('re.match(r"^(tt\\d+|tvdb:[1-9]\\d*|tmdb:[1-9]\\d*|mal:[1-9]\\d*|anilist:[1-9]\\d*|kitsu:[1-9]\\d*)$"'));
   assert.ok(workflow.includes('root.get("identityMode") == "provider"'));
   assert.match(workflow, /Check for an existing Vercel deployment/);
   assert.match(workflow, /state\["lastDeployment"\] = \{/);

@@ -27,7 +27,7 @@ export function catalogTypeForId(catalogId) {
   return MOVIE_CATALOG_IDS.has(catalogId) ? "movie" : "series";
 }
 
-const ID_PATTERN = /^(tt\d+|tvdb:[1-9]\d*|tmdb:[1-9]\d*|mal:[1-9]\d*|anilist:[1-9]\d*)$/;
+const ID_PATTERN = /^(tt\d+|tvdb:[1-9]\d*|tmdb:[1-9]\d*|mal:[1-9]\d*|anilist:[1-9]\d*|kitsu:[1-9]\d*)$/;
 
 export function validateManifest(manifest, expectedVersion, { allowLegacy = false } = {}) {
   if (!manifest || typeof manifest !== "object") throw new Error("Manifest is not an object.");

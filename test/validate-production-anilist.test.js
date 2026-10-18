@@ -14,6 +14,19 @@ test("production validator accepts canonical AniList fallback identities for ser
   }, "current_season_movies"), /not a movie/);
 });
 
+
+test("production validator accepts Kitsu fallback identities for series and movies", () => {
+  assert.equal(validateCatalog({
+    metas: [{ id: "kitsu:50965", type: "series", extra: { identityProvider: "kitsu" } }],
+  }, "current_season"), true);
+  assert.equal(validateCatalog({
+    metas: [{ id: "kitsu:50965", type: "movie", extra: { identityProvider: "kitsu" } }],
+  }, "current_season_movies"), true);
+  assert.throws(() => validateCatalog({
+    metas: [{ id: "kitsu:0", type: "series", extra: { identityProvider: "kitsu" } }],
+  }, "current_season"), /invalid catalog identity/);
+});
+
 test("legacy production manifest is accepted only for explicit dry-run compatibility", () => {
   const ids = ["upcoming_season", "current_season", "previous_season", "upcoming_3_days", "previous_3_days"];
   const manifest = {
