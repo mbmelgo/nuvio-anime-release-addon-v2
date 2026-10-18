@@ -63,7 +63,7 @@ test("release smoke test validates the provider catalog identity", () => {
   assert.doesNotMatch(deployWorkflow, /com\.marki\.nuvio\.anime-releases\.v5/);
   assert.doesNotMatch(deployWorkflow, /\/v5\//);
   assert.match(deployWorkflow, /identityMode.*provider/);
-  assert.ok(deployWorkflow.includes('r"^(tt\\d+|tvdb:[1-9]\\d*|tmdb:[1-9]\\d*|mal:[1-9]\\d*|anilist:[1-9]\\d*)$"'));
+  assert.ok(deployWorkflow.includes('r"^(tt\\d+|tvdb:[1-9]\\d*|tmdb:[1-9]\\d*|mal:[1-9]\\d*|anilist:[1-9]\\d*|kitsu:[1-9]\\d*)$"'));
   assert.match(deployWorkflow, /assert all\(m\.get\("type"\) == "series" for m in metas\)/);
   assert.match(deployWorkflow, /assert all\(m\.get\("type"\) == "movie" for m in movie_metas\)/);
 });

@@ -239,13 +239,13 @@ jobs:
 
           metas = catalog.get("metas", [])
           assert metas
-          assert all(re.match(r"^(tt\d+|tvdb:[1-9]\d*|tmdb:[1-9]\d*|mal:[1-9]\d*|anilist:[1-9]\d*)$", str(m.get("id", ""))) for m in metas)
+          assert all(re.match(r"^(tt\d+|tvdb:[1-9]\d*|tmdb:[1-9]\d*|mal:[1-9]\d*|anilist:[1-9]\d*|kitsu:[1-9]\d*)$", str(m.get("id", ""))) for m in metas)
           assert all(m.get("type") == "series" for m in metas)
           assert any(str(m.get("id", "")).startswith("tt") for m in metas)
           movie_catalog = json.loads(os.environ["MOVIE_CATALOG"])
           movie_metas = movie_catalog.get("metas", [])
           assert all(m.get("type") == "movie" for m in movie_metas)
-          assert all(re.match(r"^(tt\d+|tvdb:[1-9]\d*|tmdb:[1-9]\d*|mal:[1-9]\d*|anilist:[1-9]\d*)$", str(m.get("id", ""))) for m in movie_metas)
+          assert all(re.match(r"^(tt\d+|tvdb:[1-9]\d*|tmdb:[1-9]\d*|mal:[1-9]\d*|anilist:[1-9]\d*|kitsu:[1-9]\d*)$", str(m.get("id", ""))) for m in movie_metas)
           PY
             then
               echo "Production smoke test passed."
