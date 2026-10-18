@@ -87,7 +87,8 @@ test("Kitsu lookup errors preserve the original fallback IDs", async () => {
   const metas = [
     { id: "mal:401", extra: { anilistId: 201, malId: 401 } },
   ];
-  const result = await applyKitsuFallback(metas, async () => {
+  const result = await applyKitsuFallback(metas, async (targets) => {
+    assert.equal(targets[0].idMal, "401");
     throw new Error("temporary upstream failure");
   });
   assert.equal(result[0].id, "mal:401");
