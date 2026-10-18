@@ -1,6 +1,6 @@
 {
   "deploymentLimit": 10,
-  "deploymentsSincePause": 8,
+  "deploymentsSincePause": 0,
   "totalDeployments": 139,
   "paused": false,
   "lastDeploymentSha": "70b88a08da256b4ff69cbe4cfc1a9c14087c2da2",
