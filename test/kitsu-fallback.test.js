@@ -43,6 +43,74 @@ test("Kitsu fallback queries one external ID at a time and prefers the current f
   assert.ok(calls.every((call) => call.site === "anilist/anime" || call.site === "myanimelist/anime"));
 });
 
+test("Kitsu fallback resolves the included anime resource when relationship linkage is omitted", async () => {
+  const fetchImpl = async (url) => {
+    const parsed = new URL(url);
+    const site = parsed.searchParams.get("filter[externalSite]");
+    const id = parsed.searchParams.get("filter[externalId]");
+    if (site === "myanimelist/anime" && id === "41001") {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          data: [{
+            type: "mappings",
+            attributes: { externalSite: site, externalId: id },
+            relationships: { item: { links: { related: "https://kitsu.io/api/edge/anime/9501" } } },
+          }],
+          included: [{ type: "anime", id: "9501", attributes: { canonicalTitle: "Kitsu included anime" } }],
+          meta: { count: 1 },
+        }),
+      };
+    }
+    return { ok: true, status: 200, json: async () => ({ data: [], meta: { count: 0 } }) };
+  };
+
+  const result = await resolveAniListKitsuMappings([
+    { id: 14001, idMal: 41001, currentFallbackId: "mal:41001" },
+  ], { fetchImpl });
+
+  assert.equal(result.get(14001), "9501");
+});
+
+test("included Kitsu resources are not used to guess among ambiguous mappings", async () => {
+  const fetchImpl = async (url) => {
+    const parsed = new URL(url);
+    const site = parsed.searchParams.get("filter[externalSite]");
+    const id = parsed.searchParams.get("filter[externalId]");
+    const offset = Number(parsed.searchParams.get("page[offset]"));
+    if (site === "myanimelist/anime" && id === "42001") {
+      const data = offset === 0
+        ? [{
+          type: "mappings",
+          attributes: { externalSite: site, externalId: id },
+          relationships: { item: { links: { related: "https://kitsu.io/api/edge/anime/9601" } } },
+        }]
+        : [{
+          type: "mappings",
+          attributes: { externalSite: site, externalId: id },
+          relationships: { item: { links: { related: "https://kitsu.io/api/edge/anime/9602" } } },
+        }];
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          data,
+          included: [{ type: "anime", id: offset === 0 ? "9601" : "9602" }],
+          meta: { count: 2 },
+        }),
+      };
+    }
+    return { ok: true, status: 200, json: async () => ({ data: [], meta: { count: 0 } }) };
+  };
+
+  const result = await resolveAniListKitsuMappings([
+    { id: 15001, idMal: 42001, currentFallbackId: "mal:42001" },
+  ], { fetchImpl });
+
+  assert.equal(result.has(15001), false);
+});
+
 test("ambiguous preferred Kitsu mappings do not replace the existing identity", async () => {
   const fetchImpl = async (url) => {
     const parsed = new URL(url);
