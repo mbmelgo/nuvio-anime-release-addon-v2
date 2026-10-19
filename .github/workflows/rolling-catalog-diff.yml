@@ -133,8 +133,9 @@ jobs:
             cat "$work/output/release-diff.md"
             mkdir -p "$work/artifact"
             cp "$work/output/"release-diff.* "$work/artifact/"
-            cp "$current/capture-metadata.json" "$work/artifact/"
-            cp "$current/manifest.json" "$work/artifact/"
+            # Retain complete aggregate catalog JSON for later item-level comparisons.
+            # Do not archive raw response headers; they are unnecessary for catalog diffs.
+            cp "$current/"*.json "$work/artifact/"
           else
             echo "No rolling baseline exists yet; initializing baseline without reporting a diff."
             new_version="1.0.0"
