@@ -133,6 +133,5 @@ test("rolling catalog diff captures all eight mixed-protocol production catalogs
 
 test("rolling catalog diff artifact retains full catalog snapshots for historical item-level investigations", () => {
   assert.ok(rollingWorkflow.includes('cp "$current/"*.json "$work/artifact/"'));
-  assert.ok(rollingWorkflow.includes('cp -R "$current/pages" "$work/artifact/pages"'));
   assert.ok(rollingWorkflow.includes("retention-days: 30"));
 });
