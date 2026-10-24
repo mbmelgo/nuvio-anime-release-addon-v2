@@ -1,0 +1,161 @@
+[
+  {
+    "id": "tt34424243",
+    "type": "movie",
+    "name": "Mobile Suit Gundam SEED FREEDOM ZERO",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx183692-s7IeQgTDMkI5.jpg",
+    "genres": [
+      "Action",
+      "Drama",
+      "Mecha",
+      "Romance",
+      "Sci-Fi"
+    ],
+    "extra": {
+      "anilistId": 183692,
+      "malId": 60230,
+      "titleEnglish": "Mobile Suit Gundam SEED FREEDOM ZERO",
+      "titleRomaji": "Kidou Senshi Gundam SEED FREEDOM ZERO",
+      "titleNative": "機動戦士ガンダムSEED FREEDOM ZERO",
+      "status": "NOT_YET_RELEASED",
+      "format": "MOVIE",
+      "identityProvider": "imdb",
+      "identityId": "tt34424243",
+      "identityEvidence": [
+        {
+          "source": "anibridge",
+          "season": null,
+          "episodeOffset": null,
+          "relation": false
+        },
+        {
+          "source": "tmdb-search",
+          "season": null,
+          "episodeOffset": null,
+          "relation": false
+        }
+      ]
+    },
+    "releaseInfo": "2027",
+    "released": "2027-01-15T00:00:00.000Z"
+  },
+  {
+    "id": "kitsu:49845",
+    "type": "movie",
+    "name": "Date A Live F Last Date",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx190244-pxpZRICro9Sv.jpg",
+    "genres": [
+      "Action",
+      "Comedy",
+      "Ecchi",
+      "Fantasy",
+      "Mecha",
+      "Romance",
+      "Sci-Fi"
+    ],
+    "extra": {
+      "anilistId": 190244,
+      "malId": 63934,
+      "titleRomaji": "Date A Live F Last Date",
+      "titleNative": "デート・ア・ライブF Last Date",
+      "status": "NOT_YET_RELEASED",
+      "format": "MOVIE",
+      "identityProvider": "kitsu",
+      "identityId": "49845",
+      "identityEvidence": [
+        {
+          "source": "kitsu-mapping",
+          "season": null,
+          "episodeOffset": null,
+          "relation": false
+        }
+      ],
+      "identityFallback": "kitsu",
+      "identityFallbackFrom": "mal:63934"
+    },
+    "releaseInfo": "2027",
+    "released": "2027-03-26T00:00:00.000Z"
+  },
+  {
+    "id": "tmdb:1495141",
+    "type": "movie",
+    "name": "ghost – end of night",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx194213-hbKL5BMfdtcK.jpg",
+    "genres": [
+      "Supernatural"
+    ],
+    "extra": {
+      "anilistId": 194213,
+      "malId": 61813,
+      "titleEnglish": "ghost – end of night",
+      "titleRomaji": "ghost／yoru no hate",
+      "titleNative": "ghost／夜の果て",
+      "status": "NOT_YET_RELEASED",
+      "format": "MOVIE",
+      "tmdbProvider": "tmdb",
+      "tmdbId": "1495141",
+      "tmdbEvidence": "tmdb-search",
+      "identityFallback": "nuvio-tmdb-route"
+    },
+    "releaseInfo": "2027",
+    "released": "2027-02-11T00:00:00.000Z"
+  },
+  {
+    "id": "tmdb:1619315",
+    "type": "movie",
+    "name": "Medalist Movie",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx206298-q8wPQWpcT4WV.png",
+    "genres": [
+      "Drama",
+      "Psychological",
+      "Sports"
+    ],
+    "extra": {
+      "anilistId": 206298,
+      "malId": 63326,
+      "titleRomaji": "Medalist Movie",
+      "titleNative": "劇場版 メダリスト",
+      "status": "NOT_YET_RELEASED",
+      "format": "MOVIE",
+      "tmdbProvider": "tmdb",
+      "tmdbId": "1619315",
+      "tmdbEvidence": "tmdb-search"
+    },
+    "releaseInfo": "2027",
+    "released": "2027-02-19T00:00:00.000Z"
+  },
+  {
+    "id": "tt43649260",
+    "type": "movie",
+    "name": "Aikatsu Stars!: Hoshiboshi no Progress",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx213814-x9VFB4jU2TQJ.png",
+    "genres": [
+      "Music"
+    ],
+    "extra": {
+      "anilistId": 213814,
+      "malId": 64541,
+      "titleRomaji": "Aikatsu Stars!: Hoshiboshi no Progress",
+      "titleNative": "アイカツスターズ！ ～星々のProgress～",
+      "status": "NOT_YET_RELEASED",
+      "format": "MOVIE",
+      "identityProvider": "imdb",
+      "identityId": "tt43649260",
+      "identityEvidence": [
+        {
+          "source": "imdb-search",
+          "season": null,
+          "episodeOffset": null,
+          "relation": false
+        }
+      ]
+    },
+    "releaseInfo": "2027",
+    "released": "2027-01-22T00:00:00.000Z"
+  }
+]

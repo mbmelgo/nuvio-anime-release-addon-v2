@@ -1,0 +1,423 @@
+[
+  {
+    "id": "tt14521412",
+    "type": "movie",
+    "name": "Puella Magi Madoka Magica the Movie -Walpurgisnacht: Rising-",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx133007-5gOUXDvzxy9S.jpg",
+    "genres": [
+      "Mahou Shoujo"
+    ],
+    "extra": {
+      "anilistId": 133007,
+      "malId": 48820,
+      "titleEnglish": "Puella Magi Madoka Magica the Movie -Walpurgisnacht: Rising-",
+      "titleRomaji": "Mahou Shoujo Madoka☆Magica: Walpurgis no Kaiten",
+      "titleNative": "劇場版 魔法少女まどか☆マギカ〈ワルプルギスの廻天〉",
+      "status": "FINISHED",
+      "format": "MOVIE",
+      "identityProvider": "imdb",
+      "identityId": "tt14521412",
+      "identityEvidence": [
+        {
+          "source": "anibridge",
+          "season": null,
+          "episodeOffset": null,
+          "relation": false
+        },
+        {
+          "source": "imdb-search",
+          "season": null,
+          "episodeOffset": null,
+          "relation": false
+        }
+      ]
+    },
+    "releaseInfo": "2026",
+    "released": "2026-08-28T00:00:00.000Z"
+  },
+  {
+    "id": "tmdb:1661276",
+    "type": "movie",
+    "name": "Shiranuhi",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx176373-355WYOUefrCt.jpg",
+    "genres": [
+      "Supernatural"
+    ],
+    "extra": {
+      "anilistId": 176373,
+      "malId": 63973,
+      "titleRomaji": "Shiranuhi",
+      "titleNative": "しらぬひ",
+      "status": "FINISHED",
+      "format": "MOVIE",
+      "tmdbProvider": "tmdb",
+      "tmdbId": "1661276",
+      "tmdbEvidence": "tmdb-search",
+      "identityFallback": "nuvio-tmdb-route"
+    },
+    "releaseInfo": "2026",
+    "released": "2026-08-21T00:00:00.000Z"
+  },
+  {
+    "id": "tmdb:1494419",
+    "type": "movie",
+    "name": "Saishuu Gakushou Hibike! Euphonium - Kouhen",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx194116-GAC8nkxwQuB4.png",
+    "genres": [
+      "Drama",
+      "Music",
+      "Slice of Life"
+    ],
+    "extra": {
+      "anilistId": 194116,
+      "malId": 64019,
+      "titleRomaji": "Saishuu Gakushou Hibike! Euphonium - Kouhen",
+      "titleNative": "最終楽章 響け！ユーフォニアム後編",
+      "status": "FINISHED",
+      "format": "MOVIE",
+      "tmdbProvider": "tmdb",
+      "tmdbId": "1494419",
+      "tmdbEvidence": "tmdb-search",
+      "identityFallback": "nuvio-tmdb-route"
+    },
+    "releaseInfo": "2026",
+    "released": "2026-09-11T00:00:00.000Z"
+  },
+  {
+    "id": "tmdb:1663937",
+    "type": "movie",
+    "name": "Meitantei Precure! Fushigi na Niwa to Futari no Himitsu",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx198654-0Uvq9VnZWPtN.png",
+    "genres": [
+      "Mahou Shoujo"
+    ],
+    "extra": {
+      "anilistId": 198654,
+      "malId": 63903,
+      "titleRomaji": "Meitantei Precure! Fushigi na Niwa to Futari no Himitsu",
+      "titleNative": "名探偵プリキュア！不思議な庭と2人の秘密",
+      "status": "FINISHED",
+      "format": "MOVIE",
+      "identityProvider": "tmdb",
+      "identityId": "1663937",
+      "identityEvidence": [
+        {
+          "source": "anibridge",
+          "season": null,
+          "episodeOffset": null,
+          "relation": false
+        }
+      ]
+    },
+    "releaseInfo": "2026",
+    "released": "2026-09-18T00:00:00.000Z"
+  },
+  {
+    "id": "tmdb:1496928",
+    "type": "movie",
+    "name": "Wareware wa Uchuujin",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx202429-RwSR4o3WmD04.jpg",
+    "genres": [
+      "Drama"
+    ],
+    "extra": {
+      "anilistId": 202429,
+      "malId": 62973,
+      "titleRomaji": "Wareware wa Uchuujin",
+      "titleNative": "我々は宇宙人",
+      "status": "FINISHED",
+      "format": "MOVIE",
+      "tmdbProvider": "tmdb",
+      "tmdbId": "1496928",
+      "tmdbEvidence": "tmdb-search",
+      "identityFallback": "nuvio-tmdb-route"
+    },
+    "releaseInfo": "2026",
+    "released": "2026-09-25T00:00:00.000Z"
+  },
+  {
+    "id": "tmdb:1586876",
+    "type": "movie",
+    "name": "Chiikawa: Ningyo no Shima no Himitsu",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx202717-kHDn7BRiP9CR.jpg",
+    "genres": [
+      "Comedy",
+      "Slice of Life"
+    ],
+    "extra": {
+      "anilistId": 202717,
+      "malId": 63011,
+      "titleRomaji": "Chiikawa: Ningyo no Shima no Himitsu",
+      "titleNative": "映画ちいかわ 人魚の島のひみつ",
+      "status": "FINISHED",
+      "format": "MOVIE",
+      "tmdbProvider": "tmdb",
+      "tmdbId": "1586876",
+      "tmdbEvidence": "tmdb-search",
+      "identityFallback": "nuvio-tmdb-route"
+    },
+    "releaseInfo": "2026",
+    "released": "2026-07-24T00:00:00.000Z"
+  },
+  {
+    "id": "tmdb:1729116",
+    "type": "movie",
+    "name": "Soreike! Anpanman: Pantan to Yakusoku no Hoshi",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx206682-4WTTVkPfiVPh.png",
+    "genres": [
+      "Comedy",
+      "Fantasy"
+    ],
+    "extra": {
+      "anilistId": 206682,
+      "malId": 63356,
+      "titleRomaji": "Soreike! Anpanman: Pantan to Yakusoku no Hoshi",
+      "titleNative": "それいけ！アンパンマン　パンタンと約束の星",
+      "status": "FINISHED",
+      "format": "MOVIE",
+      "tmdbProvider": "tmdb",
+      "tmdbId": "1729116",
+      "tmdbEvidence": "tmdb-search"
+    },
+    "releaseInfo": "2026",
+    "released": "2026-06-26T00:00:00.000Z"
+  },
+  {
+    "id": "tmdb:1622621",
+    "type": "movie",
+    "name": "Kimi to Hanabi to Yakusoku to",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx206819-9VJOdSC6yFET.jpg",
+    "genres": [
+      "Romance"
+    ],
+    "extra": {
+      "anilistId": 206819,
+      "malId": 63366,
+      "titleRomaji": "Kimi to Hanabi to Yakusoku to",
+      "titleNative": "君と花火と約束と",
+      "status": "FINISHED",
+      "format": "MOVIE",
+      "tmdbProvider": "tmdb",
+      "tmdbId": "1622621",
+      "tmdbEvidence": "tmdb-search",
+      "identityFallback": "nuvio-tmdb-route"
+    },
+    "releaseInfo": "2026",
+    "released": "2026-07-17T00:00:00.000Z"
+  },
+  {
+    "id": "tmdb:1654313",
+    "type": "movie",
+    "name": "Unanswered//butterfly: Sword Art Online",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx208754-333Nyh5abrqS.png",
+    "genres": [
+      "Action",
+      "Adventure"
+    ],
+    "extra": {
+      "anilistId": 208754,
+      "malId": 63736,
+      "titleRomaji": "Unanswered//butterfly: Sword Art Online",
+      "titleNative": "Unanswered//butterfly: Sword Art Online",
+      "status": "FINISHED",
+      "format": "MOVIE",
+      "identityProvider": "tmdb",
+      "identityId": "1654313",
+      "identityEvidence": [
+        {
+          "source": "anibridge",
+          "season": null,
+          "episodeOffset": null,
+          "relation": false
+        }
+      ]
+    },
+    "releaseInfo": "2026",
+    "released": "2026-07-10T00:00:00.000Z"
+  },
+  {
+    "id": "tmdb:1598766",
+    "type": "movie",
+    "name": "Crayon Shin-chan: Kikikaikai! Ora no Youkai Vacation",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx208829-I72LfY7BgEZA.jpg",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Comedy"
+    ],
+    "extra": {
+      "anilistId": 208829,
+      "malId": 63512,
+      "titleRomaji": "Crayon Shin-chan: Kikikaikai! Ora no Youkai Vacation",
+      "titleNative": "クレヨンしんちゃん 奇々怪々! オラの妖怪バケ~ション",
+      "status": "FINISHED",
+      "format": "MOVIE",
+      "tmdbProvider": "tmdb",
+      "tmdbId": "1598766",
+      "tmdbEvidence": "tmdb-search",
+      "identityFallback": "nuvio-tmdb-route"
+    },
+    "releaseInfo": "2026",
+    "released": "2026-07-31T00:00:00.000Z"
+  },
+  {
+    "id": "tmdb:1659338",
+    "type": "movie",
+    "name": "SHIBOYUGI: Playing Death Games to Put Food on the Table 44: CLOUDY BEACH",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx209961-EKMAWTp299Kt.jpg",
+    "genres": [
+      "Action",
+      "Drama",
+      "Mystery",
+      "Thriller"
+    ],
+    "extra": {
+      "anilistId": 209961,
+      "malId": 63819,
+      "titleEnglish": "SHIBOYUGI: Playing Death Games to Put Food on the Table 44: CLOUDY BEACH",
+      "titleRomaji": "Shibou Yuugi de Meshi wo Kuu. 44: CLOUDY BEACH",
+      "titleNative": "死亡遊戯で飯を食う。44:CLOUDY BEACH",
+      "status": "FINISHED",
+      "format": "MOVIE",
+      "tmdbProvider": "tmdb",
+      "tmdbId": "1659338",
+      "tmdbEvidence": "tmdb-search",
+      "identityFallback": "nuvio-tmdb-route"
+    },
+    "releaseInfo": "2026",
+    "released": "2026-07-10T00:00:00.000Z"
+  },
+  {
+    "id": "tmdb:1678066",
+    "type": "movie",
+    "name": "Majo no Tani no Yoru",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx211232-Bthde3cpWCtq.png",
+    "genres": [
+      "Fantasy"
+    ],
+    "extra": {
+      "anilistId": 211232,
+      "malId": 64431,
+      "titleRomaji": "Majo no Tani no Yoru",
+      "titleNative": "魔女の谷の夜",
+      "status": "FINISHED",
+      "format": "MOVIE",
+      "tmdbProvider": "tmdb",
+      "tmdbId": "1678066",
+      "tmdbEvidence": "tmdb-search"
+    },
+    "releaseInfo": "2026",
+    "released": "2026-07-08T00:00:00.000Z"
+  },
+  {
+    "id": "tmdb:1679730",
+    "type": "movie",
+    "name": "THE RIBBON HERO",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx211308-KG8w6IyCI3r0.png",
+    "genres": [
+      "Action",
+      "Fantasy",
+      "Mahou Shoujo"
+    ],
+    "extra": {
+      "anilistId": 211308,
+      "malId": 64012,
+      "titleEnglish": "THE RIBBON HERO",
+      "titleRomaji": "THE RIBBON HERO",
+      "titleNative": "THE RIBBON HERO",
+      "status": "FINISHED",
+      "format": "MOVIE",
+      "tmdbProvider": "tmdb",
+      "tmdbId": "1679730",
+      "tmdbEvidence": "tmdb-search",
+      "identityFallback": "nuvio-tmdb-route"
+    },
+    "releaseInfo": "2026",
+    "released": "2026-08-08T00:00:00.000Z"
+  },
+  {
+    "id": "tmdb:1729769",
+    "type": "movie",
+    "name": "Rusuban",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx213908-ZBUHQxLVUzSW.jpg",
+    "genres": [
+      "Slice of Life"
+    ],
+    "extra": {
+      "anilistId": 213908,
+      "malId": 64580,
+      "titleRomaji": "Rusuban",
+      "titleNative": "るすばん",
+      "status": "FINISHED",
+      "format": "MOVIE",
+      "tmdbProvider": "tmdb",
+      "tmdbId": "1729769",
+      "tmdbEvidence": "tmdb-search"
+    },
+    "releaseInfo": "2026",
+    "released": "2026-08-01T00:00:00.000Z"
+  },
+  {
+    "id": "tmdb:1769471",
+    "type": "movie",
+    "name": "Echo",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx214068-th35W8qQmycd.png",
+    "genres": [
+      "Drama",
+      "Fantasy"
+    ],
+    "extra": {
+      "anilistId": 214068,
+      "malId": 63739,
+      "titleEnglish": "Echo",
+      "titleRomaji": "Moshi, Korekara Umarerunonara",
+      "titleNative": "もし、これから生まれるのなら",
+      "status": "FINISHED",
+      "format": "MOVIE",
+      "tmdbProvider": "tmdb",
+      "tmdbId": "1769471",
+      "tmdbEvidence": "tmdb-search"
+    },
+    "releaseInfo": "2026",
+    "released": "2026-07-19T00:00:00.000Z"
+  },
+  {
+    "id": "tmdb:1726306",
+    "type": "movie",
+    "name": "Dust of the Simulacrum",
+    "posterShape": "poster",
+    "poster": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx214070-DvLRZXO5xGo6.png",
+    "genres": [
+      "Action",
+      "Sci-Fi"
+    ],
+    "extra": {
+      "anilistId": 214070,
+      "titleEnglish": "Dust of the Simulacrum",
+      "titleRomaji": "Sazin no Nakade",
+      "titleNative": "砂塵ノ中デ",
+      "status": "FINISHED",
+      "format": "MOVIE",
+      "tmdbProvider": "tmdb",
+      "tmdbId": "1726306",
+      "tmdbEvidence": "tmdb-search"
+    },
+    "releaseInfo": "2026",
+    "released": "2026-07-19T00:00:00.000Z"
+  }
+]

@@ -1,0 +1,13 @@
+HTTP/2 200 
+access-control-allow-headers: Content-Type
+access-control-allow-methods: GET, OPTIONS
+access-control-allow-origin: *
+age: 0
+cache-control: public
+content-type: application/json; charset=utf-8
+date: Sat, 24 Oct 2026 12:13:28 GMT
+server: Vercel
+strict-transport-security: max-age=63072000; includeSubDomains; preload
+x-vercel-cache: MISS
+x-vercel-id: sfo1::sin1::k2559-1792843974283-5910200bd85c
+
