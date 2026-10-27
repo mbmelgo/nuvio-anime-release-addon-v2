@@ -71,7 +71,7 @@ test("historical secret scan uses full git history with minimal permissions and 
   assert.ok(scan.includes("pull_request:\n    branches: [main]"));
   assert.ok(scan.includes("workflow_dispatch:"));
   assert.ok(scan.includes("schedule:"));
-  assert.ok(scan.includes("permissions:\n  contents: read"));
+  assert.ok(scan.includes("permissions:\n  contents: read\n  pull-requests: read"));
   assert.ok(scan.includes("fetch-depth: 0"));
   assert.ok(scan.includes("persist-credentials: false"));
   assert.ok(scan.includes("gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e"));
