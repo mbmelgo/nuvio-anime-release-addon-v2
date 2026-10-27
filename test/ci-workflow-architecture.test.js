@@ -67,11 +67,11 @@ test("release workflow shell blocks do not contain inline GitHub expressions", (
 test("historical secret scan uses full git history with minimal permissions and redacted outputs", () => {
   const scan = read("../.github/workflows/secret-history-scan.yml");
 
-  assert.ok(scan.includes("push:\\n    branches: [main]"));
-  assert.ok(scan.includes("pull_request:\\n    branches: [main]"));
+  assert.ok(scan.includes("push:\n    branches: [main]"));
+  assert.ok(scan.includes("pull_request:\n    branches: [main]"));
   assert.ok(scan.includes("workflow_dispatch:"));
   assert.ok(scan.includes("schedule:"));
-  assert.ok(scan.includes("permissions:\\n  contents: read"));
+  assert.ok(scan.includes("permissions:\n  contents: read"));
   assert.ok(scan.includes("fetch-depth: 0"));
   assert.ok(scan.includes("persist-credentials: false"));
   assert.ok(scan.includes("gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e"));
