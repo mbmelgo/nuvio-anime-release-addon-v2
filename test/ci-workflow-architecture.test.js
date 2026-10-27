@@ -18,6 +18,7 @@ test("main CI owns normal push testing and patch versioning without a PR trigger
   assert.ok(!ci.includes("steps.gate.outputs.release"));
   assert.ok(ci.includes("!contains(github.event.head_commit.message || '', '[deploy-prod]')"));
   assert.ok(ci.includes("name: Run tests\n        run: npm test\n      - name: Bump patch version and sync metadata"));
+  assert.ok(ci.includes("name: Verify versioned tree\n        run: npm test\n      - name: Commit version metadata"));
   assert.ok(ci.includes('git commit -m "chore: bump patch version [skip-release-pipeline]"'));
 });
 
