@@ -4,24 +4,32 @@ import fs from "node:fs";
 
 const read = (path) => fs.readFileSync(new URL(path, import.meta.url), "utf8");
 
-test("main CI owns normal push testing and patch versioning without a PR trigger", () => {
+test("main CI tests pushes and opens patch-version PRs with a scoped GitHub App token", () => {
   const ci = read("../.github/workflows/ci.yml");
   const escapedExpression = "\\" + "$" + "{{";
 
-  assert.ok(ci.includes("on:\n  push:\n    branches: [main]"));
+  assert.ok(ci.includes("on:\\n  push:\\n    branches: [main]"));
   assert.ok(!ci.includes("pull_request:"));
-  assert.ok(ci.includes("permissions:\n  contents: write"));
+  assert.ok(ci.includes("permissions:\\n  contents: read"));
   assert.ok(ci.includes("group: ci-main-"));
   assert.ok(ci.includes("github.ref"));
   assert.ok(!ci.includes(escapedExpression));
   assert.ok(ci.includes("cancel-in-progress: true"));
   assert.ok(!ci.includes("steps.gate.outputs.release"));
   assert.ok(ci.includes("!contains(github.event.head_commit.message || '', '[deploy-prod]')"));
-  assert.ok(ci.includes("name: Run tests\n        run: npm test\n      - name: Bump patch version and sync metadata"));
-  assert.ok(ci.includes("name: Verify versioned tree\n        run: npm test\n      - name: Commit version metadata"));
-  assert.ok(ci.includes('git commit -m "chore: bump patch version [skip-release-pipeline]"'));
+  assert.ok(ci.includes("name: Run tests\\n        run: npm test\\n      - name: Bump patch version and sync metadata"));
+  assert.ok(ci.includes("name: Verify versioned tree\\n        run: npm test\\n      - name: Open version metadata pull request"));
+  assert.ok(ci.includes("actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510"));
+  assert.ok(ci.includes("app-id: ${{ vars.APP_ID }}"));
+  assert.ok(ci.includes("private-key: ${{ secrets.APP_PRIVATE_KEY }}"));
+  assert.ok(ci.includes("permission-contents: write"));
+  assert.ok(ci.includes("permission-pull-requests: write"));
+  assert.ok(ci.includes("token: ${{ steps.app-token.outputs.token }}"));
+  assert.ok(ci.includes('git commit -m "chore: bump patch version [skip-version-automation]"'));
+  assert.ok(ci.includes("gh pr create"));
+  assert.ok(ci.includes("--base main"));
+  assert.ok(!ci.includes("git push origin HEAD:main"));
 });
-
 test("pull request CI remains the single PR test workflow", () => {
   const pr = read("../.github/workflows/pr-ci.yml");
 
@@ -39,6 +47,12 @@ test("release pipeline only allocates a runner for release or manual requests", 
   assert.ok(!sync.includes("name: Bump patch version and sync metadata"));
   assert.ok(sync.includes("name: Run full CI"));
   assert.ok(sync.includes("actions: write"));
+  assert.ok(sync.includes("actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510"));
+  assert.ok(sync.includes("permission-contents: write"));
+  assert.ok(sync.includes("permission-pull-requests: write"));
+  assert.ok(sync.includes("automation/release-state-v$release_version"));
+  assert.ok(sync.includes("gh pr create"));
+  assert.ok(!sync.includes("git push origin HEAD:main"));
   assert.ok(sync.includes("name: Trigger post-release catalog snapshot"));
   assert.ok(sync.includes("gh workflow run catalog-snapshot.yml"));
   assert.ok(sync.includes("-f release_version="));
