@@ -8,17 +8,17 @@ test("main CI tests pushes and opens patch-version PRs with a scoped GitHub App 
   const ci = read("../.github/workflows/ci.yml");
   const escapedExpression = "\\" + "$" + "{{";
 
-  assert.ok(ci.includes("on:\\n  push:\\n    branches: [main]"));
+  assert.ok(ci.includes("on:\n  push:\n    branches: [main]"));
   assert.ok(!ci.includes("pull_request:"));
-  assert.ok(ci.includes("permissions:\\n  contents: read"));
+  assert.ok(ci.includes("permissions:\n  contents: read"));
   assert.ok(ci.includes("group: ci-main-"));
   assert.ok(ci.includes("github.ref"));
   assert.ok(!ci.includes(escapedExpression));
   assert.ok(ci.includes("cancel-in-progress: true"));
   assert.ok(!ci.includes("steps.gate.outputs.release"));
   assert.ok(ci.includes("!contains(github.event.head_commit.message || '', '[deploy-prod]')"));
-  assert.ok(ci.includes("name: Run tests\\n        run: npm test\\n      - name: Bump patch version and sync metadata"));
-  assert.ok(ci.includes("name: Verify versioned tree\\n        run: npm test\\n      - name: Open version metadata pull request"));
+  assert.ok(ci.includes("name: Run tests\n        run: npm test\n      - name: Bump patch version and sync metadata"));
+  assert.ok(ci.includes("name: Verify versioned tree\n        run: npm test\n      - name: Open version metadata pull request"));
   assert.ok(ci.includes("actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510"));
   assert.ok(ci.includes("app-id: ${{ vars.APP_ID }}"));
   assert.ok(ci.includes("private-key: ${{ secrets.APP_PRIVATE_KEY }}"));
