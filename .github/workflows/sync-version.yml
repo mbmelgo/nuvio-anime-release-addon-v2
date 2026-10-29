@@ -468,7 +468,7 @@ jobs:
           readme_path.write_text(readme)
           PY
           git add ops/release-state.json README.md
-          git commit -m "chore: record $tag production release [skip-release-pipeline] [capture-catalog]"
+          git commit -m "chore: record $tag production release [skip-release-pipeline] [capture-catalog] [skip-version-automation]"
           branch="automation/release-state-v$release_version"
           git switch -c "$branch"
           git push --force origin "HEAD:refs/heads/$branch"
@@ -481,7 +481,7 @@ jobs:
               --repo "$GITHUB_REPOSITORY" \
               --base main \
               --head "$branch" \
-              --title "chore: record $tag production release [skip-release-pipeline] [capture-catalog]" \
+              --title "chore: record $tag production release [skip-release-pipeline] [capture-catalog] [skip-version-automation]" \
               --body "Records the production deployment and updates release state after the controlled release pipeline's smoke tests passed. This PR does not trigger a deployment; merge only after pull-request CI passes."
           fi
 
