@@ -51,6 +51,7 @@ test("release pipeline only allocates a runner for release or manual requests", 
   assert.ok(sync.includes("permission-contents: write"));
   assert.ok(sync.includes("permission-pull-requests: write"));
   assert.ok(sync.includes("automation/release-state-v$release_version"));
+  assert.ok(sync.includes("[skip-version-automation]"));
   assert.ok(sync.includes("gh pr create"));
   assert.ok(!sync.includes("git push origin HEAD:main"));
   assert.ok(sync.includes("name: Trigger post-release catalog snapshot"));
