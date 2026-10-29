@@ -41,10 +41,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
       - name: Checkout
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -302,6 +312,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
           VERCEL_DEPLOYMENT_ID: ${{ steps.vercel_deployment.outputs.deployment_id }}
           REDEPLOY: ${{ steps.gate.outputs.redeploy }}
           RELEASE_TARGET_SHA: ${{ steps.gate.outputs.release_target_sha }}
@@ -457,8 +468,22 @@ jobs:
           readme_path.write_text(readme)
           PY
           git add ops/release-state.json README.md
-          git commit -m "chore: record $tag production release [skip-release-pipeline] [capture-catalog]"
-          git push origin HEAD:main
+          git commit -m "chore: record $tag production release [skip-release-pipeline] [capture-catalog] [skip-version-automation]"
+          branch="automation/release-state-v$release_version"
+          git switch -c "$branch"
+          git push --force origin "HEAD:refs/heads/$branch"
+
+          existing_pr="$(GH_TOKEN="$APP_TOKEN" gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --state open --json url --jq '.[0].url // empty')"
+          if [ -n "$existing_pr" ]; then
+            echo "Release-state pull request already exists: $existing_pr"
+          else
+            GH_TOKEN="$APP_TOKEN" gh pr create \
+              --repo "$GITHUB_REPOSITORY" \
+              --base main \
+              --head "$branch" \
+              --title "chore: record $tag production release [skip-release-pipeline] [capture-catalog] [skip-version-automation]" \
+              --body "Records the production deployment and updates release state after the controlled release pipeline's smoke tests passed. This PR does not trigger a deployment; merge only after pull-request CI passes."
+          fi
 
       - name: Trigger post-release catalog snapshot
         if: steps.gate.outputs.release == 'true' && inputs.dry_run != true
