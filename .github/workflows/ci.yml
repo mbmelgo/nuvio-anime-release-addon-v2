@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ci-main-${{ github.ref }}
@@ -16,8 +16,19 @@ jobs:
     if: ${{ !contains(github.event.head_commit.message || '', '[deploy-prod]') && !contains(github.event.head_commit.message || '', '[finalize-prod:') }}
     runs-on: ubuntu-latest
     steps:
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -53,12 +64,33 @@ jobs:
           PY
       - name: Verify versioned tree
         run: npm test
-      - name: Commit version metadata
+      - name: Open version metadata pull request
         shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
+          if git diff --quiet -- api/version.js package.json README.md; then
+            echo "Version metadata is unchanged; no pull request is needed."
+            exit 0
+          fi
+
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add api/version.js package.json README.md
-          git commit -m "chore: bump patch version [skip-release-pipeline]"
-          git push
+          git commit -m "chore: bump patch version [skip-version-automation]"
+          branch="automation/version-bump-${GITHUB_SHA:0:12}"
+          git switch -c "$branch"
+          git push --force origin "HEAD:refs/heads/$branch"
+
+          existing_pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --state open --json url --jq '.[0].url // empty')"
+          if [ -n "$existing_pr" ]; then
+            echo "Version metadata pull request already exists: $existing_pr"
+          else
+            gh pr create \
+              --repo "$GITHUB_REPOSITORY" \
+              --base main \
+              --head "$branch" \
+              --title "chore: bump patch version [skip-version-automation]" \
+              --body "Automated patch-version metadata update generated from main commit $GITHUB_SHA. This pull request keeps main protected and runs the normal pull-request CI before the metadata is merged."
+          fi
