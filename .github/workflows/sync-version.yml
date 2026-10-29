@@ -312,6 +312,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
           VERCEL_DEPLOYMENT_ID: ${{ steps.vercel_deployment.outputs.deployment_id }}
           REDEPLOY: ${{ steps.gate.outputs.redeploy }}
           RELEASE_TARGET_SHA: ${{ steps.gate.outputs.release_target_sha }}
@@ -472,11 +473,11 @@ jobs:
           git switch -c "$branch"
           git push --force origin "HEAD:refs/heads/$branch"
 
-          existing_pr="$(GH_TOKEN="${{ steps.app-token.outputs.token }}" gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --state open --json url --jq '.[0].url // empty')"
+          existing_pr="$(GH_TOKEN="$APP_TOKEN" gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --state open --json url --jq '.[0].url // empty')"
           if [ -n "$existing_pr" ]; then
             echo "Release-state pull request already exists: $existing_pr"
           else
-            GH_TOKEN="${{ steps.app-token.outputs.token }}" gh pr create \
+            GH_TOKEN="$APP_TOKEN" gh pr create \
               --repo "$GITHUB_REPOSITORY" \
               --base main \
               --head "$branch" \
