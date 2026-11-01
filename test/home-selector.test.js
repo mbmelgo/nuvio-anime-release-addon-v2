@@ -23,12 +23,15 @@ function renderHome(donateUrl) {
   }
 }
 
-test("home page removes GitHub and Releases links", () => {
+test("home page uses generic product descriptions without exposing implementation details", () => {
   const html = renderHome();
-  assert.doesNotMatch(html, /github\.com|>GitHub<|>Releases</);
+  assert.doesNotMatch(html, /github\\.com|>GitHub<|>Releases</);
+  assert.doesNotMatch(html, /AniList|\\bARM\\b|IMDb|TVDB|TMDB|identity|mapping|provider ID|airing schedules/i);
+  assert.match(html, /Discover anime across seasonal releases, movies, and episode schedules/);
+  assert.match(html, /Browse anime and movie selections organized by season/);
   assert.match(html, /Install addon/);
   assert.match(html, /Explore the addon interface through these representative Nuvio views/);
-});
+});;
 
 test("home page renders a configured PayPal donation link securely", () => {
   const html = renderHome("https://www.paypal.me/MarkVincentMelgo");
