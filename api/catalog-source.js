@@ -401,7 +401,24 @@ async function resolveMappingsForRows(
     }
   }
 
-  const tmdbImdbVerificationRows = [...tmdbTitleVerificationRows, ...tmdbInvalidKnownImdbRows];
+  // A valid TMDB-derived IMDb ID should not trigger an unconditional title
+  // search. However, when another mapping source already supplies a different
+  // IMDb ID, resolve that conflict independently instead of letting TMDB
+  // validation suppress the stronger direct candidate.
+  const tmdbConflictingDirectImdbRows = tmdbKnownImdbRows.filter((row) => {
+    const media = { ...row, anilistId: Number(row.id) };
+    const records = mappings.get(Number(row.id)) || [];
+    const tmdbSelected = selectTMDBIdentity(media, records);
+    return records.some((record) => record?.source !== "tmdb-search"
+      && Array.isArray(record?.imdbIds)
+      && record.imdbIds.some((id) => /^tt\d+$/.test(String(id))
+        && String(id) !== String(tmdbSelected?.id)));
+  });
+  const tmdbImdbVerificationRows = [
+    ...tmdbTitleVerificationRows,
+    ...tmdbInvalidKnownImdbRows,
+    ...tmdbConflictingDirectImdbRows,
+  ];
   if (tmdbImdbVerificationRows.length) {
     try {
       mappings = mergeMappings(mappings, await resolveImdbMappings(tmdbImdbVerificationRows));
