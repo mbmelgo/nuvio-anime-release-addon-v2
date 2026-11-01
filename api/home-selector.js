@@ -48,12 +48,12 @@ export default function handler(req, res) {
   <header class="wrap">
     <div class="eyebrow">Nuvio anime catalog addon · v${ADDON_VERSION}</div>
     <h1>Anime Releases for Nuvio</h1>
-    <p class="lead">Dynamic seasonal and rolling anime release catalogs. AniList supplies release and airing data; the addon resolves validated provider identities through ARM and secondary cross-provider mapping sources.</p>
+    <p class="lead">Discover anime across seasonal releases, movies, and episode schedules with an organized catalog experience for Nuvio.</p>
   </header>
   <main class="wrap">
     <section class="panel">
       <h2>Install the addon</h2>
-      <p>The production addon resolves a validated provider identity, preferring IMDb and falling back to TVDB or TMDB when validated. Detailed metadata is delegated to the metadata addon configured in Nuvio.</p>
+      <p>Add Anime Releases for Nuvio to explore seasonal anime, movies, and recently aired or upcoming episodes in one place.</p>
       <div class="url"><code>${manifest}</code></div>
       <a class="button" href="${manifest}">Install addon</a>
       ${donateUrl ? `<a class="button secondary" href="${donateUrl}" target="_blank" rel="noopener noreferrer">Donate via PayPal</a>` : ""}
@@ -61,7 +61,7 @@ export default function handler(req, res) {
 
     <section class="panel">
       <h2>Supported catalogs</h2>
-      <p class="note">Three episodic seasonal catalogs, three seasonal movie catalogs, and two rolling episodic catalogs are exposed. Rolling catalogs use AniList airing schedules and include non-adult TV, TV Short, ONA, OVA, and Special entries.</p>
+      <p class="note">Browse anime and movie selections organized by season, along with recently aired and upcoming episodes.</p>
       ${CATALOGS.map(([name, id, description]) => `
       <div class="catalog">
         <div><h3>${name}</h3><p>${description}</p></div>
@@ -79,14 +79,9 @@ export default function handler(req, res) {
 
     <section class="panel">
       <h2>Production status</h2>
-      <p class="note">Version ${ADDON_VERSION} is the current addon version. Seasonal catalogs support TV, TV Short, ONA, OVA, Special, and Movie formats and exclude adult entries.</p>
+      <p class="note">Version ${ADDON_VERSION} is the current addon version. Explore a range of seasonal anime, movies, and episode releases.</p>
     </section>
 
-    <section class="panel">
-      <h2>Identity and metadata flow</h2>
-      <p class="note"><code>AniList → ARM mapping → validated provider ID → Nuvio → configured metadata addon</code></p>
-      <p class="note">This addon is catalog-focused. It does not duplicate detailed metadata, provider mapping, or playback resolution.</p>
-    </section>
   </main>
   <footer class="wrap">Anime Releases for Nuvio · v${ADDON_VERSION}</footer>
 </body>
