@@ -67,7 +67,7 @@ test("every retained Vercel runtime module has a serverless default export", asy
   }
 });
 
-test("README and home page describe the current provider identity release", async () => {
+test("README documents provider identity while the public homepage stays implementation-agnostic", async () => {
   const readme = await readFile("README.md", "utf8");
   const home = await readFile("api/home-selector.js", "utf8");
   const versionSource = await readFile("api/version.js", "utf8");
@@ -80,8 +80,7 @@ test("README and home page describe the current provider identity release", asyn
   assert.ok(readme.includes("**Production:** `v" + releaseState.lastDeploymentVersion + "`"));
   assert.ok(readme.includes("**Development:** `v" + addonVersion + "`"));
   assert.doesNotMatch(readme, /AniList-only/);
-  assert.match(home, /validated provider identity/);
-  assert.doesNotMatch(home, /AniList-only/);
+  assert.doesNotMatch(home, /AniList|ARM mapping|identity mapping|provider identity|TMDB|TVDB|IMDb|metadata addon|identity and metadata flow/i);
 });
 
 test("Vercel configuration enables Fluid Compute for production functions", async () => {
