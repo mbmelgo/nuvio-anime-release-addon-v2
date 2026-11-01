@@ -16,7 +16,7 @@ function getPayPalDonateUrl(value) {
 const SAMPLE_IMAGES = [
   ["Seasonal Catalogs", "/docs/images/readme-nuvio-home.png", "Representative seasonal catalog view"],
   ["Season Listing", "/docs/images/readme-nuvio-season.png", "Representative season listing"],
-  ["Metadata Detail Flow", "/docs/images/readme-nuvio-detail.png", "Representative anime detail flow"],
+  ["Anime Details", "/docs/images/readme-nuvio-detail.png", "Representative anime detail view"],
 ];
 
 const CATALOGS = [
