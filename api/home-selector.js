@@ -1,8 +1,18 @@
 import { ADDON_VERSION } from "./version.js";
 
 const BASE_URL = "https://nuvio-anime-release-addon-v2.vercel.app";
-const GITHUB_URL = "https://github.com/mbmelgo/nuvio-anime-release-addon-v2";
-const RELEASES_URL = "https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases";
+function getPayPalDonateUrl(value) {
+  if (!value) return "";
+  try {
+    const url = new URL(value);
+    const allowedHosts = new Set(["paypal.me", "www.paypal.me", "paypal.com", "www.paypal.com"]);
+    if (url.protocol !== "https:" || !allowedHosts.has(url.hostname) || url.username || url.password) return "";
+    return url.href.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  } catch {
+    return "";
+  }
+}
+
 const SAMPLE_IMAGES = [
   ["Seasonal Catalogs", "/docs/images/readme-nuvio-home.png", "Representative seasonal catalog view"],
   ["Season Listing", "/docs/images/readme-nuvio-season.png", "Representative season listing"],
@@ -22,6 +32,7 @@ const CATALOGS = [
 
 export default function handler(req, res) {
   const manifest = `${BASE_URL}/manifest.json`;
+  const donateUrl = getPayPalDonateUrl(process.env.PAYPAL_DONATE_URL);
   const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -45,8 +56,7 @@ export default function handler(req, res) {
       <p>The production addon resolves a validated provider identity, preferring IMDb and falling back to TVDB or TMDB when validated. Detailed metadata is delegated to the metadata addon configured in Nuvio.</p>
       <div class="url"><code>${manifest}</code></div>
       <a class="button" href="${manifest}">Install addon</a>
-      <a class="button secondary" href="${GITHUB_URL}">GitHub</a>
-      <a class="button secondary" href="${RELEASES_URL}">Releases</a>
+      ${donateUrl ? `<a class="button secondary" href="${donateUrl}" target="_blank" rel="noopener noreferrer">Donate via PayPal</a>` : ""}
     </section>
 
     <section class="panel">
@@ -61,7 +71,7 @@ export default function handler(req, res) {
 
     <section class="panel">
       <h2>Sample Nuvio views</h2>
-      <p class="note">Representative showcase images from the repository. These are Nuvio-style showcase screenshots with representative anime artwork.</p>
+      <p class="note">Explore the addon interface through these representative Nuvio views.</p>
       <div class="samples">
         ${SAMPLE_IMAGES.map(([title, image, description]) => `<article class="sample"><img class="sample-image" src="${image}" alt="${title}" loading="lazy"><h3>${title}</h3><p>${description}</p></article>`).join("")}
       </div>
