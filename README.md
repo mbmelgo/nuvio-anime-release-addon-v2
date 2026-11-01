@@ -195,7 +195,7 @@ Catalog names and season labels are generated dynamically.
 
 ## 🚀 Current release
 
-**Production:** `v1.123.0`  
+**Production:** `v1.124.0`  
 **Development:** `v1.124.0` — resolves conflicting direct and TMDB-derived IMDb identities while preserving authoritative TMDB fallback behavior; updates the homepage with a validated PayPal donation link and removes GitHub and Releases links
 
 Post-release production catalog snapshots are captured automatically after each controlled release and retained on versioned `catalog-snapshots/*` branches.
