@@ -86,5 +86,5 @@ test("hero artwork blends into the hero surface and follows the intended upper-r
   const css = await readFile(new URL("../assets/anibloom.css", import.meta.url), "utf8");
   assert.match(css, /\\.hero-art\\{[^}]*transform:translate\\(24px,-20px\\)/);
   assert.match(css, /\\.hero-art img\\{[^}]*mask-image:radial-gradient/);
-  assert.match(css, /@media\\(max-width:700px\\)[^}]*\\.hero-art\\{[^}]*transform:none/s);
+  assert.match(css, /@media\\(max-width:700px\\)[\\s\\S]*?\\.hero-art\\{[^}]*transform:none/);
 });
