@@ -55,9 +55,9 @@ export default function handler(req, res) {
     '<title>AniBloom — Anime Discovery for Nuvio</title><link rel="stylesheet" href="/assets/anibloom.css"></head><body>',
     '<header class="site-header"><div class="container header-inner">',
     '<a class="brand" href="#home" aria-label="AniBloom home"><img src="/assets/anibloom-icon.png" width="43" height="43" alt=""><span class="brand-name">AniBloom</span><span class="brand-tagline">Anime Discovery for Nuvio</span></a>',
-    '<nav class="desktop-nav" aria-label="Main navigation"><a class="active" href="#home">Overview</a><a href="#catalogs">Catalogs</a><a href="#about">About</a></nav>',
+    '<nav class="desktop-nav" aria-label="Main navigation"><a class="active" href="#home" data-section-link="home" aria-current="location">Overview</a><a href="#catalogs" data-section-link="catalogs">Catalogs</a><a href="#about" data-section-link="about">About</a></nav>',
     '<a class="install-button header-install" href="' + install + '"><span aria-hidden="true">↓</span> Add to Nuvio</a>',
-    '<details class="mobile-menu"><summary aria-label="Open navigation menu">Menu</summary><nav aria-label="Mobile navigation"><a href="#home">Overview</a><a href="#catalogs">Catalogs</a><a href="#about">About</a><a href="' + install + '">Add to Nuvio</a></nav></details>',
+    '<details class="mobile-menu"><summary aria-label="Open navigation menu">Menu</summary><nav aria-label="Mobile navigation"><a class="active" href="#home" data-section-link="home" aria-current="location">Overview</a><a href="#catalogs" data-section-link="catalogs">Catalogs</a><a href="#about" data-section-link="about">About</a><a href="' + install + '">Add to Nuvio</a></nav></details>',
     '</div></header><main>',
     '<section class="hero-section" id="home"><div class="container hero-grid"><div class="hero-copy">',
     '<h1>Discover anime.<br>Every season.</h1><p class="hero-lead">Anime discovery catalogs, organized for Nuvio.</p>',
@@ -65,21 +65,21 @@ export default function handler(req, res) {
     '<div class="hero-actions"><a class="install-button" href="' + install + '">↓ &nbsp; Add to Nuvio</a><a class="outline-button" href="#catalogs">Explore catalogs →</a></div>',
     '<p class="metadata-provider-note">Catalogs only. Use a separate metadata provider in Nuvio<br>(e.g., ioametadata, Xperience, BingeCat, or other compatible providers).</p>',
     '<p class="manual-install">Manual installation: <a href="' + manifest + '">' + manifest + '</a></p></div>',
-    '<div class="hero-art"><img src="/assets/anibloom-hero-artwork.jpg" width="514" height="442" alt="The approved AniBloom Nuvio catalog artwork with sakura blossoms" fetchpriority="high"></div></div>',
+    '<div class="hero-art"><img src="/assets/anibloom-hero-artwork.webp" width="720" height="480" alt="Anime discovery on a tablet and phone, framed by cherry blossoms" fetchpriority="high"></div></div>',
     '<div class="container features"><article class="feature"><span class="feature-icon">' + featureIcon("layers") + '</span><div><h2>Seasonal discovery</h2><p>Browse anime by season, including upcoming, current, and previous releases.</p></div></article>',
     '<article class="feature"><span class="feature-icon">' + featureIcon("radio") + '</span><div><h2>Airing now &amp; next</h2><p>Follow what is airing now and what is coming up next.</p></div></article>',
     '<article class="feature"><span class="feature-icon">' + featureIcon("bolt") + '</span><div><h2>One-click installation</h2><p>Add the addon to Nuvio with a single tap or use the manifest URL.</p></div></article></div></section>',
     '<section class="catalog-section" id="catalogs"><div class="container"><div class="section-heading"><h2>Explore catalogs</h2><p>Eight focused catalogs to help you discover and follow anime releases in Nuvio.</p></div>',
     '<div class="catalog-grid">' + CATALOGS.map(card).join("") + '</div>',
-    '<aside class="metadata-notice" id="about"><span class="info-icon">ⓘ</span><div><h3>Catalogs, not metadata</h3><p>This addon provides anime catalogs for discovery and tracking. It does not supply detailed anime metadata (such as descriptions, artwork, or episode information).</p></div></aside>',
-    '</div></section><section class="final-cta"><h2>Add AniBloom to Nuvio.</h2><p>Start exploring anime through organized catalogs.</p><a class="install-button" href="' + install + '">↓ &nbsp; Add to Nuvio</a></section></main>',
+    '',
+    '</div></section><section class="about-section" id="about"><div class="container"><aside class="metadata-notice"><span class="info-icon">ⓘ</span><div><h3>Catalogs, not metadata</h3><p>This addon provides anime catalogs for discovery and tracking. It does not supply detailed anime metadata (such as descriptions, artwork, or episode information).</p></div></aside></div></section><section class="final-cta"><h2>Add AniBloom to Nuvio.</h2><p>Start exploring anime through organized catalogs.</p><a class="install-button" href="' + install + '">↓ &nbsp; Add to Nuvio</a></section></main>',
     '<footer class="site-footer">',
     donate ? '<section class="container donation-section"><div><h2>Support the addon</h2><p>Your support helps keep the addon maintained.</p></div><a class="button donation-button" href="' + donate + '" target="_blank" rel="noopener noreferrer">Support development</a></section>' : '',
     '<div class="container footer-inner"><div><div class="footer-brand"><img src="/assets/anibloom-icon.png" width="40" height="40" alt="">AniBloom</div><p class="footer-subtitle">Anime Discovery for Nuvio · Where anime blooms.</p></div>',
     '<nav class="footer-links" aria-label="Footer links"><a href="' + REPOSITORY_URL + '" target="_blank" rel="noopener noreferrer">◉ &nbsp; Open Source</a>',
     donate ? '<a href="' + donate + '" target="_blank" rel="noopener noreferrer">Donate</a>' : '',
     '</nav></div></footer></body></html>'
-  ].join("");
+    '<script>(function(){const links=Array.from(document.querySelectorAll("[data-section-link]"));const sections=links.map(link=>document.getElementById(link.dataset.sectionLink)).filter(Boolean);if(!links.length||!sections.length||!("IntersectionObserver" in window))return;const setActive=id=>links.forEach(link=>{const active=link.dataset.sectionLink===id;link.classList.toggle("active",active);if(active)link.setAttribute("aria-current","location");else link.removeAttribute("aria-current");});const observer=new IntersectionObserver(entries=>{const visible=entries.filter(entry=>entry.isIntersecting).sort((a,b)=>a.boundingClientRect.top-b.boundingClientRect.top);if(visible.length)setActive(visible[0].target.id);},{rootMargin:"-18% 0px -65% 0px",threshold:[0,0.1,0.25]});sections.forEach(section=>observer.observe(section));links.forEach(link=>link.addEventListener("click",()=>setActive(link.dataset.sectionLink)));})();</script></body></html>'
   res.status(200);
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=300, stale-while-revalidate=1800");
