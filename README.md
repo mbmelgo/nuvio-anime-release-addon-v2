@@ -197,7 +197,7 @@ Catalog names and season labels are generated dynamically.
 
 ## 🚀 Current release
 
-**Production:** `v1.128.0`  
+**Production:** `v1.129.0`  
 **Development:** `v1.129.0` — introduces the AniBloom brand, approved landing-page design, and addon logo.
 
 Post-release production catalog snapshots are captured automatically after each controlled release and retained on versioned `catalog-snapshots/*` branches.
