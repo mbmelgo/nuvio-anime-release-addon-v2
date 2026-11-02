@@ -218,7 +218,7 @@ test("last deployment metadata must mirror the authoritative release state", () 
       tag: "v5.5.0",
       releasedAt: "2026-10-01T00:00:00.000Z",
       ciRunId: "12345",
-      ciRunUrl: "https://github.com/mbmelgo/nuvio-anime-releases-addon/actions/runs/12345",
+      ciRunUrl: "https://github.com/mbmelgo/anibloom/actions/runs/12345",
       smokeTest: "passed",
     },
   };
