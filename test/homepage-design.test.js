@@ -101,7 +101,7 @@ test("homepage explains catalog-only scope and required external metadata provid
   const html = renderHome();
   assert.match(html, /Discover seasonal anime and follow what is airing now, next, and recently released/);
   assert.match(html, /catalog-only addon/i);
-  assert.match(html, /not an? metadata provider/i);
+  assert.match(html, /not an anime metadata provider/i);
   assert.match(html, /ioametadata[\s\S]*Xperience[\s\S]*BingeCat/);
   assert.doesNotMatch(html, /AniList|ARM mapping|identity mapping|provider identity|TMDB|TVDB|IMDb|airing schedules/i);
 });
