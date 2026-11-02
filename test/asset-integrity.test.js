@@ -10,7 +10,7 @@ test("AniBloom addon icon uses the approved high-resolution transparent PNG", as
   assert.ok(data.includes(Buffer.from("tRNS")), "PNG must retain transparent pixels");
 });
 
-test("approved Nuvio and sakura hero artwork is a valid JPEG", async () => {
+test("legacy Nuvio and sakura hero artwork remains a valid JPEG", async () => {
   const data = await readFile(new URL("../assets/anibloom-hero-artwork.jpg", import.meta.url));
   assert.deepEqual([...data.subarray(0, 3)], [0xff, 0xd8, 0xff]);
   assert.deepEqual([...data.subarray(-2)], [0xff, 0xd9]);
@@ -31,4 +31,11 @@ test("new high-resolution anime hero artwork is a valid WebP asset", async () =>
   assert.equal(data.toString("ascii", 0, 4), "RIFF");
   assert.equal(data.toString("ascii", 8, 12), "WEBP");
   assert.ok(data.length > 40_000, "hero artwork should retain high-resolution detail");
+});
+
+test("high-resolution anime device hero artwork is a valid WebP asset", async () => {
+  const data = await readFile(new URL("../assets/anibloom-hero-artwork.webp", import.meta.url));
+  assert.equal(data.toString("ascii", 0, 4), "RIFF");
+  assert.equal(data.toString("ascii", 8, 12), "WEBP");
+  assert.ok(data.length > 20_000, "hero artwork should retain high-resolution detail");
 });
