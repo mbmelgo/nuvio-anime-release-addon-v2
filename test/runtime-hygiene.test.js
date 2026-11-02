@@ -79,7 +79,10 @@ test("README matches the public AniBloom product, installation, catalog and supp
   assert.ok(readme.includes("**Development:** `v" + addonVersion + "`"));
   assert.ok(readme.includes("https://anibloom.vercel.app/manifest.json"));
   assert.ok(readme.includes("https://anibloom.vercel.app/#support"));
-  assert.ok(readme.includes("| Anime series | Recent releases & movies |"));
+  assert.equal(releaseState.nextReleaseVersion, "2.0.0");
+  assert.doesNotMatch(readme, /\\| Anime series \\| Recent releases & movies \\|/);
+  assert.doesNotMatch(readme, /Anime series|Recent releases & movies/);
+  for (const catalog of ["- Upcoming 3 days", "- Current Season", "- Previous Season", "- Upcoming Season", "- Previous 3 days", "- Current Season Movies", "- Previous Season Movies", "- Upcoming Season Movies"]) assert.ok(readme.includes(catalog), catalog);
   for (const catalog of ["Upcoming 3 days", "Current Season", "Previous Season", "Upcoming Season", "Previous 3 days", "Current Season Movies", "Previous Season Movies", "Upcoming Season Movies"]) assert.ok(readme.includes(catalog), catalog);
   for (const provider of ["ioametadata", "Xperience", "BingeCat"]) assert.ok(readme.includes(provider), provider);
   assert.match(readme, /does not host, store, stream, or distribute anime/i);
