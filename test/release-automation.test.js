@@ -103,3 +103,9 @@ test("production workflows explicitly target the canonical AniBloom domain", asy
   assert.ok(deployWorkflow.includes("ADDON_DOMAIN: anibloom.vercel.app"));
   assert.ok(snapshotWorkflow.includes("ADDON_DOMAIN: anibloom.vercel.app"));
 });
+
+test("catalog snapshot resolves its production URL from the configured domain in the shell", async () => {
+  const snapshotWorkflow = fs.readFileSync(new URL("../.github/workflows/catalog-snapshot.yml", import.meta.url), "utf8");
+  assert.ok(snapshotWorkflow.includes('PRODUCTION_BASE_URL="https://${ADDON_DOMAIN}"'));
+  assert.ok(!snapshotWorkflow.includes("PRODUCTION_BASE_URL: https://${ADDON_DOMAIN}"));
+});
