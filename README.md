@@ -171,7 +171,7 @@ This addon is intentionally **catalog-focused**. It does not provide detailed an
 ### Production manifest
 
 ```text
-https://nuvio-anime-release-addon-v2.vercel.app/manifest.json
+https://anibloom.vercel.app/manifest.json
 ```
 
 Add the manifest URL to a supported Nuvio/Stremio client.
@@ -179,7 +179,7 @@ Add the manifest URL to a supported Nuvio/Stremio client.
 ### Production landing page
 
 ```text
-https://nuvio-anime-release-addon-v2.vercel.app/
+https://anibloom.vercel.app/
 ```
 
 The landing page provides the manifest, current catalog endpoints, release information, and representative screenshots.
