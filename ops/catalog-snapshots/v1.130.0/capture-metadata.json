@@ -8,7 +8,7 @@
   "legacyProtocolType": "anime",
   "requestCapture": "per-page GET request metadata and raw JSON response",
   "releaseVersion": "1.130.0",
-  "capturedAt": "2026-11-02T12:26:30.391390Z",
+  "capturedAt": "2026-11-02T12:27:33.685415Z",
   "productionBaseUrl": "https://nuvio-anime-release-addon-v2.vercel.app",
   "pagination": {
     "pageSize": 50,
