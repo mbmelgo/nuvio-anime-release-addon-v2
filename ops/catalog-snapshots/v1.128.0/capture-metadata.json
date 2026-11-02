@@ -8,7 +8,7 @@
   "legacyProtocolType": "anime",
   "requestCapture": "per-page GET request metadata and raw JSON response",
   "releaseVersion": "1.128.0",
-  "capturedAt": "2026-11-02T02:32:36.845917Z",
+  "capturedAt": "2026-11-02T02:37:19.488260Z",
   "productionBaseUrl": "https://nuvio-anime-release-addon-v2.vercel.app",
   "pagination": {
     "pageSize": 50,
@@ -54,7 +54,7 @@
     "current_season_movies": "7a22871e92d6e7609ca191a01da417e541730be6f39a1dc881856db67f93a9af",
     "previous_season_movies": "dc90f55df2aa01086912d36e311dbfd1778c0ca42baa54297d0c3a0fb7e4b739",
     "upcoming_3_days": "90f7f821cc9d12fcf56b9e63f9b17c78671446c15d1adeaa3673ecabb22b1abf",
-    "previous_3_days": "a122c48fdc78216ec86a496396ca1306240fd13ce3a11fdd92abf2e3ee0f77c3",
+    "previous_3_days": "f4c5b9b35208b2f222e1e66b67d0893f057a3cd22b570ffa92438f5045de72a2",
     "manifest": "47f575153a3145d7ca67bf0b122d53da54078417c758c8ff0d02fb859bde0d97"
   },
   "pageSha256": {
@@ -122,7 +122,7 @@
     },
     "previous_3_days": {
       "page-0001.json": "c77a19d53acc24d6f3a8595b8c5e9fac1f7190fe9bcea652ee525d735979bd2c",
-      "page-0002.json": "c59fd72a497361d62002a75b4ba4907a672fed341724e86d09abc1e10fcd19ed",
+      "page-0002.json": "933d93c0695edb3ebb056d358d52a62324ea4092c3c3e4619749f2d41272134c",
       "page-0003.json": "900fd9f08899d41cab8734b696e0a528df81e7e6bf7790dc5b3d25b2c3a2219a"
     },
     "previous_3_days:requests": {
