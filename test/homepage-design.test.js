@@ -61,6 +61,6 @@ test("hero artwork stays within its source resolution and does not overscale", a
   assert.match(html, /anibloom-anime-hero-artwork\.webp/);
   const css = await readFile(new URL("../assets/anibloom.css", import.meta.url), "utf8");
   assert.match(css, /\.hero-art img\{[^}]*width:100%/);
-  assert.match(css, /\.hero-art img\{[^}]*max-width:514px/);
-  assert.doesNotMatch(css, /\.hero-art img\{[^}]*width:min\(112%/);
+  assert.match(css, /\.hero-art img\{[^}]*max-width:570px/);
+  assert.doesNotMatch(css, /\.hero-art img\{[^}]*width:min\(112%/);\n  assert.doesNotMatch(css, /\.hero-art:before/);
 });
