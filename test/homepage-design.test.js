@@ -77,13 +77,14 @@ test("hero artwork fills the right viewport edge and shares the copy's bottom bo
   assert.match(css, /@media\(max-width:700px\)[\s\S]*?\.hero-art\{[^}]*position:relative/);
 });
 
-test("About notice keeps its icon and heading readable on the light surface", async () => {
+test("About section presents AniBloom identity with readable dark-theme typography", async () => {
   const html = render();
-  assert.match(html, /<section class="about-section" id="about">[\s\S]*?<span class="info-icon"[^>]*>ⓘ<\/span><div><h3>Catalogs, not metadata<\/h3>/);
+  assert.match(html, /<section class="about-section" id="about">[\\s\\S]*?<h2>What AniBloom is<\\/h2>/);
+  assert.match(html, /<h2>What AniBloom is not<\\/h2>/);
   const css = await readFile(new URL("../assets/anibloom.css", import.meta.url), "utf8");
-  assert.match(css, /\.metadata-notice\{[^}]*color:var\(--ink\)/);
+  assert.match(css, /\\.about-section\\{[^}]*background:var\\(--midnight\\)/);
+  assert.match(css, /\\.about-copy\\{[^}]*color:#b9bbc1/);
 });
-
 test("section navigation recalculates the active section from scroll position", () => {
   const html = render();
   assert.match(html, /addEventListener\("scroll"/);
