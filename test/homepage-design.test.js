@@ -91,3 +91,22 @@ test("section navigation recalculates the active section from scroll position", 
   assert.match(html, /aria-current/);
   assert.doesNotMatch(html, /new IntersectionObserver/);
 });
+
+test("About section explains what AniBloom is and is not in a two-column disclosure layout", async () => {
+  const html = render();
+  assert.match(html, /<section class="about-section" id="about">[\\s\\S]*?<h2>What AniBloom is<\\/h2>/);
+  assert.match(html, /<h2>What AniBloom is not<\\/h2>/);
+  for (const phrase of [
+    "catalog-only Nuvio addon",
+    "upcoming episodes",
+    "recently aired episodes",
+    "seasonal movies",
+    "does not host, store, stream, or distribute anime",
+    "does not provide metadata",
+    "descriptions, artwork, or episode information",
+    "compatible metadata provider"
+  ]) assert.ok(html.includes(phrase), phrase);
+  const css = await readFile(new URL("../assets/anibloom.css", import.meta.url), "utf8");
+  assert.match(css, /\\.about-grid\\{[^}]*grid-template-columns:.*\\}/);
+  assert.match(css, /@media\\(max-width:700px\\)[\\s\\S]*?\\.about-grid\\{[^}]*grid-template-columns:1fr/);
+});
