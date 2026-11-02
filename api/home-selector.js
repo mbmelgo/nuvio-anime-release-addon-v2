@@ -2,7 +2,7 @@ import { ADDON_VERSION } from "./version.js";
 
 const BASE_URL = "https://nuvio-anime-release-addon-v2.vercel.app";
 const GITHUB_URL = "https://github.com/mbmelgo/nuvio-anime-release-addon-v2";
-const RELEASES_URL = \`\${GITHUB_URL}/releases\`;
+const RELEASES_URL = `${GITHUB_URL}/releases`;
 
 function getPayPalDonateUrl(value) {
   if (!value) return "";
@@ -35,33 +35,33 @@ const CATALOGS = [
 
 function renderCatalog([name, id, description]) {
   const type = id.endsWith("_movies") ? "movie" : "series";
-  const url = \`\${BASE_URL}/catalog/\${type}/\${id}.json\`;
-  return \`
+  const url = `${BASE_URL}/catalog/${type}/${id}.json`;
+  return `
     <li class="catalog-item">
       <div class="catalog-copy">
-        <h3>\${name}</h3>
-        <p>\${description}</p>
+        <h3>${name}</h3>
+        <p>${description}</p>
       </div>
-      <a class="catalog-link" href="\${url}" aria-label="Open \${name} catalog">View catalog <span aria-hidden="true">↗</span></a>
-    </li>\`;
+      <a class="catalog-link" href="${url}" aria-label="Open ${name} catalog">View catalog <span aria-hidden="true">↗</span></a>
+    </li>`;
 }
 
 function renderSample([title, image, description]) {
-  return \`
+  return `
     <figure class="sample">
-      <img src="\${image}" alt="\${title}" loading="lazy">
+      <img src="${image}" alt="${title}" loading="lazy">
       <figcaption>
-        <h3>\${title}</h3>
-        <p>\${description}</p>
+        <h3>${title}</h3>
+        <p>${description}</p>
       </figcaption>
-    </figure>\`;
+    </figure>`;
 }
 
 export default function handler(req, res) {
-  const manifest = \`\${BASE_URL}/manifest.json\`;
-  const nuvioInstallUrl = manifest.replace(/^https:\\/\\//, "nuvio://");
+  const manifest = `${BASE_URL}/manifest.json`;
+  const nuvioInstallUrl = manifest.replace(/^https:\/\//, "nuvio://");
   const donateUrl = getPayPalDonateUrl(process.env.PAYPAL_DONATE_URL);
-  const html = \`<!doctype html>
+  const html = `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -308,7 +308,7 @@ export default function handler(req, res) {
         <a href="#features">Features</a>
         <a href="#catalogs">Catalogs</a>
         <a href="#releases">Releases</a>
-        <a class="github-link" href="\${GITHUB_URL}" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+        <a class="github-link" href="${GITHUB_URL}" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
       </nav>
       <details class="mobile-menu">
         <summary aria-label="Open navigation menu">Menu</summary>
@@ -317,7 +317,7 @@ export default function handler(req, res) {
           <a href="#features">Features</a>
           <a href="#catalogs">Catalogs</a>
           <a href="#releases">Releases</a>
-          <a href="\${GITHUB_URL}" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+          <a href="${GITHUB_URL}" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
         </nav>
       </details>
     </div>
@@ -329,7 +329,7 @@ export default function handler(req, res) {
         <h1 id="hero-title">Nuvio <span>Addon</span></h1>
         <p class="hero-copy">An anime releases addon for Nuvio.</p>
         <div class="hero-actions">
-          <a class="button" href="\${nuvioInstallUrl}">
+          <a class="button" href="${nuvioInstallUrl}">
             <svg class="button-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M14 3h7v7M10 14 21 3M19 13v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h7"/>
             </svg>
@@ -337,7 +337,7 @@ export default function handler(req, res) {
           </a>
           <a class="button button-secondary" href="#features">View Details</a>
         </div>
-        <p class="manual-install">Prefer manual installation? <a class="manifest-url" href="\${manifest}">\${manifest}</a></p>
+        <p class="manual-install">Use the manifest URL below as a manual installation fallback if the app does not open automatically. <a class="manifest-url" href="${manifest}">${manifest}</a></p>
       </div>
     </section>
 
@@ -368,7 +368,7 @@ export default function handler(req, res) {
         <p>Find anime by season or browse recent and upcoming releases.</p>
       </div>
       <ul class="catalog-list">
-        \${CATALOGS.map(renderCatalog).join("")}
+        ${CATALOGS.map(renderCatalog).join("")}
       </ul>
     </section>
 
@@ -378,7 +378,7 @@ export default function handler(req, res) {
         <p>A few examples of how the catalogs appear in the app.</p>
       </div>
       <div class="samples">
-        \${SAMPLE_IMAGES.map(renderSample).join("")}
+        ${SAMPLE_IMAGES.map(renderSample).join("")}
       </div>
     </section>
 
@@ -395,8 +395,8 @@ export default function handler(req, res) {
         <p>Follow improvements and updates to the addon.</p>
       </div>
       <div class="release-row">
-        <div class="release-version">Version v\${ADDON_VERSION}<span>Current addon build</span></div>
-        <a class="text-link" href="\${RELEASES_URL}" target="_blank" rel="noopener noreferrer">View release history ↗</a>
+        <div class="release-version">Version v${ADDON_VERSION}<span>Current addon build</span></div>
+        <a class="text-link" href="${RELEASES_URL}" target="_blank" rel="noopener noreferrer">View release history ↗</a>
       </div>
     </section>
   </main>
@@ -408,13 +408,13 @@ export default function handler(req, res) {
         <p class="footer-copy">An anime releases addon for Nuvio.</p>
       </div>
       <nav class="footer-links" aria-label="Footer links">
-        \${donateUrl ? \`<a href="\${donateUrl}" target="_blank" rel="noopener noreferrer">Support / Donate</a>\` : ""}
-        <a href="\${GITHUB_URL}" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+        ${donateUrl ? `<a href="${donateUrl}" target="_blank" rel="noopener noreferrer">Support / Donate</a>` : ""}
+        <a href="${GITHUB_URL}" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
       </nav>
     </div>
   </footer>
 </body>
-</html>\`;
+</html>`;
 
   res.status(200);
   res.setHeader("Content-Type", "text/html; charset=utf-8");
