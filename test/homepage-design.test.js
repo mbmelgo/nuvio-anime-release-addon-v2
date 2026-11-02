@@ -45,6 +45,8 @@ test("homepage uses the approved minimalist structure and Nuvio Anime Addon bran
   }
   assert.doesNotMatch(html, /Nuvio Addon(?![\s\S]*Nuvio Anime Addon)/);
   assert.doesNotMatch(html, /github\.com|GitHub/i);
+  assert.match(html, /\.site-header\s*\{[^}]*position:\s*sticky[^}]*top:\s*0/s);
+  assert.match(html, /\.site-header\s*\{[^}]*z-index:\s*20/s);
 });
 
 test("homepage follows system light and dark appearance without a theme dependency", () => {
