@@ -98,7 +98,7 @@ test("hero artwork fills the right viewport edge and shares the copy's bottom bo
 
 test("About section presents AniBloom identity with readable dark-theme typography", async () => {
   const html = render();
-  assert.match(html, /<section class="about-section" id="about">[\s\S]*?<h2>What AniBloom is<\/h2>/);
+  assert.match(html, /<section class="about-section(?: section-reveal)?" id="about">[\s\S]*?<h2>What AniBloom is<\/h2>/);
   assert.match(html, /<h2>What AniBloom is not<\/h2>/);
   const css = await readFile(new URL("../assets/anibloom.css", import.meta.url), "utf8");
   assert.match(css, /\.about-section\{[^}]*background:var\(--midnight\)/);
@@ -109,12 +109,12 @@ test("section navigation recalculates the active section from scroll position", 
   assert.match(html, /addEventListener\("scroll"/);
   assert.match(html, /getBoundingClientRect\(\)\.top/);
   assert.match(html, /aria-current/);
-  assert.doesNotMatch(html, /new IntersectionObserver/);
+  assert.match(html, /new IntersectionObserver/);
 });
 
 test("About section explains what AniBloom is and is not in a two-column disclosure layout", async () => {
   const html = render();
-  assert.match(html, /<section class="about-section" id="about">[\s\S]*?<h2>What AniBloom is<\/h2>/);
+  assert.match(html, /<section class="about-section(?: section-reveal)?" id="about">[\s\S]*?<h2>What AniBloom is<\/h2>/);
   assert.match(html, /<h2>What AniBloom is not<\/h2>/);
   for (const phrase of [
     "catalog-only Nuvio addon",
@@ -133,7 +133,7 @@ test("About section explains what AniBloom is and is not in a two-column disclos
 
 test("About contains only identity details and support, without a duplicate install CTA", () => {
   const html = render("https://www.paypal.me/example");
-  const about = html.match(/<section class="about-section" id="about">([\s\S]*?)<\/section>/)?.[1] || "";
+  const about = html.match(/<section class="about-section(?: section-reveal)?" id="about">([\s\S]*?)<\/section>/)?.[1] || "";
   assert.match(about, /What AniBloom is/);
   assert.match(about, /What AniBloom is not/);
   assert.match(about, /id="support"/);
