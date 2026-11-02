@@ -158,7 +158,9 @@ configured metadata addon
 └──────────────────────┘
 ```
 
-This addon is intentionally **catalog-focused**. It does not duplicate detailed metadata, provider mapping, or playback resolution.
+This addon is intentionally **catalog-focused**. It does not provide detailed anime metadata such as descriptions, artwork, or episode information, and it is not a metadata provider or playback resolver.
+
+**Setup requirement:** Install a separate anime metadata addon in Nuvio and select it as your metadata provider. Examples include ioametadata, Xperience, and BingeCat. This addon supplies discovery catalogs; the metadata addon supplies the detailed title information shown when you open an item.
 
 ## 📦 Installation
 
