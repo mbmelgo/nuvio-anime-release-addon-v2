@@ -1,5 +1,8 @@
 name: CI, automatic patch versioning, and controlled Vercel release
 
+env:
+  ADDON_DOMAIN: anibloom.vercel.app
+
 on:
   push:
     branches: [main]
