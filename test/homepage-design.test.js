@@ -54,9 +54,9 @@ test("Nuvio deep links and HTTPS manifest fallback are preserved", () => {
 });
 
 test("PayPal donations remain optional and strictly host-validated", () => {
-  assert.match(render("https://www.paypal.me/example"), />Donate<\/a>/);
-  for (const unsafe of ["http://www.paypal.me/example", "https://paypal.example/attacker", "https://user:pass@paypal.me/example", "javascript:alert(1)"]) assert.doesNotMatch(render(unsafe), />Donate<\/a>/);
-  assert.doesNotMatch(render(), />Donate<\/a>/);
+  assert.match(render("https://www.paypal.me/example"), />Support development<\/a>/);
+  for (const unsafe of ["http://www.paypal.me/example", "https://paypal.example/attacker", "https://user:pass@paypal.me/example", "javascript:alert(1)"]) assert.doesNotMatch(render(unsafe), />Support development<\/a>/);
+  assert.doesNotMatch(render(), />Support development<\/a>/);
 });
 
 test("desktop and mobile section navigation tracks the visible page section", () => {
