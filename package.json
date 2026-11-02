@@ -7,7 +7,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "node scripts/dev-server.js",
+    "dev": "node --env-file-if-exists=/vercel/share/.env.project scripts/dev-server.js",
     "test": "node --test",
     "compare:snapshots": "node scripts/compare-catalog-snapshots.js"
   },
