@@ -133,7 +133,7 @@ test("About section explains what AniBloom is and is not in a two-column disclos
 
 test("About contains only identity details and support, without a duplicate install CTA", () => {
   const html = render("https://www.paypal.me/example");
-  const about = html.match(/<section class="about-section(?: section-reveal)?" id="about">([\s\S]*?)<\/section>/)?.[1] || "";
+  const about = html.match(/<section class="about-section(?: section-reveal)?" id="about">([\s\S]*?)<\/main>/)?.[1] || "";
   assert.match(about, /What AniBloom is/);
   assert.match(about, /What AniBloom is not/);
   assert.match(about, /id="support"/);
