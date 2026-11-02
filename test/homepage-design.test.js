@@ -23,23 +23,26 @@ function renderHome(donateUrl) {
   }
 }
 
-test("homepage uses the approved minimalist structure and Nuvio Anime Addon branding", () => {
+test("homepage uses the approved minimalist structure and Nuvio Anime Addon branding without a releases section", () => {
   const html = renderHome();
   for (const value of [
     'id="home"',
     'href="#features"',
+    'href="#about"',
+    'id="about"',
     'href="#catalogs"',
-    'href="#releases"',
     "Nuvio Anime Addon",
-    "An anime releases addon for Nuvio.",
     "Install on Nuvio",
     "View Details",
     'id="features"',
     'id="catalogs"',
-    'id="releases"',
     "New Releases",
     "Multiple Catalogs",
     "Regular Updates",
+    "Catalogs, not metadata",
+    "ioametadata",
+    "Xperience",
+    "BingeCat",
   ]) {
     assert.ok(html.includes(value), `Expected homepage to include: ${value}`);
   }
@@ -47,6 +50,9 @@ test("homepage uses the approved minimalist structure and Nuvio Anime Addon bran
   assert.doesNotMatch(html, /github\.com|GitHub/i);
   assert.match(html, /\.site-header\s*\{[^}]*position:\s*sticky[^}]*top:\s*0/s);
   assert.match(html, /\.site-header\s*\{[^}]*z-index:\s*20/s);
+  assert.doesNotMatch(html, /id="releases"|href="#releases"|Releases<\/a>/);
+  assert.ok(html.indexOf('id="about"') < html.indexOf('id="features"'), "Addon explanation should appear before feature and catalog sections");
+  assert.ok(html.indexOf('id="about"') < html.indexOf('id="catalogs"'), "Addon explanation should appear before catalog listings");
 });
 
 test("homepage follows system light and dark appearance without a theme dependency", () => {
@@ -91,10 +97,13 @@ test("homepage lists all supported catalogs and preserves sample screenshots", (
   ]) assert.ok(html.includes(image), `Missing sample image: ${image}`);
 });
 
-test("homepage keeps product copy generic and excludes implementation details", () => {
+test("homepage explains catalog-only scope and required external metadata provider", () => {
   const html = renderHome();
-  assert.match(html, /Discover current, upcoming, and recently aired anime/);
-  assert.doesNotMatch(html, /AniList|ARM mapping|identity mapping|provider identity|TMDB|TVDB|IMDb|metadata addon|airing schedules/i);
+  assert.match(html, /Discover seasonal anime and follow what is airing now, next, and recently released/);
+  assert.match(html, /catalog-only addon/i);
+  assert.match(html, /not an anime metadata provider/i);
+  assert.match(html, /ioametadata[\s\S]*Xperience[\s\S]*BingeCat/);
+  assert.doesNotMatch(html, /AniList|ARM mapping|identity mapping|provider identity|TMDB|TVDB|IMDb|airing schedules/i);
 });
 
 test("homepage makes configured donations prominent and keeps the PayPal destination validated", () => {
