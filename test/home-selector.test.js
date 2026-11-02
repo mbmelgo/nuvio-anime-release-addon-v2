@@ -38,14 +38,19 @@ test("install action opens Nuvio with the addon manifest and retains a browser f
   assert.match(html, /manual installation fallback/i);
 });
 
-test("home page renders a configured PayPal donation link securely", () => {
+test("home page renders a prominent configured PayPal donation callout securely", () => {
   const html = renderHome("https://www.paypal.me/MarkVincentMelgo");
-  assert.match(html, /href="https:\/\/www\.paypal\.me\/MarkVincentMelgo"/);
-  assert.match(html, /target="_blank" rel="noopener noreferrer">Support \/ Donate</);
+  assert.match(html, /<section class="container donation-section"/);
+  assert.match(html, /Support the addon/);
+  assert.match(html, /Your support helps keep the addon maintained/);
+  assert.match(html, /class="button donation-button" href="https:\/\/www\.paypal\.me\/MarkVincentMelgo"/);
+  assert.match(html, /target="_blank" rel="noopener noreferrer">Support development</);
+  assert.doesNotMatch(html, /github\.com|GitHub/i);
   assert.match(html, /Install on Nuvio/);
 });
 
 test("home page suppresses unsafe or non-PayPal donation URLs", () => {
   const html = renderHome('https://attacker.example/" onmouseover="alert(1)');
-  assert.doesNotMatch(html, /Donate via PayPal|onmouseover/);
+  assert.doesNotMatch(html, /<section class="container donation-section"/);
+  assert.doesNotMatch(html, /onmouseover/);
 });
