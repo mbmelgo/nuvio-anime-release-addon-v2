@@ -93,6 +93,8 @@ test("home page uses only canonical unversioned catalog URLs", async () => {
   const config = await readFile("api/config.js", "utf8");
   assert.match(config, /BASE_URL = "https:\/\/anibloom\.vercel\.app"/);
   assert.match(config, /ADDON_DOMAIN = "anibloom\.vercel\.app"/);
+  const validator = await readFile("scripts/validate-production.mjs", "utf8");
+  assert.match(validator, /https:\/\/anibloom\.vercel\.app/);
   assert.match(config, /REPOSITORY_URL = "https:\/\/github\.com\/mbmelgo\/anibloom"/);
   assert.doesNotMatch(source, /\/v5\//);
   assert.doesNotMatch(source, /v5 resolver/i);
