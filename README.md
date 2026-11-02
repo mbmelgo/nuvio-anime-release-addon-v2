@@ -319,7 +319,7 @@ Release/version integrity validation
   ↓
 Controlled Vercel deployment
   ↓
-Production validation: manifest + all 5 catalogs + metadata boundary
+Production validation: manifest + all eight catalogs + metadata boundary
   ↓
 Annotated Git tag + GitHub Release
   ↓
