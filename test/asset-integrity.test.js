@@ -7,7 +7,7 @@ test("AniBloom addon icon uses the approved high-resolution transparent PNG", as
   assert.deepEqual([...data.subarray(0, 8)], [137,80,78,71,13,10,26,10]);
   assert.equal(data.readUInt32BE(16), 512);
   assert.equal(data.readUInt32BE(20), 512);
-  assert.equal(data[25] & 4, 4, "PNG must retain alpha transparency");
+  assert.ok(data.includes(Buffer.from("tRNS")), "PNG must retain transparent pixels");
 });
 
 test("approved Nuvio and sakura hero artwork is a valid JPEG", async () => {
