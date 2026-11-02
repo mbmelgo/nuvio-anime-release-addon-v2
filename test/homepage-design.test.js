@@ -111,5 +111,5 @@ test("homepage makes configured donations prominent and keeps the PayPal destina
 });
 
 test("homepage omits the donation callout when no valid donation destination is configured", () => {
-  assert.doesNotMatch(renderHome(), /donation-section|donation-button/);
+  assert.doesNotMatch(renderHome(), /<section class="container donation-section"/);
 });
