@@ -40,7 +40,6 @@ test("homepage uses the approved minimalist structure and navigation", () => {
     "New Releases",
     "Multiple Catalogs",
     "Regular Updates",
-    "Support / Donate",
     "GitHub",
   ]) {
     assert.ok(html.includes(value), `Expected homepage to include: ${value}`);
@@ -99,6 +98,7 @@ test("homepage renders only validated PayPal donation URLs", () => {
   const safe = renderHome("https://www.paypal.me/example");
   assert.match(safe, /href="https:\/\/www\.paypal\.me\/example"/);
   assert.match(safe, /target="_blank" rel="noopener noreferrer"/);
+  assert.match(safe, /Support \/ Donate/);
 
   const unsafe = renderHome('https://attacker.example/" onmouseover="alert(1)');
   assert.doesNotMatch(unsafe, /Donate via PayPal|onmouseover/);
