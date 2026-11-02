@@ -76,7 +76,7 @@ export default function handler(req, res) {
     '<footer class="site-footer">',
     donate ? '<section class="container donation-section"><div><h2>Support the addon</h2><p>Your support helps keep the addon maintained.</p></div><a class="button donation-button" href="' + donate + '" target="_blank" rel="noopener noreferrer">Support development</a></section>' : '',
     '<div class="container footer-inner"><div><div class="footer-brand"><img src="/assets/anibloom-icon.png" width="40" height="40" alt="">AniBloom</div><p class="footer-subtitle">Anime Discovery for Nuvio · Where anime blooms.</p></div>',
-    '<nav class="footer-links" aria-label="Footer links"><a href="https://github.com/mbmelgo/anibloom" target="_blank" rel="noopener noreferrer">◉ &nbsp; Open Source</a>',
+    '<nav class="footer-links" aria-label="Footer links"><a href="' + REPOSITORY_URL + '" target="_blank" rel="noopener noreferrer">◉ &nbsp; Open Source</a>',
     donate ? '<a href="' + donate + '" target="_blank" rel="noopener noreferrer">Donate</a>' : '',
     '</nav></div></footer></body></html>'
   ].join("");
