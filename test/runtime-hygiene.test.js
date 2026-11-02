@@ -92,7 +92,8 @@ test("home page uses only canonical unversioned catalog URLs", async () => {
   const source = await readFile("api/home-selector.js", "utf8");
   assert.doesNotMatch(source, /\/v5\//);
   assert.doesNotMatch(source, /v5 resolver/i);
-  assert.match(source, /\$\{BASE_URL\}\/catalog\/\$\{id\.endsWith\("_movies"\) \? "movie" : "series"\}\/\$\{id\}\.json/);
+  assert.match(source, /const type = id\.endsWith\("_movies"\) \? "movie" : "series";/);
+  assert.match(source, /const url = `\$\{BASE_URL\}\/catalog\/\$\{type\}\/\$\{id\}\.json`;/);
 });
 
 
