@@ -196,7 +196,7 @@ Catalog names and season labels are generated dynamically.
 ## 🚀 Current release
 
 **Production:** `v1.127.0`  
-**Development:** `v1.128.0` — presents a simplified, user-focused homepage and adds direct installation through Nuvio.
+**Development:** `v1.128.0` — clarifies the catalog-only scope on the homepage, explains the need for a separate metadata provider, and supports direct installation through Nuvio.
 
 Post-release production catalog snapshots are captured automatically after each controlled release and retained on versioned `catalog-snapshots/*` branches.
 
