@@ -44,3 +44,23 @@ test("PayPal donations remain optional and strictly host-validated", () => {
   for (const unsafe of ["http://www.paypal.me/example", "https://paypal.example/attacker", "https://user:pass@paypal.me/example", "javascript:alert(1)"]) assert.doesNotMatch(render(unsafe), />Donate<\/a>/);
   assert.doesNotMatch(render(), />Donate<\/a>/);
 });
+
+test("desktop and mobile section navigation tracks the visible page section", () => {
+  const html = render();
+  for (const id of ["home", "catalogs", "about"]) {
+    assert.ok(html.includes('data-section-link="' + id + '"'), id + " navigation link");
+  }
+  assert.match(html, /IntersectionObserver/);
+  assert.match(html, /aria-current/);
+  assert.match(html, /rootMargin/);
+});
+
+
+test("hero artwork stays within its source resolution and does not overscale", async () => {
+  const html = render();
+  assert.match(html, /anibloom-hero-artwork\.jpg/);
+  const css = await readFile(new URL("../assets/anibloom.css", import.meta.url), "utf8");
+  assert.match(css, /\.hero-art img\{[^}]*width:100%/);
+  assert.match(css, /\.hero-art img\{[^}]*max-width:514px/);
+  assert.doesNotMatch(css, /\.hero-art img\{[^}]*width:min\(112%/);
+});
