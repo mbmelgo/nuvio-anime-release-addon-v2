@@ -79,11 +79,11 @@ test("hero artwork fills the right viewport edge and shares the copy's bottom bo
 
 test("About section presents AniBloom identity with readable dark-theme typography", async () => {
   const html = render();
-  assert.match(html, /<section class="about-section" id="about">[\\s\\S]*?<h2>What AniBloom is<\\/h2>/);
-  assert.match(html, /<h2>What AniBloom is not<\\/h2>/);
+  assert.match(html, /<section class="about-section" id="about">[\s\S]*?<h2>What AniBloom is<\/h2>/);
+  assert.match(html, /<h2>What AniBloom is not<\/h2>/);
   const css = await readFile(new URL("../assets/anibloom.css", import.meta.url), "utf8");
-  assert.match(css, /\\.about-section\\{[^}]*background:var\\(--midnight\\)/);
-  assert.match(css, /\\.about-copy\\{[^}]*color:#b9bbc1/);
+  assert.match(css, /\.about-section\{[^}]*background:var\(--midnight\)/);
+  assert.match(css, /\.about-copy\{[^}]*color:#b9bbc1/);
 });
 test("section navigation recalculates the active section from scroll position", () => {
   const html = render();
@@ -95,8 +95,8 @@ test("section navigation recalculates the active section from scroll position", 
 
 test("About section explains what AniBloom is and is not in a two-column disclosure layout", async () => {
   const html = render();
-  assert.match(html, /<section class="about-section" id="about">[\\s\\S]*?<h2>What AniBloom is<\\/h2>/);
-  assert.match(html, /<h2>What AniBloom is not<\\/h2>/);
+  assert.match(html, /<section class="about-section" id="about">[\s\S]*?<h2>What AniBloom is<\/h2>/);
+  assert.match(html, /<h2>What AniBloom is not<\/h2>/);
   for (const phrase of [
     "catalog-only Nuvio addon",
     "upcoming episodes",
@@ -108,6 +108,6 @@ test("About section explains what AniBloom is and is not in a two-column disclos
     "compatible metadata provider"
   ]) assert.ok(html.includes(phrase), phrase);
   const css = await readFile(new URL("../assets/anibloom.css", import.meta.url), "utf8");
-  assert.match(css, /\\.about-grid\\{[^}]*grid-template-columns:.*\\}/);
-  assert.match(css, /@media\\(max-width:700px\\)[\\s\\S]*?\\.about-grid\\{[^}]*grid-template-columns:1fr/);
+  assert.match(css, /\.about-grid\{[^}]*grid-template-columns:.*\}/);
+  assert.match(css, /@media\(max-width:700px\)[\s\S]*?\.about-grid\{[^}]*grid-template-columns:1fr/);
 });
