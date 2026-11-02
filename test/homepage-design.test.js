@@ -70,7 +70,7 @@ test("desktop and mobile section navigation tracks the visible page section", ()
 test("hero artwork fills the right viewport edge and shares the copy's bottom boundary", async () => {
   const html = render();
   assert.match(html, /anibloom-anime-hero-artwork\.webp/);
-  assert.match(html, /<div class="hero-grid container"><div class="hero-copy">[\s\S]*?<\/div><\/div><div class="hero-art">/);
+  assert.match(html, /<div class="container hero-grid"><div class="hero-copy">[\s\S]*?<\/div><\/div><div class="hero-art">/);
   const css = await readFile(new URL("../assets/anibloom.css", import.meta.url), "utf8");
   assert.match(css, /\.hero-art\{[^}]*position:absolute[^}]*top:0[^}]*right:0[^}]*bottom:0/);
   assert.match(css, /\.hero-art img\{[^}]*width:100%[^}]*height:100%[^}]*object-fit:cover/);
