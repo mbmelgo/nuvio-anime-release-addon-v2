@@ -140,6 +140,6 @@ test("About contains only identity details and support, without a duplicate inst
   assert.match(about, /Support the addon/);
   assert.match(about, /Support development/);
   assert.doesNotMatch(html, /class="final-cta"|Add AniBloom to Nuvio\./);
-  assert.equal((html.match(/class="donation-section"/g) || []).length, 1);
+  assert.equal((html.match(/class="donation-section(?: reveal-on-scroll)?"/g) || []).length, 1);
   assert.doesNotMatch(html, /footer[^]*Donate/);
 });
