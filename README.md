@@ -18,7 +18,7 @@
 
 AniBloom organizes anime discovery into eight catalogs:
 
-| Anime series | Anime movies |
+| Anime series | Recent releases & movies |
 | --- | --- |
 | Upcoming 3 days | Previous 3 days |
 | Current Season | Current Season Movies |
