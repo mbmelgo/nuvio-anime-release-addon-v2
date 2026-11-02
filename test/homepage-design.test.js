@@ -50,9 +50,9 @@ test("desktop and mobile section navigation tracks the visible page section", ()
   for (const id of ["home", "catalogs", "about"]) {
     assert.ok(html.includes('data-section-link="' + id + '"'), id + " navigation link");
   }
-  assert.match(html, /IntersectionObserver/);
+  assert.match(html, /getBoundingClientRect/);
+  assert.match(html, /addEventListener\("scroll"/);
   assert.match(html, /aria-current/);
-  assert.match(html, /rootMargin/);
 });
 
 
