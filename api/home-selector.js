@@ -80,6 +80,7 @@ export default function handler(req, res) {
     donate ? '<a href="' + donate + '" target="_blank" rel="noopener noreferrer">Donate</a>' : '',
     '</nav></div></footer>',
     '<script>(function(){const links=Array.from(document.querySelectorAll("[data-section-link]"));const sections=links.map(link=>document.getElementById(link.dataset.sectionLink)).filter(Boolean);if(!links.length||!sections.length||!("IntersectionObserver" in window))return;const setActive=id=>links.forEach(link=>{const active=link.dataset.sectionLink===id;link.classList.toggle("active",active);if(active)link.setAttribute("aria-current","location");else link.removeAttribute("aria-current");});const observer=new IntersectionObserver(entries=>{const visible=entries.filter(entry=>entry.isIntersecting).sort((a,b)=>a.boundingClientRect.top-b.boundingClientRect.top);if(visible.length)setActive(visible[0].target.id);},{rootMargin:"-18% 0px -65% 0px",threshold:[0,0.1,0.25]});sections.forEach(section=>observer.observe(section));links.forEach(link=>link.addEventListener("click",()=>setActive(link.dataset.sectionLink)));})();</script></body></html>'
+  ].join("");
   res.status(200);
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=300, stale-while-revalidate=1800");
