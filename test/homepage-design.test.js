@@ -17,6 +17,7 @@ test("AniBloom homepage follows approved brand and content structure", () => {
   const html = render();
   for (const text of ["AniBloom — Anime Discovery for Nuvio", "Discover anime.<br>Every season.", "Anime discovery catalogs, organized for Nuvio.", "Seasonal discovery", "Airing now &amp; next", "One-click installation", "Explore catalogs", "Catalogs, not metadata", "Add AniBloom to Nuvio.", "Where anime blooms.", "Open Source"]) assert.ok(html.includes(text), text);
   assert.match(html, /href="\/assets\/anibloom\.css"/);
+  assert.equal((html.match(/src="\/assets\/anibloom-icon\.png"/g) || []).length, 2, "header and footer use the canonical app icon");
   assert.doesNotMatch(html, /AniList|ARM mapping|identity mapping|TMDB|TVDB|IMDb/i);
 });
 
