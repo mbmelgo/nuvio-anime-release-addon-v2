@@ -25,20 +25,19 @@ test("stylesheet keeps monochrome palette, responsive layout and accessibility",
   for (const token of ["#090b0d", "#ff79b9", "#f3a6cf", "#b65bea", "prefers-reduced-motion", ":focus-visible", "@media(max-width:700px)"]) assert.ok(css.includes(token), token);
 });
 
-test("catalogs render in the requested two-column order with all original endpoints", () => {
+test("all eight catalogs render in one uncategorized grid with original endpoints", () => {
   const html = render();
-  const columns = [...html.matchAll(/<div class="catalog-column" data-column="([^"]+)">([\s\S]*?)<\/div>\s*<\/div>/g)];
-  assert.equal(columns.length, 2, "two catalog columns");
-  const labels = columns.map(([, , body]) => [...body.matchAll(/<strong>([^<]+)<\/strong>/g)].map(([, label]) => label));
+  const labels = [...html.matchAll(/<strong>([^<]+)<\\/strong>/g)].map(([, label]) => label);
   assert.deepEqual(labels, [
-    ["Upcoming 3 days", "Current Season", "Previous Season", "Upcoming Season"],
-    ["Previous 3 days", "Current Season Movies", "Previous Season Movies", "Upcoming Season Movies"],
+    "Upcoming 3 days", "Current Season", "Previous Season", "Upcoming Season",
+    "Previous 3 days", "Current Season Movies", "Previous Season Movies", "Upcoming Season Movies",
   ]);
   const ids = ["upcoming_3_days", "current_season", "previous_season", "upcoming_season", "previous_3_days", "current_season_movies", "previous_season_movies", "upcoming_season_movies"];
   for (const id of ids) assert.ok(html.includes("/" + id + ".json"), id);
   assert.equal((html.match(/class="catalog-card"/g) || []).length, 8);
+  assert.equal((html.match(/class="catalog-grid"/g) || []).length, 1);
+  assert.doesNotMatch(html, /catalog-column|Anime series|Recent releases &amp; movies/);
 });
-
 test("catalog iconography distinguishes rolling windows, seasons and movies", () => {
   const html = render();
   for (const icon of ["calendar-clock", "sun", "calendar-check", "calendar-arrow-up", "history", "film", "film-check", "film-up"]) {
