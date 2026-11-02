@@ -15,7 +15,7 @@ function render(donate) {
 
 test("AniBloom homepage follows approved brand and content structure", () => {
   const html = render();
-  for (const text of ["AniBloom — Anime Discovery for Nuvio", "Discover anime.<br>Every season.", "Anime discovery catalogs, organized for Nuvio.", "Seasonal discovery", "Airing now &amp; next", "One-click installation", "Explore catalogs", "What AniBloom is", "What AniBloom is not", "Add AniBloom to Nuvio.", "Where anime blooms.", "Open Source"]) assert.ok(html.includes(text), text);
+  for (const text of ["AniBloom — Anime Discovery for Nuvio", "Discover anime.<br>Every season.", "Anime discovery catalogs, organized for Nuvio.", "Seasonal discovery", "Airing now &amp; next", "One-click installation", "Explore catalogs", "What AniBloom is", "What AniBloom is not", "Support the addon", "Where anime blooms.", "Open Source"]) assert.ok(html.includes(text), text);
   assert.match(html, /href="\/assets\/anibloom\.css"/);
   assert.doesNotMatch(html, /AniList|ARM mapping|identity mapping|TMDB|TVDB|IMDb/i);
 });
@@ -114,13 +114,13 @@ test("About section explains what AniBloom is and is not in a two-column disclos
 
 test("About contains only identity details and support, without a duplicate install CTA", () => {
   const html = render("https://www.paypal.me/example");
-  const about = html.match(/<section class="about-section" id="about">([\\s\\S]*?)<\\/section>/)?.[1] || "";
+  const about = html.match(/<section class="about-section" id="about">([\s\S]*?)<\/section>/)?.[1] || "";
   assert.match(about, /What AniBloom is/);
   assert.match(about, /What AniBloom is not/);
   assert.match(about, /id="support"/);
   assert.match(about, /Support the addon/);
   assert.match(about, /Support development/);
-  assert.doesNotMatch(html, /class="final-cta"|Add AniBloom to Nuvio\\./);
+  assert.doesNotMatch(html, /class="final-cta"|Add AniBloom to Nuvio\./);
   assert.equal((html.match(/class="donation-section"/g) || []).length, 1);
   assert.doesNotMatch(html, /footer[^]*Donate/);
 });
