@@ -3,7 +3,7 @@
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
 [![MAL](https://img.shields.io/badge/MyAnimeList-identity-2e51a2.svg)](https://myanimelist.net)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
-[![Version](https://img.shields.io/badge/version-1.130.0-blue.svg)](https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases)
+[![Version](https://img.shields.io/badge/version-1.130.0-blue.svg)](https://github.com/mbmelgo/anibloom/releases)
 
 > Where anime blooms. An independent community addon for Nuvio.
 
@@ -249,7 +249,7 @@ Production releases are published as Git tags and GitHub Releases.
 
 A manual **dry run** validates CI, release metadata, the target version/SHA, and production behavior without deploying to Vercel, creating a tag or GitHub Release, or mutating release state.
 
-**Releases:** https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases
+**Releases:** https://github.com/mbmelgo/anibloom/releases
 
 Versioning:
 

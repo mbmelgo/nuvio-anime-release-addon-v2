@@ -68,7 +68,7 @@ jobs:
       - name: Capture all production catalog pages
         env:
           RELEASE_VERSION: ${{ steps.release.outputs.version }}
-          PRODUCTION_BASE_URL: https://nuvio-anime-release-addon-v2.vercel.app
+          PRODUCTION_BASE_URL: https://${ADDON_DOMAIN}
         run: |
           set -euo pipefail
           snapshot_dir="/tmp/catalog-snapshot"

@@ -90,6 +90,9 @@ test("Vercel configuration enables Fluid Compute for production functions", asyn
 
 test("home page uses only canonical unversioned catalog URLs", async () => {
   const source = await readFile("api/home-selector.js", "utf8");
+  const config = await readFile("api/config.js", "utf8");
+  assert.match(config, /ADDON_DOMAIN = "nuvio-anime-release-addon-v2\.vercel\.app"/);
+  assert.match(config, /REPOSITORY_URL = "https:\/\/github\.com\/mbmelgo\/anibloom"/);
   assert.doesNotMatch(source, /\/v5\//);
   assert.doesNotMatch(source, /v5 resolver/i);
   assert.match(source, /const type = id\.endsWith\("_movies"\) \? "movie" : "series";/);
@@ -218,7 +221,7 @@ test("last deployment metadata must mirror the authoritative release state", () 
       tag: "v5.5.0",
       releasedAt: "2026-10-01T00:00:00.000Z",
       ciRunId: "12345",
-      ciRunUrl: "https://github.com/mbmelgo/nuvio-anime-releases-addon/actions/runs/12345",
+      ciRunUrl: "https://github.com/mbmelgo/anibloom/actions/runs/12345",
       smokeTest: "passed",
     },
   };
