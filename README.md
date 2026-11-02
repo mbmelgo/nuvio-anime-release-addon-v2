@@ -1,5 +1,9 @@
 # AniBloom — Anime Discovery for Nuvio
 
+<p align="center">
+  <img src="assets/anibloom-icon.png" alt="AniBloom logo" width="160" />
+</p>
+
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
 [![MAL](https://img.shields.io/badge/MyAnimeList-identity-2e51a2.svg)](https://myanimelist.net)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
