@@ -39,11 +39,24 @@ function icon(id) {
   return '<svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">' + paths[id] + '</svg>';
 }
 
+function iconName(id) {
+  const names = {
+    upcoming_3_days: "calendar-clock",
+    current_season: "sun",
+    previous_season: "calendar-check",
+    upcoming_season: "calendar-arrow-up",
+    previous_3_days: "history",
+    current_season_movies: "film",
+    previous_season_movies: "film-check",
+    upcoming_season_movies: "film-up"
+  };
+  return names[id] || "calendar";
+}
 function card(item) {
   const [name, id, description] = item;
   const type = id.endsWith("_movies") ? "movie" : "series";
   const url = `${BASE_URL}/catalog/${type}/${id}.json`;
-  return '<a class="catalog-card" href="' + url + '" aria-label="Open ' + name + ' catalog"><span class="catalog-icon" data-icon="' + id + '" aria-hidden="true">' + icon(id) + '</span><span class="catalog-copy"><strong>' + name + '</strong><span>' + description + '</span></span><svg class="catalog-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>';
+  return '<a class="catalog-card" href="' + url + '" aria-label="Open ' + name + ' catalog"><span class="catalog-icon" data-icon="' + iconName(id) + '" aria-hidden="true">' + icon(id) + '</span><span class="catalog-copy"><strong>' + name + '</strong><span>' + description + '</span></span><svg class="catalog-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>';
 }
 
 function featureIcon(kind) {
