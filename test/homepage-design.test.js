@@ -63,7 +63,7 @@ test("homepage uses minimalist system-fallback typography without external font 
 
 test("homepage keeps direct Nuvio installation and manual manifest fallback", () => {
   const html = renderHome();
-  assert.match(html, /href="nuvio:\/\/nuvio-anime-release-addon-v2\.vercel\.app\/manifest\.json"[^>]*>Install on Nuvio</);
+  assert.match(html, /href="nuvio:\/\/nuvio-anime-release-addon-v2\.vercel\.app\/manifest\.json"[\s\S]*?Install on Nuvio/);
   assert.match(html, /https:\/\/nuvio-anime-release-addon-v2\.vercel\.app\/manifest\.json/);
   assert.match(html, /manual installation fallback/i);
 });
