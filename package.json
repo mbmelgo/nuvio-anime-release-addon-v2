@@ -7,7 +7,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "vercel dev",
+    "dev": "node scripts/dev-server.js",
     "test": "node --test",
     "compare:snapshots": "node scripts/compare-catalog-snapshots.js"
   },
