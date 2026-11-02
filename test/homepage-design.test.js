@@ -111,3 +111,16 @@ test("About section explains what AniBloom is and is not in a two-column disclos
   assert.match(css, /\.about-grid\{[^}]*grid-template-columns:.*\}/);
   assert.match(css, /@media\(max-width:700px\)[\s\S]*?\.about-grid\{[^}]*grid-template-columns:1fr/);
 });
+
+test("About contains only identity details and support, without a duplicate install CTA", () => {
+  const html = render("https://www.paypal.me/example");
+  const about = html.match(/<section class="about-section" id="about">([\\s\\S]*?)<\\/section>/)?.[1] || "";
+  assert.match(about, /What AniBloom is/);
+  assert.match(about, /What AniBloom is not/);
+  assert.match(about, /id="support"/);
+  assert.match(about, /Support the addon/);
+  assert.match(about, /Support development/);
+  assert.doesNotMatch(html, /class="final-cta"|Add AniBloom to Nuvio\\./);
+  assert.equal((html.match(/class="donation-section"/g) || []).length, 1);
+  assert.doesNotMatch(html, /footer[^]*Donate/);
+});
