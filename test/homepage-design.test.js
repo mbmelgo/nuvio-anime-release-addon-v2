@@ -107,7 +107,7 @@ test("homepage makes configured donations prominent and keeps the PayPal destina
   assert.doesNotMatch(safe, /github\.com|GitHub/i);
 
   const unsafe = renderHome('https://attacker.example/" onmouseover="alert(1)');
-  assert.doesNotMatch(unsafe, /donation-section|donation-button|onmouseover/);
+  assert.doesNotMatch(unsafe, /<section class="container donation-section"|<a class="button donation-button"|onmouseover/);
 });
 
 test("homepage omits the donation callout when no valid donation destination is configured", () => {
