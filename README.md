@@ -44,9 +44,119 @@ https://anibloom.vercel.app/manifest.json
 
 For manual installation, use the same manifest URL.
 
-## Support the addon
+## Self-hosting
 
-If AniBloom is useful to you, you can support its ongoing maintenance through [Buy Me a Coffee](https://buymeacoffee.com/melgom475).
+You can run your own AniBloom instance instead of using the public deployment. The project supports local development with its included Node.js preview server and deployment to your own Vercel project.
+
+### Requirements
+
+- Node.js 20 or newer
+- npm
+- Git
+
+### Option 1: Run locally
+
+1. Clone the repository and enter the project directory:
+
+   ```bash
+   git clone https://github.com/mbmelgo/AniBloom.git
+   cd AniBloom
+   ```
+
+2. Install the project dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Start the local server:
+
+   ```bash
+   npm run dev
+   ```
+
+   The server listens on port `3000` by default. Open [http://localhost:3000](http://localhost:3000) to view the homepage.
+
+   To use a different port, set the `PORT` environment variable before starting the server. For example:
+
+   ```bash
+   PORT=8080 npm run dev
+   ```
+
+4. Use your local manifest URL in Nuvio:
+
+   ```text
+   http://localhost:3000/manifest.json
+   ```
+
+   If Nuvio runs on a different device, `localhost` refers to that device—not the computer hosting AniBloom. In that case, use the host computer's reachable LAN address and ensure its firewall allows the chosen port. Only expose the server to networks you trust.
+
+The local preview server implements the homepage, manifest, version, catalog, and static asset routes. It is intended for local use and development; use the Vercel deployment option below for a public, serverless instance.
+
+### Option 2: Deploy to your own Vercel project
+
+1. Create or sign in to a [Vercel account](https://vercel.com/signup).
+2. Install the Vercel CLI:
+
+   ```bash
+   npm install --global vercel
+   ```
+
+3. Clone the repository if you have not already, then open its directory:
+
+   ```bash
+   git clone https://github.com/mbmelgo/AniBloom.git
+   cd AniBloom
+   ```
+
+4. Link the local project to a new Vercel project and follow the prompts:
+
+   ```bash
+   vercel link
+   ```
+
+   Choose or create the Vercel project you want to use. Keep the project root directory set to the repository root. AniBloom uses the included `vercel.json` rewrites and `api/` serverless functions; do not set a separate output directory.
+
+5. Deploy a preview to verify the setup:
+
+   ```bash
+   vercel
+   ```
+
+6. When the preview works, deploy to production:
+
+   ```bash
+   vercel --prod
+   ```
+
+7. Copy your deployment's manifest URL into Nuvio:
+
+   ```text
+   https://YOUR-VERCEL-DOMAIN/manifest.json
+   ```
+
+   Replace `YOUR-VERCEL-DOMAIN` with the domain assigned to your Vercel project or a custom domain you have configured.
+
+Vercel may ask you to confirm project settings during the first deployment. Use the repository root, Node.js 20 or newer, and no custom build or output directory unless Vercel's current project setup specifically requires otherwise. Review your own Vercel plan's function, bandwidth, and usage limits; those limits and any associated costs are controlled by your account.
+
+### Keeping your instance updated
+
+To update your self-hosted copy, pull the latest changes from the repository:
+
+```bash
+git pull
+npm install
+```
+
+For a local instance, restart the server after updating. For Vercel, run `vercel --prod` again from the linked project directory after pulling the changes.
+
+## Support the public instance
+
+The public AniBloom instance is currently hosted on Vercel's **Hobby plan**. Its resource and usage limits may affect response times or availability during periods of higher traffic.
+
+If community donations become sufficient, I may move the public instance to a higher Vercel plan for more generous resource and usage limits. An upgrade may help accommodate more traffic, although it cannot guarantee faster responses in every situation.
+
+If AniBloom is useful to you, you can support its ongoing maintenance and hosting through [Buy Me a Coffee](https://buymeacoffee.com/melgom475). Donations are optional. You can also use the self-hosting instructions above and run your own instance.
 
 ## Development
 
@@ -54,8 +164,6 @@ AniBloom is a JavaScript serverless addon deployed on Vercel.
 
 - **Production:** `v2.1.0`
 - **Development:** `v2.1.0`
-
-Requirements: Node.js 20 or newer and npm.
 
 Run the automated test suite:
 
