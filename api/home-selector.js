@@ -343,7 +343,7 @@ export default function handler(req, res) {
         <h2 id="about-title">Catalogs, not metadata</h2>
       </div>
       <div class="about-copy">
-        <p>Nuvio Anime Addon is a catalog-only addon. It helps you discover anime through seasonal collections and recent or upcoming release lists. It does not provide anime metadata such as detailed titles, descriptions, artwork, or episode information.</p>
+        <p>Nuvio Anime Addon is a catalog-only addon. It helps you discover anime through seasonal collections and recent or upcoming release lists. It is not an anime metadata provider and does not supply detailed titles, descriptions, artwork, or episode information.</p>
         <p><strong>You still need your own metadata provider installed and selected in Nuvio.</strong> Use a separate provider such as ioametadata, Xperience, or BingeCat alongside this addon. This addon complements your metadata provider; it does not replace it.</p>
       </div>
     </section>
@@ -402,7 +402,7 @@ export default function handler(req, res) {
     <div class="container footer-inner">
       <div>
         <div class="footer-brand">Nuvio Anime Addon</div>
-        <p class="footer-copy">An anime releases addon for Nuvio.</p>
+        <p class="footer-copy">Anime discovery catalogs for Nuvio.</p>
       </div>
     </div>
   </footer>
