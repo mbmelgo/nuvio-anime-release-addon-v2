@@ -2,9 +2,9 @@ import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
-import home from "../api/home-selector.js";
 import manifest from "../api/resolver-manifest.js";
 import catalog from "../api/catalog-source.js";
+import { ADDON_VERSION } from "../api/version.js";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const port = Number(process.env.PORT || 3000);
@@ -59,7 +59,10 @@ const server = createServer(async (request, response) => {
   const req = { method: request.method, url: url.toString(), query: Object.fromEntries(url.searchParams) };
   const res = responseAdapter(response);
   try {
-    if (url.pathname === "/") return home(req, res);
+    if (url.pathname === "/") {
+      const { default: home } = await import(`../api/home-selector.js?preview=${Date.now()}`);
+      return home(req, res);
+    }
     if (url.pathname === "/manifest.json") return manifest(req, res);
     if (url.pathname === "/version") return version(req, res);
     if (url.pathname.startsWith("/catalog/")) return catalog(req, res);
