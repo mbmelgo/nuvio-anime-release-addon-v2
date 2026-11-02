@@ -52,7 +52,7 @@ If AniBloom is useful to you, you can support its ongoing maintenance through [B
 
 AniBloom is a JavaScript serverless addon deployed on Vercel.
 
-- **Production:** `v2.0.0`
+- **Production:** `v2.1.0`
 - **Development:** `v2.1.0`
 
 Requirements: Node.js 20 or newer and npm.
