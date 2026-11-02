@@ -15,7 +15,7 @@ function render(donate) {
 
 test("AniBloom homepage follows approved brand and content structure", () => {
   const html = render();
-  for (const text of ["AniBloom — Anime Discovery for Nuvio", "Discover anime.<br>Every season.", "Anime discovery catalogs, organized for Nuvio.", "Seasonal discovery", "Airing now &amp; next", "One-click installation", "Explore catalogs", "Catalogs, not metadata", "Add AniBloom to Nuvio.", "Where anime blooms.", "Open Source"]) assert.ok(html.includes(text), text);
+  for (const text of ["AniBloom — Anime Discovery for Nuvio", "Discover anime.<br>Every season.", "Anime discovery catalogs, organized for Nuvio.", "Seasonal discovery", "Airing now &amp; next", "One-click installation", "Explore catalogs", "What AniBloom is", "What AniBloom is not", "Add AniBloom to Nuvio.", "Where anime blooms.", "Open Source"]) assert.ok(html.includes(text), text);
   assert.match(html, /href="\/assets\/anibloom\.css"/);
   assert.doesNotMatch(html, /AniList|ARM mapping|identity mapping|TMDB|TVDB|IMDb/i);
 });
