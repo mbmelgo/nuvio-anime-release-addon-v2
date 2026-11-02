@@ -90,7 +90,7 @@ test("homepage lists all supported catalogs and preserves sample screenshots", (
 
 test("homepage keeps product copy generic and excludes implementation details", () => {
   const html = renderHome();
-  assert.match(html, /Discover anime releases/);
+  assert.match(html, /Discover current, upcoming, and recently aired anime/);
   assert.doesNotMatch(html, /AniList|ARM mapping|identity mapping|provider identity|TMDB|TVDB|IMDb|metadata addon|airing schedules/i);
 });
 
