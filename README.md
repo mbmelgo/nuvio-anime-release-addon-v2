@@ -6,26 +6,26 @@
 
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
-[![Version](https://img.shields.io/badge/version-1.133.0-blue.svg)](https://github.com/mbmelgo/AniBloom/releases)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/mbmelgo/AniBloom/releases)
 
 > Where anime blooms.
 
-**AniBloom is a catalog-only addon for Nuvio.** It helps you discover anime through focused catalogs for upcoming episodes, recently aired episodes, and seasonal releases—including movies.
+**AniBloom is a catalog-only addon for Nuvio.** It helps you discover anime through eight focused catalogs for upcoming episodes, recently aired episodes, and seasonal releases—including movies.
 
 [Install AniBloom](https://anibloom.vercel.app/manifest.json) · [Homepage](https://anibloom.vercel.app/) · [Support the addon](https://anibloom.vercel.app/#support) · [Releases](https://github.com/mbmelgo/AniBloom/releases)
 
 ## What AniBloom is
 
-AniBloom organizes anime discovery into eight catalogs:
+AniBloom brings these eight catalogs together in one list:
 
-| Anime series | Recent releases & movies |
-| --- | --- |
-| Upcoming 3 days | Previous 3 days |
-| Current Season | Current Season Movies |
-| Previous Season | Previous Season Movies |
-| Upcoming Season | Upcoming Season Movies |
-
-The catalogs help you find upcoming episodes, recently aired episodes, and anime from the current, previous, and upcoming seasons.
+- **Upcoming 3 days** — Anime with new episodes airing in the next 3 days.
+- **Previous 3 days** — Anime that aired in the last 3 days.
+- **Current Season** — Anime in the current season.
+- **Current Season Movies** — Movies from the current season.
+- **Previous Season** — Anime from the recently ended season.
+- **Previous Season Movies** — Movies from the recently ended season.
+- **Upcoming Season** — Anime from the next upcoming season.
+- **Upcoming Season Movies** — Movies from the next upcoming season.
 
 ## What AniBloom is not
 
@@ -53,7 +53,7 @@ If AniBloom is useful to you, you can support its ongoing maintenance through th
 AniBloom is a JavaScript serverless addon deployed on Vercel.
 
 - **Production:** `v1.133.0`
-- **Development:** `v1.133.0`
+- **Development:** `v2.0.0`
 
 Requirements: Node.js 20 or newer and npm.
 
