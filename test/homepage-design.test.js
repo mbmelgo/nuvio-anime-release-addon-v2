@@ -50,9 +50,9 @@ test("desktop and mobile section navigation tracks the visible page section", ()
   for (const id of ["home", "catalogs", "about"]) {
     assert.ok(html.includes('data-section-link="' + id + '"'), id + " navigation link");
   }
-  assert.match(html, /IntersectionObserver/);
+  assert.match(html, /getBoundingClientRect/);
+  assert.match(html, /addEventListener\("scroll"/);
   assert.match(html, /aria-current/);
-  assert.match(html, /rootMargin/);
 });
 
 
@@ -64,4 +64,27 @@ test("hero artwork stays within its source resolution and does not overscale", a
   assert.match(css, /\.hero-art img\{[^}]*max-width:570px/);
   assert.doesNotMatch(css, /\.hero-art img\{[^}]*width:min\(112%/);
   assert.doesNotMatch(css, /\.hero-art:before/);
+});
+
+
+test("About notice keeps its icon and heading readable on the light surface", async () => {
+  const html = render();
+  assert.match(html, /<section class="about-section" id="about">[\s\S]*?<span class="info-icon"[^>]*>ⓘ<\/span><div><h3>Catalogs, not metadata<\/h3>/);
+  const css = await readFile(new URL("../assets/anibloom.css", import.meta.url), "utf8");
+  assert.match(css, /\.metadata-notice\{[^}]*color:var\(--ink\)/);
+});
+
+test("section navigation recalculates the active section from scroll position", () => {
+  const html = render();
+  assert.match(html, /addEventListener\("scroll"/);
+  assert.match(html, /getBoundingClientRect\(\)\.top/);
+  assert.match(html, /aria-current/);
+  assert.doesNotMatch(html, /new IntersectionObserver/);
+});
+
+test("hero artwork blends into the hero surface and follows the intended upper-right placement", async () => {
+  const css = await readFile(new URL("../assets/anibloom.css", import.meta.url), "utf8");
+  assert.match(css, /\.hero-art\{[^}]*transform:translate\(24px,-20px\)/);
+  assert.match(css, /\.hero-art img\{[^}]*mask-image:radial-gradient/);
+  assert.match(css, /@media\(max-width:700px\)[\s\S]*?\.hero-art\{[^}]*transform:none/);
 });
