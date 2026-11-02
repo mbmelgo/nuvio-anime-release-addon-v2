@@ -78,7 +78,7 @@ export default function handler(req, res) {
     '<div class="container footer-inner"><div><div class="footer-brand"><img src="/assets/anibloom-icon.png" width="40" height="40" alt="">AniBloom</div><p class="footer-subtitle">Anime Discovery for Nuvio · Where anime blooms.</p></div>',
     '<nav class="footer-links" aria-label="Footer links"><a href="' + REPOSITORY_URL + '" target="_blank" rel="noopener noreferrer">◉ &nbsp; Open Source</a>',
     donate ? '<a href="' + donate + '" target="_blank" rel="noopener noreferrer">Donate</a>' : '',
-    '</nav></div></footer></body></html>'
+    '</nav></div></footer>',
     '<script>(function(){const links=Array.from(document.querySelectorAll("[data-section-link]"));const sections=links.map(link=>document.getElementById(link.dataset.sectionLink)).filter(Boolean);if(!links.length||!sections.length||!("IntersectionObserver" in window))return;const setActive=id=>links.forEach(link=>{const active=link.dataset.sectionLink===id;link.classList.toggle("active",active);if(active)link.setAttribute("aria-current","location");else link.removeAttribute("aria-current");});const observer=new IntersectionObserver(entries=>{const visible=entries.filter(entry=>entry.isIntersecting).sort((a,b)=>a.boundingClientRect.top-b.boundingClientRect.top);if(visible.length)setActive(visible[0].target.id);},{rootMargin:"-18% 0px -65% 0px",threshold:[0,0.1,0.25]});sections.forEach(section=>observer.observe(section));links.forEach(link=>link.addEventListener("click",()=>setActive(link.dataset.sectionLink)));})();</script></body></html>'
   res.status(200);
   res.setHeader("Content-Type", "text/html; charset=utf-8");
