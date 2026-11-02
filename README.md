@@ -7,7 +7,7 @@
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
 [![MAL](https://img.shields.io/badge/MyAnimeList-identity-2e51a2.svg)](https://myanimelist.net)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
-[![Version](https://img.shields.io/badge/version-1.131.1-blue.svg)](https://github.com/mbmelgo/anibloom/releases)
+[![Version](https://img.shields.io/badge/version-1.132.0-blue.svg)](https://github.com/mbmelgo/anibloom/releases)
 
 > Where anime blooms. An independent community addon for Nuvio.
 
@@ -202,7 +202,7 @@ Catalog names and season labels are generated dynamically.
 ## 🚀 Current release
 
 **Production:** `v1.131.0`  
-**Development:** `v1.131.1` — updates the AniBloom homepage artwork and canonical production domain.
+**Development:** `v1.132.0` — updates the AniBloom homepage artwork and canonical production domain.
 
 Post-release production catalog snapshots are captured automatically after each controlled release and retained on versioned `catalog-snapshots/*` branches.
 
