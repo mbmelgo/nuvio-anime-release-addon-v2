@@ -7,7 +7,7 @@
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
 [![MAL](https://img.shields.io/badge/MyAnimeList-identity-2e51a2.svg)](https://myanimelist.net)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
-[![Version](https://img.shields.io/badge/version-1.130.0-blue.svg)](https://github.com/mbmelgo/anibloom/releases)
+[![Version](https://img.shields.io/badge/version-1.131.0-blue.svg)](https://github.com/mbmelgo/anibloom/releases)
 
 > Where anime blooms. An independent community addon for Nuvio.
 
