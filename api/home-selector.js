@@ -1,8 +1,6 @@
 import { ADDON_VERSION } from "./version.js";
 
 const BASE_URL = "https://nuvio-anime-release-addon-v2.vercel.app";
-const GITHUB_URL = "https://github.com/mbmelgo/nuvio-anime-release-addon-v2";
-const RELEASES_URL = `${GITHUB_URL}/releases`;
 
 function getPayPalDonateUrl(value) {
   if (!value) return "";
@@ -70,7 +68,7 @@ export default function handler(req, res) {
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#15151a" media="(prefers-color-scheme: dark)">
   <meta name="description" content="Discover current, upcoming, and recently aired anime with Anime Releases for Nuvio.">
-  <title>Nuvio Addon · Anime Releases</title>
+  <title>Nuvio Anime Addon · Anime Releases</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -121,7 +119,7 @@ export default function handler(req, res) {
       border-radius: 4px;
     }
     .container { width: min(var(--content-width), calc(100% - var(--page-gutter) * 2)); margin-inline: auto; }
-    .site-header { border-bottom: 1px solid var(--color-border); }
+    .site-header { position: sticky; top: 0; z-index: 20; border-bottom: 1px solid var(--color-border); background: var(--color-background); }
     .header-inner {
       min-height: 84px;
       display: flex;
@@ -149,7 +147,6 @@ export default function handler(req, res) {
       transition: color .16s ease;
     }
     .desktop-nav a:hover, .mobile-nav a:hover, .footer-links a:hover { color: var(--color-accent); }
-    .desktop-nav .github-link { color: var(--color-text); }
     .mobile-menu { display: none; position: relative; }
     .mobile-menu summary {
       list-style: none;
@@ -261,6 +258,10 @@ export default function handler(req, res) {
     .release-version span { display: block; color: var(--color-muted); font-size: .86rem; font-weight: 400; }
     .text-link { color: var(--color-accent); font-size: .9rem; font-weight: 600; text-decoration: none; }
     .text-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+    .donation-section { margin-top: var(--section-space); padding: clamp(30px, 5vw, 54px); border: 1px solid var(--color-border); border-radius: 18px; background: var(--color-accent-soft); text-align: center; }
+    .donation-section h2 { margin: 0; font-size: clamp(1.65rem, 3vw, 2.1rem); line-height: 1.2; letter-spacing: -.045em; }
+    .donation-section p { max-width: 560px; margin: 12px auto 24px; color: var(--color-muted); }
+    .donation-button { min-width: 190px; box-shadow: 0 8px 24px rgb(101 56 214 / .22); }
     .site-footer { margin-top: var(--section-space); border-top: 1px solid var(--color-border); }
     .footer-inner { min-height: 112px; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: 25px; }
     .footer-brand { font-weight: 640; letter-spacing: -.025em; }
@@ -296,19 +297,18 @@ export default function handler(req, res) {
 <body>
   <header class="site-header">
     <div class="container header-inner">
-      <a class="brand" href="#home" aria-label="Nuvio Addon home">
+      <a class="brand" href="#home" aria-label="Nuvio Anime Addon home">
         <svg class="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
           <path d="M16 3 28 9.5 16 16 4 9.5 16 3Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
           <path d="m4 16 12 6.5L28 16M4 22.5 16 29l12-6.5" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
         </svg>
-        <span>Nuvio Addon</span>
+        <span>Nuvio Anime Addon</span>
       </a>
       <nav class="desktop-nav" aria-label="Main navigation">
         <a href="#home">Home</a>
         <a href="#features">Features</a>
         <a href="#catalogs">Catalogs</a>
         <a href="#releases">Releases</a>
-        <a class="github-link" href="${GITHUB_URL}" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
       </nav>
       <details class="mobile-menu">
         <summary aria-label="Open navigation menu">Menu</summary>
@@ -317,7 +317,6 @@ export default function handler(req, res) {
           <a href="#features">Features</a>
           <a href="#catalogs">Catalogs</a>
           <a href="#releases">Releases</a>
-          <a href="${GITHUB_URL}" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
         </nav>
       </details>
     </div>
@@ -326,7 +325,7 @@ export default function handler(req, res) {
   <main>
     <section class="container hero" id="home" aria-labelledby="hero-title">
       <div class="hero-content">
-        <h1 id="hero-title">Nuvio <span>Addon</span></h1>
+        <h1 id="hero-title">Nuvio <span>Anime Addon</span></h1>
         <p class="hero-copy">An anime releases addon for Nuvio.</p>
         <div class="hero-actions">
           <a class="button" href="${nuvioInstallUrl}">
@@ -396,21 +395,23 @@ export default function handler(req, res) {
       </div>
       <div class="release-row">
         <div class="release-version">Version v${ADDON_VERSION}<span>Current addon build</span></div>
-        <a class="text-link" href="${RELEASES_URL}" target="_blank" rel="noopener noreferrer">View release history ↗</a>
+
       </div>
     </section>
   </main>
 
+  ${donateUrl ? `
+  <section class="container donation-section" aria-labelledby="donation-title">
+    <h2 id="donation-title">Support the addon</h2>
+    <p>Enjoying Nuvio Anime Addon? Your support helps keep the addon maintained and improving for everyone.</p>
+    <a class="button donation-button" href="${donateUrl}" target="_blank" rel="noopener noreferrer">Support development</a>
+  </section>` : ""}
   <footer class="site-footer">
     <div class="container footer-inner">
       <div>
-        <div class="footer-brand">Nuvio Addon</div>
+        <div class="footer-brand">Nuvio Anime Addon</div>
         <p class="footer-copy">An anime releases addon for Nuvio.</p>
       </div>
-      <nav class="footer-links" aria-label="Footer links">
-        ${donateUrl ? `<a href="${donateUrl}" target="_blank" rel="noopener noreferrer">Support / Donate</a>` : ""}
-        <a href="${GITHUB_URL}" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
-      </nav>
     </div>
   </footer>
 </body>
