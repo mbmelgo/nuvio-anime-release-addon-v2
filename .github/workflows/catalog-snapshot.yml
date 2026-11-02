@@ -1,5 +1,8 @@
 name: Post-release catalog snapshot
 
+env:
+  ADDON_DOMAIN: anibloom.vercel.app
+
 on:
   push:
     branches: [main]

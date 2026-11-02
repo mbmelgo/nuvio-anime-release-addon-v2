@@ -91,7 +91,10 @@ test("Vercel configuration enables Fluid Compute for production functions", asyn
 test("home page uses only canonical unversioned catalog URLs", async () => {
   const source = await readFile("api/home-selector.js", "utf8");
   const config = await readFile("api/config.js", "utf8");
-  assert.match(config, /ADDON_DOMAIN = "nuvio-anime-release-addon-v2\.vercel\.app"/);
+  assert.match(config, /BASE_URL = "https:\/\/anibloom\.vercel\.app"/);
+  assert.match(config, /ADDON_DOMAIN = "anibloom\.vercel\.app"/);
+  const validator = await readFile("scripts/validate-production.mjs", "utf8");
+  assert.match(validator, /https:\/\/anibloom\.vercel\.app/);
   assert.match(config, /REPOSITORY_URL = "https:\/\/github\.com\/mbmelgo\/anibloom"/);
   assert.doesNotMatch(source, /\/v5\//);
   assert.doesNotMatch(source, /v5 resolver/i);

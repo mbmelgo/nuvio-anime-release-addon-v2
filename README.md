@@ -7,7 +7,7 @@
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
 [![MAL](https://img.shields.io/badge/MyAnimeList-identity-2e51a2.svg)](https://myanimelist.net)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
-[![Version](https://img.shields.io/badge/version-1.130.0-blue.svg)](https://github.com/mbmelgo/anibloom/releases)
+[![Version](https://img.shields.io/badge/version-1.131.0-blue.svg)](https://github.com/mbmelgo/anibloom/releases)
 
 > Where anime blooms. An independent community addon for Nuvio.
 
@@ -171,7 +171,7 @@ This addon is intentionally **catalog-focused**. It does not provide detailed an
 ### Production manifest
 
 ```text
-https://nuvio-anime-release-addon-v2.vercel.app/manifest.json
+https://anibloom.vercel.app/manifest.json
 ```
 
 Add the manifest URL to a supported Nuvio/Stremio client.
@@ -179,7 +179,7 @@ Add the manifest URL to a supported Nuvio/Stremio client.
 ### Production landing page
 
 ```text
-https://nuvio-anime-release-addon-v2.vercel.app/
+https://anibloom.vercel.app/
 ```
 
 The landing page provides the manifest, current catalog endpoints, release information, and representative screenshots.
@@ -202,7 +202,7 @@ Catalog names and season labels are generated dynamically.
 ## 🚀 Current release
 
 **Production:** `v1.130.0`  
-**Development:** `v1.130.0` — introduces the AniBloom brand, approved landing-page design, and addon logo.
+**Development:** `v1.131.0` — updates the AniBloom homepage artwork and canonical production domain.
 
 Post-release production catalog snapshots are captured automatically after each controlled release and retained on versioned `catalog-snapshots/*` branches.
 

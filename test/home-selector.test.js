@@ -15,6 +15,6 @@ test("home page retains direct Nuvio installation and HTTPS fallback", () => {
   let html = "";
   const res = { status() { return this; }, setHeader() {}, send(value) { html = value; return value; } };
   handler({}, res);
-  assert.match(html, /nuvio:\/\/nuvio-anime-release-addon-v2\.vercel\.app\/manifest\.json/);
-  assert.match(html, /https:\/\/nuvio-anime-release-addon-v2\.vercel\.app\/manifest\.json/);
+  assert.match(html, /nuvio:\/\/anibloom\.vercel\.app\/manifest\.json/);
+  assert.match(html, /https:\/\/anibloom\.vercel\.app\/manifest\.json/);
 });

@@ -34,8 +34,8 @@ test("all eight original catalog IDs and endpoints remain available", () => {
 
 test("Nuvio deep links and HTTPS manifest fallback are preserved", () => {
   const html = render();
-  assert.match(html, /nuvio:\/\/nuvio-anime-release-addon-v2\.vercel\.app\/manifest\.json/);
-  assert.match(html, /https:\/\/nuvio-anime-release-addon-v2\.vercel\.app\/manifest\.json/);
+  assert.match(html, /nuvio:\/\/anibloom\.vercel\.app\/manifest\.json/);
+  assert.match(html, /https:\/\/anibloom\.vercel\.app\/manifest\.json/);
   assert.match(html, /Manual installation:/);
 });
 
@@ -58,9 +58,10 @@ test("desktop and mobile section navigation tracks the visible page section", ()
 
 test("hero artwork stays within its source resolution and does not overscale", async () => {
   const html = render();
-  assert.match(html, /anibloom-hero-artwork\.jpg/);
+  assert.match(html, /anibloom-anime-hero-artwork\.webp/);
   const css = await readFile(new URL("../assets/anibloom.css", import.meta.url), "utf8");
   assert.match(css, /\.hero-art img\{[^}]*width:100%/);
-  assert.match(css, /\.hero-art img\{[^}]*max-width:514px/);
+  assert.match(css, /\.hero-art img\{[^}]*max-width:570px/);
   assert.doesNotMatch(css, /\.hero-art img\{[^}]*width:min\(112%/);
+  assert.doesNotMatch(css, /\.hero-art:before/);
 });
