@@ -6,7 +6,7 @@
 
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/mbmelgo/AniBloom/releases)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/mbmelgo/AniBloom/releases)
 
 > Where anime blooms.
 
@@ -53,7 +53,7 @@ If AniBloom is useful to you, you can support its ongoing maintenance through [B
 AniBloom is a JavaScript serverless addon deployed on Vercel.
 
 - **Production:** `v2.0.0`
-- **Development:** `v2.0.0`
+- **Development:** `v2.1.0`
 
 Requirements: Node.js 20 or newer and npm.
 
