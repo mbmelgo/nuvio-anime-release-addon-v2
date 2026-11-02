@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createPreviewServer } from "../scripts/dev-server.js";
+import { ADDON_VERSION } from "../api/version.js";
 
 test("preview server serves version, homepage, manifest and assets", async (t) => {
   const server = createPreviewServer();
@@ -15,7 +16,7 @@ test("preview server serves version, homepage, manifest and assets", async (t) =
 
   const versionResponse = await fetch(`${base}/version`);
   assert.equal(versionResponse.status, 200);
-  assert.deepEqual(await versionResponse.json(), { version: "2.0.0" });
+  assert.deepEqual(await versionResponse.json(), { version: ADDON_VERSION });
 
   const homeResponse = await fetch(base);
   assert.equal(homeResponse.status, 200);
@@ -23,7 +24,7 @@ test("preview server serves version, homepage, manifest and assets", async (t) =
 
   const manifestResponse = await fetch(`${base}/manifest.json`);
   assert.equal(manifestResponse.status, 200);
-  assert.equal((await manifestResponse.json()).version, "2.0.0");
+  assert.equal((await manifestResponse.json()).version, ADDON_VERSION);
 
   const assetResponse = await fetch(`${base}/assets/anibloom.css`);
   assert.equal(assetResponse.status, 200);
