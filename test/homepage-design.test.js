@@ -23,14 +23,14 @@ function renderHome(donateUrl) {
   }
 }
 
-test("homepage uses the approved minimalist structure and navigation", () => {
+test("homepage uses the approved minimalist structure and Nuvio Anime Addon branding", () => {
   const html = renderHome();
   for (const value of [
     'id="home"',
     'href="#features"',
     'href="#catalogs"',
     'href="#releases"',
-    "Nuvio Addon",
+    "Nuvio Anime Addon",
     "An anime releases addon for Nuvio.",
     "Install on Nuvio",
     "View Details",
@@ -40,10 +40,11 @@ test("homepage uses the approved minimalist structure and navigation", () => {
     "New Releases",
     "Multiple Catalogs",
     "Regular Updates",
-    "GitHub",
   ]) {
     assert.ok(html.includes(value), `Expected homepage to include: ${value}`);
   }
+  assert.doesNotMatch(html, /Nuvio Addon(?![\s\S]*Nuvio Anime Addon)/);
+  assert.doesNotMatch(html, /github\.com|GitHub/i);
 });
 
 test("homepage follows system light and dark appearance without a theme dependency", () => {
@@ -94,12 +95,19 @@ test("homepage keeps product copy generic and excludes implementation details", 
   assert.doesNotMatch(html, /AniList|ARM mapping|identity mapping|provider identity|TMDB|TVDB|IMDb|metadata addon|airing schedules/i);
 });
 
-test("homepage renders only validated PayPal donation URLs", () => {
+test("homepage makes configured donations prominent and keeps the PayPal destination validated", () => {
   const safe = renderHome("https://www.paypal.me/example");
-  assert.match(safe, /href="https:\/\/www\.paypal\.me\/example"/);
+  assert.match(safe, /class="donation-section"/);
+  assert.match(safe, /Support the addon/);
+  assert.match(safe, /Help keep the addon maintained/);
+  assert.match(safe, /class="button donation-button"[^>]*href="https:\/\/www\.paypal\.me\/example"/);
   assert.match(safe, /target="_blank" rel="noopener noreferrer"/);
-  assert.match(safe, /Support \/ Donate/);
+  assert.doesNotMatch(safe, /github\.com|GitHub/i);
 
   const unsafe = renderHome('https://attacker.example/" onmouseover="alert(1)');
-  assert.doesNotMatch(unsafe, /Donate via PayPal|onmouseover/);
+  assert.doesNotMatch(unsafe, /donation-section|donation-button|onmouseover/);
+});
+
+test("homepage omits the donation callout when no valid donation destination is configured", () => {
+  assert.doesNotMatch(renderHome(), /donation-section|donation-button/);
 });
