@@ -25,3 +25,10 @@ test("black and white logo variants use the approved high-resolution symbol", as
     assert.doesNotMatch(svg, /href="https?:/i);
   }
 });
+
+test("new high-resolution anime hero artwork is a valid WebP asset", async () => {
+  const data = await readFile(new URL("../assets/anibloom-hero-artwork.webp", import.meta.url));
+  assert.equal(data.toString("ascii", 0, 4), "RIFF");
+  assert.equal(data.toString("ascii", 8, 12), "WEBP");
+  assert.ok(data.length > 40_000, "hero artwork should retain high-resolution detail");
+});
