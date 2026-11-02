@@ -1,5 +1,3 @@
-import { ADDON_VERSION } from "./version.js";
-
 const BASE_URL = "https://nuvio-anime-release-addon-v2.vercel.app";
 
 function getPayPalDonateUrl(value) {
@@ -252,10 +250,11 @@ export default function handler(req, res) {
     .sample { min-width: 0; margin: 0; }
     .sample img { display: block; width: 100%; height: auto; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-surface); }
     .sample figcaption { padding-top: 13px; }
-    .about-copy { max-width: 690px; color: var(--color-muted); font-size: 1rem; }
-    .release-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px; padding: 23px 0; border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
-    .release-version { font-weight: 620; letter-spacing: -.02em; }
-    .release-version span { display: block; color: var(--color-muted); font-size: .86rem; font-weight: 400; }
+    .intro-details { padding: clamp(28px, 4vw, 42px); border: 1px solid var(--color-border); border-radius: 16px; background: var(--color-surface); }
+    .about-copy { max-width: 760px; color: var(--color-muted); font-size: 1rem; }
+    .about-copy p { margin: 0; }
+    .about-copy p + p { margin-top: 14px; }
+    .about-copy strong { color: var(--color-text); }
     .text-link { color: var(--color-accent); font-size: .9rem; font-weight: 600; text-decoration: none; }
     .text-link:hover { text-decoration: underline; text-underline-offset: 3px; }
     .donation-section { margin-top: var(--section-space); padding: clamp(30px, 5vw, 54px); border: 1px solid var(--color-border); border-radius: 18px; background: var(--color-accent-soft); text-align: center; }
@@ -308,16 +307,15 @@ export default function handler(req, res) {
         <a href="#home">Home</a>
         <a href="#features">Features</a>
         <a href="#catalogs">Catalogs</a>
-        <a href="#releases">Releases</a>
       </nav>
       <details class="mobile-menu">
         <summary aria-label="Open navigation menu">Menu</summary>
         <nav class="mobile-nav" aria-label="Mobile navigation">
           <a href="#home">Home</a>
           <a href="#features">Features</a>
+          <a href="#about">About</a>
           <a href="#catalogs">Catalogs</a>
-          <a href="#releases">Releases</a>
-        </nav>
+          </nav>
       </details>
     </div>
   </header>
@@ -326,7 +324,7 @@ export default function handler(req, res) {
     <section class="container hero" id="home" aria-labelledby="hero-title">
       <div class="hero-content">
         <h1 id="hero-title">Nuvio <span>Anime Addon</span></h1>
-        <p class="hero-copy">An anime releases addon for Nuvio.</p>
+        <p class="hero-copy">Discover seasonal anime and follow what is airing now, next, and recently released—all through focused Nuvio catalogs.</p>
         <div class="hero-actions">
           <a class="button" href="${nuvioInstallUrl}">
             <svg class="button-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -337,6 +335,16 @@ export default function handler(req, res) {
           <a class="button button-secondary" href="#features">View Details</a>
         </div>
         <p class="manual-install">Use the manifest URL below as a manual installation fallback if the app does not open automatically. <a class="manifest-url" href="${manifest}">${manifest}</a></p>
+      </div>
+    </section>
+
+    <section class="container section intro-details" id="about" aria-labelledby="about-title">
+      <div class="section-heading">
+        <h2 id="about-title">Catalogs, not metadata</h2>
+      </div>
+      <div class="about-copy">
+        <p>Nuvio Anime Addon is a catalog-only addon. It helps you discover anime through seasonal collections and recent or upcoming release lists. It does not provide anime metadata such as detailed titles, descriptions, artwork, or episode information.</p>
+        <p><strong>You still need your own metadata provider installed and selected in Nuvio.</strong> Use a separate provider such as ioametadata, Xperience, or BingeCat alongside this addon. This addon complements your metadata provider; it does not replace it.</p>
       </div>
     </section>
 
@@ -381,23 +389,7 @@ export default function handler(req, res) {
       </div>
     </section>
 
-    <section class="container section" aria-labelledby="about-title">
-      <div class="section-heading">
-        <h2 id="about-title">About the addon</h2>
-      </div>
-      <p class="about-copy">Anime Releases brings together useful anime discovery catalogs in one convenient Nuvio addon. Browse seasonal collections and keep up with recent and upcoming releases.</p>
-    </section>
 
-    <section class="container section" id="releases" aria-labelledby="releases-title">
-      <div class="section-heading">
-        <h2 id="releases-title">Releases</h2>
-        <p>Follow improvements and updates to the addon.</p>
-      </div>
-      <div class="release-row">
-        <div class="release-version">Version v${ADDON_VERSION}<span>Current addon build</span></div>
-
-      </div>
-    </section>
   </main>
 
   ${donateUrl ? `
