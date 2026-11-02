@@ -59,7 +59,7 @@ test("previous three days and airing now icons use complete in-bounds SVG paths"
   const html = render();
   assert.match(html, /data-icon="history"[^>]*>[\s\S]*?<svg viewBox="0 0 48 48"[^>]*>[\s\S]*?<path d="M7 7v10h10"\/><path d="M7 17a17 17 0 1 1 2 15"\/><path d="M24 14v10l7 5"\/>[\s\S]*?<\/svg>/);
   assert.doesNotMatch(html, /<text[^>]*>3D<\/text>/);
-  assert.match(html, /<span class="feature-icon" data-icon="radio"><svg viewBox="0 0 48 48"[^>]*><path d="M14 10Q2 24 14 38M34 10Q46 24 34 38M20 17Q13 24 20 31M28 17Q35 24 28 31"\\/><circle cx="24" cy="38" r="3"[^>]*\\/><\\/svg>/);
+  assert.match(html, /<span class="feature-icon" data-icon="radio"><svg viewBox="0 0 48 48"[^>]*><path d="M14 10Q2 24 14 38M34 10Q46 24 34 38M20 17Q13 24 20 31M28 17Q35 24 28 31"\/><circle cx="24" cy="38" r="3"[^>]*\/><\/svg>/);
 });
 
 test("Nuvio deep links and HTTPS manifest fallback are preserved", () => {
