@@ -45,6 +45,23 @@ test("catalog iconography distinguishes rolling windows, seasons and movies", ()
   }
 });
 
+test("mobile navigation uses an accessible hamburger icon instead of visible Menu text", async () => {
+  const html = render();
+  assert.match(html, /<details class="mobile-menu"><summary aria-label="Open navigation menu"><span class="menu-icon" aria-hidden="true"><span><\\/span><\\/span><\\/summary>/);
+  assert.doesNotMatch(html, /<summary[^>]*>\\s*Menu\\s*<\\/summary>/);
+  const css = await readFile(new URL("../assets/anibloom.css", import.meta.url), "utf8");
+  assert.match(css, /\\.menu-icon::before/);
+  assert.match(css, /\\.menu-icon::after/);
+  assert.match(css, /\\.menu-icon span/);
+});
+
+test("previous three days and airing now icons use complete in-bounds SVG paths", () => {
+  const html = render();
+  assert.match(html, /data-icon="history"[^>]*>[\\s\\S]*?<svg viewBox="0 0 48 48"[^>]*>[\\s\\S]*?<path d="M7 7v10h10"\\/><path d="M7 17a17 17 0 1 1 2 15"\\/><path d="M24 14v10l7 5"\\/>[\\s\\S]*?<\\/svg>/);
+  assert.doesNotMatch(html, /<text[^>]*>3D<\\/text>/);
+  assert.match(html, /<span class="feature-icon" data-icon="radio"><svg viewBox="0 0 48 48"[^>]*><path d="M15 8a14 14 0 0 0 0 32M33 8a14 14 0 0 1 0 32M20 16a7 7 0 0 0 0 16M28 16a7 7 0 0 1 0 16"\\/><circle cx="24" cy="38" r="3"[^>]*\\/><\\/svg>/);
+});
+
 test("Nuvio deep links and HTTPS manifest fallback are preserved", () => {
   const html = render();
   assert.match(html, /nuvio:\/\/anibloom\.vercel\.app\/manifest\.json/);
