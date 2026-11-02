@@ -2,12 +2,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-test("AniBloom addon icon uses the approved high-resolution transparent PNG", async () => {
+test("AniBloom addon icon uses the supplied square app icon", async () => {
   const data = await readFile(new URL("../assets/anibloom-icon.png", import.meta.url));
   assert.deepEqual([...data.subarray(0, 8)], [137,80,78,71,13,10,26,10]);
   assert.equal(data.readUInt32BE(16), 512);
   assert.equal(data.readUInt32BE(20), 512);
-  assert.ok(data.includes(Buffer.from("tRNS")), "PNG must retain transparent pixels");
+  assert.equal(data[25], 6, "PNG must retain its RGBA channel");
+  assert.ok(!data.includes(Buffer.from("tRNS")), "app icon uses its own opaque black corners");
+  assert.ok(data.length > 10_000, "icon should contain the supplied full-resolution artwork");
 });
 
 test("approved Nuvio and sakura hero artwork is a valid JPEG", async () => {
