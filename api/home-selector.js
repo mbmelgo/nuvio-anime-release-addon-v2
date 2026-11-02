@@ -1,414 +1,85 @@
-const BASE_URL = "https://nuvio-anime-release-addon-v2.vercel.app";
+import { BASE_URL } from "./config.js";
 
-function getPayPalDonateUrl(value) {
+const CATALOGS = [
+  ["Upcoming Season", "upcoming_season", "Anime from the next upcoming season."],
+  ["Current Season", "current_season", "Anime in the current season."],
+  ["Previous Season", "previous_season", "Anime from the recently ended season."],
+  ["Upcoming Season Movies", "upcoming_season_movies", "Movies from the next upcoming season."],
+  ["Current Season Movies", "current_season_movies", "Movies from the current season."],
+  ["Previous Season Movies", "previous_season_movies", "Movies from the recently ended season."],
+  ["Upcoming — 3 days", "upcoming_3_days", "Anime with new episodes airing in the next 3 days."],
+  ["Previous — 3 days", "previous_3_days", "Anime that aired in the last 3 days."]
+];
+
+function safeDonationUrl(value) {
   if (!value) return "";
   try {
     const url = new URL(value);
-    const allowedHosts = new Set(["paypal.me", "www.paypal.me", "paypal.com", "www.paypal.com"]);
-    if (url.protocol !== "https:" || !allowedHosts.has(url.hostname) || url.username || url.password) return "";
+    const hosts = ["paypal.me", "www.paypal.me", "paypal.com", "www.paypal.com"];
+    if (url.protocol !== "https:" || !hosts.includes(url.hostname) || url.username || url.password) return "";
     return url.href.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  } catch {
-    return "";
-  }
+  } catch { return ""; }
 }
 
-const SAMPLE_IMAGES = [
-  ["Seasonal Catalogs", "/docs/images/readme-nuvio-home.png", "Representative seasonal catalog view"],
-  ["Season Listing", "/docs/images/readme-nuvio-season.png", "Representative season listing"],
-  ["Anime Details", "/docs/images/readme-nuvio-detail.png", "Representative anime detail view"],
-];
+function icon(id) {
+  if (id.endsWith("_movies")) return '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 7a17 17 0 1 0 0 34 17 17 0 0 0 0-34Zm-4 10.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Zm10 0a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7ZM24 29a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Z" fill="currentColor"/></svg>';
+  const count = id.endsWith("_3_days") ? '<text x="24" y="34" text-anchor="middle" font-size="14" font-weight="800" fill="currentColor">3</text>' : "";
+  return '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="8" y="11" width="32" height="29" rx="4" fill="none" stroke="currentColor" stroke-width="3.5"/><path d="M15 6v10M33 6v10M9 20h30" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>' + count + '</svg>';
+}
 
-const CATALOGS = [
-  ["Upcoming Season", "upcoming_season", "Anime scheduled for the next season"],
-  ["Current Season", "current_season", "Anime in the current season"],
-  ["Previous Season", "previous_season", "Episodic anime from the immediately preceding season"],
-  ["Upcoming Season Movies", "upcoming_season_movies", "Movies scheduled for the next season"],
-  ["Current Season Movies", "current_season_movies", "Movies scheduled for the current season"],
-  ["Previous Season Movies", "previous_season_movies", "Movies from the immediately preceding season"],
-  ["Upcoming — 3 days", "upcoming_3_days", "Unique anime with an upcoming airing within the next three days"],
-  ["Previous — 3 days", "previous_3_days", "Unique anime with an airing within the previous three days"],
-];
-
-function renderCatalog([name, id, description]) {
+function card(item) {
+  const [name, id, description] = item;
   const type = id.endsWith("_movies") ? "movie" : "series";
   const url = `${BASE_URL}/catalog/${type}/${id}.json`;
-  return `
-    <li class="catalog-item">
-      <div class="catalog-copy">
-        <h3>${name}</h3>
-        <p>${description}</p>
-      </div>
-      <a class="catalog-link" href="${url}" aria-label="Open ${name} catalog">View catalog <span aria-hidden="true">↗</span></a>
-    </li>`;
+  return '<a class="catalog-card" href="' + url + '" aria-label="Open ' + name + ' catalog"><span class="catalog-icon">' + icon(id) + '</span><span class="catalog-copy"><strong>' + name + '</strong><span>' + description + '</span></span><svg class="catalog-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>';
 }
 
-function renderSample([title, image, description]) {
-  return `
-    <figure class="sample">
-      <img src="${image}" alt="${title}" loading="lazy">
-      <figcaption>
-        <h3>${title}</h3>
-        <p>${description}</p>
-      </figcaption>
-    </figure>`;
+function featureIcon(kind) {
+  const paths = {
+    layers: '<path d="m24 5 18 10-18 10L6 15 24 5Z"/><path d="m6 23 18 10 18-10M6 31l18 10 18-10"/>',
+    radio: '<path d="M12 18a17 17 0 0 1 0-24M36 18a17 17 0 0 0 0-24M18 12a8 8 0 0 1 0-12M30 12a8 8 0 0 0 0-12"/><circle cx="24" cy="24" r="3" fill="currentColor" stroke="none"/>',
+    bolt: '<path d="m27 3-19 24h14l-2 18 20-26H26l1-16Z" fill="currentColor" stroke="none"/>'
+  };
+  return '<svg viewBox="0 0 48 48" aria-hidden="true">' + paths[kind] + '</svg>';
 }
 
 export default function handler(req, res) {
-  const manifest = `${BASE_URL}/manifest.json`;
-  const nuvioInstallUrl = manifest.replace(/^https:\/\//, "nuvio://");
-  const donateUrl = getPayPalDonateUrl(process.env.PAYPAL_DONATE_URL);
-  const html = `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#15151a" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="Discover current, upcoming, and recently aired anime with Anime Releases for Nuvio.">
-  <title>Nuvio Anime Addon · Anime Releases</title>
-  <style>
-    :root {
-      color-scheme: light dark;
-      --color-background: #ffffff;
-      --color-surface: #ffffff;
-      --color-text: #17171c;
-      --color-muted: #666675;
-      --color-border: #e7e7ed;
-      --color-accent: #6538d6;
-      --color-accent-hover: #5128bd;
-      --color-accent-soft: #f2edff;
-      --color-button-text: #ffffff;
-      --content-width: 1080px;
-      --page-gutter: clamp(22px, 5vw, 64px);
-      --section-space: clamp(76px, 11vw, 132px);
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --color-background: #15151a;
-        --color-surface: #1c1c23;
-        --color-text: #f3f3f7;
-        --color-muted: #a4a4b2;
-        --color-border: #33333d;
-        --color-accent: #a88aff;
-        --color-accent-hover: #bea8ff;
-        --color-accent-soft: #2a223d;
-        --color-button-text: #17121f;
-      }
-    }
-
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; scroll-padding-top: 92px; }
-    body {
-      margin: 0;
-      background: var(--color-background);
-      color: var(--color-text);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-size: 16px;
-      line-height: 1.65;
-      -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
-    }
-    a { color: inherit; }
-    a:focus-visible, summary:focus-visible {
-      outline: 3px solid var(--color-accent);
-      outline-offset: 4px;
-      border-radius: 4px;
-    }
-    .container { width: min(var(--content-width), calc(100% - var(--page-gutter) * 2)); margin-inline: auto; }
-    .site-header { position: sticky; top: 0; z-index: 20; border-bottom: 1px solid var(--color-border); background: var(--color-background); }
-    .header-inner {
-      min-height: 84px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 28px;
-    }
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 11px;
-      text-decoration: none;
-      font-size: 1.12rem;
-      font-weight: 650;
-      letter-spacing: -0.035em;
-      white-space: nowrap;
-    }
-    .brand-mark { width: 30px; height: 30px; color: var(--color-accent); flex: 0 0 auto; }
-    .desktop-nav { display: flex; align-items: center; gap: clamp(18px, 3vw, 38px); }
-    .desktop-nav a, .mobile-nav a {
-      color: var(--color-muted);
-      text-decoration: none;
-      font-size: .92rem;
-      font-weight: 520;
-      transition: color .16s ease;
-    }
-    .desktop-nav a:hover, .mobile-nav a:hover, .footer-links a:hover { color: var(--color-accent); }
-    .mobile-menu { display: none; position: relative; }
-    .mobile-menu summary {
-      list-style: none;
-      cursor: pointer;
-      color: var(--color-text);
-      font-size: .92rem;
-      font-weight: 550;
-      padding: 8px 0 8px 12px;
-    }
-    .mobile-menu summary::-webkit-details-marker { display: none; }
-    .mobile-menu nav {
-      position: absolute;
-      z-index: 2;
-      right: 0;
-      top: calc(100% + 14px);
-      min-width: 190px;
-      display: grid;
-      gap: 4px;
-      padding: 12px;
-      border: 1px solid var(--color-border);
-      border-radius: 12px;
-      background: var(--color-surface);
-      box-shadow: 0 12px 32px rgb(0 0 0 / .12);
-    }
-    .mobile-menu nav a { padding: 9px 10px; }
-    .hero {
-      min-height: 470px;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      padding-block: clamp(94px, 13vw, 150px) clamp(84px, 10vw, 112px);
-    }
-    .hero-content { max-width: 760px; }
-    .hero h1 {
-      margin: 0;
-      font-size: clamp(2.8rem, 7.2vw, 5.25rem);
-      line-height: 1.08;
-      letter-spacing: -.065em;
-      font-weight: 720;
-    }
-    .hero h1 span { color: var(--color-accent); }
-    .hero-copy {
-      margin: 20px auto 0;
-      color: var(--color-muted);
-      font-size: clamp(1.08rem, 2.3vw, 1.35rem);
-      letter-spacing: -.018em;
-    }
-    .hero-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 34px; }
-    .button {
-      min-height: 50px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 12px 23px;
-      border: 1px solid transparent;
-      border-radius: 9px;
-      background: var(--color-accent);
-      color: var(--color-button-text);
-      font: inherit;
-      font-size: .96rem;
-      font-weight: 620;
-      text-decoration: none;
-      transition: background-color .16s ease, border-color .16s ease, transform .16s ease;
-    }
-    .button:hover { background: var(--color-accent-hover); }
-    .button:active { transform: translateY(1px); }
-    .button-secondary {
-      border-color: var(--color-border);
-      background: transparent;
-      color: var(--color-text);
-    }
-    .button-secondary:hover { border-color: var(--color-accent); background: var(--color-accent-soft); }
-    .button-icon { width: 18px; height: 18px; }
-    .features {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      padding-block: 26px;
-      border-top: 1px solid var(--color-border);
-      border-bottom: 1px solid var(--color-border);
-    }
-    .feature {
-      display: flex;
-      align-items: center;
-      gap: 17px;
-      padding: 12px clamp(12px, 2.7vw, 34px);
-    }
-    .feature + .feature { border-left: 1px solid var(--color-border); }
-    .feature-icon { width: 29px; height: 29px; color: var(--color-accent); flex: 0 0 auto; }
-    .feature h2 { margin: 0; font-size: 1rem; font-weight: 640; letter-spacing: -.025em; }
-    .feature p { margin: 2px 0 0; color: var(--color-muted); font-size: .88rem; line-height: 1.5; }
-    .section { padding-top: var(--section-space); }
-    .section-heading { margin-bottom: 30px; }
-    .section-heading h2 { margin: 0; font-size: clamp(1.65rem, 3vw, 2.05rem); line-height: 1.2; letter-spacing: -.045em; font-weight: 680; }
-    .section-heading p { margin: 9px 0 0; color: var(--color-muted); max-width: 620px; }
-    .catalog-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 52px; margin: 0; padding: 0; list-style: none; }
-    .catalog-item { min-width: 0; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px 0; border-top: 1px solid var(--color-border); }
-    .catalog-copy h3, .sample h3 { margin: 0; font-size: .98rem; line-height: 1.4; font-weight: 620; letter-spacing: -.018em; }
-    .catalog-copy p, .sample p { margin: 4px 0 0; color: var(--color-muted); font-size: .86rem; line-height: 1.5; }
-    .catalog-link { flex: 0 0 auto; color: var(--color-accent); font-size: .84rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
-    .catalog-link:hover { text-decoration: underline; text-underline-offset: 3px; }
-    .samples { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
-    .sample { min-width: 0; margin: 0; }
-    .sample img { display: block; width: 100%; height: auto; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-surface); }
-    .sample figcaption { padding-top: 13px; }
-    .intro-details { padding: clamp(28px, 4vw, 42px); border: 1px solid var(--color-border); border-radius: 16px; background: var(--color-surface); }
-    .about-copy { max-width: 760px; color: var(--color-muted); font-size: 1rem; }
-    .about-copy p { margin: 0; }
-    .about-copy p + p { margin-top: 14px; }
-    .about-copy strong { color: var(--color-text); }
-    .text-link { color: var(--color-accent); font-size: .9rem; font-weight: 600; text-decoration: none; }
-    .text-link:hover { text-decoration: underline; text-underline-offset: 3px; }
-    .donation-section { margin-top: var(--section-space); padding: clamp(30px, 5vw, 54px); border: 1px solid var(--color-border); border-radius: 18px; background: var(--color-accent-soft); text-align: center; }
-    .donation-section h2 { margin: 0; font-size: clamp(1.65rem, 3vw, 2.1rem); line-height: 1.2; letter-spacing: -.045em; }
-    .donation-section p { max-width: 560px; margin: 12px auto 24px; color: var(--color-muted); }
-    .donation-button { min-width: 190px; box-shadow: 0 8px 24px rgb(101 56 214 / .22); }
-    .site-footer { margin-top: var(--section-space); border-top: 1px solid var(--color-border); }
-    .footer-inner { min-height: 112px; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: 25px; }
-    .footer-brand { font-weight: 640; letter-spacing: -.025em; }
-    .footer-copy { margin: 3px 0 0; color: var(--color-muted); font-size: .86rem; }
-    .footer-links { display: flex; flex-wrap: wrap; gap: 24px; }
-    .footer-links a { color: var(--color-muted); font-size: .9rem; text-decoration: none; transition: color .16s ease; }
-    .manual-install { margin-top: 22px; color: var(--color-muted); font-size: .9rem; }
-    .manifest-url { display: inline-block; margin-left: 5px; color: var(--color-accent); overflow-wrap: anywhere; }
-    @media (max-width: 760px) {
-      .header-inner { min-height: 72px; }
-      .desktop-nav { display: none; }
-      .mobile-menu { display: block; }
-      .hero { min-height: 0; padding-block: 100px 88px; }
-      .features { grid-template-columns: 1fr; padding-block: 8px; }
-      .feature { padding: 19px 4px; }
-      .feature + .feature { border-left: 0; border-top: 1px solid var(--color-border); }
-      .catalog-list { grid-template-columns: 1fr; }
-      .samples { grid-template-columns: 1fr; gap: 28px; }
-      .sample img { max-width: 560px; }
-      .footer-inner { align-items: flex-start; flex-direction: column; justify-content: center; }
-    }
-    @media (max-width: 430px) {
-      .hero { padding-block: 82px 72px; }
-      .hero-actions { flex-direction: column; align-items: stretch; }
-      .button { width: 100%; }
-      .catalog-item { align-items: flex-start; flex-direction: column; gap: 9px; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
-    }
-  </style>
-</head>
-<body>
-  <header class="site-header">
-    <div class="container header-inner">
-      <a class="brand" href="#home" aria-label="Nuvio Anime Addon home">
-        <svg class="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-          <path d="M16 3 28 9.5 16 16 4 9.5 16 3Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
-          <path d="m4 16 12 6.5L28 16M4 22.5 16 29l12-6.5" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
-        </svg>
-        <span>Nuvio Anime Addon</span>
-      </a>
-      <nav class="desktop-nav" aria-label="Main navigation">
-        <a href="#home">Home</a>
-        <a href="#features">Features</a>
-        <a href="#catalogs">Catalogs</a>
-      </nav>
-      <details class="mobile-menu">
-        <summary aria-label="Open navigation menu">Menu</summary>
-        <nav class="mobile-nav" aria-label="Mobile navigation">
-          <a href="#home">Home</a>
-          <a href="#features">Features</a>
-          <a href="#about">About</a>
-          <a href="#catalogs">Catalogs</a>
-          </nav>
-      </details>
-    </div>
-  </header>
-
-  <main>
-    <section class="container hero" id="home" aria-labelledby="hero-title">
-      <div class="hero-content">
-        <h1 id="hero-title">Nuvio <span>Anime Addon</span></h1>
-        <p class="hero-copy">Discover seasonal anime and follow what is airing now, next, and recently released—all through focused Nuvio catalogs.</p>
-        <div class="hero-actions">
-          <a class="button" href="${nuvioInstallUrl}">
-            <svg class="button-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M14 3h7v7M10 14 21 3M19 13v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h7"/>
-            </svg>
-            Install on Nuvio
-          </a>
-          <a class="button button-secondary" href="#features">View Details</a>
-        </div>
-        <p class="manual-install">Use the manifest URL below as a manual installation fallback if the app does not open automatically. <a class="manifest-url" href="${manifest}">${manifest}</a></p>
-      </div>
-    </section>
-
-    <section class="container section intro-details" id="about" aria-labelledby="about-title">
-      <div class="section-heading">
-        <h2 id="about-title">Catalogs, not metadata</h2>
-      </div>
-      <div class="about-copy">
-        <p>Nuvio Anime Addon is a catalog-only addon. It helps you discover anime through seasonal collections and recent or upcoming release lists. It is not an anime metadata provider and does not supply detailed titles, descriptions, artwork, or episode information.</p>
-        <p><strong>You still need your own metadata provider installed and selected in Nuvio.</strong> Use a separate provider such as ioametadata, Xperience, or BingeCat alongside this addon. This addon complements your metadata provider; it does not replace it.</p>
-      </div>
-    </section>
-
-    <section class="container features" id="features" aria-label="Addon features">
-      <article class="feature">
-        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="3" y="4.5" width="18" height="17" rx="2"/><path d="M16 2.5v4M8 2.5v4M3 9.5h18M8 13h2M14 13h2M8 17h2"/>
-        </svg>
-        <div><h2>New Releases</h2><p>Keep up with the latest anime.</p></div>
-      </article>
-      <article class="feature">
-        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5M3 17l9 5 9-5"/>
-        </svg>
-        <div><h2>Multiple Catalogs</h2><p>Browse different collections.</p></div>
-      </article>
-      <article class="feature">
-        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="m13 2-3 9H4l7 11 3-9h6L13 2Z"/>
-        </svg>
-        <div><h2>Regular Updates</h2><p>Improved and maintained.</p></div>
-      </article>
-    </section>
-
-    <section class="container section" id="catalogs" aria-labelledby="catalogs-title">
-      <div class="section-heading">
-        <h2 id="catalogs-title">Explore the catalogs</h2>
-        <p>Find anime by season or browse recent and upcoming releases.</p>
-      </div>
-      <ul class="catalog-list">
-        ${CATALOGS.map(renderCatalog).join("")}
-      </ul>
-    </section>
-
-    <section class="container section" aria-labelledby="samples-title">
-      <div class="section-heading">
-        <h2 id="samples-title">A look inside Nuvio</h2>
-        <p>A few examples of how the catalogs appear in the app.</p>
-      </div>
-      <div class="samples">
-        ${SAMPLE_IMAGES.map(renderSample).join("")}
-      </div>
-    </section>
-
-
-  </main>
-
-  ${donateUrl ? `
-  <section class="container donation-section" aria-labelledby="donation-title">
-    <h2 id="donation-title">Support the addon</h2>
-    <p>Enjoying Nuvio Anime Addon? Your support helps keep the addon maintained and improving for everyone.</p>
-    <a class="button donation-button" href="${donateUrl}" target="_blank" rel="noopener noreferrer">Support development</a>
-  </section>` : ""}
-  <footer class="site-footer">
-    <div class="container footer-inner">
-      <div>
-        <div class="footer-brand">Nuvio Anime Addon</div>
-        <p class="footer-copy">Anime discovery catalogs for Nuvio.</p>
-      </div>
-    </div>
-  </footer>
-</body>
-</html>`;
-
+  const manifest = BASE_URL + "/manifest.json";
+  const install = manifest.replace("https://", "nuvio://");
+  const donate = safeDonationUrl(process.env.PAYPAL_DONATE_URL);
+  const html = [
+    '<!doctype html><html lang="en"><head>',
+    '<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
+    '<meta name="color-scheme" content="dark light"><meta name="theme-color" content="#090B0D">',
+    '<meta name="description" content="Anime discovery catalogs, organized for Nuvio. Discover upcoming seasons, current releases, and recently aired anime through focused catalogs.">',
+    '<title>AniBloom — Anime Discovery for Nuvio</title><link rel="stylesheet" href="/assets/anibloom.css"></head><body>',
+    '<header class="site-header"><div class="container header-inner">',
+    '<a class="brand" href="#home" aria-label="AniBloom home"><img src="/assets/anibloom-icon.png" width="43" height="43" alt=""><span class="brand-name">AniBloom</span><span class="brand-tagline">Anime Discovery for Nuvio</span></a>',
+    '<nav class="desktop-nav" aria-label="Main navigation"><a class="active" href="#home">Overview</a><a href="#catalogs">Catalogs</a><a href="#about">About</a></nav>',
+    '<a class="install-button header-install" href="' + install + '"><span aria-hidden="true">↓</span> Add to Nuvio</a>',
+    '<details class="mobile-menu"><summary aria-label="Open navigation menu">Menu</summary><nav aria-label="Mobile navigation"><a href="#home">Overview</a><a href="#catalogs">Catalogs</a><a href="#about">About</a><a href="' + install + '">Add to Nuvio</a></nav></details>',
+    '</div></header><main>',
+    '<section class="hero-section" id="home"><div class="container hero-grid"><div class="hero-copy">',
+    '<h1>Discover anime.<br>Every season.</h1><p class="hero-lead">Anime discovery catalogs, organized for Nuvio.</p>',
+    '<p class="hero-description">Find upcoming seasons, current releases, and recently aired anime through focused catalogs built for a better Nuvio experience.</p>',
+    '<div class="hero-actions"><a class="install-button" href="' + install + '">↓ &nbsp; Add to Nuvio</a><a class="outline-button" href="#catalogs">Explore catalogs →</a></div>',
+    '<p class="metadata-provider-note">Catalogs only. Use a separate metadata provider in Nuvio<br>(e.g., ioametadata, Xperience, BingeCat, or other compatible providers).</p>',
+    '<p class="manual-install">Manual installation: <a href="' + manifest + '">' + manifest + '</a></p></div>',
+    '<div class="hero-art"><img src="/assets/anibloom-hero-artwork.svg" width="720" height="540" alt="Nuvio anime catalogs displayed on television and mobile devices, surrounded by pink sakura blossoms" fetchpriority="high"></div></div>',
+    '<div class="container features"><article class="feature"><span class="feature-icon">' + featureIcon("layers") + '</span><div><h2>Seasonal discovery</h2><p>Browse anime by season, including upcoming, current, and previous releases.</p></div></article>',
+    '<article class="feature"><span class="feature-icon">' + featureIcon("radio") + '</span><div><h2>Airing now &amp; next</h2><p>Follow what is airing now and what is coming up next.</p></div></article>',
+    '<article class="feature"><span class="feature-icon">' + featureIcon("bolt") + '</span><div><h2>One-click installation</h2><p>Add the addon to Nuvio with a single tap or use the manifest URL.</p></div></article></div></section>',
+    '<section class="catalog-section" id="catalogs"><div class="container"><div class="section-heading"><h2>Explore catalogs</h2><p>Eight focused catalogs to help you discover and follow anime releases in Nuvio.</p></div>',
+    '<div class="catalog-grid">' + CATALOGS.map(card).join("") + '</div>',
+    '<aside class="metadata-notice" id="about"><span class="info-icon">ⓘ</span><div><h3>Catalogs, not metadata</h3><p>This addon provides anime catalogs for discovery and tracking. It does not supply detailed anime metadata (such as descriptions, artwork, or episode information).</p></div></aside>',
+    '</div></section><section class="final-cta"><h2>Add AniBloom to Nuvio.</h2><p>Start exploring anime through organized catalogs.</p><a class="install-button" href="' + install + '">↓ &nbsp; Add to Nuvio</a></section></main>',
+    '<footer class="site-footer">',
+    donate ? '<section class="container donation-section"><div><h2>Support the addon</h2><p>Your support helps keep the addon maintained.</p></div><a class="button donation-button" href="' + donate + '" target="_blank" rel="noopener noreferrer">Support development</a></section>' : '',
+    '<div class="container footer-inner"><div><div class="footer-brand"><img src="/assets/anibloom-icon.png" width="40" height="40" alt="">AniBloom</div><p class="footer-subtitle">Anime Discovery for Nuvio · Where anime blooms.</p></div>',
+    '<nav class="footer-links" aria-label="Footer links"><a href="https://github.com/mbmelgo/nuvio-anime-release-addon-v2" target="_blank" rel="noopener noreferrer">◉ &nbsp; Open Source</a>',
+    donate ? '<a href="' + donate + '" target="_blank" rel="noopener noreferrer">Donate</a>' : '',
+    '</nav></div></footer></body></html>'
+  ].join("");
   res.status(200);
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=300, stale-while-revalidate=1800");
