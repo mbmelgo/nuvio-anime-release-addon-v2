@@ -1,11 +1,11 @@
-# Anime Releases for Nuvio
+# Nuvio Anime Addon
 
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
 [![MAL](https://img.shields.io/badge/MyAnimeList-identity-2e51a2.svg)](https://myanimelist.net)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
 [![Version](https://img.shields.io/badge/version-1.128.0-blue.svg)](https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases)
 
-> A lightweight, season-aware anime release catalog for Nuvio and Stremio-compatible clients.
+> A season-aware anime discovery catalog for Nuvio.
 
 **Anime Releases for Nuvio** discovers anime releases from **AniList**, resolves each catalog item to a validated provider identity through ARM and independent cross-provider mapping services, and delegates detailed metadata to the metadata addon configured in the client.
 
