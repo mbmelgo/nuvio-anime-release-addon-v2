@@ -55,10 +55,12 @@ test("desktop and mobile section navigation tracks the visible page section", ()
   assert.match(html, /rootMargin/);
 });
 
-test("hero artwork is contained within its layout column without horizontal cropping", async () => {
+
+test("hero artwork stays within its source resolution and does not overscale", async () => {
   const html = render();
-  assert.match(html, /anibloom-hero-artwork\.webp/);
+  assert.match(html, /anibloom-hero-artwork\.jpg/);
   const css = await readFile(new URL("../assets/anibloom.css", import.meta.url), "utf8");
   assert.match(css, /\.hero-art img\{[^}]*width:100%/);
+  assert.match(css, /\.hero-art img\{[^}]*max-width:514px/);
   assert.doesNotMatch(css, /\.hero-art img\{[^}]*width:min\(112%/);
 });
