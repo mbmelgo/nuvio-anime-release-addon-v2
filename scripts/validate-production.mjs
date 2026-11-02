@@ -68,6 +68,9 @@ export function validateCatalog(catalog, catalogId, expectedType = catalogTypeFo
     if (meta?.type !== expectedType) throw new Error(`${catalogId}: catalog entry is not a ${expectedType}.`);
     if (!ID_PATTERN.test(String(meta.id || ""))) throw new Error(`${catalogId}: invalid catalog identity ${meta.id}.`);
   }
+  if (catalogId === "current_season" && !catalog.metas.some((meta) => !String(meta?.id || "").startsWith("anilist:"))) {
+    throw new Error("current_season: no external provider identities were resolved.");
+  }
 
   if (catalogId === "upcoming_3_days") {
     if (catalog.metas.some((meta) => !Number.isInteger(Number(meta?.extra?.nextEpisode)) || !Number.isInteger(Number(meta?.extra?.nextAiringAt)))) {
@@ -84,12 +87,34 @@ export function validateCatalog(catalog, catalogId, expectedType = catalogTypeFo
   return true;
 }
 
+export async function validateLogoAsset(baseUrl, logoUrl, fetchImpl = fetch) {
+  const base = new URL(String(baseUrl).replace(/\/$/, ""));
+  const url = new URL(String(logoUrl || ""), base);
+  if (url.origin !== base.origin) throw new Error("Manifest logo must be hosted on the addon origin.");
+  const response = await fetchImpl(url);
+  if (!response.ok) throw new Error(`Logo request failed: HTTP ${response.status}`);
+  const contentType = String(response.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
+  if (contentType !== "image/png") throw new Error(`Logo content type must be image/png, received ${contentType || "missing"}.`);
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  const signature = [137, 80, 78, 71, 13, 10, 26, 10];
+  if (bytes.length < 24 || signature.some((value, index) => bytes[index] !== value)) {
+    throw new Error("Manifest logo is not a valid PNG image.");
+  }
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  if (view.getUint32(16) < 1 || view.getUint32(20) < 1) {
+    throw new Error("Manifest logo has invalid image dimensions.");
+  }
+  return true;
+}
+
 export async function validateProduction(baseUrl, expectedVersion, fetchImpl = fetch, { allowLegacy = false } = {}) {
   const base = String(baseUrl).replace(/\/$/, "");
   const manifestResponse = await fetchImpl(`${base}/manifest.json`);
   if (!manifestResponse.ok) throw new Error(`Manifest request failed: HTTP ${manifestResponse.status}`);
   const manifest = await manifestResponse.json();
   validateManifest(manifest, expectedVersion, { allowLegacy });
+  if (!manifest.logo) throw new Error("Manifest logo URL is required.");
+  await validateLogoAsset(base, manifest.logo, fetchImpl);
 
   for (const catalogInfo of manifest.catalogs) {
     const { id: catalogId } = catalogInfo;

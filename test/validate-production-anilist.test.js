@@ -1,6 +1,28 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { validateCatalog, validateManifest, validateProduction } from "../scripts/validate-production.mjs";
+import { validateCatalog, validateLogoAsset, validateManifest, validateProduction } from "../scripts/validate-production.mjs";
+
+test("current-season production validation requires at least one external provider identity", () => {
+  assert.throws(() => validateCatalog({
+    metas: [{ id: "anilist:212653", type: "series", extra: { anilistId: 212653 } }],
+  }, "current_season"), /no external provider identities/);
+  assert.equal(validateCatalog({
+    metas: [{ id: "mal:5114", type: "series", extra: { malId: 5114 } }],
+  }, "current_season"), true);
+});
+
+test("production logo validation requires same-origin PNG bytes and image/png content type", async () => {
+  const png = new Uint8Array(24);
+  png.set([137, 80, 78, 71, 13, 10, 26, 10]);
+  const view = new DataView(png.buffer);
+  view.setUint32(16, 192);
+  view.setUint32(20, 192);
+  const ok = async () => new Response(png, { status: 200, headers: { "content-type": "image/png" } });
+  assert.equal(await validateLogoAsset("https://example.test", "/assets/anibloom-icon.png", ok), true);
+  await assert.rejects(validateLogoAsset("https://example.test", "https://other.test/logo.png", ok), /addon origin/);
+  await assert.rejects(validateLogoAsset("https://example.test", "/assets/logo.png", async () => new Response(png, { status: 200, headers: { "content-type": "text/plain" } })), /content type/);
+  await assert.rejects(validateLogoAsset("https://example.test", "/assets/logo.png", async () => new Response("not a png", { status: 200, headers: { "content-type": "image/png" } })), /valid PNG/);
+});
 
 test("production validator accepts canonical AniList fallback identities for series and movies", () => {
   assert.equal(validateCatalog({
@@ -61,6 +83,7 @@ test("production validation inspects every catalog page for duplicate identities
   const manifest = {
     id: "com.marki.nuvio.anime-releases",
     version: "1.109.0",
+    logo: "https://example.test/assets/anibloom-icon.png",
     identityMode: "provider",
     resources: [{ name: "catalog", types: ["series", "movie"] }],
     types: ["series", "movie"],
@@ -82,6 +105,14 @@ test("production validation inspects every catalog page for duplicate identities
     requests.push(parsed.pathname + parsed.search);
     if (parsed.pathname === "/manifest.json") {
       return new Response(JSON.stringify(manifest), { status: 200 });
+    }
+    if (parsed.pathname === "/assets/anibloom-icon.png") {
+      const png = new Uint8Array(24);
+      png.set([137, 80, 78, 71, 13, 10, 26, 10]);
+      const view = new DataView(png.buffer);
+      view.setUint32(16, 192);
+      view.setUint32(20, 192);
+      return new Response(png, { status: 200, headers: { "content-type": "image/png" } });
     }
     if (parsed.pathname === "/meta/series/mal%3A39535.json" || parsed.pathname === "/meta/series/mal:39535.json") {
       return new Response("{}", { status: 404 });
