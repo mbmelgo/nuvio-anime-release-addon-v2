@@ -7,7 +7,11 @@
     "node": ">=20"
   },
   "scripts": {
+    "dev": "vercel dev",
     "test": "node --test",
     "compare:snapshots": "node scripts/compare-catalog-snapshots.js"
+  },
+  "devDependencies": {
+    "vercel": "^65.9.0"
   }
 }
