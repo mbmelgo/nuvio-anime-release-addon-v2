@@ -65,7 +65,7 @@ export default function handler(req, res) {
     '<div class="hero-actions"><a class="install-button" href="' + install + '">↓ &nbsp; Add to Nuvio</a><a class="outline-button" href="#catalogs">Explore catalogs →</a></div>',
     '<p class="metadata-provider-note">Catalogs only. Use a separate metadata provider in Nuvio<br>(e.g., ioametadata, Xperience, BingeCat, or other compatible providers).</p>',
     '<p class="manual-install">Manual installation: <a href="' + manifest + '">' + manifest + '</a></p></div>',
-    '<div class="hero-art"><img src="/assets/anibloom-hero-artwork.svg" width="720" height="540" alt="Nuvio anime catalogs displayed on television and mobile devices, surrounded by pink sakura blossoms" fetchpriority="high"></div></div>',
+    '<div class="hero-art"><img src="/assets/anibloom-hero-artwork.jpg" width="514" height="386" alt="The approved AniBloom Nuvio catalog artwork with sakura blossoms" fetchpriority="high"></div></div>',
     '<div class="container features"><article class="feature"><span class="feature-icon">' + featureIcon("layers") + '</span><div><h2>Seasonal discovery</h2><p>Browse anime by season, including upcoming, current, and previous releases.</p></div></article>',
     '<article class="feature"><span class="feature-icon">' + featureIcon("radio") + '</span><div><h2>Airing now &amp; next</h2><p>Follow what is airing now and what is coming up next.</p></div></article>',
     '<article class="feature"><span class="feature-icon">' + featureIcon("bolt") + '</span><div><h2>One-click installation</h2><p>Add the addon to Nuvio with a single tap or use the manifest URL.</p></div></article></div></section>',
