@@ -28,9 +28,10 @@ test("homepage uses the approved minimalist structure and Nuvio Anime Addon bran
   for (const value of [
     'id="home"',
     'href="#features"',
+    'href="#about"',
+    'id="about"',
     'href="#catalogs"',
     "Nuvio Anime Addon",
-    "An anime releases addon for Nuvio.",
     "Install on Nuvio",
     "View Details",
     'id="features"',
@@ -50,6 +51,8 @@ test("homepage uses the approved minimalist structure and Nuvio Anime Addon bran
   assert.match(html, /\.site-header\s*\{[^}]*position:\s*sticky[^}]*top:\s*0/s);
   assert.match(html, /\.site-header\s*\{[^}]*z-index:\s*20/s);
   assert.doesNotMatch(html, /id="releases"|href="#releases"|Releases<\/a>/);
+  assert.ok(html.indexOf('id="about"') < html.indexOf('id="features"'), "Addon explanation should appear before feature and catalog sections");
+  assert.ok(html.indexOf('id="about"') < html.indexOf('id="catalogs"'), "Addon explanation should appear before catalog listings");
 });
 
 test("homepage follows system light and dark appearance without a theme dependency", () => {
