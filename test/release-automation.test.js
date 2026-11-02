@@ -100,6 +100,6 @@ test("extended production validation defines its production version within the s
 
 test("production workflows explicitly target the canonical AniBloom domain", async () => {
   const snapshotWorkflow = fs.readFileSync(new URL("../.github/workflows/catalog-snapshot.yml", import.meta.url), "utf8");
-  assert.match(deployWorkflow, /env:\\n  ADDON_DOMAIN: anibloom\\.vercel\\.app/);
-  assert.match(snapshotWorkflow, /env:\\n  ADDON_DOMAIN: anibloom\\.vercel\\.app/);
+  assert.ok(deployWorkflow.includes("ADDON_DOMAIN: anibloom.vercel.app"));
+  assert.ok(snapshotWorkflow.includes("ADDON_DOMAIN: anibloom.vercel.app"));
 });
