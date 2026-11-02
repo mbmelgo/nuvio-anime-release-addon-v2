@@ -27,3 +27,8 @@ test("black and white logo variants use the approved high-resolution symbol", as
     assert.doesNotMatch(svg, /href="https?:/i);
   }
 });
+
+test("README displays the canonical AniBloom app icon", async () => {
+  const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
+  assert.match(readme, /<img src="assets\/anibloom-icon\.png" alt="AniBloom logo" width="160"/);
+});
