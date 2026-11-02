@@ -1,11 +1,11 @@
-# Nuvio Anime Addon
+# AniBloom — Anime Discovery for Nuvio
 
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
 [![MAL](https://img.shields.io/badge/MyAnimeList-identity-2e51a2.svg)](https://myanimelist.net)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
-[![Version](https://img.shields.io/badge/version-1.128.0-blue.svg)](https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases)
+[![Version](https://img.shields.io/badge/version-1.129.0-blue.svg)](https://github.com/mbmelgo/nuvio-anime-release-addon-v2/releases)
 
-> A season-aware anime discovery catalog for Nuvio.
+> Where anime blooms. An independent community addon for Nuvio.
 
 **Anime Releases for Nuvio** discovers anime releases from **AniList**, resolves each catalog item to a validated provider identity through ARM and independent cross-provider mapping services, and delegates detailed metadata to the metadata addon configured in the client.
 
@@ -198,7 +198,7 @@ Catalog names and season labels are generated dynamically.
 ## 🚀 Current release
 
 **Production:** `v1.128.0`  
-**Development:** `v1.128.0` — presents a simplified, user-focused homepage and adds direct installation through Nuvio.
+**Development:** `v1.129.0` — introduces the AniBloom brand, approved landing-page design, and addon logo.
 
 Post-release production catalog snapshots are captured automatically after each controlled release and retained on versioned `catalog-snapshots/*` branches.
 

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="540" viewBox="0 0 720 540" role="img" aria-labelledby="title desc">
+<title id="title">AniBloom anime discovery on Nuvio</title><desc id="desc">Nuvio anime catalogs displayed on television and mobile devices with pink sakura blossoms.</desc>
+<defs>
+<linearGradient id="pink" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffd1e5"/><stop offset=".55" stop-color="#ff79b9"/><stop offset="1" stop-color="#d83d91"/></linearGradient>
+<linearGradient id="screen" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#171b20"/><stop offset="1" stop-color="#050607"/></linearGradient>
+<linearGradient id="p1" x2="0" y2="1"><stop stop-color="#d46aa9"/><stop offset="1" stop-color="#17213b"/></linearGradient>
+<linearGradient id="p2" x2="0" y2="1"><stop stop-color="#8ec4e8"/><stop offset="1" stop-color="#182c45"/></linearGradient>
+<linearGradient id="p3" x2="0" y2="1"><stop stop-color="#ffb16c"/><stop offset="1" stop-color="#182039"/></linearGradient>
+<linearGradient id="p4" x2="0" y2="1"><stop stop-color="#6676c8"/><stop offset="1" stop-color="#11182c"/></linearGradient>
+<g id="flower"><ellipse cy="-20" rx="11" ry="19" fill="url(#pink)"/><ellipse cx="19" cy="-6" rx="11" ry="19" transform="rotate(72 19 -6)" fill="url(#pink)"/><ellipse cx="12" cy="17" rx="11" ry="19" transform="rotate(144 12 17)" fill="url(#pink)"/><ellipse cx="-12" cy="17" rx="11" ry="19" transform="rotate(216 -12 17)" fill="url(#pink)"/><ellipse cx="-19" cy="-6" rx="11" ry="19" transform="rotate(288 -19 -6)" fill="url(#pink)"/><circle r="4" fill="#861443"/><g stroke="#861443" stroke-width="1.6" stroke-linecap="round"><path d="M0 0V-13M0 0 12-8M0 0 8 12M0 0-8 12M0 0-12-8"/></g></g>
+</defs>
+<ellipse cx="420" cy="430" rx="255" ry="35" fill="#c42a80" opacity=".2"/>
+<path d="M440 70Q535 22 683 49" fill="none" stroke="#5a263e" stroke-width="3" opacity=".55"/>
+<g><use href="#flower" transform="translate(510 63) scale(1.05)"/><use href="#flower" transform="translate(605 43) scale(.82)"/><use href="#flower" transform="translate(680 80) scale(1.15)"/><use href="#flower" transform="translate(654 154) scale(.7)"/><use href="#flower" transform="translate(560 130) scale(.58)"/></g>
+<path d="M470 96q-20-22-34-7 4 22 34 7ZM620 178q-24-12-32 8 15 15 32-8ZM702 246q-22-8-29 12 17 11 29-12Z" fill="url(#pink)"/>
+<g transform="rotate(-5 370 280)">
+<rect x="88" y="118" width="560" height="310" rx="23" fill="#070809" stroke="#70737a" stroke-width="3"/>
+<rect x="98" y="128" width="540" height="290" rx="17" fill="url(#screen)"/>
+<path d="M98 145q0-17 17-17h506q17 0 17 17v36H98Z" fill="#101317"/>
+<path d="M119 155l12-7v14l-12-7Z" fill="none" stroke="#fff" stroke-width="3"/>
+<text x="140" y="160" fill="#fff" font-size="16" font-family="Arial,sans-serif" font-weight="700">NUVIO</text>
+<g fill="#b9bdc4" font-size="11" font-family="Arial,sans-serif"><text x="116" y="208">⌕ Search</text><text x="116" y="240">⌂ Home</text><text x="218" y="211" fill="#fff" font-size="18" font-weight="700">Anime</text></g>
+<rect x="108" y="222" width="88" height="25" rx="7" fill="#292d33"/>
+<g><rect x="220" y="229" width="83" height="126" rx="9" fill="url(#p1)"/><rect x="313" y="229" width="83" height="126" rx="9" fill="url(#p2)"/><rect x="406" y="229" width="83" height="126" rx="9" fill="url(#p3)"/><rect x="499" y="229" width="83" height="126" rx="9" fill="url(#p4)"/><g fill="#f7d9ed" opacity=".8"><circle cx="260" cy="262" r="13"/><circle cx="354" cy="264" r="13"/><circle cx="447" cy="264" r="13"/><circle cx="540" cy="263" r="13"/></g><g stroke="#121827" stroke-width="5" stroke-linecap="round"><path d="M260 282v45m-10-26h20M354 285v43m-10-25h20M447 283v45m-10-26h20M540 285v43m-10-25h20"/></g><g fill="#bfc2c8"><rect x="220" y="366" width="53" height="8" rx="4"/><rect x="313" y="366" width="53" height="8" rx="4"/><rect x="406" y="366" width="53" height="8" rx="4"/><rect x="499" y="366" width="53" height="8" rx="4"/></g></g>
+</g>
+<g transform="rotate(-2 115 380)"><rect x="40" y="282" width="120" height="224" rx="22" fill="#030405" stroke="#858990" stroke-width="3"/><rect x="48" y="292" width="104" height="203" rx="15" fill="#11151a"/><rect x="85" y="298" width="30" height="4" rx="2" fill="#5a5d63"/><path d="M59 322l7-4v8l-7-4Z" fill="none" stroke="#fff" stroke-width="1.7"/><text x="71" y="325" fill="#fff" font-size="7" font-family="Arial,sans-serif" font-weight="700">NUVIO</text><text x="59" y="348" fill="#fff" font-size="10" font-family="Arial,sans-serif" font-weight="700">Anime</text><rect x="58" y="358" width="40" height="56" rx="5" fill="url(#p1)"/><rect x="105" y="358" width="40" height="56" rx="5" fill="url(#p2)"/><rect x="58" y="421" width="40" height="56" rx="5" fill="url(#p3)"/><rect x="105" y="421" width="40" height="56" rx="5" fill="url(#p4)"/><g fill="#f3c9df"><circle cx="78" cy="377" r="6"/><circle cx="125" cy="377" r="6"/><circle cx="78" cy="440" r="6"/><circle cx="125" cy="440" r="6"/></g><path d="M85 489h30" stroke="#777b82" stroke-width="2" stroke-linecap="round"/></g>
+<g opacity=".9"><use href="#flower" transform="translate(42 90) scale(.45)"/><use href="#flower" transform="translate(690 380) scale(.65)"/></g>
+</svg>
