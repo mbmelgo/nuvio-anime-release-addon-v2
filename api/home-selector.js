@@ -1,4 +1,4 @@
-import { BASE_URL } from "./config.js";
+import { BASE_URL, REPOSITORY_URL } from "./config.js";
 
 const CATALOGS = [
   ["Upcoming Season", "upcoming_season", "Anime from the next upcoming season."],
