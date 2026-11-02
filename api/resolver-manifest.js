@@ -21,7 +21,9 @@ export function buildManifest(info) {
     name: "AniBloom",
     description: "Anime discovery catalogs organized by season, release timing, and movies for Nuvio.",
     logo: BASE_URL + "/assets/anibloom-icon.png",
-    resources: [{ name: "catalog", types: ["series", "movie"] }],
+    resources: [
+      { name: "catalog", types: ["series", "movie"] },
+    ],
     types: ["series", "movie"],
     catalogs: catalogDefinitions(info, "mal"),
     identityMode: "provider"

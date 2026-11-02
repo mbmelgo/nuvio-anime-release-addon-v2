@@ -30,7 +30,8 @@ function icon(id) {
 function card(item) {
   const [name, id, description] = item;
   const type = id.endsWith("_movies") ? "movie" : "series";
-  return '<a class="catalog-card" href="' + BASE_URL + '/catalog/' + type + '/' + id + '.json" aria-label="Open ' + name + ' catalog"><span class="catalog-icon">' + icon(id) + '</span><span class="catalog-copy"><strong>' + name + '</strong><span>' + description + '</span></span><svg class="catalog-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>';
+  const url = `${BASE_URL}/catalog/${type}/${id}.json`;
+  return '<a class="catalog-card" href="' + url + '" aria-label="Open ' + name + ' catalog"><span class="catalog-icon">' + icon(id) + '</span><span class="catalog-copy"><strong>' + name + '</strong><span>' + description + '</span></span><svg class="catalog-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>';
 }
 
 function featureIcon(kind) {
@@ -72,9 +73,11 @@ export default function handler(req, res) {
     '<div class="catalog-grid">' + CATALOGS.map(card).join("") + '</div>',
     '<aside class="metadata-notice" id="about"><span class="info-icon">ⓘ</span><div><h3>Catalogs, not metadata</h3><p>This addon provides anime catalogs for discovery and tracking. It does not supply detailed anime metadata (such as descriptions, artwork, or episode information).</p></div></aside>',
     '</div></section><section class="final-cta"><h2>Add AniBloom to Nuvio.</h2><p>Start exploring anime through organized catalogs.</p><a class="install-button" href="' + install + '">↓ &nbsp; Add to Nuvio</a></section></main>',
-    '<footer class="site-footer"><div class="container footer-inner"><div><div class="footer-brand"><img src="/assets/anibloom-icon.png" width="40" height="40" alt="">AniBloom</div><p class="footer-subtitle">Anime Discovery for Nuvio · Where anime blooms.</p></div>',
+    '<footer class="site-footer">',
+    donate ? '<section class="container donation-section"><div><h2>Support the addon</h2><p>Your support helps keep the addon maintained.</p></div><a class="button donation-button" href="' + donate + '" target="_blank" rel="noopener noreferrer">Support development</a></section>' : '',
+    '<div class="container footer-inner"><div><div class="footer-brand"><img src="/assets/anibloom-icon.png" width="40" height="40" alt="">AniBloom</div><p class="footer-subtitle">Anime Discovery for Nuvio · Where anime blooms.</p></div>',
     '<nav class="footer-links" aria-label="Footer links"><a href="https://github.com/mbmelgo/nuvio-anime-release-addon-v2" target="_blank" rel="noopener noreferrer">◉ &nbsp; Open Source</a>',
-    donate ? '<a href="' + donate + '" target="_blank" rel="noopener noreferrer">♡ &nbsp; Donate</a>' : '',
+    donate ? '<a href="' + donate + '" target="_blank" rel="noopener noreferrer">Donate</a>' : '',
     '</nav></div></footer></body></html>'
   ].join("");
   res.status(200);
