@@ -1,352 +1,69 @@
 # AniBloom — Anime Discovery for Nuvio
 
 <p align="center">
-  <img src="assets/anibloom-icon.png" alt="AniBloom logo" width="160" />
+  <img src="assets/anibloom-icon.png" alt="AniBloom logo" width="128" />
 </p>
 
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
-[![MAL](https://img.shields.io/badge/MyAnimeList-identity-2e51a2.svg)](https://myanimelist.net)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
-[![Version](https://img.shields.io/badge/version-1.132.0-blue.svg)](https://github.com/mbmelgo/anibloom/releases)
+[![Version](https://img.shields.io/badge/version-1.133.0-blue.svg)](https://github.com/mbmelgo/AniBloom/releases)
 
-> Where anime blooms. An independent community addon for Nuvio.
+> Where anime blooms.
 
-**Anime Releases for Nuvio** discovers anime releases from **AniList**, resolves each catalog item to a validated provider identity through ARM and independent cross-provider mapping services, and delegates detailed metadata to the metadata addon configured in the client.
+**AniBloom is a catalog-only addon for Nuvio.** It helps you discover anime through focused catalogs for upcoming episodes, recently aired episodes, and seasonal releases—including movies.
 
-## ✨ Features
+[Install AniBloom](https://anibloom.vercel.app/manifest.json) · [Homepage](https://anibloom.vercel.app/) · [Support the addon](https://anibloom.vercel.app/#support) · [Releases](https://github.com/mbmelgo/AniBloom/releases)
 
-### 📺 Seasonal catalogs
+## What AniBloom is
 
-The addon dynamically exposes:
+AniBloom organizes anime discovery into eight catalogs:
 
-- **Upcoming Season**
-- **Current Season**
-- **Previous Season**
+| Anime series | Anime movies |
+| --- | --- |
+| Upcoming 3 days | Previous 3 days |
+| Current Season | Current Season Movies |
+| Previous Season | Previous Season Movies |
+| Upcoming Season | Upcoming Season Movies |
 
-The season windows are calculated from the current date rather than hard-coded to a particular year.
+The catalogs help you find upcoming episodes, recently aired episodes, and anime from the current, previous, and upcoming seasons.
 
-### ⏱️ Rolling release catalogs
+## What AniBloom is not
 
-Two rolling catalogs complement the seasonal views:
+AniBloom is not a streaming service, media host, or metadata provider. It does not host, store, stream, or distribute anime. It also does not provide detailed metadata such as descriptions, artwork, or episode information.
 
-- **Upcoming — 3 days** — unique anime with an upcoming airing within the next three days.
-- **Previous — 3 days** — unique anime with an airing within the previous three days.
+Install a separate compatible metadata provider in Nuvio to supply detailed title information and artwork. Examples include **ioametadata**, **Xperience**, and **BingeCat**.
 
-Rolling catalogs use AniList airing schedules, deduplicate by anime, and paginate the resulting unique catalog for Nuvio.
+## Installation
 
-### 🔑 Cross-provider catalog identity
-
-Catalog items normally use one validated provider identity:
-
-```text
-IMDb: tt<id>
-TVDB: tvdb:<id>
-TMDB: tmdb:<id>
-```
-
-Provider-candidate identity selection prioritizes TMDB, then IMDb, then TVDB after candidate validation; a higher-priority candidate is used only when it passes the existing title, year, format, source-ID, and related-entry checks. Catalog-level TMDB resolution still preserves the native TMDB route when an IMDb ID from TMDB is not independently verified, and canonical-series identities retain their dedicated precedence. ARM supplies the primary cross-provider mapping in a batched request. Later independent sources supplement unresolved rows through Fribb, AniList external links, AniBridge, AniMap, IDMapper, Anime Mapper, AnimeAPI TSV data, IMDb title search, secondary mappings, relation-aware provider resolution, and the MAL identity bridge. Provider validation checks title, year, format, source identity, and explicit related-entry collisions before an identity is accepted. v1.52.0 also verifies TMDB-only matches through the independent IMDb title search before retaining a TMDB fallback.
-
-If no validated provider identity is available, the canonical AniList MAL ID is used as the final fallback (`mal:<id>`); if neither a provider identity nor a MAL ID exists, the catalog emits an AniList identity fallback rather than dropping the row.
-
-The catalog keeps the AniList source id in the item's extra metadata so downstream systems can correlate the entry when needed.
-
-### 📄 Nuvio pagination
-
-- AniList seasonal pages use **50 items**, matching the Nuvio catalog page size.
-- Rolling catalogs paginate **after** schedule records are filtered and deduplicated.
-- Nuvio search parameters are supported by the catalog endpoints.
-
-### 🔎 Release snapshot comparison
-
-Production catalog snapshots can be compared deterministically by stable AniList/MAL identity, with a conservative normalized-title fallback when neither source ID is available. Snapshot comparison also maps the historical `upcoming_5_days` and `previous_7_days` filenames to the current three-day rolling catalog IDs when comparing releases across the catalog rename.
-
-The comparator reports:
-
-- added and removed entries
-- unchanged entries
-- provider-rank changes, reported separately from actual identity changes
-- provider changes and identity changes
-- title, year, and explicitly exposed season changes
-- ordering changes among matched entries
-
-Run it locally against two snapshot directories with:
-
-```text
-npm run compare:snapshots -- <before-snapshot-dir> <after-snapshot-dir> <output-dir>
-```
-
-The command writes:
-
-- `release-diff.json` — machine-readable comparison
-- `release-diff.md` — human-readable summary
-
-The `Compare catalog snapshots` GitHub Actions workflow automatically performs the same comparison when a new `catalog-snapshots/vX.Y.Z` branch is updated and uploads both files as an artifact. No production deployment or credentials are required. Production releases also trigger a full snapshot of all eight catalogs and all paginated results.
-
-### 🎞️ Supported anime formats
-
-Seasonal catalog discovery includes:
-
-- TV
-- TV Short
-- ONA
-- OVA
-- Special
-- Movie
-
-Movies are exposed through dedicated seasonal movie catalogs; rolling catalogs contain episodic anime only. Adult entries are excluded.
-
-## 🖼️ What it looks like
-
-The repository includes representative Nuvio-style screenshots for the addon views.
-
-### Seasonal catalogs
-
-![Representative Nuvio seasonal catalog](docs/images/readme-nuvio-home.png)
-
-### Season listing
-
-![Representative Nuvio season catalog](docs/images/readme-nuvio-season.png)
-
-### Rolling catalogs
-
-#### Upcoming — 3 days
-
-The rolling endpoints above reflect the current three-day window. Historical five-day and seven-day showcase screenshots are intentionally omitted to avoid showing outdated catalog windows.
-
-#### Previous — 3 days
-
-
-
-The upcoming and previous rolling catalogs use separate endpoints and independent three-day windows.
-
-### Metadata detail flow
-
-![Representative Nuvio anime detail flow](docs/images/readme-nuvio-detail.png)
-
-The production flow is:
-
-```text
-AniList release discovery
-        ↓
-validated provider ID
-        ↓
-Nuvio catalog
-        ↓
-configured metadata addon
-```
-
-## 🧩 Architecture
-
-```text
-┌──────────────────────┐
-│       AniList        │
-│ release / airing data│
-└──────────┬───────────┘
-           │
-           ▼
-┌──────────────────────┐
-│ Anime Releases       │
-│      for Nuvio       │
-│ Provider identities  │
-└──────────┬───────────┘
-           │
-           ▼
-┌──────────────────────┐
-│        Nuvio         │
-└──────────┬───────────┘
-           │
-           ▼
-┌──────────────────────┐
-│ Configured metadata  │
-│       addon          │
-└──────────────────────┘
-```
-
-This addon is intentionally **catalog-focused**. It does not provide detailed anime metadata such as descriptions, artwork, or episode information, and it is not a metadata provider or playback resolver.
-
-**Setup requirement:** Install a separate anime metadata addon in Nuvio and select it as your metadata provider. Examples include ioametadata, Xperience, and BingeCat. This addon supplies discovery catalogs; the metadata addon supplies the detailed title information shown when you open an item.
-
-## 📦 Installation
-
-### Production manifest
+1. Open the AniBloom [homepage](https://anibloom.vercel.app/).
+2. Select **Add to Nuvio**, or copy the manifest URL below into Nuvio.
 
 ```text
 https://anibloom.vercel.app/manifest.json
 ```
 
-Add the manifest URL to a supported Nuvio/Stremio client.
+For manual installation, use the same manifest URL.
 
-### Production landing page
+## Support the addon
 
-```text
-https://anibloom.vercel.app/
-```
+If AniBloom is useful to you, you can support its ongoing maintenance through the [Support the addon section on the homepage](https://anibloom.vercel.app/#support).
 
-The landing page provides the manifest, current catalog endpoints, release information, and representative screenshots.
+## Development
 
-## 📋 Production catalogs
+AniBloom is a JavaScript serverless addon deployed on Vercel.
 
-| Catalog | Endpoint |
-| --- | --- |
-| Upcoming Season | `/catalog/series/upcoming_season.json` |
-| Current Season | `/catalog/series/current_season.json` |
-| Previous Season | `/catalog/series/previous_season.json` |
-| Upcoming Season Movies | `/catalog/movie/upcoming_season_movies.json` |
-| Current Season Movies | `/catalog/movie/current_season_movies.json` |
-| Previous Season Movies | `/catalog/movie/previous_season_movies.json` |
-| Upcoming — 3 days | `/catalog/series/upcoming_3_days.json` |
-| Previous — 3 days | `/catalog/series/previous_3_days.json` |
+- **Production:** `v1.132.0`
+- **Development:** `v1.133.0`
 
-Catalog names and season labels are generated dynamically.
+Requirements: Node.js 20 or newer and npm.
 
-## 🚀 Current release
-
-**Production:** `v1.132.0`  
-**Development:** `v1.132.0` — updates the AniBloom homepage artwork and canonical production domain.
-
-Post-release production catalog snapshots are captured automatically after each controlled release and retained on versioned `catalog-snapshots/*` branches.
-
-Production release state is finalized by the controlled release pipeline after deployment validation.
-**Major baseline:** `v1.0.0`
-
-The 1.56.0 release anchors seasonal/installment catalog entries to their canonical franchise series identity for scraper-facing provider IDs while preserving the specific seasonal display metadata.\n\nThe 1.42.0 release switches active identity resolution to TMDB-backed matching, upgrades strong TMDB matches to IMDb when available, and retains TMDB identities when IMDb is unavailable. BingeCat API integration was later removed because its public endpoint is not usable by the addon and its private endpoint requires authenticated session access.
-
-The 1.43.0 release lets TMDB upgrade earlier non-IMDb provider mappings, such as TVDB-only mappings, to stronger IMDb identities when TMDB finds a strong match.
-
-The 1.44.0 release keeps that TMDB upgrade path active when BingeCat is unavailable, including production degraded-mode resolution.
-
-The 1.45.0 release removes TMDB's pre-search year filter so exact title matches can still resolve when AniList and TMDB record different start years.
-
-The 1.46.0 release resolves TMDB mappings with bounded concurrency to reduce catalog latency while respecting the provider's request-rate constraints.
-
-
-The 1.23.0 development baseline hardens BingeCat identity selection so unverified provider mappings cannot inherit identities from explicit franchise-related anime.
-
-The 1.24.0 development baseline protects unverified provider identities that belong to explicit AniList-related anime before final BingeCat verification, using targeted, cached bulk relation checks before terminal fallback.
-
-The 1.10.0 corrective release extends degraded BingeCat resolution through the independent Anime Mapper dataset before terminal MAL fallback, improving provider-ID coverage when BingeCat search is unavailable.
-
-The 1.11.0 corrective release adds a cached AniBridge v3 bulk cross-provider mapping fallback, improving IMDb/TVDB/TMDB coverage without issuing per-title external mapping requests when BingeCat is unavailable. The resolver now consults this shared bulk dataset before per-title mapping fallbacks, reducing upstream request fan-out while retaining the final authoritative BingeCat verification.
-
-The 1.1.0 release carries the BingeCat identity-verification, cache-safety, related-title, numbered-installment, evidence-aggregation, and year-validation fixes validated on main.
-
-The 1.2.0 corrective release refreshes cached negative BingeCat results during the authoritative verification pass so transient misses cannot mask a supported identity.
-
-The 1.3.0 corrective release reduces redundant BingeCat searches for already-resolved identities, lowering upstream request pressure while retaining the authoritative verification pass.
-
-The 1.4.0 corrective release adds transient BingeCat upstream retries so temporary 429/5xx/network failures do not become false identity-resolution misses.
-
-The 1.4.0 corrective release retries transient BingeCat upstream failures before falling back, preserving supported identities during temporary upstream errors.
-
-The 1.5.0 corrective release preserves every AniList catalog row through terminal identity fallback, requires direct BingeCat evidence for advertised provider identities, and hardens live catalog resolution against unresolved identities.
-This release is the controlled production promotion of the tested identity-preservation and BingeCat-verification fixes.
-Release target: `v1.5.0`.
-
-
-The 1.0.0 release establishes the major baseline for the production-ready identity-resolution architecture, including provenance-aware validation, generalized weak-provider rejection, and the complete fallback chain.
-
-This release is the controlled production baseline for continued P0 identity-resolution work.
-
-The v2 project was initialized from an unreleased `v0.0.0` baseline. Version `1.0.0` is the first deliberate major release.
-
-Production releases are published as Git tags and GitHub Releases.
-
-A manual **dry run** validates CI, release metadata, the target version/SHA, and production behavior without deploying to Vercel, creating a tag or GitHub Release, or mutating release state.
-
-**Releases:** https://github.com/mbmelgo/anibloom/releases
-
-Versioning:
-
-- **PATCH** — meaningful development changes.
-- **MINOR** — production deployments.
-- **MAJOR** — deliberate project or architectural baseline changes, including the v1.0.0 production baseline.
-
-## 🔧 Development
-
-This is a small serverless JavaScript addon designed for Vercel.
-
-### Requirements
-
-- Node.js **20+**
-- npm
-
-### Run tests
+Run the automated test suite:
 
 ```bash
+npm install
 npm test
 ```
 
-### Project structure
+## License
 
-```text
-api/
-  catalog-source.js
-  home-selector.js
-  resolver-manifest.js
-  version.js
-
-lib/
-  catalog-anilist.js
-  catalog-config.js
-  catalog-meta.js
-  catalog-pagination.js
-
-scripts/
-  release-target.mjs
-  release-integrity.mjs
-  validate-production.mjs
-
-test/
-  automated regression and release tests
-
-ops/
-  release-state.json
-
-docs/images/
-  representative Nuvio showcase images
-```
-
-## 🚦 Release pipeline
-
-Production releases follow:
-
-```text
-Feature / change
-  ↓
-PR CI
-  ↓
-Merge to main
-  ↓
-Main CI + patch versioning
-  ↓
-Explicit release authorization
-  ↓
-Release/version integrity validation
-  ↓
-Controlled Vercel deployment
-  ↓
-Production validation: manifest + all eight catalogs + metadata boundary
-  ↓
-Annotated Git tag + GitHub Release
-  ↓
-Release-state update
-```
-
-Release metadata is validated across `api/version.js`, `package.json`, `README.md`, and `ops/release-state.json`. Production validation checks all eight supported catalogs for valid, unique identities with the correct movie or series type, plus catalog-specific rolling metadata.
-
-## 📄 Scope
-
-This addon is responsible for:
-
-- seasonal anime release discovery
-- rolling upcoming/recent airing discovery
-- validated provider identities with ARM-backed and secondary cross-provider mapping
-- Nuvio-compatible catalog pagination
-- catalog search
-- dynamic seasonal organization
-
-It is **not** a replacement for a detailed anime metadata/provider addon.
-
-## 📜 License
-
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for the full license text.
+AniBloom is licensed under the MIT License. See [LICENSE](LICENSE).
