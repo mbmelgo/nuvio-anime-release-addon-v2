@@ -15,7 +15,7 @@ function safeDonationUrl(value) {
   if (!value) return "";
   try {
     const url = new URL(value);
-    const hosts = ["paypal.me", "www.paypal.me", "paypal.com", "www.paypal.com"];
+    const hosts = ["buymeacoffee.com", "www.buymeacoffee.com"];
     if (url.protocol !== "https:" || !hosts.includes(url.hostname) || url.username || url.password) return "";
     return url.href.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   } catch { return ""; }
@@ -67,7 +67,7 @@ function featureIcon(kind) {
 export default function handler(req, res) {
   const manifest = BASE_URL + "/manifest.json";
   const install = manifest.replace("https://", "nuvio://");
-  const donate = safeDonationUrl(process.env.PAYPAL_DONATE_URL) || "https://paypal.me/AniBloom";
+  const donate = safeDonationUrl(process.env.PAYPAL_DONATE_URL) || "https://buymeacoffee.com/melgom475s";
   const html = [
     '<!doctype html><html lang="en"><head>',
     '<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
