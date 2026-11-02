@@ -99,7 +99,7 @@ test("homepage keeps product copy generic and excludes implementation details", 
 
 test("homepage makes configured donations prominent and keeps the PayPal destination validated", () => {
   const safe = renderHome("https://www.paypal.me/example");
-  assert.match(safe, /class="donation-section"/);
+  assert.match(safe, /<section class="container donation-section"/);
   assert.match(safe, /Support the addon/);
   assert.match(safe, /Your support helps keep the addon maintained/);
   assert.match(safe, /class="button donation-button"[^>]*href="https:\/\/www\.paypal\.me\/example"/);
