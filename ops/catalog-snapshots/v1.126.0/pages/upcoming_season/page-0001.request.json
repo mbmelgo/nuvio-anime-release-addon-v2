@@ -1,0 +1,17 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://nuvio-anime-release-addon-v2.vercel.app/catalog/series/upcoming_season.json?skip=0",
+    "catalog": "upcoming_season",
+    "page": 1,
+    "query": {
+      "skip": 0
+    },
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json",
+    "bodyFile": "page-0001.json"
+  }
+}
