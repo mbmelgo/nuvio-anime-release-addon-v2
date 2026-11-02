@@ -25,25 +25,41 @@ test("stylesheet keeps monochrome palette, responsive layout and accessibility",
   for (const token of ["#090b0d", "#ff79b9", "#f3a6cf", "#b65bea", "prefers-reduced-motion", ":focus-visible", "@media(max-width:700px)"]) assert.ok(css.includes(token), token);
 });
 
-test("catalogs render in the requested two-column order with all original endpoints", () => {
+test("all eight catalogs render in one uncategorized grid with original endpoints", () => {
   const html = render();
-  const columns = [...html.matchAll(/<div class="catalog-column" data-column="([^"]+)">([\s\S]*?)<\/div>\s*<\/div>/g)];
-  assert.equal(columns.length, 2, "two catalog columns");
-  const labels = columns.map(([, , body]) => [...body.matchAll(/<strong>([^<]+)<\/strong>/g)].map(([, label]) => label));
+  const labels = [...html.matchAll(/<strong>([^<]+)<\/strong>/g)].map(([, label]) => label);
   assert.deepEqual(labels, [
-    ["Upcoming 3 days", "Current Season", "Previous Season", "Upcoming Season"],
-    ["Previous 3 days", "Current Season Movies", "Previous Season Movies", "Upcoming Season Movies"],
+    "Upcoming 3 days", "Previous 3 days", "Current Season", "Current Season Movies",
+    "Previous Season", "Previous Season Movies", "Upcoming Season", "Upcoming Season Movies",
   ]);
   const ids = ["upcoming_3_days", "current_season", "previous_season", "upcoming_season", "previous_3_days", "current_season_movies", "previous_season_movies", "upcoming_season_movies"];
   for (const id of ids) assert.ok(html.includes("/" + id + ".json"), id);
   assert.equal((html.match(/class="catalog-card"/g) || []).length, 8);
+  assert.equal((html.match(/class="catalog-grid"/g) || []).length, 1);
+  assert.doesNotMatch(html, /catalog-column|Anime series|Recent releases &amp; movies/);
 });
-
 test("catalog iconography distinguishes rolling windows, seasons and movies", () => {
   const html = render();
   for (const icon of ["calendar-clock", "sun", "calendar-check", "calendar-arrow-up", "history", "film", "film-check", "film-up"]) {
     assert.ok(html.includes('data-icon="' + icon + '"'), icon);
   }
+});
+
+test("mobile navigation uses an accessible hamburger icon instead of visible Menu text", async () => {
+  const html = render();
+  assert.match(html, /<details class="mobile-menu"><summary aria-label="Open navigation menu"><span class="menu-icon" aria-hidden="true"><span><\/span><\/span><\/summary>/);
+  assert.doesNotMatch(html, /<summary[^>]*>\s*Menu\s*<\/summary>/);
+  const css = await readFile(new URL("../assets/anibloom.css", import.meta.url), "utf8");
+  assert.match(css, /\.menu-icon::before/);
+  assert.match(css, /\.menu-icon::after/);
+  assert.match(css, /\.menu-icon span/);
+});
+
+test("previous three days and airing now icons use complete in-bounds SVG paths", () => {
+  const html = render();
+  assert.match(html, /data-icon="history"[^>]*>[\s\S]*?<svg viewBox="0 0 48 48"[^>]*>[\s\S]*?<path d="M7 7v10h10"\/><path d="M7 17a17 17 0 1 1 2 15"\/><path d="M24 14v10l7 5"\/>[\s\S]*?<\/svg>/);
+  assert.doesNotMatch(html, /<text[^>]*>3D<\/text>/);
+  assert.match(html, /<span class="feature-icon" data-icon="radio"><svg viewBox="0 0 48 48"[^>]*><path d="M14 10Q2 24 14 38M34 10Q46 24 34 38M20 17Q13 24 20 31M28 17Q35 24 28 31"\/><circle cx="24" cy="38" r="3"[^>]*\/><\/svg>/);
 });
 
 test("Nuvio deep links and HTTPS manifest fallback are preserved", () => {
