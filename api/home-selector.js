@@ -67,7 +67,7 @@ function featureIcon(kind) {
 export default function handler(req, res) {
   const manifest = BASE_URL + "/manifest.json";
   const install = manifest.replace("https://", "nuvio://");
-  const donate = safeDonationUrl(process.env.PAYPAL_DONATE_URL) || "https://buymeacoffee.com/melgom475s";
+  const donate = safeDonationUrl(process.env.PAYPAL_DONATE_URL) || "https://buymeacoffee.com/melgom475";
   const html = [
     '<!doctype html><html lang="en"><head>',
     '<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
