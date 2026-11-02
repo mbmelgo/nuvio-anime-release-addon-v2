@@ -11,15 +11,7 @@ const CATALOGS = [
   ["Upcoming Season Movies", "upcoming_season_movies", "Movies from the next upcoming season."]
 ];
 
-function safeDonationUrl(value) {
-  if (!value) return "";
-  try {
-    const url = new URL(value);
-    const hosts = ["paypal.me", "www.paypal.me", "paypal.com", "www.paypal.com"];
-    if (url.protocol !== "https:" || !hosts.includes(url.hostname) || url.username || url.password) return "";
-    return url.href.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  } catch { return ""; }
-}
+const DONATION_URL = "https://buymeacoffee.com/melgom475";
 
 function icon(id) {
   const paths = {
@@ -67,7 +59,7 @@ function featureIcon(kind) {
 export default function handler(req, res) {
   const manifest = BASE_URL + "/manifest.json";
   const install = manifest.replace("https://", "nuvio://");
-  const donate = safeDonationUrl(process.env.PAYPAL_DONATE_URL);
+  const donate = DONATION_URL;
   const html = [
     '<!doctype html><html lang="en"><head>',
     '<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
@@ -90,18 +82,18 @@ export default function handler(req, res) {
     '<div class="container features"><article class="feature"><span class="feature-icon">' + featureIcon("layers") + '</span><div><h2>Seasonal discovery</h2><p>Browse anime by season, including upcoming, current, and previous releases.</p></div></article>',
     '<article class="feature"><span class="feature-icon" data-icon="radio">' + featureIcon("radio") + '</span><div><h2>Airing now &amp; next</h2><p>Follow what is airing now and what is coming up next.</p></div></article>',
     '<article class="feature"><span class="feature-icon">' + featureIcon("bolt") + '</span><div><h2>One-click installation</h2><p>Add the addon to Nuvio with a single tap or use the manifest URL.</p></div></article></div></section>',
-    '<section class="catalog-section" id="catalogs"><div class="container"><div class="section-heading"><h2>Explore catalogs</h2><p>Eight focused catalogs to help you discover and follow anime releases in Nuvio.</p></div>',
+    '<section class="catalog-section section-reveal" id="catalogs"><div class="container"><div class="section-heading"><h2>Explore catalogs</h2><p>Eight focused catalogs to help you discover and follow anime releases in Nuvio.</p></div>',
     '<div class="catalog-grid">' + CATALOGS.map((item) => card(item)).join("") + '</div>',
     '',
-    '</div></section><section class="about-section" id="about"><div class="container"><div class="about-grid"><div class="about-label"><span class="about-kicker">About AniBloom</span><h2>What AniBloom is</h2></div><div class="about-copy"><p>AniBloom is a catalog-only Nuvio addon for discovering anime. It organizes titles into focused catalogs for upcoming episodes, recently aired episodes, and current, previous, and upcoming seasons—including seasonal movies.</p><p>It helps you find what to watch. Nuvio and your separately installed providers handle the metadata and playback experience.</p></div><div class="about-label about-label-secondary"><h2>What AniBloom is not</h2></div><div class="about-copy"><p>AniBloom is not a streaming service, media host, or metadata provider. It does not host, store, stream, or distribute anime, and it does not provide metadata such as descriptions, artwork, or episode information.</p><p>To see detailed titles and artwork in Nuvio, use a compatible metadata provider alongside AniBloom.</p></div></div><section class="donation-section" id="support" aria-labelledby="support-heading"><div><h2 id="support-heading">Support the addon</h2><p>Your support helps keep AniBloom maintained.</p></div>' + (donate ? '<a class="button donation-button" href="' + donate + '" target="_blank" rel="noopener noreferrer">Support development</a>' : '') + '</section></div></section></main>',
+    '</div></section><section class="about-section section-reveal" id="about"><div class="container"><div class="about-grid"><div class="about-label"><span class="about-kicker">About AniBloom</span><h2>What AniBloom is</h2></div><div class="about-copy"><p>AniBloom is a catalog-only Nuvio addon for discovering anime. It organizes titles into focused catalogs for upcoming episodes, recently aired episodes, and current, previous, and upcoming seasons—including seasonal movies.</p><p>It helps you find what to watch. Nuvio and your separately installed providers handle the metadata and playback experience.</p></div><div class="about-label about-label-secondary"><h2>What AniBloom is not</h2></div><div class="about-copy"><p>AniBloom is not a streaming service, media host, or metadata provider. It does not host, store, stream, or distribute anime, and it does not provide metadata such as descriptions, artwork, or episode information.</p><p>To see detailed titles and artwork in Nuvio, use a compatible metadata provider alongside AniBloom.</p></div></div><section class="donation-section reveal-on-scroll" id="support" aria-labelledby="support-heading"><div><h2 id="support-heading">Support the addon</h2><p>Your support helps keep AniBloom maintained.</p></div><a class="button donation-button" data-support-button href="' + donate + '" target="_blank" rel="noopener noreferrer">Support development</a></section></div></section></main>',
     '<footer class="site-footer">',
     '<div class="container footer-inner"><div><div class="footer-brand"><img src="/assets/anibloom-icon.png" width="40" height="40" alt="">AniBloom</div><p class="footer-subtitle">Anime Discovery for Nuvio · Where anime blooms.</p></div>',
     '<nav class="footer-links" aria-label="Footer links"><a href="' + REPOSITORY_URL + '" target="_blank" rel="noopener noreferrer">◉ &nbsp; Open Source</a>',
     '</nav></div></footer>',
-    '<script>(function(){const links=Array.from(document.querySelectorAll("[data-section-link]"));const sections=links.map(link=>document.getElementById(link.dataset.sectionLink)).filter(Boolean);if(!links.length||!sections.length)return;const setActive=id=>links.forEach(link=>{const active=link.dataset.sectionLink===id;link.classList.toggle("active",active);if(active)link.setAttribute("aria-current","location");else link.removeAttribute("aria-current");});const updateActive=()=>{const marker=Math.min(window.innerHeight*0.35,260);let current=sections[0];for(const section of sections){if(section.getBoundingClientRect().top<=marker)current=section;else break;}setActive(current.id);};links.forEach(link=>link.addEventListener("click",()=>setActive(link.dataset.sectionLink)));window.addEventListener("scroll",updateActive,{passive:true});window.addEventListener("resize",updateActive);window.addEventListener("hashchange",updateActive);updateActive();})();</script></body></html>'
+    '<script>(function(){const links=Array.from(document.querySelectorAll("[data-section-link]"));const sections=links.map(link=>document.getElementById(link.dataset.sectionLink)).filter(Boolean);const header=document.querySelector(".site-header");const revealItems=Array.from(document.querySelectorAll(".feature,.catalog-card,.about-label,.about-copy,.donation-section,.section-reveal"));const setActive=id=>links.forEach(link=>{const active=link.dataset.sectionLink===id;link.classList.toggle("active",active);if(active)link.setAttribute("aria-current","location");else link.removeAttribute("aria-current");});const updateActive=()=>{header?.classList.toggle("is-floating",window.scrollY>24);const marker=Math.min(window.innerHeight*0.35,260);let current=sections[0];for(const section of sections){if(section.getBoundingClientRect().top<=marker)current=section;else break;}setActive(current.id);header?.classList.toggle("is-floating",window.scrollY>24);};const reveal = (entries, observer) => entries.forEach(entry => { if (!entry.isIntersecting) return; entry.target.classList.add("is-visible"); observer.unobserve(entry.target); });const sectionObserver=new IntersectionObserver(reveal,{threshold:.1,rootMargin:"0px 0px -18%"});const cardObserver=new IntersectionObserver(reveal,{threshold:.25,rootMargin:"0px 0px -12%"});revealItems.forEach(item=>{item.classList.add("reveal-on-scroll");if(item.classList.contains("catalog-card"))cardObserver.observe(item);else if(item.classList.contains("section-reveal"))sectionObserver.observe(item);else sectionObserver.observe(item);});links.forEach(link=>link.addEventListener("click",()=>setActive(link.dataset.sectionLink)));window.addEventListener("scroll",updateActive,{passive:true});window.addEventListener("resize",updateActive);window.addEventListener("hashchange",updateActive);updateActive();})();</script></body></html>'
   ].join("");
   res.status(200);
   res.setHeader("Content-Type", "text/html; charset=utf-8");
-  res.setHeader("Cache-Control", "public, max-age=300, stale-while-revalidate=1800");
+  res.setHeader("Cache-Control", "no-store, max-age=0");
   return res.send(html);
 }

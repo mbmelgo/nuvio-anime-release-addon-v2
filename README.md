@@ -6,13 +6,13 @@
 
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/mbmelgo/AniBloom/releases)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/mbmelgo/AniBloom/releases)
 
 > Where anime blooms.
 
 **AniBloom is a catalog-only addon for Nuvio.** It helps you discover anime through eight focused catalogs for upcoming episodes, recently aired episodes, and seasonal releases—including movies.
 
-[Install AniBloom](https://anibloom.vercel.app/manifest.json) · [Homepage](https://anibloom.vercel.app/) · [Support the addon](https://anibloom.vercel.app/#support) · [Releases](https://github.com/mbmelgo/AniBloom/releases)
+[Install AniBloom](https://anibloom.vercel.app/manifest.json) · [Homepage](https://anibloom.vercel.app/) · [Support the addon](https://buymeacoffee.com/melgom475) · [Releases](https://github.com/mbmelgo/AniBloom/releases)
 
 ## What AniBloom is
 
@@ -46,14 +46,14 @@ For manual installation, use the same manifest URL.
 
 ## Support the addon
 
-If AniBloom is useful to you, you can support its ongoing maintenance through the [Support the addon section on the homepage](https://anibloom.vercel.app/#support).
+If AniBloom is useful to you, you can support its ongoing maintenance through [Buy Me a Coffee](https://buymeacoffee.com/melgom475).
 
 ## Development
 
 AniBloom is a JavaScript serverless addon deployed on Vercel.
 
 - **Production:** `v2.0.0`
-- **Development:** `v2.0.0`
+- **Development:** `v2.1.0`
 
 Requirements: Node.js 20 or newer and npm.
 

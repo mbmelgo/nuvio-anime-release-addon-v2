@@ -69,10 +69,13 @@ test("Nuvio deep links and HTTPS manifest fallback are preserved", () => {
   assert.match(html, /Manual installation:/);
 });
 
-test("PayPal donations remain optional and strictly host-validated", () => {
-  assert.match(render("https://www.paypal.me/example"), />Support development<\/a>/);
-  for (const unsafe of ["http://www.paypal.me/example", "https://paypal.example/attacker", "https://user:pass@paypal.me/example", "javascript:alert(1)"]) assert.doesNotMatch(render(unsafe), />Support development<\/a>/);
-  assert.doesNotMatch(render(), />Support development<\/a>/);
+test("support CTA always uses the canonical Buy Me a Coffee destination", async () => {
+  const html = render("https://www.paypal.me/legacy");
+  assert.match(html, /href="https:\/\/buymeacoffee\.com\/melgom475" target="_blank" rel="noopener noreferrer">Support development<\/a>/);
+  assert.doesNotMatch(html, /paypal\.me|paypal\.com/i);
+  const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
+  assert.match(readme, /\[Support the addon\]\(https:\/\/buymeacoffee\.com\/melgom475\)/);
+  assert.doesNotMatch(readme, /paypal\.me|paypal\.com/i);
 });
 
 test("desktop and mobile section navigation tracks the visible page section", () => {
@@ -95,7 +98,7 @@ test("hero artwork fills the right viewport edge and shares the copy's bottom bo
 
 test("About section presents AniBloom identity with readable dark-theme typography", async () => {
   const html = render();
-  assert.match(html, /<section class="about-section" id="about">[\s\S]*?<h2>What AniBloom is<\/h2>/);
+  assert.match(html, /<section class="about-section(?: section-reveal)?" id="about">[\s\S]*?<h2>What AniBloom is<\/h2>/);
   assert.match(html, /<h2>What AniBloom is not<\/h2>/);
   const css = await readFile(new URL("../assets/anibloom.css", import.meta.url), "utf8");
   assert.match(css, /\.about-section\{[^}]*background:var\(--midnight\)/);
@@ -106,12 +109,12 @@ test("section navigation recalculates the active section from scroll position", 
   assert.match(html, /addEventListener\("scroll"/);
   assert.match(html, /getBoundingClientRect\(\)\.top/);
   assert.match(html, /aria-current/);
-  assert.doesNotMatch(html, /new IntersectionObserver/);
+  assert.match(html, /new IntersectionObserver/);
 });
 
 test("About section explains what AniBloom is and is not in a two-column disclosure layout", async () => {
   const html = render();
-  assert.match(html, /<section class="about-section" id="about">[\s\S]*?<h2>What AniBloom is<\/h2>/);
+  assert.match(html, /<section class="about-section(?: section-reveal)?" id="about">[\s\S]*?<h2>What AniBloom is<\/h2>/);
   assert.match(html, /<h2>What AniBloom is not<\/h2>/);
   for (const phrase of [
     "catalog-only Nuvio addon",
@@ -130,13 +133,13 @@ test("About section explains what AniBloom is and is not in a two-column disclos
 
 test("About contains only identity details and support, without a duplicate install CTA", () => {
   const html = render("https://www.paypal.me/example");
-  const about = html.match(/<section class="about-section" id="about">([\s\S]*?)<\/section>/)?.[1] || "";
+  const about = html.match(/<section class="about-section(?: section-reveal)?" id="about">([\s\S]*?)<\/main>/)?.[1] || "";
   assert.match(about, /What AniBloom is/);
   assert.match(about, /What AniBloom is not/);
   assert.match(about, /id="support"/);
   assert.match(about, /Support the addon/);
   assert.match(about, /Support development/);
   assert.doesNotMatch(html, /class="final-cta"|Add AniBloom to Nuvio\./);
-  assert.equal((html.match(/class="donation-section"/g) || []).length, 1);
+  assert.equal((html.match(/class="donation-section(?: reveal-on-scroll)?"/g) || []).length, 1);
   assert.doesNotMatch(html, /footer[^]*Donate/);
 });
