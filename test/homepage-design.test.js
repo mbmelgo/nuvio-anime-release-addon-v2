@@ -101,7 +101,7 @@ test("homepage makes configured donations prominent and keeps the PayPal destina
   const safe = renderHome("https://www.paypal.me/example");
   assert.match(safe, /class="donation-section"/);
   assert.match(safe, /Support the addon/);
-  assert.match(safe, /Help keep the addon maintained/);
+  assert.match(safe, /Your support helps keep the addon maintained/);
   assert.match(safe, /class="button donation-button"[^>]*href="https:\/\/www\.paypal\.me\/example"/);
   assert.match(safe, /target="_blank" rel="noopener noreferrer"/);
   assert.doesNotMatch(safe, /github\.com|GitHub/i);
