@@ -6,13 +6,13 @@
 
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
-[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/mbmelgo/AniBloom/releases)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/AniBloomHQ/AniBloom/releases)
 
 > Where anime blooms.
 
 **AniBloom is a catalog-only addon for Nuvio.** It helps you discover anime through eight focused catalogs for upcoming episodes, recently aired episodes, and seasonal releases—including movies.
 
-[Install AniBloom](https://anibloom.vercel.app/manifest.json) · [Homepage](https://anibloom.vercel.app/) · [Support the addon](https://buymeacoffee.com/melgom475) · [Releases](https://github.com/mbmelgo/AniBloom/releases)
+[Install AniBloom](https://anibloom.vercel.app/manifest.json) · [Homepage](https://anibloom.vercel.app/) · [Support the addon](https://buymeacoffee.com/melgom475) · [Releases](https://github.com/AniBloomHQ/AniBloom/releases)
 
 ## What AniBloom is
 
@@ -59,7 +59,7 @@ You can run your own AniBloom instance instead of using the public deployment. T
 1. Clone the repository and enter the project directory:
 
    ```bash
-   git clone https://github.com/mbmelgo/AniBloom.git
+   git clone https://github.com/AniBloomHQ/AniBloom.git
    cd AniBloom
    ```
 
@@ -105,7 +105,7 @@ The local preview server implements the homepage, manifest, version, catalog, an
 3. Clone the repository if you have not already, then open its directory:
 
    ```bash
-   git clone https://github.com/mbmelgo/AniBloom.git
+   git clone https://github.com/AniBloomHQ/AniBloom.git
    cd AniBloom
    ```
 

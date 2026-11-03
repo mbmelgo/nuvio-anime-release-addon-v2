@@ -15,7 +15,7 @@
     "tag": "v2.1.0",
     "releasedAt": "2026-11-02T16:27:17.782840Z",
     "ciRunId": "41480765933",
-    "ciRunUrl": "https://github.com/mbmelgo/AniBloom/actions/runs/41480765933",
+    "ciRunUrl": "https://github.com/AniBloomHQ/AniBloom/actions/runs/41480765933",
     "smokeTest": "passed"
   },
   "supersededReleaseVersions": [
