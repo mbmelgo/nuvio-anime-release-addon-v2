@@ -11,7 +11,22 @@ const CATALOGS = [
   ["Upcoming Season Movies", "upcoming_season_movies", "Movies from the next upcoming season."]
 ];
 
-const DONATION_URL = "https://buymeacoffee.com/mark475";
+const DEFAULT_DONATION_URL = "https://buymeacoffee.com/mark475";
+
+function getDonationUrl() {
+  const configured = process.env.DONATION_URL?.trim();
+  if (!configured) return DEFAULT_DONATION_URL;
+
+  try {
+    const url = new URL(configured);
+    if (url.protocol !== "https:" || !url.hostname || url.username || url.password) {
+      return DEFAULT_DONATION_URL;
+    }
+    return url.href;
+  } catch {
+    return DEFAULT_DONATION_URL;
+  }
+}
 
 function icon(id) {
   const paths = {
@@ -59,7 +74,7 @@ function featureIcon(kind) {
 export default function handler(req, res) {
   const manifest = BASE_URL + "/manifest.json";
   const install = manifest.replace("https://", "nuvio://");
-  const donate = DONATION_URL;
+  const donate = getDonationUrl();
   const html = [
     '<!doctype html><html lang="en"><head>',
     '<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
