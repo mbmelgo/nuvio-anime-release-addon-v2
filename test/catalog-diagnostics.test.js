@@ -200,3 +200,11 @@ test("catalog diagnostics recognize cross-instance request-lock contention as re
   assert.equal(diagnostics.code, "ANILIST_REQUEST_IN_PROGRESS");
   assert.equal(diagnostics.retryable, true);
 });
+
+test("catalog refresh contention is reported as a retryable catalog error", async () => {
+  const { formatCatalogErrorDiagnostics } = await import("../api/catalog-source.js");
+  const diagnostics = formatCatalogErrorDiagnostics({ code: "CATALOG_REFRESH_IN_PROGRESS" });
+  assert.equal(diagnostics.code, "CATALOG_REFRESH_IN_PROGRESS");
+  assert.equal(diagnostics.category, "catalog_refresh_in_progress");
+  assert.equal(diagnostics.retryable, true);
+});

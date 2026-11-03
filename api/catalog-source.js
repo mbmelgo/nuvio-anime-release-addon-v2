@@ -43,6 +43,7 @@ import {
   normalizeCatalogRequestOptions,
 } from "../lib/catalog-request-guard.js";
 import { acquireCatalogRequestPermit } from "../lib/catalog-request-rate-limiter.js";
+import { acquireCatalogRefreshLock } from "../lib/catalog-rate-limiter.js";
 
 export {
   ANILIST_PAGE_SIZE,
@@ -82,11 +83,14 @@ export function getSeasonInfo(date) {
 let catalogRequestSeen = false;
 
 export function formatCatalogErrorDiagnostics(error) {
-  const category = classifyAniListFailure(error);
+  const category = error?.code === "CATALOG_REFRESH_IN_PROGRESS"
+    ? "catalog_refresh_in_progress"
+    : classifyAniListFailure(error);
   const allowedCodes = new Set([
     "ANILIST_RATE_LIMIT_COOLDOWN",
     "ANILIST_RATE_LIMIT_BUDGET",
     "ANILIST_REQUEST_IN_PROGRESS",
+    "CATALOG_REFRESH_IN_PROGRESS",
     "ANILIST_HTTP_429",
     "ANILIST_HTTP_ERROR",
     "ANILIST_GRAPHQL_ERROR",
@@ -99,6 +103,7 @@ export function formatCatalogErrorDiagnostics(error) {
       "rate_limit_cooldown",
       "rate_limit_budget",
       "request_in_progress",
+      "catalog_refresh_in_progress",
       "rate_limited",
       "timeout",
       "network",
@@ -273,15 +278,10 @@ export default {
         }
       }
 
-      const metas = await buildCatalog(id, seasonInfo, skip, search, diagnosticsStages);
-      if (!diagnosticsEnabled) {
-        const cachedAt = Date.now();
-        await setCatalogRuntimeCache(cacheKey, {
-          metas,
-          cachedAt,
-          freshUntil: cachedAt + (cachePolicy.freshTtlSeconds * 1000),
-        }, cachePolicy.freshTtlSeconds + cachePolicy.staleTtlSeconds);
-      }
+      const build = () => buildCatalog(id, seasonInfo, skip, search, diagnosticsStages);
+      const metas = diagnosticsEnabled
+        ? await build()
+        : await buildCatalogWithRefreshLock(cacheKey, build, cachePolicy);
       return send({ metas }, 200, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null, diagnosticsEnabled, id);
     } catch (error) {
       console.error("[catalog] request failed", {
@@ -2052,6 +2052,106 @@ export async function buildCatalog(id, info, skip, search, diagnostics = null) {
 }
 
 const catalogRefreshes = new Map();
+const CATALOG_REFRESH_LOCK_LEASE_MS = 60_000;
+const CATALOG_REFRESH_LOCK_RENEW_INTERVAL_MS = 20_000;
+const CATALOG_REFRESH_WAIT_MS = 20_000;
+const CATALOG_REFRESH_POLL_MS = 500;
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function isFreshCatalogCache(cached) {
+  return Boolean(
+    cached
+      && Array.isArray(cached.metas)
+      && Number(cached.freshUntil) > Date.now(),
+  );
+}
+
+async function cacheCatalogMetas(cacheKey, metas, cachePolicy) {
+  const cachedAt = Date.now();
+  await setCatalogRuntimeCache(cacheKey, {
+    metas,
+    cachedAt,
+    freshUntil: cachedAt + (cachePolicy.freshTtlSeconds * 1000),
+  }, cachePolicy.freshTtlSeconds + cachePolicy.staleTtlSeconds);
+}
+
+function startCatalogRefreshLeaseRenewal(lock) {
+  let renewalInFlight = false;
+  let leaseLost = false;
+  const timer = setInterval(async () => {
+    if (renewalInFlight) return;
+    renewalInFlight = true;
+    try {
+      const renewed = await lock.renew(CATALOG_REFRESH_LOCK_LEASE_MS);
+      if (renewed === false) {
+        leaseLost = true;
+        clearInterval(timer);
+      }
+    } finally {
+      renewalInFlight = false;
+    }
+  }, CATALOG_REFRESH_LOCK_RENEW_INTERVAL_MS);
+  return {
+    isLost: () => leaseLost,
+    async release() {
+      clearInterval(timer);
+      await lock.release();
+    },
+  };
+}
+
+async function buildCatalogWithRefreshLock(cacheKey, build, cachePolicy) {
+  const deadline = Date.now() + CATALOG_REFRESH_WAIT_MS;
+  while (true) {
+    const lock = await acquireCatalogRefreshLock(cacheKey, {
+      leaseMs: CATALOG_REFRESH_LOCK_LEASE_MS,
+    });
+
+    if (lock.status === "unavailable") {
+      const cached = await getCatalogRuntimeCache(cacheKey);
+      if (isFreshCatalogCache(cached)) return cached.metas;
+      const metas = await build();
+      await cacheCatalogMetas(cacheKey, metas, cachePolicy);
+      return metas;
+    }
+
+    if (lock.status === "acquired") {
+      const lease = startCatalogRefreshLeaseRenewal(lock);
+      try {
+        const cached = await getCatalogRuntimeCache(cacheKey);
+        if (isFreshCatalogCache(cached)) return cached.metas;
+        const metas = await build();
+        const renewed = await lock.renew(CATALOG_REFRESH_LOCK_LEASE_MS);
+        if (lease.isLost() || renewed === false) {
+          const latest = await getCatalogRuntimeCache(cacheKey);
+          if (isFreshCatalogCache(latest)) return latest.metas;
+          const error = new Error("Catalog refresh lease was lost before publishing the result");
+          error.code = "CATALOG_REFRESH_IN_PROGRESS";
+          error.retryAfterSeconds = 10;
+          throw error;
+        }
+        if (renewed === null) return metas;
+        await cacheCatalogMetas(cacheKey, metas, cachePolicy);
+        return metas;
+      } finally {
+        await lease.release();
+      }
+    }
+
+    const cached = await getCatalogRuntimeCache(cacheKey);
+    if (isFreshCatalogCache(cached)) return cached.metas;
+    if (Date.now() >= deadline) {
+      const error = new Error("Catalog refresh is already in progress on another instance");
+      error.code = "CATALOG_REFRESH_IN_PROGRESS";
+      error.retryAfterSeconds = 10;
+      throw error;
+    }
+    await sleep(Math.min(CATALOG_REFRESH_POLL_MS, Math.max(1, deadline - Date.now())));
+  }
+}
 
 export function getCatalogRuntimeCachePolicy(id) {
   if (id === "upcoming_3_days" || id === "previous_3_days") {
@@ -2064,13 +2164,26 @@ async function scheduleCatalogRefresh(cacheKey, id, seasonInfo, skip, search, ca
   if (catalogRefreshes.has(cacheKey)) return;
 
   const refresh = (async () => {
-    const metas = await buildCatalog(id, seasonInfo, skip, search, null);
-    const cachedAt = Date.now();
-    await setCatalogRuntimeCache(cacheKey, {
-      metas,
-      cachedAt,
-      freshUntil: cachedAt + (cachePolicy.freshTtlSeconds * 1000),
-    }, cachePolicy.freshTtlSeconds + cachePolicy.staleTtlSeconds);
+    const lock = await acquireCatalogRefreshLock(cacheKey, {
+      leaseMs: CATALOG_REFRESH_LOCK_LEASE_MS,
+    });
+    if (lock.status === "contended") return;
+
+    const lease = lock.status === "acquired"
+      ? startCatalogRefreshLeaseRenewal(lock)
+      : null;
+    try {
+      const cached = await getCatalogRuntimeCache(cacheKey);
+      if (isFreshCatalogCache(cached)) return;
+      const metas = await buildCatalog(id, seasonInfo, skip, search, null);
+      if (lease) {
+        const renewed = await lock.renew(CATALOG_REFRESH_LOCK_LEASE_MS);
+        if (lease.isLost() || renewed === false || renewed === null) return;
+      }
+      await cacheCatalogMetas(cacheKey, metas, cachePolicy);
+    } finally {
+      if (lease) await lease.release();
+    }
   })().catch((error) => {
     console.error("[catalog] background refresh failed", {
       id,
