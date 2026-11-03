@@ -1958,7 +1958,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
           uniqueEligibleRows: uniqueEligibleRows.length,
           searchedRows: searchedRows.length,
           metas: filteredMetas.length,
-          fallbackMetas: filteredMetas.filter((meta) => /^(?:mal|anilist):\\d+$/.test(String(meta?.id || ""))).length,
+          fallbackMetas: filteredMetas.filter((meta) => /^(?:mal|anilist):\d+$/.test(String(meta?.id || ""))).length,
         });
       }
       return filteredMetas;
