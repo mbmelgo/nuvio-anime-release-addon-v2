@@ -366,3 +366,52 @@ test("AniList failure classification distinguishes cooldown, budget, HTTP, timeo
   assert.equal(classifyAniListFailure(timeout), "timeout");
   assert.equal(classifyAniListFailure(new TypeError("fetch failed")), "network");
 });
+
+
+test("AniList waits for a bounded upstream token refill instead of failing immediately", async () => {
+  const { acquireAniListRequestPermit, setAniListRateLimiterForTests } = await import("../lib/catalog-rate-limiter.js");
+  let limiterCalls = 0;
+  const waits = [];
+  setAniListRateLimiterForTests(async () => {
+    limiterCalls += 1;
+    return limiterCalls === 1
+      ? { success: false, reset: Date.now() + 1_000 }
+      : { success: true };
+  });
+  try {
+    const permit = await acquireAniListRequestPermit({
+      maxWaitMs: 2_000,
+      wait: async (ms) => waits.push(ms),
+    });
+    assert.equal(permit.allowed, true);
+    assert.equal(permit.source, "injected");
+    assert.equal(limiterCalls, 2);
+    assert.deepEqual(waits, [1_000]);
+  } finally {
+    setAniListRateLimiterForTests(null);
+    clearAniListRateLimitState();
+  }
+});
+
+test("AniList does not wait beyond the configured upstream permit deadline", async () => {
+  const { acquireAniListRequestPermit, setAniListRateLimiterForTests } = await import("../lib/catalog-rate-limiter.js");
+  let limiterCalls = 0;
+  let waitCalls = 0;
+  setAniListRateLimiterForTests(async () => {
+    limiterCalls += 1;
+    return { success: false, reset: Date.now() + 1_000 };
+  });
+  try {
+    const permit = await acquireAniListRequestPermit({
+      maxWaitMs: 500,
+      wait: async () => { waitCalls += 1; },
+    });
+    assert.equal(permit.allowed, false);
+    assert.equal(permit.retryAfterMs, 1_000);
+    assert.equal(limiterCalls, 1);
+    assert.equal(waitCalls, 0);
+  } finally {
+    setAniListRateLimiterForTests(null);
+    clearAniListRateLimitState();
+  }
+});
