@@ -76,9 +76,7 @@ jobs:
           private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
           owner: AniBloomHQ
           repositories: AniBloom
-          permission-contents: write
           permission-pull-requests: write
-          permission-actions: write
       - name: Open version metadata pull request
         shell: bash
         env:
@@ -110,6 +108,3 @@ jobs:
               --body "Automated patch-version metadata update generated from main commit $GITHUB_SHA. This pull request keeps main protected and runs the normal pull-request CI before the metadata is merged."
           fi
 
-          # GITHUB_TOKEN-created PRs do not start pull_request workflows automatically.
-          # Dispatch the same PR CI workflow against this exact automation branch.
-          gh workflow run pr-ci.yml --repo "$GITHUB_REPOSITORY" --ref "$branch"
