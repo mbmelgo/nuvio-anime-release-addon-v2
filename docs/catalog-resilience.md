@@ -45,7 +45,7 @@ A true global limiter still requires an atomic coordination primitive (for examp
 - Redis client: `@upstash/redis` 1.41.0.
 - Rate limiter: `@upstash/ratelimit` 2.2.0.
 - Algorithm: atomic token bucket, 20-token refill per 60 seconds, maximum burst of 5.
-- Shared identifier: `global`; do not derive the identifier from user input or catalog query parameters.
+- Shared identifier: `global`; do not derive the identifier from user input or catalog query parameters. The Redis key prefix is also scoped by `VERCEL_ENV`, keeping Preview traffic separate from the Production budget even though both environments share the same database.
 - Redis timeout: 800 ms; analytics disabled; denied decisions are cached in-process by the SDK.
 - Vercel Marketplace environment variables are sensitive and must never be copied into source, logs, tests, or public artifacts.
 
