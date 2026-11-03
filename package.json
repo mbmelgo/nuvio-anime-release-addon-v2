@@ -12,6 +12,8 @@
     "compare:snapshots": "node scripts/compare-catalog-snapshots.js"
   },
   "dependencies": {
-    "@vercel/functions": "3.10.5"
+    "@vercel/functions": "3.10.5",
+    "@upstash/redis": "1.41.0",
+    "@upstash/ratelimit": "2.2.0"
   }
 }
