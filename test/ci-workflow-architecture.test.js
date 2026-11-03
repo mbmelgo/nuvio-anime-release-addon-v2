@@ -17,21 +17,18 @@ test("main CI uses a scoped GitHub App token for automated PR events", () => {
   assert.ok(ci.includes("cancel-in-progress: true"));
   assert.ok(ci.includes("name: Run tests\n        run: npm test"));
   assert.ok(ci.includes("version-automation:\n    needs: test"));
-  assert.ok(ci.includes("contents: write\n      pull-requests: write\n      actions: write"));
+  assert.ok(ci.includes("permissions:\n      contents: write"));
   assert.ok(ci.includes("name: Create automation GitHub App token"));
   assert.ok(ci.includes("uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510"));
   assert.ok(ci.includes("app-id: ${{ vars.AUTOMATION_APP_ID }}"));
   assert.ok(ci.includes("private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}"));
   assert.ok(ci.includes("repositories: AniBloom"));
-  assert.ok(ci.includes("permission-contents: write"));
   assert.ok(ci.includes("permission-pull-requests: write"));
-  assert.ok(ci.includes("permission-actions: write"));
   assert.ok(ci.includes("GH_TOKEN: ${{ steps.automation-app-token.outputs.token }}"));
   assert.ok(ci.includes('git commit -m "chore: bump patch version [skip-version-automation]"'));
   assert.ok(ci.includes("gh pr create"));
   assert.ok(ci.includes("--base main"));
-  assert.ok(ci.includes("gh workflow run pr-ci.yml"));
-  assert.ok(ci.includes('--ref "$branch"'));
+  assert.ok(!ci.includes("gh workflow run pr-ci.yml"));
   assert.ok(!ci.includes("git push origin HEAD:main"));
 });
 
@@ -53,28 +50,23 @@ test("release pipeline uses the scoped GitHub App token only for release-state P
   assert.ok(!sync.includes("name: Bump patch version and sync metadata"));
   assert.ok(sync.includes("name: Run full CI"));
   assert.ok(sync.includes("actions: write"));
-  assert.ok(sync.includes("pull-requests: write"));
   assert.ok(sync.includes("automation/release-state-v$release_version"));
   assert.ok(sync.includes("[skip-version-automation]"));
   assert.ok(sync.includes("gh pr create"));
-  assert.ok(sync.includes("gh workflow run pr-ci.yml"));
-  assert.ok(sync.includes('--ref "$branch"'));
   assert.ok(sync.includes("name: Create automation GitHub App token"));
   assert.ok(sync.includes("uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510"));
   assert.ok(sync.includes("app-id: ${{ vars.AUTOMATION_APP_ID }}"));
   assert.ok(sync.includes("private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}"));
   assert.ok(sync.includes("repositories: AniBloom"));
-  assert.ok(sync.includes("permission-contents: write"));
   assert.ok(sync.includes("permission-pull-requests: write"));
-  assert.ok(sync.includes("permission-actions: write"));
   assert.ok(sync.includes("AUTOMATION_TOKEN: ${{ steps.automation-app-token.outputs.token }}"));
   assert.ok(sync.includes('GH_TOKEN="$AUTOMATION_TOKEN" gh pr create'));
-  assert.ok(sync.includes('GH_TOKEN="$AUTOMATION_TOKEN" gh workflow run pr-ci.yml'));
   assert.ok(!sync.includes("git push origin HEAD:main"));
   assert.ok(sync.includes("name: Trigger post-release catalog snapshot"));
   assert.ok(sync.includes("gh workflow run catalog-snapshot.yml"));
   assert.ok(sync.includes("-f release_version="));
   assert.ok(sync.includes("-f release_sha="));
+  assert.ok(!sync.includes("pull-requests: write\n  actions: write"));
 });
 
 test("release workflow shell blocks do not contain inline GitHub expressions", () => {
