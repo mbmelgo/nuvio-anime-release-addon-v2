@@ -93,10 +93,10 @@ export function formatCatalogErrorDiagnostics(error) {
       "rate_limit_cooldown",
       "rate_limit_budget",
       "rate_limited",
-      "upstream_http",
       "timeout",
       "network",
-    ].includes(category),
+    ].includes(category)
+      || (category === "upstream_http" && Number(error?.status) >= 500 && Number(error?.status) <= 599),
   };
   const status = Number(error?.status);
   if (Number.isInteger(status) && status >= 100 && status <= 599) {
