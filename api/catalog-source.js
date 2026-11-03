@@ -138,6 +138,26 @@ export function mergeCatalogDiagnosticStages(target, pageStages) {
   return target;
 }
 
+const ROLLING_CATALOG_COUNTERS = Object.freeze({
+  schedulePages: "rollingSchedulePages",
+  scheduleRows: "rollingScheduleRows",
+  eligibleRows: "rollingEligibleRows",
+  uniqueEligibleRows: "rollingUniqueEligibleRows",
+  searchedRows: "rollingSearchedRows",
+  metas: "rollingMetas",
+  fallbackMetas: "rollingFallbackMetas",
+});
+
+export function recordRollingCatalogDiagnostics(target, counts = {}) {
+  if (!target) return target;
+  for (const [input, output] of Object.entries(ROLLING_CATALOG_COUNTERS)) {
+    const value = Number(counts[input]);
+    if (!Number.isFinite(value) || value <= 0) continue;
+    target[output] = (Number(target[output]) || 0) + Math.round(value);
+  }
+  return target;
+}
+
 export default {
   async fetch(request) {
   // Use Vercel's Web-standard Request interface to avoid the legacy
@@ -1701,10 +1721,16 @@ export async function fetchValidatedSeasonCatalogPage({
   const pageOffset = normalizedSkip % NUVIO_PAGE_SIZE;
   const fetchStart = diagnostics ? performance.now() : 0;
   const rows = await fetchPage(filter, anilistPage, search, { includeMalId: true });
-  if (diagnostics) diagnostics.anilist = performance.now() - fetchStart;
+  if (diagnostics) {
+    diagnostics.anilist = performance.now() - fetchStart;
+    diagnostics.seasonAnilistRows = Array.isArray(rows) ? rows.length : 0;
+  }
   const canonicalStart = diagnostics ? performance.now() : 0;
   const canonical = await canonicalizePage(rows, diagnostics);
-  if (diagnostics) diagnostics.identity = performance.now() - canonicalStart;
+  if (diagnostics) {
+    diagnostics.identity = performance.now() - canonicalStart;
+    diagnostics.seasonCanonicalMetas = Array.isArray(canonical) ? canonical.length : 0;
+  }
   return canonical.slice(pageOffset, pageOffset + NUVIO_PAGE_SIZE);
 }
 
@@ -1757,14 +1783,17 @@ export async function buildRollingCatalog(id, date, skip, search, {
     fetchPage: async (page) => {
       const stageStart = diagnostics ? performance.now() : 0;
       try {
+        if (diagnostics) recordRollingCatalogDiagnostics(diagnostics, { schedulePages: 1 });
         const rows = await fetchPage(range.start, range.end, futureOnly, page, sort);
-        return (Array.isArray(rows) ? rows : []).filter((row) => {
+        const filteredRows = (Array.isArray(rows) ? rows : []).filter((row) => {
           const airingAt = Number(row?.airingAt);
           const airingAtMs = airingAt > 100_000_000_000 ? airingAt : airingAt * 1000;
           return Number.isFinite(airingAt)
             && airingAtMs > range.start
             && airingAtMs < range.end;
         });
+        if (diagnostics) recordRollingCatalogDiagnostics(diagnostics, { scheduleRows: filteredRows.length });
+        return filteredRows;
       } finally {
         if (diagnostics) diagnostics.schedule = (diagnostics.schedule || 0) + (performance.now() - stageStart);
       }
@@ -1922,7 +1951,17 @@ export async function buildRollingCatalog(id, date, skip, search, {
       const finalMetas = enableKitsuFallback
         ? await applyKitsuFallback(metas, resolveKitsuMappings, diagnostics)
         : metas;
-      return filterCatalogMetasBySearch(finalMetas, search);
+      const filteredMetas = filterCatalogMetasBySearch(finalMetas, search);
+      if (diagnostics) {
+        recordRollingCatalogDiagnostics(diagnostics, {
+          eligibleRows: eligibleRows.length,
+          uniqueEligibleRows: uniqueEligibleRows.length,
+          searchedRows: searchedRows.length,
+          metas: filteredMetas.length,
+          fallbackMetas: filteredMetas.filter((meta) => /^(?:mal|anilist):\\d+$/.test(String(meta?.id || ""))).length,
+        });
+      }
+      return filteredMetas;
     },
   });
 }
