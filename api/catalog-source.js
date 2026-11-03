@@ -32,6 +32,12 @@ import {
   resolveAniListMappingsSecondary,
   resolveAniListMappingsByMalIds,
 } from "../lib/secondary-mapping.js";
+import {
+  catalogCacheKey,
+  getCatalogRuntimeCache,
+  keepCatalogTaskAlive,
+  setCatalogRuntimeCache,
+} from "../lib/catalog-runtime-cache.js";
 
 export {
   ANILIST_PAGE_SIZE,
@@ -132,6 +138,26 @@ export function mergeCatalogDiagnosticStages(target, pageStages) {
   return target;
 }
 
+const ROLLING_CATALOG_COUNTERS = Object.freeze({
+  schedulePages: "rollingSchedulePages",
+  scheduleRows: "rollingScheduleRows",
+  eligibleRows: "rollingEligibleRows",
+  uniqueEligibleRows: "rollingUniqueEligibleRows",
+  searchedRows: "rollingSearchedRows",
+  metas: "rollingMetas",
+  fallbackMetas: "rollingFallbackMetas",
+});
+
+export function recordRollingCatalogDiagnostics(target, counts = {}) {
+  if (!target) return target;
+  for (const [input, output] of Object.entries(ROLLING_CATALOG_COUNTERS)) {
+    const value = Number(counts[input]);
+    if (!Number.isFinite(value) || value <= 0) continue;
+    target[output] = (Number(target[output]) || 0) + Math.round(value);
+  }
+  return target;
+}
+
 export default {
   async fetch(request) {
   // Use Vercel's Web-standard Request interface to avoid the legacy
@@ -162,14 +188,51 @@ export default {
     if (!definition || (requestedType === "anime" ? definition.type !== "series" : definition.type !== requestedType)) {
       return send({ metas: [] }, 404);
     }
+    const skip = Math.max(0, Number(query.skip || 0) || 0);
+    const search = String(query.search || "").trim();
+    const cachePolicy = getCatalogRuntimeCachePolicy(id);
+    const cacheKey = catalogCacheKey("catalog-response", { id, seasonInfo, skip, search });
     try {
-      const skip = Math.max(0, Number(query.skip || 0) || 0);
-      const search = String(query.search || "").trim();
+      if (!diagnosticsEnabled) {
+        const cached = await getCatalogRuntimeCache(cacheKey);
+        if (cached && Array.isArray(cached.metas)) {
+          if (Number(cached.freshUntil) > Date.now()) {
+            return send({ metas: cached.metas }, 200, null, false, id);
+          }
+
+          await scheduleCatalogRefresh(cacheKey, id, seasonInfo, skip, search, cachePolicy);
+          return send(
+            { metas: cached.metas },
+            200,
+            { "X-Nuvio-Catalog-Stale": "1", "Cache-Control": "no-store" },
+            false,
+            id,
+          );
+        }
+      }
+
       const metas = await buildCatalog(id, seasonInfo, skip, search, diagnosticsStages);
+      if (!diagnosticsEnabled) {
+        const cachedAt = Date.now();
+        await setCatalogRuntimeCache(cacheKey, {
+          metas,
+          cachedAt,
+          freshUntil: cachedAt + (cachePolicy.freshTtlSeconds * 1000),
+        }, cachePolicy.freshTtlSeconds + cachePolicy.staleTtlSeconds);
+      }
       return send({ metas }, 200, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null, diagnosticsEnabled, id);
     } catch (error) {
-      console.error("[catalog] request failed", { id, skip: query.skip, search: query.search, error });
-      return send({ metas: [] }, 500, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null, diagnosticsEnabled);
+      console.error("[catalog] request failed", {
+        id,
+        kind: error?.name || "Error",
+      });
+      return send(
+        { error: "Catalog temporarily unavailable", metas: [] },
+        503,
+        diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null,
+        diagnosticsEnabled,
+        id,
+      );
     }
   }
 
@@ -1658,10 +1721,16 @@ export async function fetchValidatedSeasonCatalogPage({
   const pageOffset = normalizedSkip % NUVIO_PAGE_SIZE;
   const fetchStart = diagnostics ? performance.now() : 0;
   const rows = await fetchPage(filter, anilistPage, search, { includeMalId: true });
-  if (diagnostics) diagnostics.anilist = performance.now() - fetchStart;
+  if (diagnostics) {
+    diagnostics.anilist = performance.now() - fetchStart;
+    diagnostics.seasonAnilistRows = Array.isArray(rows) ? rows.length : 0;
+  }
   const canonicalStart = diagnostics ? performance.now() : 0;
   const canonical = await canonicalizePage(rows, diagnostics);
-  if (diagnostics) diagnostics.identity = performance.now() - canonicalStart;
+  if (diagnostics) {
+    diagnostics.identity = performance.now() - canonicalStart;
+    diagnostics.seasonCanonicalMetas = Array.isArray(canonical) ? canonical.length : 0;
+  }
   return canonical.slice(pageOffset, pageOffset + NUVIO_PAGE_SIZE);
 }
 
@@ -1709,19 +1778,22 @@ export async function buildRollingCatalog(id, date, skip, search, {
   const sort = futureOnly ? "TIME" : "TIME_DESC";
   // Share one TMDB budget across all AniList pages consumed by this rolling request.
   const tmdbResolverBudget = { deadlineAt: null };
-  return collectValidatedCatalogPage({
+  const result = await collectValidatedCatalogPage({
     skip, pageSize, maxPages,
     fetchPage: async (page) => {
       const stageStart = diagnostics ? performance.now() : 0;
       try {
+        if (diagnostics) recordRollingCatalogDiagnostics(diagnostics, { schedulePages: 1 });
         const rows = await fetchPage(range.start, range.end, futureOnly, page, sort);
-        return (Array.isArray(rows) ? rows : []).filter((row) => {
+        const filteredRows = (Array.isArray(rows) ? rows : []).filter((row) => {
           const airingAt = Number(row?.airingAt);
           const airingAtMs = airingAt > 100_000_000_000 ? airingAt : airingAt * 1000;
           return Number.isFinite(airingAt)
             && airingAtMs > range.start
             && airingAtMs < range.end;
         });
+        if (diagnostics) recordRollingCatalogDiagnostics(diagnostics, { scheduleRows: filteredRows.length });
+        return filteredRows;
       } finally {
         if (diagnostics) diagnostics.schedule = (diagnostics.schedule || 0) + (performance.now() - stageStart);
       }
@@ -1879,9 +1951,21 @@ export async function buildRollingCatalog(id, date, skip, search, {
       const finalMetas = enableKitsuFallback
         ? await applyKitsuFallback(metas, resolveKitsuMappings, diagnostics)
         : metas;
-      return filterCatalogMetasBySearch(finalMetas, search);
+      const filteredMetas = filterCatalogMetasBySearch(finalMetas, search);
+      if (diagnostics) {
+        recordRollingCatalogDiagnostics(diagnostics, {
+          eligibleRows: eligibleRows.length,
+          uniqueEligibleRows: uniqueEligibleRows.length,
+          searchedRows: searchedRows.length,
+          metas: filteredMetas.length,
+          fallbackMetas: filteredMetas.filter((meta) => /^(?:mal|anilist):\d+$/.test(String(meta?.id || ""))).length,
+        });
+      }
+      return filteredMetas;
     },
   });
+  if (diagnostics) diagnostics.rollingReturnedMetas = Array.isArray(result) ? result.length : 0;
+  return result;
 }
 export async function buildCatalog(id, info, skip, search, diagnostics = null) {
   const filter = getCatalogFilter(id, info);
@@ -1900,6 +1984,39 @@ export async function buildCatalog(id, info, skip, search, diagnostics = null) {
   return [];
 }
 
+const catalogRefreshes = new Map();
+
+export function getCatalogRuntimeCachePolicy(id) {
+  if (id === "upcoming_3_days" || id === "previous_3_days") {
+    return { freshTtlSeconds: 30, staleTtlSeconds: 300 };
+  }
+  return { freshTtlSeconds: 3600, staleTtlSeconds: 86400 };
+}
+
+async function scheduleCatalogRefresh(cacheKey, id, seasonInfo, skip, search, cachePolicy) {
+  if (catalogRefreshes.has(cacheKey)) return;
+
+  const refresh = (async () => {
+    const metas = await buildCatalog(id, seasonInfo, skip, search, null);
+    const cachedAt = Date.now();
+    await setCatalogRuntimeCache(cacheKey, {
+      metas,
+      cachedAt,
+      freshUntil: cachedAt + (cachePolicy.freshTtlSeconds * 1000),
+    }, cachePolicy.freshTtlSeconds + cachePolicy.staleTtlSeconds);
+  })().catch((error) => {
+    console.error("[catalog] background refresh failed", {
+      id,
+      kind: error?.name || "Error",
+    });
+  }).finally(() => {
+    catalogRefreshes.delete(cacheKey);
+  });
+
+  catalogRefreshes.set(cacheKey, refresh);
+  await keepCatalogTaskAlive(refresh);
+}
+
 export function getCatalogCacheControl(id, diagnosticsEnabled = false, status = 200) {
   if (diagnosticsEnabled || Number(status) >= 500) return "no-store";
   if (id === "upcoming_3_days" || id === "previous_3_days") {
@@ -1907,7 +2024,7 @@ export function getCatalogCacheControl(id, diagnosticsEnabled = false, status = 
     // freshness bounded and do not permit a long stale fallback for these feeds.
     return "public, s-maxage=30, stale-while-revalidate=30";
   }
-  return "public, s-maxage=3600, stale-while-revalidate=86400, stale-if-error=86400";
+  return "public, s-maxage=3600, stale-while-revalidate=86400";
 }
 
 function send(body, status = 200, extraHeaders = null, diagnosticsEnabled = false, catalogId = "") {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatCatalogDiagnostics, getCatalogCacheControl, mergeCatalogDiagnosticStages, normalizeCatalogOptions } from "../api/catalog-source.js";
+import { formatCatalogDiagnostics, getCatalogCacheControl, mergeCatalogDiagnosticStages, normalizeCatalogOptions, recordRollingCatalogDiagnostics } from "../api/catalog-source.js";
 
 test("TMDB resolver log summary includes stage duration and only aggregate counters", async () => {
   const { formatTMDBResolverSummary } = await import("../api/catalog-source.js");
@@ -101,8 +101,64 @@ test("rolling page diagnostic stages accumulate instead of overwriting earlier p
 test("rolling catalogs use short shared caching without long stale fallbacks", () => {
   assert.equal(getCatalogCacheControl("upcoming_3_days"), "public, s-maxage=30, stale-while-revalidate=30");
   assert.equal(getCatalogCacheControl("previous_3_days"), "public, s-maxage=30, stale-while-revalidate=30");
-  assert.equal(getCatalogCacheControl("current_season"), "public, s-maxage=3600, stale-while-revalidate=86400, stale-if-error=86400");
+  assert.equal(getCatalogCacheControl("current_season"), "public, s-maxage=3600, stale-while-revalidate=86400");
   assert.equal(getCatalogCacheControl("upcoming_3_days", true), "no-store");
   assert.equal(getCatalogCacheControl("upcoming_3_days", false, 500), "no-store");
   assert.equal(getCatalogCacheControl("current_season", false, 500), "no-store");
+});
+
+test("catalog runtime cache keeps a longer application-level stale window than its freshness window", async () => {
+  const { getCatalogRuntimeCachePolicy } = await import("../api/catalog-source.js");
+  assert.deepEqual(getCatalogRuntimeCachePolicy("upcoming_3_days"), {
+    freshTtlSeconds: 30,
+    staleTtlSeconds: 300,
+  });
+  assert.deepEqual(getCatalogRuntimeCachePolicy("previous_season"), {
+    freshTtlSeconds: 3600,
+    staleTtlSeconds: 86400,
+  });
+});
+
+
+test("rolling catalog counters accumulate safe aggregate counts without exposing row data", () => {
+  const diagnostics = { rollingEligibleRows: 3, rollingMetas: 2 };
+  recordRollingCatalogDiagnostics(diagnostics, {
+    schedulePages: 2,
+    scheduleRows: 18,
+    eligibleRows: 12,
+    uniqueEligibleRows: 10,
+    searchedRows: 8,
+    metas: 7,
+    fallbackMetas: 3,
+  });
+  recordRollingCatalogDiagnostics(diagnostics, {
+    schedulePages: 1,
+    scheduleRows: 5,
+    eligibleRows: 4,
+    uniqueEligibleRows: 4,
+    searchedRows: 3,
+    metas: 3,
+    fallbackMetas: 1,
+  });
+
+  assert.deepEqual(diagnostics, {
+    rollingEligibleRows: 19,
+    rollingMetas: 12,
+    rollingSchedulePages: 3,
+    rollingScheduleRows: 23,
+    rollingUniqueEligibleRows: 14,
+    rollingSearchedRows: 11,
+    rollingFallbackMetas: 4,
+  });
+});
+
+test("rolling catalog counter helper safely ignores invalid values and missing targets", () => {
+  const diagnostics = {};
+  recordRollingCatalogDiagnostics(diagnostics, {
+    schedulePages: -1,
+    scheduleRows: "not-a-number",
+    eligibleRows: 2,
+  });
+  assert.deepEqual(diagnostics, { rollingEligibleRows: 2 });
+  assert.equal(recordRollingCatalogDiagnostics(null, { metas: 1 }), null);
 });

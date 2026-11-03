@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { clearAniListRateLimitState, queryAnime } from "../lib/catalog-anilist.js";
+import { clearAniListRateLimitState, clearAniListResponseCache, queryAnime } from "../lib/catalog-anilist.js";
 
 test("AniList fails fast on HTTP 429 and opens a cooldown", async () => {
   const originalFetch = globalThis.fetch;
@@ -195,6 +195,158 @@ test("AniList preserves 429 cooldown when the response body stalls", async () =>
     assert.equal(calls, 1);
   } finally {
     globalThis.fetch = originalFetch;
+    clearAniListRateLimitState();
+  }
+});
+
+test("AniList Retry-After is honored beyond the previous one-minute cap", async () => {
+  const { getAniListRetryDelayMs } = await import("../lib/catalog-anilist.js");
+  assert.equal(getAniListRetryDelayMs(new Headers({ "Retry-After": "120" }), 1_000), 120_000);
+});
+
+test("AniList rate-limit reset header is used when Retry-After is absent", async () => {
+  const { getAniListRetryDelayMs } = await import("../lib/catalog-anilist.js");
+  assert.equal(getAniListRetryDelayMs(new Headers({ "X-RateLimit-Reset": "1700" }), 1_000_000), 700_000);
+});
+
+test("AniList upstream failures are classified without exposing request data", async () => {
+  const { classifyAniListFailure } = await import("../lib/catalog-anilist.js");
+  const timeout = new Error("request timed out");
+  timeout.name = "TimeoutError";
+  assert.equal(classifyAniListFailure(timeout), "timeout");
+  assert.equal(classifyAniListFailure(new TypeError("fetch failed")), "network");
+  assert.equal(classifyAniListFailure(new Error("GraphQL response invalid")), "upstream");
+});
+
+test("AniList reuses Runtime Cache responses after the function-local cache is cleared", async () => {
+  const { setCatalogRuntimeCacheForTests } = await import("../lib/catalog-runtime-cache.js");
+  const values = new Map();
+  setCatalogRuntimeCacheForTests({
+    async get(key) { return values.get(key) ?? null; },
+    async set(key, value) { values.set(key, value); },
+  });
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    return {
+      ok: true,
+      status: 200,
+      headers: new Headers(),
+      async json() { return { data: { Page: { media: [{ id: 321 }] } } }; },
+    };
+  };
+
+  clearAniListRateLimitState();
+  try {
+    const filter = { season: "FALL", seasonYear: 2026, sort: ["ID"] };
+    assert.deepEqual(await queryAnime(filter, 1), [{ id: 321 }]);
+    clearAniListResponseCache();
+    assert.deepEqual(await queryAnime(filter, 1), [{ id: 321 }]);
+    assert.equal(calls, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    setCatalogRuntimeCacheForTests(null);
+    clearAniListRateLimitState();
+  }
+});
+
+test("AniList shares a 429 cooldown across function-local state", async () => {
+  const { setCatalogRuntimeCacheForTests } = await import("../lib/catalog-runtime-cache.js");
+  const values = new Map();
+  setCatalogRuntimeCacheForTests({
+    async get(key) { return values.get(key) ?? null; },
+    async set(key, value) { values.set(key, value); },
+  });
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    return {
+      ok: false,
+      status: 429,
+      headers: new Headers({ "Retry-After": "120" }),
+      async json() { return {}; },
+    };
+  };
+
+  clearAniListRateLimitState();
+  try {
+    const filter = { season: "FALL", seasonYear: 2026, sort: ["ID"] };
+    await assert.rejects(queryAnime(filter, 1), /HTTP 429/);
+    clearAniListRateLimitState();
+    await assert.rejects(queryAnime(filter, 1), /cooldown active/);
+    assert.equal(calls, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    setCatalogRuntimeCacheForTests(null);
+    clearAniListRateLimitState();
+  }
+});
+
+test("AniList relative rate-limit reset values are treated as seconds", async () => {
+  const { getAniListRetryDelayMs } = await import("../lib/catalog-anilist.js");
+  assert.equal(getAniListRetryDelayMs(new Headers({ "X-RateLimit-Reset": "45" }), 1_000_000), 45_000);
+});
+
+
+test("AniList blocks upstream requests when the shared token bucket is exhausted", async () => {
+  const { setAniListRateLimiterForTests } = await import("../lib/catalog-rate-limiter.js");
+  const originalFetch = globalThis.fetch;
+  let fetchCalls = 0;
+  globalThis.fetch = async () => {
+    fetchCalls += 1;
+    throw new Error("upstream must not be called");
+  };
+  setAniListRateLimiterForTests(async () => ({ success: false, reset: Date.now() + 15_000 }));
+  clearAniListRateLimitState();
+  try {
+    await assert.rejects(
+      queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1),
+      /global request budget exhausted/,
+    );
+    assert.equal(fetchCalls, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+    setAniListRateLimiterForTests(null);
+    clearAniListRateLimitState();
+  }
+});
+
+test("identical concurrent AniList requests share one distributed limiter permit", async () => {
+  const { setAniListRateLimiterForTests } = await import("../lib/catalog-rate-limiter.js");
+  const originalFetch = globalThis.fetch;
+  let limiterCalls = 0;
+  let fetchCalls = 0;
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  setAniListRateLimiterForTests(async () => {
+    limiterCalls += 1;
+    return { success: true };
+  });
+  globalThis.fetch = async () => {
+    fetchCalls += 1;
+    await gate;
+    return {
+      ok: true,
+      status: 200,
+      headers: new Headers(),
+      async json() { return { data: { Page: { media: [] } } }; },
+    };
+  };
+  clearAniListRateLimitState();
+  try {
+    const filter = { season: "FALL", seasonYear: 2026, sort: ["ID"] };
+    const first = queryAnime(filter, 1);
+    const second = queryAnime(filter, 1);
+    await Promise.resolve();
+    release();
+    await Promise.all([first, second]);
+    assert.equal(limiterCalls, 1);
+    assert.equal(fetchCalls, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    setAniListRateLimiterForTests(null);
     clearAniListRateLimitState();
   }
 });
