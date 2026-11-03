@@ -7,6 +7,7 @@ import {
   isValidNextReleaseVersion,
   validateVersionConsistency,
   validateReleaseConcurrencyState,
+  validateLastDeploymentMetadata,
 } from "../scripts/release-integrity.mjs";
 
 test("release increments support both minor releases and major baselines", () => {
@@ -33,6 +34,7 @@ test("v2.0.0 major rebrand baseline passes release-state consistency validation"
     paused: false,
   }));
 });
+
 test("release concurrency gate rejects a stale target after another release advances main", () => {
   assert.throws(() => validateReleaseConcurrencyState({
     state: { paused: true, deploymentsSincePause: 10, deploymentLimit: 10, nextReleaseVersion: "1.5.0" },
@@ -43,4 +45,23 @@ test("release concurrency gate rejects a stale target after another release adva
     state: { paused: false, deploymentsSincePause: 1, deploymentLimit: 10, nextReleaseVersion: "1.5.0" },
     targetVersion: "1.4.0",
   }), /Release target 1.4.0 is stale/);
+});
+
+test("a reconciled direct deployment may be recorded without claiming a smoke test", () => {
+  assert.doesNotThrow(() => validateLastDeploymentMetadata({
+    lastDeploymentVersion: "2.1.0",
+    lastDeploymentSha: "dde8839d7f2364f16a35d155baae6a9c30337fbf",
+    lastDeploymentId: "dpl_3ZPqAVyRSLTJ1fXJ3YXNPtxWCAvc",
+    lastDeploymentTag: "v2.1.0",
+    lastDeployment: {
+      version: "2.1.0",
+      sha: "dde8839d7f2364f16a35d155baae6a9c30337fbf",
+      vercelDeploymentId: "dpl_3ZPqAVyRSLTJ1fXJ3YXNPtxWCAvc",
+      tag: "v2.1.0",
+      releasedAt: "2026-11-03T07:00:03.635Z",
+      ciRunId: null,
+      ciRunUrl: null,
+      smokeTest: "not_run",
+    },
+  }));
 });
