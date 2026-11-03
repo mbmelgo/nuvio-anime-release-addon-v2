@@ -344,75 +344,7 @@ jobs:
             range="$target"
           fi
 
-          summary="$(python - "$range" "$tag" <<'PY'
-          import re
-          import subprocess
-          import sys
-
-          commit_range, tag = sys.argv[1:]
-          subjects = subprocess.check_output(
-              ["git", "log", "--reverse", "--no-merges", "--pretty=format:%s", commit_range],
-              text=True,
-          ).splitlines()
-
-          seen = set()
-          highlights = []
-          categories = []
-
-          for subject in subjects:
-              subject = re.sub(r"\s*\[[^]]+\]", "", subject).strip()
-              kind, separator, text = subject.partition(": ")
-              kind = kind.lower() if separator else ""
-              text = text.strip() if separator else subject.strip()
-
-              if kind in {"chore", "test", "release"}:
-                  continue
-              if kind == "fix":
-                  categories.append("reliability")
-                  line = text
-              elif kind in {"feat", "feature"}:
-                  categories.append("features")
-                  line = text
-              elif kind == "refactor":
-                  categories.append("maintenance")
-                  line = "Improved the internal organization and reliability of the addon."
-              elif kind == "perf":
-                  categories.append("performance")
-                  line = "Improved addon performance and efficiency."
-              elif kind in {"docs", "documentation"}:
-                  categories.append("documentation")
-                  line = "Improved documentation and guidance."
-              else:
-                  continue
-
-              line = re.sub(r"\s+", " ", line).strip().rstrip(".") + "."
-              key = line.lower()
-              if key not in seen:
-                  seen.add(key)
-                  highlights.append(line)
-
-          overview = []
-          if "features" in categories:
-              overview.append("This release adds new user-facing functionality.")
-          if "reliability" in categories:
-              overview.append("It improves reliability and accuracy when identifying anime across different sources.")
-          if "maintenance" in categories:
-              overview.append("It improves the internal structure of the addon to make future fixes safer and more reliable.")
-          if "performance" in categories:
-              overview.append("It includes performance and efficiency improvements.")
-          if not overview:
-              overview = ["This release contains improvements to the addon."]
-
-          print(f"Release {tag}\n\nOverview")
-          for item in overview:
-              print(item)
-          print("\nHighlights")
-          for line in highlights[:12]:
-              print(f"- {line}")
-          if not highlights:
-              print("- General reliability and maintenance improvements.")
-          PY
-          )"
+          summary="$(git log --reverse --no-merges --format='%s%x1f%b%x1e' "$range" | node scripts/release-notes.mjs "$tag")"
 
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
