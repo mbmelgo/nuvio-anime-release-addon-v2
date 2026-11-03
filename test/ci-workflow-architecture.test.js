@@ -31,6 +31,7 @@ test("main CI uses a scoped GitHub App token for automated PR events", () => {
   assert.ok(ci.includes("permission-pull-requests: write"));
   assert.ok(ci.includes("GH_TOKEN: ${{ steps.automation-app-token.outputs.token }}"));
   assert.ok(ci.includes('git commit -m "chore: bump patch version [skip-version-automation]"'));
+  assert.ok(ci.includes("git add api/version.js package.json package-lock.json README.md"));
   assert.ok(ci.includes('lock["version"] = next_version'));
   assert.ok(ci.includes('lock["packages"][""]["version"] = next_version'));
   assert.ok(ci.includes("gh pr create"));
