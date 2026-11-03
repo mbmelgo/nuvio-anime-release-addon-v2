@@ -114,7 +114,7 @@ async function runCrossInstanceScenario({ failCacheWrites = false, lockUnavailab
 
 test("separate AniBloom workers coalesce identical cold AniList requests through shared Redis and cache", async () => {
   const result = await runCrossInstanceScenario();
-  assert.deepEqual(result.results, [
+  assert.deepEqual(result.results.map(({ ok, result: value }) => ({ ok, result: value })), [
     { ok: true, result: [{ id: 123 }] },
     { ok: true, result: [{ id: 123 }] },
   ]);
@@ -125,7 +125,7 @@ test("separate AniBloom workers coalesce identical cold AniList requests through
 
 test("cache-write failures release the lock and allow a later worker to retry", async () => {
   const result = await runCrossInstanceScenario({ failCacheWrites: true });
-  assert.deepEqual(result.results, [
+  assert.deepEqual(result.results.map(({ ok, result: value }) => ({ ok, result: value })), [
     { ok: true, result: [{ id: 123 }] },
     { ok: true, result: [{ id: 123 }] },
   ]);
@@ -145,7 +145,7 @@ test("a shared 429 cooldown prevents a contending worker from retrying the upstr
 
 test("Redis outages fail open to the existing AniList request path", async () => {
   const result = await runCrossInstanceScenario({ lockUnavailable: true });
-  assert.deepEqual(result.results, [
+  assert.deepEqual(result.results.map(({ ok, result: value }) => ({ ok, result: value })), [
     { ok: true, result: [{ id: 123 }] },
     { ok: true, result: [{ id: 123 }] },
   ]);

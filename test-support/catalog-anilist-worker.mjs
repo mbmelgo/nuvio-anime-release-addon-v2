@@ -59,5 +59,5 @@ try {
   const result = await queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1);
   parentPort.postMessage({ ok: true, result });
 } catch (error) {
-  parentPort.postMessage({ ok: false, error: error?.message || "unknown" });
+  parentPort.postMessage({ ok: false, error: error?.message || "unknown", code: error?.code });
 }

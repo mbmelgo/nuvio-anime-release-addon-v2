@@ -420,3 +420,75 @@ test("AniList classifies shared request-lock contention as retryable work in pro
   const { classifyAniListFailure } = await import("../lib/catalog-anilist.js");
   assert.equal(classifyAniListFailure({ code: "ANILIST_REQUEST_IN_PROGRESS" }), "request_in_progress");
 });
+
+test("shared request-budget exhaustion opens a cooldown for subsequent instances", async () => {
+  const { setCatalogRuntimeCacheForTests } = await import("../lib/catalog-runtime-cache.js");
+  const { setAniListRedisClientForTests, setAniListRateLimiterForTests } = await import("../lib/catalog-rate-limiter.js");
+  const originalFetch = globalThis.fetch;
+  const originalNow = Date.now;
+  const originalSetTimeout = globalThis.setTimeout;
+  const values = new Map();
+  const locks = new Map();
+  let now = 1_000_000;
+  let permitChecks = 0;
+  let fetchCalls = 0;
+
+  Date.now = () => now;
+  globalThis.setTimeout = (callback, delay = 0, ...args) => {
+    now += Math.max(1, Number(delay) || 0);
+    queueMicrotask(() => callback(...args));
+    return 0;
+  };
+  globalThis.fetch = async () => {
+    fetchCalls += 1;
+    throw new Error("upstream must not be called after budget exhaustion");
+  };
+  setCatalogRuntimeCacheForTests({
+    async get(key) { return values.get(key) ?? null; },
+    async set(key, value) { values.set(key, value); return true; },
+    async delete(key) { values.delete(key); return true; },
+  });
+  setAniListRedisClientForTests({
+    async set(key, token) {
+      if (locks.has(key)) return null;
+      locks.set(key, token);
+      return "OK";
+    },
+    async eval(_script, keys, args) {
+      if (locks.get(keys[0]) !== args[0]) return 0;
+      locks.delete(keys[0]);
+      return 1;
+    },
+  });
+  setAniListRateLimiterForTests(async () => {
+    permitChecks += 1;
+    return { success: false, retryAfterMs: 3_000 };
+  });
+  clearAniListRateLimitState();
+
+  try {
+    await assert.rejects(
+      queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1),
+      error => error.code === "ANILIST_RATE_LIMIT_BUDGET",
+    );
+    const checksAfterBudgetFailure = permitChecks;
+    assert.ok(checksAfterBudgetFailure > 1);
+    assert.equal(fetchCalls, 0);
+
+    clearAniListRateLimitState();
+    await assert.rejects(
+      queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1),
+      error => error.code === "ANILIST_RATE_LIMIT_COOLDOWN",
+    );
+    assert.equal(permitChecks, checksAfterBudgetFailure, "the shared cooldown should prevent another permit wait");
+    assert.equal(fetchCalls, 0);
+  } finally {
+    Date.now = originalNow;
+    globalThis.setTimeout = originalSetTimeout;
+    globalThis.fetch = originalFetch;
+    clearAniListRateLimitState();
+    setAniListRedisClientForTests(null);
+    setAniListRateLimiterForTests(null);
+    setCatalogRuntimeCacheForTests(null);
+  }
+});
