@@ -137,6 +137,10 @@ The local preview server implements the homepage, manifest, version, catalog, an
 
    Replace `YOUR-VERCEL-DOMAIN` with the domain assigned to your Vercel project or a custom domain you have configured.
 
+### Optional environment variable
+
+Set `DONATION_URL` in your Vercel project's environment variables to configure the homepage's **Support development** link. The value must be an HTTPS URL. If it is missing or invalid, the homepage falls back to `https://buymeacoffee.com/mark475`. Configure the variable separately for each environment where you want a custom destination.
+
 Vercel may ask you to confirm project settings during the first deployment. Use the repository root, Node.js 20 or newer, and no custom build or output directory unless Vercel's current project setup specifically requires otherwise. Review your own Vercel plan's function, bandwidth, and usage limits; those limits and any associated costs are controlled by your account.
 
 ### Keeping your instance updated
