@@ -32,6 +32,12 @@ import {
   resolveAniListMappingsSecondary,
   resolveAniListMappingsByMalIds,
 } from "../lib/secondary-mapping.js";
+import {
+  catalogCacheKey,
+  getCatalogRuntimeCache,
+  keepCatalogTaskAlive,
+  setCatalogRuntimeCache,
+} from "../lib/catalog-runtime-cache.js";
 
 export {
   ANILIST_PAGE_SIZE,
@@ -162,14 +168,52 @@ export default {
     if (!definition || (requestedType === "anime" ? definition.type !== "series" : definition.type !== requestedType)) {
       return send({ metas: [] }, 404);
     }
+    const skip = Math.max(0, Number(query.skip || 0) || 0);
+    const search = String(query.search || "").trim();
+    const cachePolicy = getCatalogRuntimeCachePolicy(id);
+    const cacheKey = catalogCacheKey("catalog-response", { id, seasonInfo, skip, search });
     try {
-      const skip = Math.max(0, Number(query.skip || 0) || 0);
-      const search = String(query.search || "").trim();
+      if (!diagnosticsEnabled) {
+        const cached = await getCatalogRuntimeCache(cacheKey);
+        if (cached && Array.isArray(cached.metas)) {
+          if (Number(cached.freshUntil) > Date.now()) {
+            return send({ metas: cached.metas }, 200, null, false, id);
+          }
+
+          scheduleCatalogRefresh(cacheKey, id, seasonInfo, skip, search, cachePolicy);
+          return send(
+            { metas: cached.metas },
+            200,
+            { "X-Nuvio-Catalog-Stale": "1", "Cache-Control": "no-store" },
+            false,
+            id,
+          );
+        }
+      }
+
       const metas = await buildCatalog(id, seasonInfo, skip, search, diagnosticsStages);
+      if (!diagnosticsEnabled) {
+        const cachedAt = Date.now();
+        await setCatalogRuntimeCache(cacheKey, {
+          metas,
+          cachedAt,
+          freshUntil: cachedAt + (cachePolicy.freshTtlSeconds * 1000),
+        }, cachePolicy.freshTtlSeconds + cachePolicy.staleTtlSeconds);
+      }
       return send({ metas }, 200, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null, diagnosticsEnabled, id);
     } catch (error) {
-      console.error("[catalog] request failed", { id, skip: query.skip, search: query.search, error });
-      return send({ metas: [] }, 500, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null, diagnosticsEnabled);
+      console.error("[catalog] request failed", {
+        id,
+        kind: error?.name || "Error",
+        message: String(error?.message || "Catalog provider failure").slice(0, 180),
+      });
+      return send(
+        { error: "Catalog temporarily unavailable", metas: [] },
+        503,
+        diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null,
+        diagnosticsEnabled,
+        id,
+      );
     }
   }
 
@@ -1900,6 +1944,40 @@ export async function buildCatalog(id, info, skip, search, diagnostics = null) {
   return [];
 }
 
+const catalogRefreshes = new Map();
+
+export function getCatalogRuntimeCachePolicy(id) {
+  if (id === "upcoming_3_days" || id === "previous_3_days") {
+    return { freshTtlSeconds: 30, staleTtlSeconds: 300 };
+  }
+  return { freshTtlSeconds: 3600, staleTtlSeconds: 86400 };
+}
+
+function scheduleCatalogRefresh(cacheKey, id, seasonInfo, skip, search, cachePolicy) {
+  if (catalogRefreshes.has(cacheKey)) return;
+
+  const refresh = (async () => {
+    const metas = await buildCatalog(id, seasonInfo, skip, search, null);
+    const cachedAt = Date.now();
+    await setCatalogRuntimeCache(cacheKey, {
+      metas,
+      cachedAt,
+      freshUntil: cachedAt + (cachePolicy.freshTtlSeconds * 1000),
+    }, cachePolicy.freshTtlSeconds + cachePolicy.staleTtlSeconds);
+  })().catch((error) => {
+    console.error("[catalog] background refresh failed", {
+      id,
+      kind: error?.name || "Error",
+      message: String(error?.message || "Catalog provider failure").slice(0, 180),
+    });
+  }).finally(() => {
+    catalogRefreshes.delete(cacheKey);
+  });
+
+  catalogRefreshes.set(cacheKey, refresh);
+  void keepCatalogTaskAlive(refresh);
+}
+
 export function getCatalogCacheControl(id, diagnosticsEnabled = false, status = 200) {
   if (diagnosticsEnabled || Number(status) >= 500) return "no-store";
   if (id === "upcoming_3_days" || id === "previous_3_days") {
@@ -1907,7 +1985,7 @@ export function getCatalogCacheControl(id, diagnosticsEnabled = false, status = 
     // freshness bounded and do not permit a long stale fallback for these feeds.
     return "public, s-maxage=30, stale-while-revalidate=30";
   }
-  return "public, s-maxage=3600, stale-while-revalidate=86400, stale-if-error=86400";
+  return "public, s-maxage=3600, stale-while-revalidate=86400";
 }
 
 function send(body, status = 200, extraHeaders = null, diagnosticsEnabled = false, catalogId = "") {
