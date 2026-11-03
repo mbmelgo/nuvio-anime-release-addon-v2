@@ -1,6 +1,12 @@
 name: Production availability monitor
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "privacy.html"
+      - "api/home-selector.js"
+      - ".github/workflows/production-health-check.yml"
   schedule:
     - cron: "*/30 * * * *"
   workflow_dispatch:

@@ -140,6 +140,10 @@ test("all GitHub Actions dependencies are pinned to immutable full commit SHAs",
 
 test("production availability monitor uses minimal permissions and validates public catalog endpoints", () => {
   const workflow = read("../.github/workflows/production-health-check.yml");
+  assert.ok(workflow.includes("push:\n    branches: [main]"));
+  assert.ok(workflow.includes('- "privacy.html"'));
+  assert.ok(workflow.includes('- "api/home-selector.js"'));
+  assert.ok(workflow.includes('- ".github/workflows/production-health-check.yml"'));
   assert.ok(workflow.includes('cron: "*/30 * * * *"'));
   assert.ok(workflow.includes("workflow_dispatch:"));
   assert.ok(workflow.includes("permissions: {}"));
