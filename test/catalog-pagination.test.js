@@ -132,3 +132,8 @@ test("rolling catalog search filters airing rows before identity resolution", as
     [202079],
   );
 });
+
+test("rolling catalog upstream pagination has a bounded per-request page budget", async () => {
+  const { MAX_SCHEDULE_PAGES } = await import("../lib/catalog-config.js");
+  assert.equal(MAX_SCHEDULE_PAGES, 8);
+});
