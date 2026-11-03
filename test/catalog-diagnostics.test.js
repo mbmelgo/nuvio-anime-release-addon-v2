@@ -162,3 +162,31 @@ test("rolling catalog counter helper safely ignores invalid values and missing t
   assert.deepEqual(diagnostics, { rollingEligibleRows: 2 });
   assert.equal(recordRollingCatalogDiagnostics(null, { metas: 1 }), null);
 });
+
+
+test("catalog error diagnostics expose stable safe fields without raw error messages", async () => {
+  const { formatCatalogErrorDiagnostics } = await import("../api/catalog-source.js");
+  assert.deepEqual(formatCatalogErrorDiagnostics(Object.assign(
+    new Error("private query and upstream response must not be logged"),
+    { code: "ANILIST_HTTP_ERROR", status: 503 },
+  )), {
+    category: "upstream_http",
+    code: "ANILIST_HTTP_ERROR",
+    retryable: true,
+    upstreamStatus: 503,
+  });
+  assert.deepEqual(formatCatalogErrorDiagnostics(Object.assign(
+    new Error("private timeout detail"),
+    { code: "ANILIST_TIMEOUT", timeoutMs: 8000 },
+  )), {
+    category: "timeout",
+    code: "ANILIST_TIMEOUT",
+    retryable: true,
+    timeoutMs: 8000,
+  });
+  assert.deepEqual(formatCatalogErrorDiagnostics(new Error("private unknown detail")), {
+    category: "upstream",
+    code: "UNKNOWN",
+    retryable: false,
+  });
+});

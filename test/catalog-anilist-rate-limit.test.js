@@ -350,3 +350,19 @@ test("identical concurrent AniList requests share one distributed limiter permit
     clearAniListRateLimitState();
   }
 });
+
+
+test("AniList failure classification distinguishes cooldown, budget, HTTP, timeout, and network failures", async () => {
+  const { classifyAniListFailure } = await import("../lib/catalog-anilist.js");
+  const cooldown = Object.assign(new Error("private cooldown detail"), { code: "ANILIST_RATE_LIMIT_COOLDOWN" });
+  const budget = Object.assign(new Error("private budget detail"), { code: "ANILIST_RATE_LIMIT_BUDGET" });
+  const limited = Object.assign(new Error("private upstream detail"), { code: "ANILIST_HTTP_429", status: 429 });
+  const unavailable = Object.assign(new Error("private upstream detail"), { code: "ANILIST_HTTP_ERROR", status: 503 });
+  const timeout = Object.assign(new Error("private timeout detail"), { code: "ANILIST_TIMEOUT", timeoutMs: 8000 });
+  assert.equal(classifyAniListFailure(cooldown), "rate_limit_cooldown");
+  assert.equal(classifyAniListFailure(budget), "rate_limit_budget");
+  assert.equal(classifyAniListFailure(limited), "rate_limited");
+  assert.equal(classifyAniListFailure(unavailable), "upstream_http");
+  assert.equal(classifyAniListFailure(timeout), "timeout");
+  assert.equal(classifyAniListFailure(new TypeError("fetch failed")), "network");
+});
