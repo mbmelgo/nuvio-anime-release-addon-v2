@@ -57,7 +57,8 @@ Append `?diagnostics=1` to a catalog endpoint to bypass the normalized catalog c
 - `rollingEligibleRows`: rows passing media ID, adult-content, and format eligibility checks.
 - `rollingUniqueEligibleRows`: eligible rows after AniList ID deduplication.
 - `rollingSearchedRows`: rows remaining after the optional catalog search filter.
-- `rollingMetas`: final rolling metadata entries after Kitsu fallback and final search filtering.
+- `rollingMetas`: canonicalized rolling metadata entries after Kitsu fallback and final search filtering, before cross-page identity deduplication and page slicing.
+- `rollingReturnedMetas`: actual entries returned by the endpoint after cross-page identity deduplication and the requested page-size/skip window.
 - `rollingFallbackMetas`: final entries still using `mal:` or `anilist:` IDs.
 - `seasonAnilistRows` and `seasonCanonicalMetas`: seasonal source rows and canonicalized metadata entries.
 
