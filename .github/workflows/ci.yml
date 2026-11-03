@@ -104,7 +104,7 @@ jobs:
 
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add api/version.js package.json README.md
+          git add api/version.js package.json package-lock.json README.md
           git commit -m "chore: bump patch version [skip-version-automation]"
           branch="automation/version-bump-${GITHUB_SHA:0:12}"
           git switch -c "$branch"
