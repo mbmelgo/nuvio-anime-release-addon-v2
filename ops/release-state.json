@@ -1,22 +1,22 @@
 {
   "deploymentLimit": 10,
-  "deploymentsSincePause": 7,
-  "totalDeployments": 152,
+  "deploymentsSincePause": 8,
+  "totalDeployments": 153,
   "paused": false,
-  "lastDeploymentSha": "52ff6df4245dd0d9d92373211d6f57e3fe0ef8f2",
-  "lastDeploymentId": "dpl_9XKUK44FF1hAUm5db6RT72EgjGSr",
+  "lastDeploymentSha": "dde8839d7f2364f16a35d155baae6a9c30337fbf",
+  "lastDeploymentId": "dpl_3ZPqAVyRSLTJ1fXJ3YXNPtxWCAvc",
   "lastDeploymentVersion": "2.1.0",
   "nextReleaseVersion": "2.2.0",
   "lastDeploymentTag": "v2.1.0",
   "lastDeployment": {
     "version": "2.1.0",
-    "sha": "52ff6df4245dd0d9d92373211d6f57e3fe0ef8f2",
-    "vercelDeploymentId": "dpl_9XKUK44FF1hAUm5db6RT72EgjGSr",
+    "sha": "dde8839d7f2364f16a35d155baae6a9c30337fbf",
+    "vercelDeploymentId": "dpl_3ZPqAVyRSLTJ1fXJ3YXNPtxWCAvc",
     "tag": "v2.1.0",
-    "releasedAt": "2026-11-02T16:27:17.782840Z",
-    "ciRunId": "41480765933",
-    "ciRunUrl": "https://github.com/AniBloomHQ/AniBloom/actions/runs/41480765933",
-    "smokeTest": "passed"
+    "releasedAt": "2026-11-03T01:40:03.635Z",
+    "ciRunId": null,
+    "ciRunUrl": null,
+    "smokeTest": "not_run"
   },
   "supersededReleaseVersions": [
     "1.24.0",
