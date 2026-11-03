@@ -12,7 +12,7 @@ import {
 import { collectValidatedCatalogPage } from "../lib/catalog-pagination.js";
 import { filterCatalogMetasBySearch, toMetaFromAniList } from "../lib/catalog-meta.js";
 import { applyKitsuFallback, resolveAniListKitsuMappings } from "../lib/kitsu-fallback.js";
-import { queryAnime, queryAiringSchedulePage } from "../lib/catalog-anilist.js";
+import { classifyAniListFailure, queryAnime, queryAiringSchedulePage } from "../lib/catalog-anilist.js";
 import { resolveAniListMappings } from "../lib/arm-mapping.js";
 import { resolveAniListMappingsFribb } from "../lib/fribb-mapping.js";
 import { resolveAniListExternalMappings } from "../lib/external-provider-mapping.js";
@@ -75,6 +75,39 @@ export function getSeasonInfo(date) {
 }
 
 let catalogRequestSeen = false;
+
+export function formatCatalogErrorDiagnostics(error) {
+  const category = classifyAniListFailure(error);
+  const allowedCodes = new Set([
+    "ANILIST_RATE_LIMIT_COOLDOWN",
+    "ANILIST_RATE_LIMIT_BUDGET",
+    "ANILIST_HTTP_429",
+    "ANILIST_HTTP_ERROR",
+    "ANILIST_GRAPHQL_ERROR",
+    "ANILIST_TIMEOUT",
+  ]);
+  const diagnostics = {
+    category,
+    code: allowedCodes.has(error?.code) ? error.code : "UNKNOWN",
+    retryable: [
+      "rate_limit_cooldown",
+      "rate_limit_budget",
+      "rate_limited",
+      "upstream_http",
+      "timeout",
+      "network",
+    ].includes(category),
+  };
+  const status = Number(error?.status);
+  if (Number.isInteger(status) && status >= 100 && status <= 599) {
+    diagnostics.upstreamStatus = status;
+  }
+  const timeoutMs = Number(error?.timeoutMs);
+  if (Number.isFinite(timeoutMs) && timeoutMs > 0) {
+    diagnostics.timeoutMs = Math.round(timeoutMs);
+  }
+  return diagnostics;
+}
 
 export function formatCatalogDiagnostics(durationMs, coldStart, stages = {}, processUptimeMs = null) {
   const normalizedDuration = Math.max(0, Math.round(Number(durationMs) || 0));
@@ -224,7 +257,7 @@ export default {
     } catch (error) {
       console.error("[catalog] request failed", {
         id,
-        kind: error?.name || "Error",
+        ...formatCatalogErrorDiagnostics(error),
       });
       return send(
         { error: "Catalog temporarily unavailable", metas: [] },
@@ -2007,7 +2040,7 @@ async function scheduleCatalogRefresh(cacheKey, id, seasonInfo, skip, search, ca
   })().catch((error) => {
     console.error("[catalog] background refresh failed", {
       id,
-      kind: error?.name || "Error",
+      ...formatCatalogErrorDiagnostics(error),
     });
   }).finally(() => {
     catalogRefreshes.delete(cacheKey);
