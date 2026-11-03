@@ -109,6 +109,39 @@ test("load probe records HTTP and response-contract failures without leaking bod
   assert.equal(JSON.stringify(report).includes("unavailable"), false);
 });
 
+test("load probe forwards the local Vercel OIDC token only to preview requests", async () => {
+  const token = "test-oidc-token-not-a-secret";
+  const preview = await runLoadTest({
+    target: "https://anibloom-preview123-personal-bcb9.vercel.app",
+    path: "/catalog/series/current_season.json",
+    requests: 1,
+    concurrency: 1,
+    timeoutMs: 5000,
+  }, {
+    env: { VERCEL_OIDC_TOKEN: token },
+    fetchImpl: async (_url, options) => {
+      assert.equal(options.headers["x-vercel-trusted-oidc-idp-token"], token);
+      return new Response(JSON.stringify({ metas: [] }), { status: 200 });
+    },
+  });
+  assert.equal(JSON.stringify(preview).includes(token), false);
+
+  await runLoadTest({
+    target: "https://anibloom.vercel.app",
+    path: "/catalog/series/current_season.json",
+    requests: 1,
+    concurrency: 1,
+    timeoutMs: 5000,
+    allowProduction: true,
+  }, {
+    env: { VERCEL_OIDC_TOKEN: token },
+    fetchImpl: async (_url, options) => {
+      assert.equal(options.headers["x-vercel-trusted-oidc-idp-token"], undefined);
+      return new Response(JSON.stringify({ metas: [] }), { status: 200 });
+    },
+  });
+});
+
 test("load result summary counts stale catalog responses", () => {
   const summary = summarizeLoadResults(
     [
