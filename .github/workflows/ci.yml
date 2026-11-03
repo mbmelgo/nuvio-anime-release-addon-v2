@@ -15,28 +15,34 @@ jobs:
   test:
     if: ${{ !contains(github.event.head_commit.message || '', '[deploy-prod]') && !contains(github.event.head_commit.message || '', '[finalize-prod:') }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - name: Create GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
-        with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          permission-contents: write
-          permission-pull-requests: write
-
       - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          token: ${{ steps.app-token.outputs.token }}
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
       - name: Run tests
         run: npm test
+
+  version-automation:
+    needs: test
+    if: ${{ needs.test.result == 'success' && github.event_name == 'push' && !contains(github.event.head_commit.message || '', '[skip-version-automation]') && !contains(github.event.head_commit.message || '', '[major-release]') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - name: Bump patch version and sync metadata
-        if: github.event_name == 'push' && !contains(github.event.head_commit.message || '', '[skip-version-automation]') && !contains(github.event.head_commit.message || '', '[major-release]')
         shell: bash
         run: |
           set -euo pipefail
@@ -59,7 +65,7 @@ jobs:
           readme_path = Path("README.md")
           readme = readme_path.read_text()
           readme = re.sub(r"version-\d+\.\d+\.\d+-blue", f"version-{next_version}-blue", readme)
-          readme = re.sub(r"(\*\*Development:\*\*\s*)`v?[^`]+`", rf"\g<1>`v{next_version}`", readme)
+          readme = re.sub(r"(\*\*Development:\*\*\s*)`v?[^\`]+`", rf"\g<1>`v{next_version}`", readme)
           readme_path.write_text(readme)
           PY
       - name: Verify versioned tree
@@ -67,7 +73,7 @@ jobs:
       - name: Open version metadata pull request
         shell: bash
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           if git diff --quiet -- api/version.js package.json README.md; then
@@ -94,3 +100,7 @@ jobs:
               --title "chore: bump patch version [skip-version-automation]" \
               --body "Automated patch-version metadata update generated from main commit $GITHUB_SHA. This pull request keeps main protected and runs the normal pull-request CI before the metadata is merged."
           fi
+
+          # GITHUB_TOKEN-created PRs do not start pull_request workflows automatically.
+          # Dispatch the same PR CI workflow against this exact automation branch.
+          gh workflow run pr-ci.yml --repo "$GITHUB_REPOSITORY" --ref "$branch"

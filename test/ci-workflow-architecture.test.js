@@ -4,7 +4,7 @@ import fs from "node:fs";
 
 const read = (path) => fs.readFileSync(new URL(path, import.meta.url), "utf8");
 
-test("main CI tests pushes and opens patch-version PRs with a scoped GitHub App token", () => {
+test("main CI separates read-only tests from GITHUB_TOKEN version automation", () => {
   const ci = read("../.github/workflows/ci.yml");
   const escapedExpression = "\\" + "$" + "{{";
 
@@ -15,30 +15,31 @@ test("main CI tests pushes and opens patch-version PRs with a scoped GitHub App 
   assert.ok(ci.includes("github.ref"));
   assert.ok(!ci.includes(escapedExpression));
   assert.ok(ci.includes("cancel-in-progress: true"));
-  assert.ok(!ci.includes("steps.gate.outputs.release"));
-  assert.ok(ci.includes("!contains(github.event.head_commit.message || '', '[deploy-prod]')"));
-  assert.ok(ci.includes("name: Run tests\n        run: npm test\n      - name: Bump patch version and sync metadata"));
-  assert.ok(ci.includes("name: Verify versioned tree\n        run: npm test\n      - name: Open version metadata pull request"));
-  assert.ok(ci.includes("actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510"));
-  assert.ok(ci.includes("app-id: ${{ vars.APP_ID }}"));
-  assert.ok(ci.includes("private-key: ${{ secrets.APP_PRIVATE_KEY }}"));
-  assert.ok(ci.includes("permission-contents: write"));
-  assert.ok(ci.includes("permission-pull-requests: write"));
-  assert.ok(ci.includes("token: ${{ steps.app-token.outputs.token }}"));
+  assert.ok(ci.includes("name: Run tests\n        run: npm test"));
+  assert.ok(ci.includes("version-automation:\n    needs: test"));
+  assert.ok(ci.includes("contents: write\n      pull-requests: write\n      actions: write"));
+  assert.ok(ci.includes("GH_TOKEN: ${{ github.token }}"));
   assert.ok(ci.includes('git commit -m "chore: bump patch version [skip-version-automation]"'));
   assert.ok(ci.includes("gh pr create"));
   assert.ok(ci.includes("--base main"));
+  assert.ok(ci.includes("gh workflow run pr-ci.yml"));
+  assert.ok(ci.includes('--ref "$branch"'));
+  assert.ok(!ci.includes("create-github-app-token"));
+  assert.ok(!ci.includes("APP_PRIVATE_KEY"));
+  assert.ok(!ci.includes("vars.APP_ID"));
   assert.ok(!ci.includes("git push origin HEAD:main"));
 });
-test("pull request CI remains the single PR test workflow", () => {
+
+test("pull request CI supports both automatic PR events and explicit dispatch", () => {
   const pr = read("../.github/workflows/pr-ci.yml");
 
   assert.ok(pr.includes("on:\n  pull_request:\n    branches: [main]"));
+  assert.ok(pr.includes("workflow_dispatch:"));
   assert.ok(pr.includes("cancel-in-progress: true"));
   assert.ok(pr.includes("run: npm test"));
 });
 
-test("release pipeline only allocates a runner for release or manual requests", () => {
+test("release pipeline retains controlled release behavior without a custom App token", () => {
   const sync = read("../.github/workflows/sync-version.yml");
 
   assert.ok(sync.includes("github.event_name == 'workflow_dispatch'"));
@@ -47,12 +48,16 @@ test("release pipeline only allocates a runner for release or manual requests", 
   assert.ok(!sync.includes("name: Bump patch version and sync metadata"));
   assert.ok(sync.includes("name: Run full CI"));
   assert.ok(sync.includes("actions: write"));
-  assert.ok(sync.includes("actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510"));
-  assert.ok(sync.includes("permission-contents: write"));
-  assert.ok(sync.includes("permission-pull-requests: write"));
+  assert.ok(sync.includes("pull-requests: write"));
   assert.ok(sync.includes("automation/release-state-v$release_version"));
   assert.ok(sync.includes("[skip-version-automation]"));
   assert.ok(sync.includes("gh pr create"));
+  assert.ok(sync.includes("gh workflow run pr-ci.yml"));
+  assert.ok(sync.includes('--ref "$branch"'));
+  assert.ok(!sync.includes("create-github-app-token"));
+  assert.ok(!sync.includes("APP_PRIVATE_KEY"));
+  assert.ok(!sync.includes("vars.APP_ID"));
+  assert.ok(!sync.includes("APP_TOKEN"));
   assert.ok(!sync.includes("git push origin HEAD:main"));
   assert.ok(sync.includes("name: Trigger post-release catalog snapshot"));
   assert.ok(sync.includes("gh workflow run catalog-snapshot.yml"));
