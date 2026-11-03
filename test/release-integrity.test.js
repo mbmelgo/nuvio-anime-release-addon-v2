@@ -58,10 +58,26 @@ test("a reconciled direct deployment may be recorded without claiming a smoke te
       sha: "dde8839d7f2364f16a35d155baae6a9c30337fbf",
       vercelDeploymentId: "dpl_3ZPqAVyRSLTJ1fXJ3YXNPtxWCAvc",
       tag: "v2.1.0",
-      releasedAt: "2026-11-03T07:00:03.635Z",
+      releasedAt: "2026-11-03T01:40:03.635Z",
       ciRunId: null,
       ciRunUrl: null,
       smokeTest: "not_run",
     },
   }));
+  assert.throws(() => validateLastDeploymentMetadata({
+    lastDeploymentVersion: "2.1.0",
+    lastDeploymentSha: "dde8839d7f2364f16a35d155baae6a9c30337fbf",
+    lastDeploymentId: "dpl_3ZPqAVyRSLTJ1fXJ3YXNPtxWCAvc",
+    lastDeploymentTag: "v2.1.0",
+    lastDeployment: {
+      version: "2.1.0",
+      sha: "dde8839d7f2364f16a35d155baae6a9c30337fbf",
+      vercelDeploymentId: "dpl_3ZPqAVyRSLTJ1fXJ3YXNPtxWCAvc",
+      tag: "v2.1.0",
+      releasedAt: "2026-11-03T01:40:03.635Z",
+      ciRunId: "12345",
+      ciRunUrl: "https://github.com/AniBloomHQ/AniBloom/actions/runs/12345",
+      smokeTest: "not_run",
+    },
+  }), /must not claim a CI run/);
 });
