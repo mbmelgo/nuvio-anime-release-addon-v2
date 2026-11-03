@@ -86,6 +86,7 @@ export function formatCatalogErrorDiagnostics(error) {
   const allowedCodes = new Set([
     "ANILIST_RATE_LIMIT_COOLDOWN",
     "ANILIST_RATE_LIMIT_BUDGET",
+    "ANILIST_REQUEST_IN_PROGRESS",
     "ANILIST_HTTP_429",
     "ANILIST_HTTP_ERROR",
     "ANILIST_GRAPHQL_ERROR",
@@ -97,6 +98,7 @@ export function formatCatalogErrorDiagnostics(error) {
     retryable: [
       "rate_limit_cooldown",
       "rate_limit_budget",
+      "request_in_progress",
       "rate_limited",
       "timeout",
       "network",
@@ -289,7 +291,12 @@ export default {
       return send(
         { error: "Catalog temporarily unavailable", metas: [] },
         503,
-        diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null,
+        {
+          ...(Number.isFinite(Number(error?.retryAfterSeconds)) && Number(error.retryAfterSeconds) > 0
+            ? { "Retry-After": String(Math.max(1, Math.min(60, Math.ceil(Number(error.retryAfterSeconds))))) }
+            : {}),
+          ...(diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : {}),
+        },
         diagnosticsEnabled,
         id,
       );
