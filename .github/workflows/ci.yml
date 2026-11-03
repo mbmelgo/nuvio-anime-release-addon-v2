@@ -33,8 +33,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
-      actions: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -70,10 +68,21 @@ jobs:
           PY
       - name: Verify versioned tree
         run: npm test
+      - name: Create automation GitHub App token
+        id: automation-app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        with:
+          app-id: ${{ vars.AUTOMATION_APP_ID }}
+          private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+          owner: AniBloomHQ
+          repositories: AniBloom
+          permission-contents: write
+          permission-pull-requests: write
+          permission-actions: write
       - name: Open version metadata pull request
         shell: bash
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.automation-app-token.outputs.token }}
         run: |
           set -euo pipefail
           if git diff --quiet -- api/version.js package.json README.md; then
