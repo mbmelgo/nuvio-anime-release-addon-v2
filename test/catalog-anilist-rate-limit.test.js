@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { clearAniListRateLimitState, queryAnime } from "../lib/catalog-anilist.js";
+import { clearAniListRateLimitState, clearAniListResponseCache, queryAnime } from "../lib/catalog-anilist.js";
 
 test("AniList fails fast on HTTP 429 and opens a cooldown", async () => {
   const originalFetch = globalThis.fetch;
