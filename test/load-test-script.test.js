@@ -109,6 +109,17 @@ test("load probe records HTTP and response-contract failures without leaking bod
   assert.equal(JSON.stringify(report).includes("unavailable"), false);
 });
 
+test("load result summary counts stale catalog responses", () => {
+  const summary = summarizeLoadResults(
+    [
+      { ok: true, status: 200, durationMs: 10, bytes: 100, cache: "MISS", stale: true },
+      { ok: true, status: 200, durationMs: 20, bytes: 100, cache: "MISS", stale: false },
+    ],
+    30,
+  );
+  assert.equal(summary.staleResponses, 1);
+});
+
 test("load result summary computes nearest-rank latency percentiles", () => {
   const summary = summarizeLoadResults(
     [10, 20, 30, 40, 50].map((durationMs) => ({
