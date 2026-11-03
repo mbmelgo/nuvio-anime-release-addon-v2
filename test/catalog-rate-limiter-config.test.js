@@ -72,3 +72,14 @@ test("does not combine incomplete credentials from different naming schemes", ()
     assert.equal(getAniListRedisCredentials(), null);
   });
 });
+
+test("distributed AniList token bucket refills smoothly at the configured 20 requests per minute", async () => {
+  const { ANILIST_RATE_LIMIT } = await import("../lib/catalog-rate-limiter.js");
+  assert.deepEqual(ANILIST_RATE_LIMIT, {
+    refillTokens: 1,
+    refillInterval: "3 s",
+    refillIntervalMs: 3_000,
+    maxBurstTokens: 5,
+    requestsPerMinute: 20,
+  });
+});

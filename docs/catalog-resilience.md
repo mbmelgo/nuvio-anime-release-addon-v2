@@ -46,7 +46,8 @@ The Upstash token bucket is the proactive shared limiter when its Vercel Marketp
 
 - Redis client: `@upstash/redis` 1.41.0.
 - Rate limiter: `@upstash/ratelimit` 2.2.0.
-- Algorithm: atomic token bucket, 20-token refill per 60 seconds, maximum burst of 5.
+- Algorithm: atomic token bucket, one token every 3 seconds (20 requests/minute), maximum burst of 5. The refill interval is deliberately short: Upstash's token-bucket algorithm adds the configured refill amount only when the interval elapses, capped at the burst capacity. A 20-token refill every 60 seconds with a burst of 5 would therefore refill only 5 usable tokens per minute.
+- Permit acquisition waits for the next shared refill when the bucket is exhausted, with a 12-second per-request wait ceiling. If a permit is still unavailable at the deadline, the catalog request fails with a retryable budget error rather than exceeding the upstream budget.
 - Shared identifier: `global`; do not derive the identifier from user input or catalog query parameters. The Redis key prefix is also scoped by `VERCEL_ENV`, keeping Preview traffic separate from the Production budget even though both environments share the same database.
 - Redis timeout: 800 ms; analytics disabled; denied decisions are cached in-process by the SDK.
 - Vercel Marketplace environment variables are sensitive and must never be copied into source, logs, tests, or public artifacts.
