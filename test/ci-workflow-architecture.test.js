@@ -15,7 +15,12 @@ test("main CI uses a scoped GitHub App token for automated PR events", () => {
   assert.ok(ci.includes("github.ref"));
   assert.ok(!ci.includes(escapedExpression));
   assert.ok(ci.includes("cancel-in-progress: true"));
+  assert.ok(ci.includes("name: Install locked dependencies\n        run: npm ci --ignore-scripts"));
+  assert.ok(ci.includes("npm audit --omit=dev --audit-level=high"));
   assert.ok(ci.includes("name: Run tests\n        run: npm test"));
+  assert.ok(ci.includes("node-version: 26"));
+  assert.ok(ci.includes("actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1"));
+  assert.ok(ci.includes("actions/setup-node@820762786026740c76f36085b0efc47a31fe5020"));
   assert.ok(ci.includes("version-automation:\n    needs: test"));
   assert.ok(ci.includes("permissions:\n      contents: write"));
   assert.ok(ci.includes("name: Create automation GitHub App token"));
@@ -26,6 +31,8 @@ test("main CI uses a scoped GitHub App token for automated PR events", () => {
   assert.ok(ci.includes("permission-pull-requests: write"));
   assert.ok(ci.includes("GH_TOKEN: ${{ steps.automation-app-token.outputs.token }}"));
   assert.ok(ci.includes('git commit -m "chore: bump patch version [skip-version-automation]"'));
+  assert.ok(ci.includes('lock["version"] = next_version'));
+  assert.ok(ci.includes('lock["packages"][""]["version"] = next_version'));
   assert.ok(ci.includes("gh pr create"));
   assert.ok(ci.includes("--base main"));
   assert.ok(!ci.includes("gh workflow run pr-ci.yml"));
@@ -38,7 +45,11 @@ test("pull request CI supports both automatic PR events and explicit dispatch", 
   assert.ok(pr.includes("on:\n  pull_request:\n    branches: [main]"));
   assert.ok(pr.includes("workflow_dispatch:"));
   assert.ok(pr.includes("cancel-in-progress: true"));
+  assert.ok(pr.includes("run: npm ci --ignore-scripts"));
+  assert.ok(pr.includes("npm audit --omit=dev --audit-level=high"));
   assert.ok(pr.includes("run: npm test"));
+  assert.ok(pr.includes("persist-credentials: false"));
+  assert.ok(pr.includes("node-version: 26"));
 });
 
 test("release pipeline uses the scoped GitHub App token only for release-state PR automation", () => {
@@ -48,6 +59,8 @@ test("release pipeline uses the scoped GitHub App token only for release-state P
   assert.ok(sync.includes("'[deploy-prod]'"));
   assert.ok(sync.includes("'[finalize-prod:'"));
   assert.ok(!sync.includes("name: Bump patch version and sync metadata"));
+  assert.ok(sync.includes("name: Install locked dependencies\n        run: npm ci --ignore-scripts"));
+  assert.ok(sync.includes("npm audit --omit=dev --audit-level=high"));
   assert.ok(sync.includes("name: Run full CI"));
   assert.ok(sync.includes("actions: write"));
   assert.ok(sync.includes("automation/release-state-v$release_version"));
@@ -109,4 +122,31 @@ test("historical secret scan uses full git history with minimal permissions and 
   assert.ok(!scan.includes("GITLEAKS_LICENSE"));
   assert.ok(!scan.includes("gitleaks/gitleaks-action"));
   assert.ok(!scan.includes("pull-requests: write"));
+});
+
+test("all GitHub Actions dependencies are pinned to immutable full commit SHAs", () => {
+  const workflowsDirectory = new URL("../.github/workflows/", import.meta.url);
+  const files = fs.readdirSync(workflowsDirectory).filter((name) => name.endsWith(".yml"));
+  const references = files.flatMap((name) => {
+    const content = fs.readFileSync(new URL(name, workflowsDirectory), "utf8");
+    return [...content.matchAll(/^\s*uses:\s*([^\s#]+)/gm)].map((match) => ({ file: name, ref: match[1] }));
+  });
+  assert.ok(references.length > 0);
+  for (const { file, ref } of references) {
+    assert.match(ref, /^.+@[a-f0-9]{40}$/, `${file} contains a mutable or invalid action reference: ${ref}`);
+  }
+});
+
+test("production availability monitor uses minimal permissions and validates public catalog endpoints", () => {
+  const workflow = read("../.github/workflows/production-health-check.yml");
+  assert.ok(workflow.includes('cron: "*/30 * * * *"'));
+  assert.ok(workflow.includes("workflow_dispatch:"));
+  assert.ok(workflow.includes("permissions: {}"));
+  assert.ok(workflow.includes("PRODUCTION_BASE_URL: https://anibloom.vercel.app"));
+  assert.ok(workflow.includes("$PRODUCTION_BASE_URL/manifest.json"));
+  assert.ok(workflow.includes("$PRODUCTION_BASE_URL/catalog/series/current_season.json"));
+  assert.ok(workflow.includes("--max-time 35"));
+  assert.ok(workflow.includes("Production manifest does not advertise series and movie types"));
+  assert.ok(workflow.includes("Current-season catalog response is missing its metas array"));
+  assert.ok(!workflow.includes("secrets."));
 });

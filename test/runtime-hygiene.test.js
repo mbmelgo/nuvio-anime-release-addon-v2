@@ -53,6 +53,15 @@ test("retired runtime entrypoints and helpers stay removed", async () => {
   }
 });
 
+test("package lockfile matches the package manifest and root dependency graph", async () => {
+  const packageJson = JSON.parse(await readFile("package.json", "utf8"));
+  const packageLock = JSON.parse(await readFile("package-lock.json", "utf8"));
+  assert.equal(packageLock.lockfileVersion, 3);
+  assert.equal(packageLock.version, packageJson.version);
+  assert.equal(packageLock.packages[""].version, packageJson.version);
+  assert.deepEqual(packageLock.packages[""].dependencies, packageJson.dependencies);
+});
+
 test("catalog source is the only retained catalog runtime implementation", async () => {
   await access("api/catalog-source.js");
   await assert.rejects(access("api/catalog-delegation.js"));
@@ -322,4 +331,13 @@ test("release target validator requires an exact SHA and expected version", () =
     }),
     /full 40-character/,
   );
+});
+
+test("git ignore rules exclude local dependencies, Vercel state, and environment files", async () => {
+  const ignore = await readFile(".gitignore", "utf8");
+  assert.match(ignore, /^node_modules\/$/m);
+  assert.match(ignore, /^\.vercel\/$/m);
+  assert.match(ignore, /^\.env$/m);
+  assert.match(ignore, /^\.env\.\*$/m);
+  assert.match(ignore, /^!\.env\.example$/m);
 });

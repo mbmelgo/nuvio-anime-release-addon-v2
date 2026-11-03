@@ -104,6 +104,9 @@ test("rolling catalogs use short shared caching without long stale fallbacks", (
   assert.equal(getCatalogCacheControl("current_season"), "public, s-maxage=3600, stale-while-revalidate=86400");
   assert.equal(getCatalogCacheControl("upcoming_3_days", true), "no-store");
   assert.equal(getCatalogCacheControl("upcoming_3_days", false, 500), "no-store");
+  assert.equal(getCatalogCacheControl("current_season", false, 400), "no-store");
+  assert.equal(getCatalogCacheControl("current_season", false, 404), "no-store");
+  assert.equal(getCatalogCacheControl("current_season", false, 429), "no-store");
   assert.equal(getCatalogCacheControl("current_season", false, 500), "no-store");
 });
 

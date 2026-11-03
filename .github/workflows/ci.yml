@@ -19,11 +19,15 @@ jobs:
       contents: read
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 26
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
       - name: Run tests
         run: npm test
 
@@ -35,11 +39,11 @@ jobs:
       contents: write
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 26
       - name: Bump patch version and sync metadata
         shell: bash
         run: |
@@ -60,12 +64,22 @@ jobs:
           package["version"] = next_version
           package_path.write_text(json.dumps(package, indent=2) + "\n")
 
+          lock_path = Path("package-lock.json")
+          lock = json.loads(lock_path.read_text())
+          lock["version"] = next_version
+          lock["packages"][""]["version"] = next_version
+          lock_path.write_text(json.dumps(lock, indent=2) + "\n")
+
           readme_path = Path("README.md")
           readme = readme_path.read_text()
           readme = re.sub(r"version-\d+\.\d+\.\d+-blue", f"version-{next_version}-blue", readme)
           readme = re.sub(r"(\*\*Development:\*\*\s*)`v?[^\`]+`", rf"\g<1>`v{next_version}`", readme)
           readme_path.write_text(readme)
           PY
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
       - name: Verify versioned tree
         run: npm test
       - name: Create automation GitHub App token

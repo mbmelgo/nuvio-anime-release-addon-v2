@@ -88,7 +88,7 @@ test("catalog snapshot workflow compares against the previous snapshot and publi
   assert.doesNotMatch(workflow, /git fetch --quiet origin[^\n]*\|\| true/);
   assert.match(workflow, /git archive "origin\/catalog-snapshots\/v\$before_version"/);
   assert.match(workflow, /scripts\/compare-catalog-snapshots\.js/);
-  assert.match(workflow, /uses: actions\/upload-artifact@v4/);
+  assert.match(workflow, /uses: actions\/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02/);
   assert.match(workflow, /name: catalog-diff-v\$\{\{ steps\.diff\.outputs\.before_version \}\}-to-v\$\{\{ steps\.release\.outputs\.version \}\}/);
 });
 
