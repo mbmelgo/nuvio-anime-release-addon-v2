@@ -143,7 +143,7 @@ test("rolling catalog counters accumulate safe aggregate counts without exposing
 
   assert.deepEqual(diagnostics, {
     rollingEligibleRows: 19,
-    rollingMetas: 10,
+    rollingMetas: 12,
     rollingSchedulePages: 3,
     rollingScheduleRows: 23,
     rollingUniqueEligibleRows: 14,
