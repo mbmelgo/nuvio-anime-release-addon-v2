@@ -225,7 +225,7 @@ test("AniList request locking fails open when Redis is unavailable", async () =>
   }
 });
 
-test("catalog requests receive a retryable 503 when a cross-instance query lock remains held", async () => {
+test("catalog requests receive a retryable 503 when a cross-instance refresh lock remains held", async () => {
   const { default: catalogSource } = await import("../api/catalog-source.js");
   const { setCatalogRuntimeCacheForTests } = await import("../lib/catalog-runtime-cache.js");
   const { setAniListRedisClientForTests } = await import("../lib/catalog-rate-limiter.js");
@@ -246,7 +246,7 @@ test("catalog requests receive a retryable 503 when a cross-instance query lock 
       "https://anibloom.example/catalog/series/current_season.json",
     ));
     assert.equal(response.status, 503);
-    assert.equal(response.headers.get("retry-after"), "5");
+    assert.equal(response.headers.get("retry-after"), "10");
     assert.equal((await response.json()).error, "Catalog temporarily unavailable");
   } finally {
     Date.now = originalNow;
