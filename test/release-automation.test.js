@@ -109,3 +109,9 @@ test("catalog snapshot resolves its production URL from the configured domain in
   assert.ok(snapshotWorkflow.includes('PRODUCTION_BASE_URL="https://${ADDON_DOMAIN}"'));
   assert.ok(!snapshotWorkflow.includes("PRODUCTION_BASE_URL: https://${ADDON_DOMAIN}"));
 });
+
+test("release workflow builds notes from commit subjects and bodies using the tested generator", () => {
+  assert.match(deployWorkflow, /git log --reverse --no-merges --format='%s%x1f%b%x1e'/);
+  assert.match(deployWorkflow, /node scripts\/release-notes\.mjs/);
+  assert.doesNotMatch(deployWorkflow, /This release contains improvements to the addon\./);
+});
