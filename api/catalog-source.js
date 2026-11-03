@@ -1778,7 +1778,7 @@ export async function buildRollingCatalog(id, date, skip, search, {
   const sort = futureOnly ? "TIME" : "TIME_DESC";
   // Share one TMDB budget across all AniList pages consumed by this rolling request.
   const tmdbResolverBudget = { deadlineAt: null };
-  return collectValidatedCatalogPage({
+  const result = await collectValidatedCatalogPage({
     skip, pageSize, maxPages,
     fetchPage: async (page) => {
       const stageStart = diagnostics ? performance.now() : 0;
@@ -1964,6 +1964,8 @@ export async function buildRollingCatalog(id, date, skip, search, {
       return filteredMetas;
     },
   });
+  if (diagnostics) diagnostics.rollingReturnedMetas = Array.isArray(result) ? result.length : 0;
+  return result;
 }
 export async function buildCatalog(id, info, skip, search, diagnostics = null) {
   const filter = getCatalogFilter(id, info);
