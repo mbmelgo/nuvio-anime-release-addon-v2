@@ -34,11 +34,11 @@ A background refresh is deduplicated within one warm function instance. This is 
 
 The page budget intentionally bounds worst-case upstream fan-out. If validation removes many candidates or a client requests a deep offset, the catalog may return fewer than the requested page size after the budget is exhausted.
 
-## Known limitation: proactive global rate limiting
+## Runtime Cache and limiter limitations
 
-The Runtime Cache API exposes get/set/delete but no atomic increment or compare-and-set operation. Therefore the shared 429 cooldown is reactive and regional; it is **not** a proactive global requests-per-minute limiter and cannot prevent simultaneous cold misses across separate function instances or regions.
+Vercel Runtime Cache is regional and does not provide atomic increment or compare-and-set operations. It is used for response reuse and the reactive shared 429 cooldown, not as the global request-budget primitive.
 
-A true global limiter still requires an atomic coordination primitive (for example, a Redis-backed token bucket/lease) or a queue worker with a verified, supported global concurrency setting. No Redis/Upstash integration or corresponding project environment configuration was present during this implementation. Do not claim that AniBloom has a globally enforced AniList request budget until that component is provisioned and validated.
+The Upstash token bucket is the proactive shared limiter when its Vercel Marketplace credentials are available and Redis responds within the configured timeout. The limiter deliberately fails open to a bounded per-instance token bucket when Redis is missing, unavailable, or times out. Therefore a strict global request budget is **not guaranteed during Redis outages or timeouts**. Do not interpret fail-open operation as globally enforced rate limiting.
 
 ## Upstash distributed limiter
 
@@ -48,6 +48,20 @@ A true global limiter still requires an atomic coordination primitive (for examp
 - Shared identifier: `global`; do not derive the identifier from user input or catalog query parameters. The Redis key prefix is also scoped by `VERCEL_ENV`, keeping Preview traffic separate from the Production budget even though both environments share the same database.
 - Redis timeout: 800 ms; analytics disabled; denied decisions are cached in-process by the SDK.
 - Vercel Marketplace environment variables are sensitive and must never be copied into source, logs, tests, or public artifacts.
+
+## Diagnostic counters
+
+Append `?diagnostics=1` to a catalog endpoint to bypass the normalized catalog cache and return aggregate timing/count headers. The `X-Nuvio-Catalog-Stages` header includes:
+
+- `rollingSchedulePages` and `rollingScheduleRows`: schedule pages requested and rows retained inside the requested time window.
+- `rollingEligibleRows`: rows passing media ID, adult-content, and format eligibility checks.
+- `rollingUniqueEligibleRows`: eligible rows after AniList ID deduplication.
+- `rollingSearchedRows`: rows remaining after the optional catalog search filter.
+- `rollingMetas`: final rolling metadata entries after Kitsu fallback and final search filtering.
+- `rollingFallbackMetas`: final entries still using `mal:` or `anilist:` IDs.
+- `seasonAnilistRows` and `seasonCanonicalMetas`: seasonal source rows and canonicalized metadata entries.
+
+Counters are aggregate counts only. They do not include AniList IDs, titles, search terms, or provider credentials. Rolling counters accumulate across all pages fetched for one diagnostic request.
 
 ## Operational validation
 
