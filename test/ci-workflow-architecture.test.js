@@ -20,7 +20,7 @@ test("main CI uses a scoped GitHub App token for automated PR events", () => {
   assert.ok(ci.includes("permissions:\n      contents: write"));
   assert.ok(ci.includes("name: Create automation GitHub App token"));
   assert.ok(ci.includes("uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510"));
-  assert.ok(ci.includes("client-id: ${{ vars.AUTOMATION_APP_ID || secrets.AUTOMATION_APP_ID }}"));
+  assert.ok(ci.includes("client-id: ${{ vars.AUTOMATION_APP_CLIENT_ID || secrets.AUTOMATION_APP_CLIENT_ID }}"));
   assert.ok(ci.includes("private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}"));
   assert.ok(ci.includes("repositories: AniBloom"));
   assert.ok(ci.includes("permission-pull-requests: write"));
@@ -55,7 +55,7 @@ test("release pipeline uses the scoped GitHub App token only for release-state P
   assert.ok(sync.includes("gh pr create"));
   assert.ok(sync.includes("name: Create automation GitHub App token"));
   assert.ok(sync.includes("uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510"));
-  assert.ok(sync.includes("client-id: ${{ vars.AUTOMATION_APP_ID || secrets.AUTOMATION_APP_ID }}"));
+  assert.ok(sync.includes("client-id: ${{ vars.AUTOMATION_APP_CLIENT_ID || secrets.AUTOMATION_APP_CLIENT_ID }}"));
   assert.ok(sync.includes("private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}"));
   assert.ok(sync.includes("repositories: AniBloom"));
   assert.ok(sync.includes("permission-pull-requests: write"));
