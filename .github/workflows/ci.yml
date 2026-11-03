@@ -33,8 +33,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
-      actions: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -70,10 +68,19 @@ jobs:
           PY
       - name: Verify versioned tree
         run: npm test
+      - name: Create automation GitHub App token
+        id: automation-app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
+        with:
+          app-id: ${{ vars.AUTOMATION_APP_ID }}
+          private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+          owner: AniBloomHQ
+          repositories: AniBloom
+          permission-pull-requests: write
       - name: Open version metadata pull request
         shell: bash
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.automation-app-token.outputs.token }}
         run: |
           set -euo pipefail
           if git diff --quiet -- api/version.js package.json README.md; then
@@ -101,6 +108,3 @@ jobs:
               --body "Automated patch-version metadata update generated from main commit $GITHUB_SHA. This pull request keeps main protected and runs the normal pull-request CI before the metadata is merged."
           fi
 
-          # GITHUB_TOKEN-created PRs do not start pull_request workflows automatically.
-          # Dispatch the same PR CI workflow against this exact automation branch.
-          gh workflow run pr-ci.yml --repo "$GITHUB_REPOSITORY" --ref "$branch"
