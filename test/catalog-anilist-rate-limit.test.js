@@ -217,3 +217,69 @@ test("AniList upstream failures are classified without exposing request data", a
   assert.equal(classifyAniListFailure(new TypeError("fetch failed")), "network");
   assert.equal(classifyAniListFailure(new Error("GraphQL response invalid")), "upstream");
 });
+
+test("AniList reuses Runtime Cache responses after the function-local cache is cleared", async () => {
+  const { setCatalogRuntimeCacheForTests } = await import("../lib/catalog-runtime-cache.js");
+  const values = new Map();
+  setCatalogRuntimeCacheForTests({
+    async get(key) { return values.get(key) ?? null; },
+    async set(key, value) { values.set(key, value); },
+  });
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    return {
+      ok: true,
+      status: 200,
+      headers: new Headers(),
+      async json() { return { data: { Page: { media: [{ id: 321 }] } } }; },
+    };
+  };
+
+  clearAniListRateLimitState();
+  try {
+    const filter = { season: "FALL", seasonYear: 2026, sort: ["ID"] };
+    assert.deepEqual(await queryAnime(filter, 1), [{ id: 321 }]);
+    clearAniListResponseCache();
+    assert.deepEqual(await queryAnime(filter, 1), [{ id: 321 }]);
+    assert.equal(calls, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    setCatalogRuntimeCacheForTests(null);
+    clearAniListRateLimitState();
+  }
+});
+
+test("AniList shares a 429 cooldown across function-local state", async () => {
+  const { setCatalogRuntimeCacheForTests } = await import("../lib/catalog-runtime-cache.js");
+  const values = new Map();
+  setCatalogRuntimeCacheForTests({
+    async get(key) { return values.get(key) ?? null; },
+    async set(key, value) { values.set(key, value); },
+  });
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    return {
+      ok: false,
+      status: 429,
+      headers: new Headers({ "Retry-After": "120" }),
+      async json() { return {}; },
+    };
+  };
+
+  clearAniListRateLimitState();
+  try {
+    const filter = { season: "FALL", seasonYear: 2026, sort: ["ID"] };
+    await assert.rejects(queryAnime(filter, 1), /HTTP 429/);
+    clearAniListRateLimitState();
+    await assert.rejects(queryAnime(filter, 1), /cooldown active/);
+    assert.equal(calls, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    setCatalogRuntimeCacheForTests(null);
+    clearAniListRateLimitState();
+  }
+});
