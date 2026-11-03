@@ -134,7 +134,7 @@ export function summarizeLoadResults(results, elapsedMs) {
   };
 }
 
-export async function runLoadTest(config, { fetchImpl = globalThis.fetch } = {}) {
+export async function runLoadTest(config, { fetchImpl = globalThis.fetch, env = process.env } = {}) {
   const safeConfig = validateLoadTestConfig(config);
   const results = new Array(safeConfig.requests);
   let nextIndex = 0;
@@ -152,13 +152,18 @@ export async function runLoadTest(config, { fetchImpl = globalThis.fetch } = {})
       url.searchParams.set("_load_probe", randomUUID());
       const requestStartedAt = performance.now();
       try {
+        const headers = {
+          Accept: "application/json",
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        };
+        const trustedSourcesToken = String(env?.VERCEL_OIDC_TOKEN || "").trim();
+        if (!safeConfig.allowProduction && trustedSourcesToken) {
+          headers["x-vercel-trusted-oidc-idp-token"] = trustedSourcesToken;
+        }
         const response = await fetchImpl(url, {
           method: "GET",
-          headers: {
-            Accept: "application/json",
-            "Cache-Control": "no-cache",
-            Pragma: "no-cache",
-          },
+          headers,
           redirect: "error",
           signal: AbortSignal.timeout(safeConfig.timeoutMs),
         });
@@ -223,6 +228,7 @@ function printHelp() {
     "  --concurrency <count>  Concurrent requests (1-20; default 5)",
     "  --timeout-ms <ms>      Per-request timeout (1000-30000; default 15000)",
     "  --allow-production     Explicit opt-in; production capped at 40 requests / 10 concurrent",
+    "                         Preview requests use VERCEL_OIDC_TOKEN when supplied by vercel env run",
     "  --help                 Show this help",
     "",
     "This probes the warm application-cache path. It does not simulate cold-cache",
