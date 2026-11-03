@@ -40,6 +40,15 @@ The Runtime Cache API exposes get/set/delete but no atomic increment or compare-
 
 A true global limiter still requires an atomic coordination primitive (for example, a Redis-backed token bucket/lease) or a queue worker with a verified, supported global concurrency setting. No Redis/Upstash integration or corresponding project environment configuration was present during this implementation. Do not claim that AniBloom has a globally enforced AniList request budget until that component is provisioned and validated.
 
+## Upstash distributed limiter
+
+- Redis client: `@upstash/redis` 1.41.0.
+- Rate limiter: `@upstash/ratelimit` 2.2.0.
+- Algorithm: atomic token bucket, 20-token refill per 60 seconds, maximum burst of 5.
+- Shared identifier: `global`; do not derive the identifier from user input or catalog query parameters.
+- Redis timeout: 800 ms; analytics disabled; denied decisions are cached in-process by the SDK.
+- Vercel Marketplace environment variables are sensitive and must never be copied into source, logs, tests, or public artifacts.
+
 ## Operational validation
 
 After a controlled deployment:
@@ -49,4 +58,6 @@ After a controlled deployment:
 - Verify fresh and stale cache response headers.
 - Test a cold cache with AniList unavailable and confirm HTTP 503.
 - Test a warmed cache with AniList unavailable and confirm stale HTTP 200.
-- Confirm the actual Vercel function region; Runtime Cache sharing is regional.
+- Confirm the actual Vercel function region and that all AniBloom function regions use the connected Singapore Redis primary.
+- Exercise concurrent requests across separate function instances and confirm aggregate upstream calls remain within the shared token-bucket budget.
+- Inspect Upstash command usage against the 500,000-command monthly Free-plan allowance.
