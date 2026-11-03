@@ -2,8 +2,18 @@ const AUTOMATION_SUBJECT = /\b(?:bump (?:the )?(?:patch )?version|record v?\d+\.
 const AUTOMATION_BODY = /\b(?:npm test|tests? passed|dependency audit|workflow assertions|release-state\.json|production deployment|deploy(?:ment)? workflow|ci run|git tag|snapshot artifact)\b/i;
 const GENERIC_SUBJECT = /^(?:update|improve the addon|maintenance|miscellaneous changes|changes)$/i;
 
+function stripHtml(value) {
+  let text = String(value ?? "");
+  let previous;
+  do {
+    previous = text;
+    text = text.replace(/<[^>]*>/g, "");
+  } while (text !== previous);
+  return text.replace(/<|>/g, "");
+}
+
 function clean(value) {
-  return String(value ?? "").replace(/<\/?[a-z][^>]*>/gi, "").replace(/[<>]/g, "").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/https?:\/\/\S+/gi, "").replace(/[\x60*_~]/g, "").replace(/\s+/g, " ").trim().slice(0, 180);
+  return stripHtml(value).replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/https?:\/\/\S+/gi, "").replace(/[\x60*_~]/g, "").replace(/\s+/g, " ").trim().slice(0, 180);
 }
 
 function categoryFor(text) {
