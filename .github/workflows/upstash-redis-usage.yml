@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   monitor:
+    if: github.ref == 'refs/heads/main'
     name: Check monthly Redis quotas
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -21,11 +22,11 @@ jobs:
       contents: read
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           package-manager-cache: false
