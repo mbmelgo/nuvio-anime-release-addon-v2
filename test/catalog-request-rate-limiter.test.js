@@ -15,7 +15,7 @@ function request(ip) {
 test("incoming catalog limiter enforces the configured per-client burst locally", async () => {
   resetCatalogRequestRateLimiterForTests();
   const client = request("203.0.113.25");
-  for (let index = 0; index < 30; index += 1) {
+  for (let index = 0; index < 60; index += 1) {
     assert.equal((await acquireCatalogRequestPermit(client, 1_000)).allowed, true);
   }
   const limited = await acquireCatalogRequestPermit(client, 1_000);
@@ -28,7 +28,7 @@ test("incoming catalog limiter enforces the configured per-client burst locally"
 test("incoming catalog limiter refills the local bucket over time", async () => {
   resetCatalogRequestRateLimiterForTests();
   const client = request("203.0.113.27");
-  for (let index = 0; index < 30; index += 1) await acquireCatalogRequestPermit(client, 1_000);
+  for (let index = 0; index < 60; index += 1) await acquireCatalogRequestPermit(client, 1_000);
   assert.equal((await acquireCatalogRequestPermit(client, 1_000)).allowed, false);
   assert.equal((await acquireCatalogRequestPermit(client, 1_500)).allowed, true);
 });
