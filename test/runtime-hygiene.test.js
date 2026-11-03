@@ -78,7 +78,7 @@ test("README matches the public AniBloom product, installation, catalog and supp
   assert.ok(readme.includes("**Production:** `v" + releaseState.lastDeploymentVersion + "`"));
   assert.ok(readme.includes("**Development:** `v" + addonVersion + "`"));
   assert.ok(readme.includes("https://anibloom.vercel.app/manifest.json"));
-  assert.ok(readme.split(/\r?\n/).some(line => line === "[Install AniBloom](https://anibloom.vercel.app/manifest.json) · [Homepage](https://anibloom.vercel.app/) · [Support the addon](https://buymeacoffee.com/melgom475) · [Releases](https://github.com/mbmelgo/AniBloom/releases)"));
+  assert.ok(readme.split(/\r?\n/).some(line => line === "[Install AniBloom](https://anibloom.vercel.app/manifest.json) · [Homepage](https://anibloom.vercel.app/) · [Support the addon](https://buymeacoffee.com/melgom475) · [Releases](https://github.com/AniBloomHQ/AniBloom/releases)"));
   assert.ok(isValidNextReleaseVersion(releaseState.lastDeploymentVersion, releaseState.nextReleaseVersion, releaseState.supersededReleaseVersions));
   assert.ok(!readme.includes("| Anime series | Recent releases & movies |"));
   assert.doesNotMatch(readme, /Anime series|Recent releases & movies/);
@@ -230,7 +230,7 @@ test("last deployment metadata must mirror the authoritative release state", () 
       tag: "v5.5.0",
       releasedAt: "2026-10-01T00:00:00.000Z",
       ciRunId: "12345",
-      ciRunUrl: "https://github.com/mbmelgo/anibloom/actions/runs/12345",
+      ciRunUrl: "https://github.com/AniBloomHQ/AniBloom/actions/runs/12345",
       smokeTest: "passed",
     },
   };
