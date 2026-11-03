@@ -92,6 +92,7 @@ test("historical secret scan uses full git history with minimal permissions and 
   assert.ok(scan.includes("if: github.event_name == 'pull_request' || github.event_name == 'push'"));
   assert.ok(scan.includes("run: gitleaks detect --redact --no-banner --exit-code=2"));
   assert.ok(scan.includes("persist-credentials: false"));
+  assert.ok(scan.includes("GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}"));
   assert.ok(scan.includes("gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e"));
   assert.ok(scan.includes("actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1"));
   assert.ok(scan.includes('GITLEAKS_VERSION: "8.30.1"'));
