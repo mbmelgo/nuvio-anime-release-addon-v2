@@ -20,6 +20,12 @@ test("AniBloom homepage follows approved brand and content structure", () => {
   assert.doesNotMatch(html, /AniList|ARM mapping|identity mapping|TMDB|TVDB|IMDb/i);
 });
 
+test("homepage Open Source footer points to the canonical organization repository", () => {
+  const html = render();
+  assert.match(html, /<a href="https:\/\/github\.com\/AniBloomHQ\/AniBloom" target="_blank" rel="noopener noreferrer">◉ &nbsp; Open Source<\/a>/);
+  assert.doesNotMatch(html, /github\.com\/mbmelgo\/AniBloom/i);
+});
+
 test("stylesheet keeps monochrome palette, responsive layout and accessibility", async () => {
   const css = await readFile(new URL("../assets/anibloom.css", import.meta.url), "utf8");
   for (const token of ["#090b0d", "#ff79b9", "#f3a6cf", "#b65bea", "prefers-reduced-motion", ":focus-visible", "@media(max-width:700px)"]) assert.ok(css.includes(token), token);
