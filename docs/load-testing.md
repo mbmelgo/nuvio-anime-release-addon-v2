@@ -22,11 +22,11 @@ This is not a cold-cache, AniList, or cross-instance refresh-stampede test. Do n
 Warm the target catalog with one ordinary request first, then run a preview test:
 
 ```sh
-curl -fsS https://<anibloom-preview>.vercel.app/catalog/series/current_season.json >/dev/null
-node scripts/load-probe.mjs \
+vercel curl https://<anibloom-preview>.vercel.app/catalog/series/current_season.json >/dev/null
+vercel env run -- node scripts/load-probe.mjs \
   --target https://<anibloom-preview>.vercel.app \
   --path /catalog/series/current_season.json \
-  --requests 80 \
+  --requests 40 \
   --concurrency 20
 ```
 
@@ -42,7 +42,7 @@ node scripts/load-probe.mjs \
   --allow-production
 ```
 
-For preview-only stages, run separate bounded passes at 5, 10, and 20 concurrent requests. Keep the total request count within the stated limit for each invocation and inspect runtime errors and Upstash usage between stages. A preview uses an environment-specific AniList limiter key, but still shares the connected Redis database and its command allowance.
+For protected previews, run these commands from the repository directory linked to the same Vercel project. `vercel curl` uses the existing Vercel CLI authentication to warm the preview catalog. `vercel env run` supplies a short-lived `VERCEL_OIDC_TOKEN`; the probe forwards it as `x-vercel-trusted-oidc-idp-token` for preview requests only. The token is never printed or persisted. This uses the existing Trusted Sources access path and does not disable Deployment Protection or create a bypass secret. If the CLI does not supply the token or Trusted Sources rejects it, stop rather than weakening protection.\n\nFor preview-only stages, run separate bounded passes at 5, 10, and 20 concurrent requests. Keep the total request count within the stated limit for each invocation and inspect runtime errors and Upstash usage between stages. A preview uses an environment-specific AniList limiter key, but still shares the connected Redis database and its command allowance.
 
 ## Interpreting results
 
