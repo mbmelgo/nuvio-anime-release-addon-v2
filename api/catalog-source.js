@@ -180,7 +180,7 @@ export default {
             return send({ metas: cached.metas }, 200, null, false, id);
           }
 
-          scheduleCatalogRefresh(cacheKey, id, seasonInfo, skip, search, cachePolicy);
+          await scheduleCatalogRefresh(cacheKey, id, seasonInfo, skip, search, cachePolicy);
           return send(
             { metas: cached.metas },
             200,
@@ -205,7 +205,6 @@ export default {
       console.error("[catalog] request failed", {
         id,
         kind: error?.name || "Error",
-        message: String(error?.message || "Catalog provider failure").slice(0, 180),
       });
       return send(
         { error: "Catalog temporarily unavailable", metas: [] },
@@ -1953,7 +1952,7 @@ export function getCatalogRuntimeCachePolicy(id) {
   return { freshTtlSeconds: 3600, staleTtlSeconds: 86400 };
 }
 
-function scheduleCatalogRefresh(cacheKey, id, seasonInfo, skip, search, cachePolicy) {
+async function scheduleCatalogRefresh(cacheKey, id, seasonInfo, skip, search, cachePolicy) {
   if (catalogRefreshes.has(cacheKey)) return;
 
   const refresh = (async () => {
@@ -1968,14 +1967,13 @@ function scheduleCatalogRefresh(cacheKey, id, seasonInfo, skip, search, cachePol
     console.error("[catalog] background refresh failed", {
       id,
       kind: error?.name || "Error",
-      message: String(error?.message || "Catalog provider failure").slice(0, 180),
     });
   }).finally(() => {
     catalogRefreshes.delete(cacheKey);
   });
 
   catalogRefreshes.set(cacheKey, refresh);
-  void keepCatalogTaskAlive(refresh);
+  await keepCatalogTaskAlive(refresh);
 }
 
 export function getCatalogCacheControl(id, diagnosticsEnabled = false, status = 200) {
