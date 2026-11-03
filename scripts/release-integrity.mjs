@@ -7,7 +7,7 @@ export function parseVersion(value) {
 export function compareVersions(left, right) {
   const a = parseVersion(left);
   const b = parseVersion(right);
-  for (let i = 0; i < 3; i += 1) {
+  for (let i = 0; i < 3; i++) {
     if (a[i] !== b[i]) return a[i] - b[i];
   }
   return 0;
@@ -31,7 +31,7 @@ export function isValidNextReleaseVersion(productionVersion, nextReleaseVersion,
     })
     .filter(Boolean)
     .sort((left, right) => {
-      for (let i = 0; i < 3; i += 1) {
+      for (let i = 0; i < 3; i++) {
         if (left.parsed[i] !== right.parsed[i]) return left.parsed[i] - right.parsed[i];
       }
       return 0;
@@ -134,8 +134,11 @@ export function validateLastDeploymentMetadata(state) {
       throw new Error("lastDeployment ciRunUrl is invalid.");
     }
   }
-  if (deployment.smokeTest !== "passed") {
-    throw new Error("lastDeployment smokeTest must be passed.");
+  if (deployment.smokeTest !== "passed" && deployment.smokeTest !== "not_run") {
+    throw new Error("lastDeployment smokeTest must be passed or not_run.");
+  }
+  if (deployment.smokeTest === "not_run" && (deployment.ciRunId !== null || deployment.ciRunUrl !== null)) {
+    throw new Error("A deployment without a smoke test must not claim a CI run.");
   }
   return true;
 }
