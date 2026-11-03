@@ -12,9 +12,9 @@ function requireNonNegativeFiniteNumber(value, field) {
   return value;
 }
 
-function parseJson(response, context) {
+async function parseJson(response, context) {
   try {
-    return response.json();
+    return await response.json();
   } catch {
     throw new Error(`${context} returned invalid JSON`);
   }
