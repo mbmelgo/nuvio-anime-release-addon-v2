@@ -283,3 +283,8 @@ test("AniList shares a 429 cooldown across function-local state", async () => {
     clearAniListRateLimitState();
   }
 });
+
+test("AniList relative rate-limit reset values are treated as seconds", async () => {
+  const { getAniListRetryDelayMs } = await import("../lib/catalog-anilist.js");
+  assert.equal(getAniListRetryDelayMs(new Headers({ "X-RateLimit-Reset": "45" }), 1_000_000), 45_000);
+});
