@@ -11,7 +11,7 @@ const CATALOGS = [
   ["Upcoming Season Movies", "upcoming_season_movies", "Movies from the next upcoming season."]
 ];
 
-const DONATION_URL = "https://buymeacoffee.com/melgom475";
+const DONATION_URL = "https://buymeacoffee.com/mark475";
 
 function icon(id) {
   const paths = {
