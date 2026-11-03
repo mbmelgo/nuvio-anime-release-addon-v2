@@ -27,12 +27,21 @@ jobs:
             "$PRODUCTION_BASE_URL/" -o "$RUNNER_TEMP/home.html"
           curl --fail --silent --show-error --location --max-time 15 \
             "$PRODUCTION_BASE_URL/manifest.json" -o "$RUNNER_TEMP/manifest.json"
-          python3 - "$RUNNER_TEMP/manifest.json" <<'PY'
+          curl --fail --silent --show-error --location --max-time 15 \
+            "$PRODUCTION_BASE_URL/privacy.html" -o "$RUNNER_TEMP/privacy.html"
+          python3 - "$RUNNER_TEMP/home.html" "$RUNNER_TEMP/manifest.json" "$RUNNER_TEMP/privacy.html" <<'PY'
           import json
           import sys
           from pathlib import Path
 
-          manifest = json.loads(Path(sys.argv[1]).read_text())
+          homepage = Path(sys.argv[1]).read_text()
+          privacy = Path(sys.argv[3]).read_text()
+          if 'href="/privacy.html"' not in homepage:
+              raise SystemExit("Homepage does not link to the privacy disclosure")
+          if "Privacy &amp; service data" not in privacy:
+              raise SystemExit("Privacy disclosure page is missing its expected heading")
+
+          manifest = json.loads(Path(sys.argv[2]).read_text())
           expected = {
               "current_season",
               "previous_season",

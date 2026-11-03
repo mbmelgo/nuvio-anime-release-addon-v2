@@ -145,6 +145,9 @@ test("production availability monitor uses minimal permissions and validates pub
   assert.ok(workflow.includes("permissions: {}"));
   assert.ok(workflow.includes("PRODUCTION_BASE_URL: https://anibloom.vercel.app"));
   assert.ok(workflow.includes("$PRODUCTION_BASE_URL/manifest.json"));
+  assert.ok(workflow.includes('"$PRODUCTION_BASE_URL/privacy.html"'));
+  assert.ok(workflow.includes('href="/privacy.html"'));
+  assert.ok(workflow.includes("Privacy &amp; service data"));
   assert.ok(workflow.includes("$PRODUCTION_BASE_URL/catalog/series/current_season.json"));
   assert.ok(workflow.includes("--max-time 35"));
   assert.ok(workflow.includes("Production manifest does not advertise series and movie types"));
