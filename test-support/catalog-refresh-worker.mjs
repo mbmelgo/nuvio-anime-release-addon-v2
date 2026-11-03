@@ -19,6 +19,21 @@ const cache = {
     if (!response.ok) throw new Error("shared cache write failed");
   },
 };
+globalThis.fetch = (url, options) => {
+  const target = String(url);
+  if (target === "https://graphql.anilist.co") {
+    return nativeFetch(`${baseUrl}/upstream/anilist`, options);
+  }
+  if (target === "https://arm.haglund.dev/api/v2/ids") {
+    return nativeFetch(`${baseUrl}/upstream/arm`, options);
+  }
+  return nativeFetch(`${baseUrl}/upstream/provider`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ url: target, method: options?.method || "GET" }),
+  });
+};
+
 const redis = {
   async set(key, token, options) {
     const response = await nativeFetch(`${baseUrl}/lock/set`, {
@@ -53,20 +68,6 @@ const [
 setCatalogRuntimeCacheForTests(cache);
 setAniListRedisClientForTests(redis);
 setAniListRateLimiterForTests(async () => ({ success: true }));
-globalThis.fetch = (url, options) => {
-  const target = String(url);
-  if (target === "https://graphql.anilist.co") {
-    return nativeFetch(`${baseUrl}/upstream/anilist`, options);
-  }
-  if (target === "https://arm.haglund.dev/api/v2/ids") {
-    return nativeFetch(`${baseUrl}/upstream/arm`, options);
-  }
-  return nativeFetch(`${baseUrl}/upstream/provider`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ url: target, method: options?.method || "GET" }),
-  });
-};
 
 try {
   const response = await catalogSource.fetch(new Request(
