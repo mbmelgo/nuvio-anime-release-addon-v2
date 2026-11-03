@@ -104,3 +104,12 @@ test("snapshot comparison treats newly introduced movie catalogs as empty in leg
   assert.equal(diff.catalogs.upcoming_season_movies.summary.before, 0);
   assert.equal(diff.catalogs.upcoming_season_movies.summary.after, 0);
 });
+
+
+test("production snapshot capture paces requests and backs off on transient upstream failures", () => {
+  assert.ok(workflow.includes("sleep 3"), "requests should be spaced to respect the shared AniList token bucket");
+  assert.ok(workflow.includes("max_attempts=5"), "transient failures should have a bounded retry count");
+  assert.ok(workflow.includes("3 * (2 ** (attempt - 1))"), "transient failures should use exponential backoff");
+  assert.ok(workflow.includes("500|502|503|504"), "upstream 5xx responses should be retried");
+  assert.ok(workflow.includes('fetch_catalog_page "$request_url" "$output"'));
+});
