@@ -3,7 +3,7 @@ import { createServer } from "node:http";
 import { Worker } from "node:worker_threads";
 import test from "node:test";
 
-async function runCrossInstanceScenario({ failCacheWrites = false, lockUnavailable = false, upstream429 = false } = {}) {
+async function runCrossInstanceScenario({ failCacheWrites = false, lockUnavailable = false, upstream429 = false, seedExpiredResponse = false } = {}) {
   const cache = new Map();
   const locks = new Map();
   let responseCacheReads = 0;
@@ -28,14 +28,25 @@ async function runCrossInstanceScenario({ failCacheWrites = false, lockUnavailab
       const key = url.searchParams.get("key");
       if (key?.startsWith("anilist-response:") && responseCacheReads < 2) {
         responseCacheReads += 1;
+        if (seedExpiredResponse && responseCacheReads === 1) {
+          cache.set(key, {
+            value: { Page: { media: [{ id: 99 }] } },
+            expiresAt: Date.now() - 1,
+          });
+        }
         pendingReads.push({ key, res });
         if (responseCacheReads === 2) {
           releaseInitialReads();
-          for (const item of pendingReads.splice(0)) sendJson(item.res, { value: null });
+          for (const item of pendingReads.splice(0)) {
+            const entry = cache.get(item.key);
+            const value = entry && entry.expiresAt > Date.now() ? entry.value : null;
+            sendJson(item.res, { value });
+          }
         }
         return;
       }
-      sendJson(res, { value: cache.get(key) ?? null });
+      const entry = cache.get(key);
+      sendJson(res, { value: entry && entry.expiresAt > Date.now() ? entry.value : null });
       return;
     }
     if (url.pathname === "/cache/set" && req.method === "POST") {
@@ -44,7 +55,7 @@ async function runCrossInstanceScenario({ failCacheWrites = false, lockUnavailab
         sendJson(res, { error: "simulated cache write failure" }, 503);
         return;
       }
-      cache.set(key, value);
+      cache.set(key, { value, expiresAt: Date.now() + 60_000 });
       sendJson(res, { ok: true });
       return;
     }
@@ -121,6 +132,17 @@ test("separate AniBloom workers coalesce identical cold AniList requests through
   assert.equal(result.upstreamCalls, 1, "only the lock owner should call AniList for an identical cold query");
   assert.equal(result.activeLocks, 0, "the lock owner must release its lease after caching the response");
   assert.ok(result.durationMs < 3_000, "both workers should complete within the bounded test window");
+});
+
+test("separate workers coalesce a stale AniList response refresh and receive fresh data", async () => {
+  const result = await runCrossInstanceScenario({ seedExpiredResponse: true });
+  assert.deepEqual(result.results, [
+    { ok: true, result: [{ id: 123 }] },
+    { ok: true, result: [{ id: 123 }] },
+  ]);
+  assert.equal(result.upstreamCalls, 1, "an expired shared response must be refreshed by only one lock owner");
+  assert.equal(result.activeLocks, 0);
+  assert.ok(result.durationMs < 3_000);
 });
 
 test("cache-write failures release the lock and allow a later worker to retry", async () => {

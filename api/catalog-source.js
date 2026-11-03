@@ -292,8 +292,8 @@ export default {
         { error: "Catalog temporarily unavailable", metas: [] },
         503,
         {
-          ...(error?.code === "ANILIST_REQUEST_IN_PROGRESS"
-            ? { "Retry-After": String(Math.max(2, Math.min(60, Number(error.retryAfterSeconds) || 5))) }
+          ...(Number.isFinite(Number(error?.retryAfterSeconds)) && Number(error.retryAfterSeconds) > 0
+            ? { "Retry-After": String(Math.max(1, Math.min(60, Math.ceil(Number(error.retryAfterSeconds))))) }
             : {}),
           ...(diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : {}),
         },
