@@ -19,7 +19,7 @@ test("AniList fails fast on HTTP 429 and opens a cooldown", async () => {
   try {
     await assert.rejects(
       queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1),
-      /Too Many Requests|HTTP 429/,
+      error => error.code === "ANILIST_HTTP_429" && error.retryAfterSeconds === 60,
     );
     await assert.rejects(
       queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1),
@@ -469,7 +469,7 @@ test("shared request-budget exhaustion opens a cooldown for subsequent instances
   try {
     await assert.rejects(
       queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1),
-      error => error.code === "ANILIST_RATE_LIMIT_BUDGET",
+      error => error.code === "ANILIST_RATE_LIMIT_BUDGET" && error.retryAfterSeconds >= 1,
     );
     const checksAfterBudgetFailure = permitChecks;
     assert.ok(checksAfterBudgetFailure > 1);
@@ -478,7 +478,7 @@ test("shared request-budget exhaustion opens a cooldown for subsequent instances
     clearAniListRateLimitState();
     await assert.rejects(
       queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1),
-      error => error.code === "ANILIST_RATE_LIMIT_COOLDOWN",
+      error => error.code === "ANILIST_RATE_LIMIT_COOLDOWN" && error.retryAfterSeconds >= 1,
     );
     assert.equal(permitChecks, checksAfterBudgetFailure, "the shared cooldown should prevent another permit wait");
     assert.equal(fetchCalls, 0);
