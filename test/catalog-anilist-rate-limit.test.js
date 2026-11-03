@@ -288,3 +288,65 @@ test("AniList relative rate-limit reset values are treated as seconds", async ()
   const { getAniListRetryDelayMs } = await import("../lib/catalog-anilist.js");
   assert.equal(getAniListRetryDelayMs(new Headers({ "X-RateLimit-Reset": "45" }), 1_000_000), 45_000);
 });
+
+
+test("AniList blocks upstream requests when the shared token bucket is exhausted", async () => {
+  const { setAniListRateLimiterForTests } = await import("../lib/catalog-rate-limiter.js");
+  const originalFetch = globalThis.fetch;
+  let fetchCalls = 0;
+  globalThis.fetch = async () => {
+    fetchCalls += 1;
+    throw new Error("upstream must not be called");
+  };
+  setAniListRateLimiterForTests(async () => ({ success: false, reset: Date.now() + 15_000 }));
+  clearAniListRateLimitState();
+  try {
+    await assert.rejects(
+      queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1),
+      /global request budget exhausted/,
+    );
+    assert.equal(fetchCalls, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+    setAniListRateLimiterForTests(null);
+    clearAniListRateLimitState();
+  }
+});
+
+test("identical concurrent AniList requests share one distributed limiter permit", async () => {
+  const { setAniListRateLimiterForTests } = await import("../lib/catalog-rate-limiter.js");
+  const originalFetch = globalThis.fetch;
+  let limiterCalls = 0;
+  let fetchCalls = 0;
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  setAniListRateLimiterForTests(async () => {
+    limiterCalls += 1;
+    return { success: true };
+  });
+  globalThis.fetch = async () => {
+    fetchCalls += 1;
+    await gate;
+    return {
+      ok: true,
+      status: 200,
+      headers: new Headers(),
+      async json() { return { data: { Page: { media: [] } } }; },
+    };
+  };
+  clearAniListRateLimitState();
+  try {
+    const filter = { season: "FALL", seasonYear: 2026, sort: ["ID"] };
+    const first = queryAnime(filter, 1);
+    const second = queryAnime(filter, 1);
+    await Promise.resolve();
+    release();
+    await Promise.all([first, second]);
+    assert.equal(limiterCalls, 1);
+    assert.equal(fetchCalls, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    setAniListRateLimiterForTests(null);
+    clearAniListRateLimitState();
+  }
+});
