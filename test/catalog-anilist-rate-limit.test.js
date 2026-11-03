@@ -198,3 +198,22 @@ test("AniList preserves 429 cooldown when the response body stalls", async () =>
     clearAniListRateLimitState();
   }
 });
+
+test("AniList Retry-After is honored beyond the previous one-minute cap", async () => {
+  const { getAniListRetryDelayMs } = await import("../lib/catalog-anilist.js");
+  assert.equal(getAniListRetryDelayMs(new Headers({ "Retry-After": "120" }), 1_000), 120_000);
+});
+
+test("AniList rate-limit reset header is used when Retry-After is absent", async () => {
+  const { getAniListRetryDelayMs } = await import("../lib/catalog-anilist.js");
+  assert.equal(getAniListRetryDelayMs(new Headers({ "X-RateLimit-Reset": "1700" }), 1_000_000), 700_000);
+});
+
+test("AniList upstream failures are classified without exposing request data", async () => {
+  const { classifyAniListFailure } = await import("../lib/catalog-anilist.js");
+  const timeout = new Error("request timed out");
+  timeout.name = "TimeoutError";
+  assert.equal(classifyAniListFailure(timeout), "timeout");
+  assert.equal(classifyAniListFailure(new TypeError("fetch failed")), "network");
+  assert.equal(classifyAniListFailure(new Error("GraphQL response invalid")), "upstream");
+});
