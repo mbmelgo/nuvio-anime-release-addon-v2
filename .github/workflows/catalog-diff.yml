@@ -28,7 +28,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
@@ -128,7 +128,7 @@ jobs:
           cat /tmp/catalog-diff/output/release-diff.md
 
       - name: Upload release diff
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: catalog-diff-v${{ steps.versions.outputs.before_version }}-to-v${{ steps.versions.outputs.after_version }}
           path: /tmp/catalog-diff/output/

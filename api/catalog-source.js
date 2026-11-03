@@ -38,6 +38,11 @@ import {
   keepCatalogTaskAlive,
   setCatalogRuntimeCache,
 } from "../lib/catalog-runtime-cache.js";
+import {
+  isCatalogDiagnosticsEnabled,
+  normalizeCatalogRequestOptions,
+} from "../lib/catalog-request-guard.js";
+import { acquireCatalogRequestPermit } from "../lib/catalog-request-rate-limiter.js";
 
 export {
   ANILIST_PAGE_SIZE,
@@ -204,16 +209,24 @@ export default {
   const resource = query.resource || parts[0];
   const type = query.type || parts[1];
   const rawId = query.id || parts[2]?.replace(/\.json$/, "");
-  const id = rawId ? decodeURIComponent(String(rawId).replace(/\.json$/, "")) : "";
+  let id = "";
+  try {
+    id = rawId ? decodeURIComponent(String(rawId).replace(/\.json$/, "")) : "";
+  } catch {
+    return send({ error: "Invalid catalog identifier" }, 400);
+  }
   const now = new Date();
   const seasonInfo = getSeasonInfo(now);
-  const diagnosticsEnabled = String(query.diagnostics || "") === "1";
+  const diagnosticsEnabled = isCatalogDiagnosticsEnabled(query);
   const diagnosticsStart = diagnosticsEnabled ? performance.now() : 0;
   const diagnosticsStages = diagnosticsEnabled ? {} : null;
   const coldStart = !catalogRequestSeen;
   catalogRequestSeen = true;
 
   if (request.method === "OPTIONS") return send({}, 200);
+  if (request.method !== "GET") {
+    return send({ error: "Method not allowed" }, 405, { Allow: "GET, OPTIONS" });
+  }
 
   if (resource === "catalog" && ["series", "movie", "anime"].includes(String(type || "").toLowerCase())) {
     const requestedType = String(type || "").toLowerCase();
@@ -221,8 +234,22 @@ export default {
     if (!definition || (requestedType === "anime" ? definition.type !== "series" : definition.type !== requestedType)) {
       return send({ metas: [] }, 404);
     }
-    const skip = Math.max(0, Number(query.skip || 0) || 0);
-    const search = String(query.search || "").trim();
+    const options = normalizeCatalogRequestOptions(query);
+    if (!options.ok) {
+      return send({ error: options.error, code: options.code }, 400);
+    }
+    const { skip, search } = options;
+    const permit = await acquireCatalogRequestPermit(request);
+    if (!permit.allowed) {
+      return send(
+        { error: "Too many requests", code: "RATE_LIMITED" },
+        429,
+        {
+          "Cache-Control": "no-store",
+          "Retry-After": String(Math.max(1, Math.ceil(permit.retryAfterMs / 1000))),
+        },
+      );
+    }
     const cachePolicy = getCatalogRuntimeCachePolicy(id);
     const cacheKey = catalogCacheKey("catalog-response", { id, seasonInfo, skip, search });
     try {
@@ -2051,7 +2078,7 @@ async function scheduleCatalogRefresh(cacheKey, id, seasonInfo, skip, search, ca
 }
 
 export function getCatalogCacheControl(id, diagnosticsEnabled = false, status = 200) {
-  if (diagnosticsEnabled || Number(status) >= 500) return "no-store";
+  if (diagnosticsEnabled || Number(status) >= 400) return "no-store";
   if (id === "upcoming_3_days" || id === "previous_3_days") {
     // Rolling membership changes as airings cross the now boundary. Keep CDN
     // freshness bounded and do not permit a long stale fallback for these feeds.

@@ -29,7 +29,7 @@ test("release diff discovers previous snapshot branches from fetched local refs"
   assert.doesNotMatch(workflow, /\|\| true/);
   assert.ok(workflow.includes('git archive "origin/catalog-snapshots/v$before_version"'));
   assert.ok(workflow.includes("scripts/compare-catalog-snapshots.js"));
-  assert.ok(workflow.includes("uses: actions/upload-artifact@v4"));
+  assert.ok(workflow.includes("uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02"));
   assert.ok(workflow.includes("name: catalog-diff-v${{ steps.diff.outputs.before_version }}-to-v${{ steps.release.outputs.version }}"));
 });
 
