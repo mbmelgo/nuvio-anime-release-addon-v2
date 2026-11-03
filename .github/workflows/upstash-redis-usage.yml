@@ -1,0 +1,59 @@
+name: Upstash Redis usage monitor
+
+on:
+  schedule:
+    - cron: "17 1 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: upstash-redis-usage-monitor
+  cancel-in-progress: true
+
+jobs:
+  monitor:
+    name: Check monthly Redis quotas
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Read Upstash monthly usage
+        id: usage
+        env:
+          UPSTASH_API_EMAIL: ${{ secrets.UPSTASH_API_EMAIL }}
+          UPSTASH_API_KEY: ${{ secrets.UPSTASH_API_KEY }}
+          UPSTASH_REDIS_DATABASE_ID: ${{ vars.UPSTASH_REDIS_DATABASE_ID }}
+        run: node scripts/check-upstash-redis-usage.js
+      - name: Create or update the usage alert issue
+        if: steps.usage.outputs.usage_alerts == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          body_file="$RUNNER_TEMP/redis-usage-alert.md"
+          {
+            echo "Automated monthly usage threshold alert."
+            echo
+            echo "Run: https://github.com/$GH_REPO/actions/runs/$GITHUB_RUN_ID"
+          } > "$body_file"
+          existing="$(gh issue list --repo "$GH_REPO" --state open --label redis-usage-alert --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --repo "$GH_REPO" --body-file "$body_file"
+          else
+            gh issue create --repo "$GH_REPO" --title "Upstash Redis monthly usage threshold reached" --label redis-usage-alert --body-file "$body_file"
+          fi
