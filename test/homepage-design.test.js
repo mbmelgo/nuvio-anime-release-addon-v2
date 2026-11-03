@@ -77,11 +77,12 @@ test("Nuvio deep links and HTTPS manifest fallback are preserved", () => {
 
 test("support CTA always uses the canonical Buy Me a Coffee destination", async () => {
   const html = render("https://www.paypal.me/legacy");
-  assert.match(html, /href="https:\/\/buymeacoffee\.com\/melgom475" target="_blank" rel="noopener noreferrer">Support development<\/a>/);
+  assert.match(html, /href="https:\/\/buymeacoffee\.com\/mark475" target="_blank" rel="noopener noreferrer">Support development<\/a>/);
   assert.doesNotMatch(html, /paypal\.me|paypal\.com/i);
   const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
-  assert.match(readme, /\[Support the addon\]\(https:\/\/buymeacoffee\.com\/melgom475\)/);
-  assert.doesNotMatch(readme, /paypal\.me|paypal\.com/i);
+  assert.match(readme, /\[Support the addon\]\(https:\/\/buymeacoffee\.com\/mark475\)/);
+  assert.doesNotMatch(html, /buymeacoffee\.com\/melgom475/i);
+  assert.doesNotMatch(readme, /buymeacoffee\.com\/melgom475|paypal\.me|paypal\.com/i);
 });
 
 test("desktop and mobile section navigation tracks the visible page section", () => {
