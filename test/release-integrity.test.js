@@ -8,6 +8,7 @@ import {
   validateVersionConsistency,
   validateReleaseConcurrencyState,
   validateLastDeploymentMetadata,
+  validateRepositoryReleaseState,
 } from "../scripts/release-integrity.mjs";
 
 test("release increments support both minor releases and major baselines", () => {
@@ -80,4 +81,8 @@ test("a reconciled direct deployment may be recorded without claiming a smoke te
       smokeTest: "not_run",
     },
   }), /must not claim a CI run/);
+});
+
+test("repository release metadata remains internally consistent after deployment reconciliation", () => {
+  assert.doesNotThrow(() => validateRepositoryReleaseState());
 });
