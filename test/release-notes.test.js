@@ -53,10 +53,12 @@ test("release notes can recover user-facing details from a non-conventional summ
 
 test("release notes sanitize Markdown and URLs from commit-body highlights", () => {
   const notes = generateReleaseNotes([
-    { subject: "Improve the addon", body: "## Summary\n\n- Add [a dedicated movie catalog](https://example.invalid/catalog) for users.\n- Improve <b>upstream fallback</b> behavior." },
+    { subject: "Improve the addon", body: "## Summary\n\n- Add [a dedicated movie catalog](https://example.invalid/catalog) for users.\n- Improve <b>upstream fallback</b> behavior.\n- Improve <script behavior for upstream fallback." },
   ], "v2.9.0");
   assert.match(notes, /dedicated movie catalog for users/i);
   assert.match(notes, /upstream fallback behavior/i);
   assert.ok(!notes.includes("https://"));
   assert.ok(!notes.includes("<b>"));
+  assert.ok(!notes.includes("<"));
+  assert.ok(!notes.includes(">"));
 });

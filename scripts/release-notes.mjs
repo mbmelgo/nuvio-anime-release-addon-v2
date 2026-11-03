@@ -3,7 +3,7 @@ const AUTOMATION_BODY = /\b(?:npm test|tests? passed|dependency audit|workflow a
 const GENERIC_SUBJECT = /^(?:update|improve the addon|maintenance|miscellaneous changes|changes)$/i;
 
 function clean(value) {
-  return String(value ?? "").replace(/<[^>]*>/g, "").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/https?:\/\/\S+/gi, "").replace(/[\x60*_~]/g, "").replace(/\s+/g, " ").trim().slice(0, 180);
+  return String(value ?? "").replace(/<\/?[a-z][^>]*>/gi, "").replace(/[<>]/g, "").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/https?:\/\/\S+/gi, "").replace(/[\x60*_~]/g, "").replace(/\s+/g, " ").trim().slice(0, 180);
 }
 
 function categoryFor(text) {
