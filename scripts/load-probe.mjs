@@ -103,12 +103,14 @@ export function summarizeLoadResults(results, elapsedMs) {
   const statuses = {};
   const cache = {};
   let failures = 0;
+  let staleResponses = 0;
   let responseBytes = 0;
 
   for (const result of results) {
     const status = String(result.status || "network_error");
     statuses[status] = (statuses[status] || 0) + 1;
     if (!result.ok) failures += 1;
+    if (result.stale) staleResponses += 1;
     if (Number.isFinite(result.bytes)) responseBytes += result.bytes;
     const cacheStatus = result.cache || "unknown";
     cache[cacheStatus] = (cache[cacheStatus] || 0) + 1;
@@ -117,6 +119,7 @@ export function summarizeLoadResults(results, elapsedMs) {
   return {
     requests: results.length,
     failures,
+    staleResponses,
     elapsedMs: Math.round(elapsedMs),
     requestsPerSecond: elapsedMs > 0 ? Number((results.length * 1000 / elapsedMs).toFixed(2)) : 0,
     latencyMs: {
