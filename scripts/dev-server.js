@@ -58,10 +58,23 @@ async function serveAsset(pathname, response) {
   }
 }
 
+async function servePrivacyPage(response) {
+  try {
+    const body = await readFile(resolve(root, "privacy.html"));
+    response.statusCode = 200;
+    response.setHeader("Content-Type", "text/html; charset=utf-8");
+    response.end(body);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function createPreviewServer() {
   return createServer(async (request, response) => {
   const url = new URL(request.url || "/", `http://${request.headers.host || "localhost"}`);
   if (url.pathname.startsWith("/assets/") && await serveAsset(url.pathname, response)) return;
+  if (url.pathname === "/privacy.html" && await servePrivacyPage(response)) return;
 
   const req = { method: request.method, url: url.toString(), query: Object.fromEntries(url.searchParams) };
   const res = responseAdapter(response);
