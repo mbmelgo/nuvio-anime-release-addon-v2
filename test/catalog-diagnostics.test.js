@@ -193,3 +193,10 @@ test("catalog error diagnostics expose stable safe fields without raw error mess
     retryable: false,
   });
 });
+
+test("catalog diagnostics recognize cross-instance request-lock contention as retryable", async () => {
+  const { formatCatalogErrorDiagnostics } = await import("../api/catalog-source.js");
+  const diagnostics = formatCatalogErrorDiagnostics({ code: "ANILIST_REQUEST_IN_PROGRESS" });
+  assert.equal(diagnostics.code, "ANILIST_REQUEST_IN_PROGRESS");
+  assert.equal(diagnostics.retryable, true);
+});

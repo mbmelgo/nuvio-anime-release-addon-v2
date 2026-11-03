@@ -415,3 +415,8 @@ test("AniList does not wait beyond the configured upstream permit deadline", asy
     clearAniListRateLimitState();
   }
 });
+
+test("AniList classifies shared request-lock contention as retryable work in progress", async () => {
+  const { classifyAniListFailure } = await import("../lib/catalog-anilist.js");
+  assert.equal(classifyAniListFailure({ code: "ANILIST_REQUEST_IN_PROGRESS" }), "request_in_progress");
+});

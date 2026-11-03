@@ -58,8 +58,19 @@ Stop if any of the following occurs:
 - Redis command consumption rises faster than expected.
 - Stale responses or refresh failures appear unexpectedly.
 
+## Verified production warm-cache probe
+
+The controlled production probe recorded in PR #499 ran 20 requests at 5 concurrent requests, followed by 40 requests at 10 concurrent requests. All responses were HTTP 200 and no runtime errors were observed. This is evidence for the warmed catalog path only; it is not a stress test and does not establish cold-cache or cross-instance behavior.
+
 ## Cold-cache and multi-instance testing
 
-Runtime Cache does not provide atomic compare-and-set, and catalog refresh deduplication is process-local. A cold cache miss or stale refresh can therefore be duplicated across separate serverless instances. Validate this in an isolated environment with mocked upstream services or a dedicated upstream test double. Do not generate cold-cache fan-out against AniList.
+The catalog refresh coordinator and resolver work remain process-local, so separate serverless instances may still perform duplicate catalog assembly and non-AniList provider lookups. Identical AniList GraphQL requests are additionally coalesced across instances by a Redis request lock:
 
-A future distributed refresh lock would need a bounded lease, unique owner token, safe compare-and-delete release, expiry recovery, and failure-open behavior. Do not use Vercel Runtime Cache as a lock primitive.
+- The lock uses the same Upstash Redis client as the shared AniList token bucket and an environment-scoped key derived from the hashed request signature.
+- Acquisition uses `SET NX PX` with a bounded lease sized to cover the configured permit wait and upstream timeout. Each owner has a unique token; release uses an atomic compare-and-delete Lua script.
+- A contending instance checks the shared response cache and retries lock acquisition for up to the bounded request wait (at most 25 seconds). If the result is still in progress, the API returns HTTP 503 with a `Retry-After` value aligned to the remaining lock lease rather than duplicating the upstream request.
+- If Redis is unavailable, locking fails open to the existing request-permit path. The lock is not a replacement for the shared token bucket, and no cross-instance guarantee exists while Redis is unavailable.
+
+The deterministic integration test uses two isolated Node workers, a shared fake cache/lock service, and a mocked AniList endpoint. It verifies that two simultaneous cold misses produce one upstream request; it also covers cache-write failure, shared 429 cooldown propagation, lock contention, lease expiry, owner-token-safe release, and Redis unavailability. This does not validate the full catalog refresh across Vercel instances or duplicate work in other provider resolvers.
+
+Do not generate cold-cache fan-out against live AniList or against a preview connected to live upstreams. Any broader multi-instance test must keep all upstreams mocked and record AniList request counts, cache writes, lock contention, completion time, and failure behavior. Do not use Vercel Runtime Cache as a lock primitive.
