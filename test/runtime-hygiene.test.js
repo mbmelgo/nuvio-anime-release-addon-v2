@@ -80,9 +80,9 @@ test("README matches the public AniBloom product, installation, catalog and supp
   assert.ok(readme.includes("https://anibloom.vercel.app/manifest.json"));
   assert.ok(readme.split(/\r?\n/).some(line => line === "[Install AniBloom](https://anibloom.vercel.app/manifest.json) · [Homepage](https://anibloom.vercel.app/) · [Support the addon](https://buymeacoffee.com/mark475) · [Releases](https://github.com/AniBloomHQ/AniBloom/releases)"));
   assert.ok(!readme.includes("https://buymeacoffee.com/melgom475"));
-  assert.match(home, /process\\.env\\.DONATION_URL/);
-  assert.match(home, /DEFAULT_DONATION_URL = "https:\\/\\/buymeacoffee\\.com\\/mark475"/);
-  assert.match(home, /url\\.protocol !== "https:"/);
+  assert.match(home, /process\.env\.DONATION_URL/);
+  assert.match(home, /DEFAULT_DONATION_URL = "https:\/\/buymeacoffee\.com\/mark475"/);
+  assert.match(home, /url\.protocol !== "https:"/);
   assert.ok(isValidNextReleaseVersion(releaseState.lastDeploymentVersion, releaseState.nextReleaseVersion, releaseState.supersededReleaseVersions));
   assert.ok(!readme.includes("| Anime series | Recent releases & movies |"));
   assert.doesNotMatch(readme, /Anime series|Recent releases & movies/);
