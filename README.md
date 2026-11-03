@@ -162,6 +162,12 @@ If community donations become sufficient, I may move the public instance to a hi
 
 If AniBloom is useful to you, you can support its ongoing maintenance and hosting through [Buy Me a Coffee](https://buymeacoffee.com/mark475). Donations are optional. You can also use the self-hosting instructions above and run your own instance.
 
+## Privacy and operations
+
+- [Public privacy and service-data disclosure](https://anibloom.vercel.app/privacy.html)
+- [Operational incident-response runbook](docs/operations-incident-response.md)
+- [Catalog upstream resilience](docs/catalog-resilience.md)
+
 ## Development
 
 AniBloom is a JavaScript serverless addon deployed on Vercel.
