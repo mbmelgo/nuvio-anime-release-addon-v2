@@ -31,7 +31,7 @@ A background refresh is deduplicated within one warm function instance. This is 
 - `Retry-After` is preferred; `X-RateLimit-Reset` is used when present. Parsed cooldowns are bounded to one hour.
 - Error logs include HTTP status, duration, rate-limit headers, GraphQL error count, and a timeout/network classification. They do not log GraphQL variables or search strings.
 - Rolling schedule pagination is bounded to 8 AniList pages per catalog request.
-- Incoming catalog requests are rate-limited per client IP with a distributed Upstash token bucket (120 requests/minute, burst capacity 30). Client IPs are hashed before being used as limiter identifiers; raw IP addresses are not stored in limiter keys. If Redis is unavailable, an instance-local fallback limiter is used, which is not a cross-instance guarantee.
+- Incoming catalog requests are rate-limited per client IP with a distributed Upstash token bucket (120 requests/minute, burst capacity 60). Client IPs are hashed before being used as limiter identifiers; raw IP addresses are not stored in limiter keys. If Redis is unavailable, an instance-local fallback limiter is used, which is not a cross-instance guarantee.
 - Catalog requests accept only GET and OPTIONS. Search queries are limited to 200 characters, and offsets must be non-negative integers no greater than 1,000.
 
 The page budget intentionally bounds worst-case upstream fan-out. If validation removes many candidates or a client requests a deep offset, the catalog may return fewer than the requested page size after the budget is exhausted.
