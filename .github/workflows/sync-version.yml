@@ -31,8 +31,8 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
   statuses: read
+  pull-requests: write
   actions: write
 
 concurrency:
