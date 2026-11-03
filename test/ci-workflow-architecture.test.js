@@ -97,7 +97,7 @@ test("historical secret scan uses full git history with minimal permissions and 
   assert.ok(scan.includes("https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz"));
   assert.ok(scan.includes("551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"));
   assert.ok(scan.includes("sha256sum --check --strict"));
-  assert.ok(scan.includes("gitleaks git --redact --no-banner --exit-code=2 ."));
+  assert.ok(scan.includes('gitleaks git --log-opts="--full-history --all" --redact --no-banner --exit-code=2 .'));
   assert.ok(!scan.includes("GITLEAKS_LICENSE"));
   assert.ok(!scan.includes("gitleaks/gitleaks-action"));
   assert.ok(!scan.includes("pull-requests: write"));
