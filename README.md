@@ -6,13 +6,13 @@
 
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
-[![Version](https://img.shields.io/badge/version-2.4.0-blue.svg)](https://github.com/AniBloomHQ/AniBloom/releases)
+[![Version](https://img.shields.io/badge/version-2.5.0-blue.svg)](https://github.com/AniBloomHQ/AniBloom/releases)
 
 > Where anime blooms.
 
 **AniBloom is a catalog-only addon for Nuvio.** It helps you discover anime through eight focused catalogs for upcoming episodes, recently aired episodes, and seasonal releases—including movies.
 
-[Install AniBloom](https://anibloom.vercel.app/manifest.json) · [Homepage](https://anibloom.vercel.app/) · [Support the addon](https://buymeacoffee.com/melgom475) · [Releases](https://github.com/AniBloomHQ/AniBloom/releases)
+[Install AniBloom](https://anibloom.vercel.app/manifest.json) · [Homepage](https://anibloom.vercel.app/) · [Support the addon](https://buymeacoffee.com/mark475) · [Releases](https://github.com/AniBloomHQ/AniBloom/releases)
 
 ## What AniBloom is
 
@@ -137,6 +137,10 @@ The local preview server implements the homepage, manifest, version, catalog, an
 
    Replace `YOUR-VERCEL-DOMAIN` with the domain assigned to your Vercel project or a custom domain you have configured.
 
+### Optional environment variable
+
+Set `DONATION_URL` in your Vercel project's environment variables to configure the homepage's **Support development** link. The value must be an HTTPS URL. If it is missing or invalid, the homepage falls back to `https://buymeacoffee.com/mark475`. Configure the variable separately for each environment where you want a custom destination.
+
 Vercel may ask you to confirm project settings during the first deployment. Use the repository root, Node.js 20 or newer, and no custom build or output directory unless Vercel's current project setup specifically requires otherwise. Review your own Vercel plan's function, bandwidth, and usage limits; those limits and any associated costs are controlled by your account.
 
 ### Keeping your instance updated
@@ -156,14 +160,14 @@ The public AniBloom instance is currently hosted on Vercel's **Hobby plan**. Its
 
 If community donations become sufficient, I may move the public instance to a higher Vercel plan for more generous resource and usage limits. An upgrade may help accommodate more traffic, although it cannot guarantee faster responses in every situation.
 
-If AniBloom is useful to you, you can support its ongoing maintenance and hosting through [Buy Me a Coffee](https://buymeacoffee.com/melgom475). Donations are optional. You can also use the self-hosting instructions above and run your own instance.
+If AniBloom is useful to you, you can support its ongoing maintenance and hosting through [Buy Me a Coffee](https://buymeacoffee.com/mark475). Donations are optional. You can also use the self-hosting instructions above and run your own instance.
 
 ## Development
 
 AniBloom is a JavaScript serverless addon deployed on Vercel.
 
 - **Production:** `v2.4.0`
-- **Development:** `v2.4.0`
+- **Development:** `v2.5.0`
 
 Run the automated test suite:
 

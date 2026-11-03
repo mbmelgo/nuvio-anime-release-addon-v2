@@ -4,13 +4,13 @@ import { readFile } from "node:fs/promises";
 import handler from "../api/home-selector.js";
 
 function render(donate) {
-  const previous = process.env.PAYPAL_DONATE_URL;
-  if (donate === undefined) delete process.env.PAYPAL_DONATE_URL;
-  else process.env.PAYPAL_DONATE_URL = donate;
+  const previous = process.env.DONATION_URL;
+  if (donate === undefined) delete process.env.DONATION_URL;
+  else process.env.DONATION_URL = donate;
   let html = "";
   const res = { status() { return this; }, setHeader() {}, send(value) { html = value; return value; } };
   try { handler({}, res); return html; }
-  finally { if (previous === undefined) delete process.env.PAYPAL_DONATE_URL; else process.env.PAYPAL_DONATE_URL = previous; }
+  finally { if (previous === undefined) delete process.env.DONATION_URL; else process.env.DONATION_URL = previous; }
 }
 
 test("AniBloom homepage follows approved brand and content structure", () => {
@@ -75,13 +75,23 @@ test("Nuvio deep links and HTTPS manifest fallback are preserved", () => {
   assert.match(html, /Manual installation:/);
 });
 
-test("support CTA always uses the canonical Buy Me a Coffee destination", async () => {
-  const html = render("https://www.paypal.me/legacy");
-  assert.match(html, /href="https:\/\/buymeacoffee\.com\/melgom475" target="_blank" rel="noopener noreferrer">Support development<\/a>/);
-  assert.doesNotMatch(html, /paypal\.me|paypal\.com/i);
+test("support CTA uses DONATION_URL when configured and the canonical fallback otherwise", async () => {
+  const fallbackHtml = render();
+  assert.match(fallbackHtml, /href="https:\/\/buymeacoffee\.com\/mark475" target="_blank" rel="noopener noreferrer">Support development<\/a>/);
+
+  const configuredHtml = render("https://buymeacoffee.com/community-support?ref=homepage");
+  assert.match(configuredHtml, /href="https:\/\/buymeacoffee\.com\/community-support\?ref=homepage" target="_blank" rel="noopener noreferrer">Support development<\/a>/);
+
+  for (const invalidUrl of ["http://buymeacoffee.com/unsafe", "javascript:alert(1)", "https://user:pass@buymeacoffee.com/mark475", "not a URL"]) {
+    const html = render(invalidUrl);
+    assert.match(html, /href="https:\/\/buymeacoffee\.com\/mark475" target="_blank" rel="noopener noreferrer">Support development<\/a>/, invalidUrl);
+    assert.doesNotMatch(html, /javascript:|http:\/\//i, invalidUrl);
+  }
+
   const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
-  assert.match(readme, /\[Support the addon\]\(https:\/\/buymeacoffee\.com\/melgom475\)/);
-  assert.doesNotMatch(readme, /paypal\.me|paypal\.com/i);
+  assert.match(readme, /\[Support the addon\]\(https:\/\/buymeacoffee\.com\/mark475\)/);
+  assert.doesNotMatch(fallbackHtml, /buymeacoffee\.com\/melgom475|paypal\.me|paypal\.com/i);
+  assert.doesNotMatch(readme, /buymeacoffee\.com\/melgom475|paypal\.me|paypal\.com/i);
 });
 
 test("desktop and mobile section navigation tracks the visible page section", () => {
