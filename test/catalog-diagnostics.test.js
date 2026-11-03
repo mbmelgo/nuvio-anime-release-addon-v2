@@ -101,8 +101,20 @@ test("rolling page diagnostic stages accumulate instead of overwriting earlier p
 test("rolling catalogs use short shared caching without long stale fallbacks", () => {
   assert.equal(getCatalogCacheControl("upcoming_3_days"), "public, s-maxage=30, stale-while-revalidate=30");
   assert.equal(getCatalogCacheControl("previous_3_days"), "public, s-maxage=30, stale-while-revalidate=30");
-  assert.equal(getCatalogCacheControl("current_season"), "public, s-maxage=3600, stale-while-revalidate=86400, stale-if-error=86400");
+  assert.equal(getCatalogCacheControl("current_season"), "public, s-maxage=3600, stale-while-revalidate=86400");
   assert.equal(getCatalogCacheControl("upcoming_3_days", true), "no-store");
   assert.equal(getCatalogCacheControl("upcoming_3_days", false, 500), "no-store");
   assert.equal(getCatalogCacheControl("current_season", false, 500), "no-store");
+});
+
+test("catalog runtime cache keeps a longer application-level stale window than its freshness window", async () => {
+  const { getCatalogRuntimeCachePolicy } = await import("../api/catalog-source.js");
+  assert.deepEqual(getCatalogRuntimeCachePolicy("upcoming_3_days"), {
+    freshTtlSeconds: 30,
+    staleTtlSeconds: 300,
+  });
+  assert.deepEqual(getCatalogRuntimeCachePolicy("previous_season"), {
+    freshTtlSeconds: 3600,
+    staleTtlSeconds: 86400,
+  });
 });
