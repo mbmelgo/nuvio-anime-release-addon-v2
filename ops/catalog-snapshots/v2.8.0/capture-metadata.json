@@ -8,7 +8,7 @@
   "legacyProtocolType": "anime",
   "requestCapture": "per-page GET request metadata and raw JSON response",
   "releaseVersion": "2.8.0",
-  "capturedAt": "2026-11-03T14:42:10.581930Z",
+  "capturedAt": "2026-11-03T14:44:07.741225Z",
   "productionBaseUrl": "https://anibloom.vercel.app",
   "pagination": {
     "pageSize": 50,
@@ -54,7 +54,7 @@
     "current_season_movies": "7a22871e92d6e7609ca191a01da417e541730be6f39a1dc881856db67f93a9af",
     "previous_season_movies": "dc90f55df2aa01086912d36e311dbfd1778c0ca42baa54297d0c3a0fb7e4b739",
     "upcoming_3_days": "48ac8671121e4f4309dc466ba45460bc5745c54b8a49e2186db7af3ea7055c8b",
-    "previous_3_days": "6c171c7be203751ab0888d8bc0772df09802edeb4d0839633e4c6a681584e9ea",
+    "previous_3_days": "fb07b03762b00eb71e9017ea7b80655ae3f26ca9490c12c7f0020e2a4a409f65",
     "manifest": "0964229cdc0066dd66cd323b93426e4bb4530caeda954538e3b775f08c301c1c"
   },
   "pageSha256": {
@@ -121,7 +121,7 @@
       "page-0002.request.json": "58769f939b8536ada6fdfd4d5e98cc788d148dc54e89c659887df80f3880037d"
     },
     "previous_3_days": {
-      "page-0001.json": "44012aba4ecbe5ece010ff504cfc9f8d0d7cf1b110bfa1a36a0e38d42b0b224f",
+      "page-0001.json": "4678a7e81994207995c5e1f9c9b324322bd6e5610a2441999626d7e52168be3c",
       "page-0002.json": "42e02b387e52d75003883e4ea16687f6c2ad50261f3b07b01f7c84c09d8caef9",
       "page-0003.json": "900fd9f08899d41cab8734b696e0a528df81e7e6bf7790dc5b3d25b2c3a2219a"
     },
