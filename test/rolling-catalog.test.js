@@ -891,3 +891,33 @@ test("rolling catalog reuses a semantically verified production identity over a 
   assert.ok(result[0].extra.identityEvidence.some((entry) => entry.source === "previous-production-snapshot"));
 });
 
+
+
+test("rolling diagnostics distinguish canonicalized metas from the page-size-limited response", async () => {
+  const now = new Date("2026-10-01T00:00:00.000Z");
+  const rows = [
+    schedule(801, now.getTime() + 1, 1, "Rolling Count One", 10801),
+    schedule(802, now.getTime() + 2, 1, "Rolling Count Two", 10802),
+    schedule(803, now.getTime() + 3, 1, "Rolling Count Three", 10803),
+  ];
+  const diagnostics = {};
+  const result = await buildRollingCatalog("upcoming_3_days", now, 0, "", {
+    fetchPage: async () => rows,
+    maxPages: 1,
+    pageSize: 2,
+    diagnostics,
+    resolveMappings: async (ids) => new Map(ids.map((id) => [id, [{
+      source: "test",
+      anilistId: id,
+      type: "TV",
+      imdbIds: [`tt${10000000 + id}`],
+      tvdbId: null,
+      tmdbTvId: null,
+      tmdbMovieIds: [],
+    }]])),
+  });
+
+  assert.equal(diagnostics.rollingMetas, 3);
+  assert.equal(diagnostics.rollingReturnedMetas, 2);
+  assert.equal(result.length, 2);
+});
