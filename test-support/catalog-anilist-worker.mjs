@@ -17,7 +17,15 @@ const cache = {
   },
 };
 const redis = {
+  async get(key) {
+    if (!key.startsWith("anibloom:anilist:response:v1:")) return null;
+    return cache.get(key);
+  },
   async set(key, token, options) {
+    if (key.startsWith("anibloom:anilist:response:v1:")) {
+      await cache.set(key, token);
+      return "OK";
+    }
     const response = await nativeFetch(`${baseUrl}/lock/set`, {
       method: "POST",
       headers: { "content-type": "application/json" },
