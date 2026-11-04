@@ -81,3 +81,14 @@ After a controlled deployment:
 - Confirm the actual Vercel function region and that all AniBloom function regions use the connected Singapore Redis primary.
 - Exercise concurrent requests across separate function instances and confirm aggregate upstream calls remain within the shared token-bucket budget.
 - Inspect Upstash command usage against the 500,000-command monthly Free-plan allowance.
+
+## Cross-region AniList response reuse
+
+Successful AniList GraphQL responses are also stored for 60 seconds in the existing
+Upstash Redis database, using hashed query keys and a separate versioned namespace.
+This allows Singapore and Mumbai functions to reuse the same successful upstream
+response after a regional Runtime Cache miss, including while another region holds
+the shared request lock. Entries over 256 KiB are not written to Redis; the existing
+regional cache and upstream fallback remain operational. Redis cache failures are
+non-fatal. The additional Redis commands consume Free-plan quota, so monitor
+monthly command usage after rollout.
