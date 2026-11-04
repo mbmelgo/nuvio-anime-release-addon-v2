@@ -492,3 +492,67 @@ test("shared request-budget exhaustion opens a cooldown for subsequent instances
     setCatalogRuntimeCacheForTests(null);
   }
 });
+
+test("AniList reuses successful responses across regions via Redis when Runtime Cache misses", async () => {
+  const { setAniListRedisClientForTests } = await import("../lib/catalog-rate-limiter.js");
+  const { setCatalogRuntimeCacheForTests } = await import("../lib/catalog-runtime-cache.js");
+  const redisValues = new Map();
+  const redis = {
+    async get(key) { return redisValues.get(key) ?? null; },
+    async set(key, value, options) {
+      if (options?.nx) return "OK";
+      redisValues.set(key, value);
+      return "OK";
+    },
+    async eval() { return 1; },
+  };
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    return new Response(JSON.stringify({ data: { Page: { media: [{ id: 123 }] } } }), { status: 200 });
+  };
+  setAniListRedisClientForTests(redis);
+  setCatalogRuntimeCacheForTests({ async get() { return null; }, async set() {} });
+  clearAniListRateLimitState();
+  try {
+    const filter = { season: { season: "FALL", year: 2026 }, sort: ["ID"] };
+    assert.deepEqual(await queryAnime(filter, 1, "dragon ball"), [{ id: 123 }]);
+    clearAniListResponseCache();
+    assert.deepEqual(await queryAnime(filter, 1, "dragon ball"), [{ id: 123 }]);
+    assert.equal(calls, 1);
+    assert.equal([...redisValues.keys()].filter(key => key.startsWith("anibloom:anilist:response:v1:")).length, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    setAniListRedisClientForTests(null);
+    setCatalogRuntimeCacheForTests(null);
+    clearAniListRateLimitState();
+  }
+});
+
+test("Redis response-cache failures preserve AniList upstream fallback", async () => {
+  const { setAniListRedisClientForTests } = await import("../lib/catalog-rate-limiter.js");
+  const { setCatalogRuntimeCacheForTests } = await import("../lib/catalog-runtime-cache.js");
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    return new Response(JSON.stringify({ data: { Page: { media: [{ id: 456 }] } } }), { status: 200 });
+  };
+  setAniListRedisClientForTests({
+    async get() { throw new Error("Redis unavailable"); },
+    async set() { throw new Error("Redis unavailable"); },
+  });
+  setCatalogRuntimeCacheForTests({ async get() { return null; }, async set() {} });
+  clearAniListRateLimitState();
+  try {
+    const result = await queryAnime({ season: { season: "FALL", year: 2026 }, sort: ["ID"] }, 1, "unavailable");
+    assert.deepEqual(result, [{ id: 456 }]);
+    assert.equal(calls, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    setAniListRedisClientForTests(null);
+    setCatalogRuntimeCacheForTests(null);
+    clearAniListRateLimitState();
+  }
+});
