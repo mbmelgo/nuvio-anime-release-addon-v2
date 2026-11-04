@@ -8,7 +8,7 @@
   "legacyProtocolType": "anime",
   "requestCapture": "per-page GET request metadata and raw JSON response",
   "releaseVersion": "2.10.0",
-  "capturedAt": "2026-11-04T14:02:08.451415Z",
+  "capturedAt": "2026-11-04T14:03:29.767976Z",
   "productionBaseUrl": "https://anibloom.vercel.app",
   "pagination": {
     "pageSize": 50,
