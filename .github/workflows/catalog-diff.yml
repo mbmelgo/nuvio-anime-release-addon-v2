@@ -1,9 +1,7 @@
 name: Compare catalog snapshots
 
+# Catalog snapshots already generate comparison artifacts; standalone comparison is opt-in.
 on:
-  push:
-    branches:
-      - "catalog-snapshots/v*"
   workflow_dispatch:
     inputs:
       before_version:
