@@ -50,10 +50,11 @@ The catalog endpoint also enforces an incoming per-client rate limit of 120 requ
 
 ## AniList upstream budget and retry behavior
 
-AniBloom also has a **shared outbound AniList token bucket** (currently 20 requests per minute with a five-token burst and up to 12 seconds of bounded permit waiting). This is distinct from the 120 requests/minute incoming per-client guard and from AniList's own HTTP 429 responses:
+AniBloom also has a **shared outbound AniList token bucket** (currently 20 requests per minute with a five-token burst and up to 18 seconds of bounded permit waiting). This is distinct from the 120 requests/minute incoming per-client guard and from AniList's own HTTP 429 responses:
 
 - A request that cannot obtain an outbound token within the deadline returns a retryable catalog HTTP 503 with `Retry-After` where available. **Budget denial does not publish an AniList HTTP 429 cooldown.** A later request must be allowed to recheck the shared bucket and use a newly available permit.
 - A real HTTP 429 from AniList triggers the existing shared cooldown, using upstream retry headers. That cooldown remains in place across requests and instances; existing successful caches are checked before new upstream work.
+- Repeated **exact** seasonal search GraphQL requests use a five-minute regional/Redis cache TTL. Unsearched requests and rolling schedules keep their existing one-minute upstream TTL. A cache hit must serve the complete upstream page, not a filtered subset of an earlier prefix result.
 - Different search prefixes, catalog formats, and pages can generate distinct AniList requests. They cannot always be satisfied from one another's cached results without changing AniList search semantics or risking incomplete data. Cached exact responses and identical-request coalescing remain enabled.
 - Repeated 503s under a genuinely exhausted token bucket are expected safety behavior, not evidence of a broken cooldown. Measure errors with request-volume denominators before drawing conclusions about error rates.
 
