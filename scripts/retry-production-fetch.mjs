@@ -1,4 +1,4 @@
-const RETRYABLE_STATUSES = new Set([408, 429, 502, 503, 504]);
+const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504]);
 
 export function isTransientProductionStatus(status) {
   return RETRYABLE_STATUSES.has(Number(status));
