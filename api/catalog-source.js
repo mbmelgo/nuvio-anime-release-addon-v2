@@ -11,6 +11,7 @@ import {
 } from "../lib/catalog-config.js";
 import { collectValidatedCatalogPage } from "../lib/catalog-pagination.js";
 import { filterCatalogMetasBySearch, toMetaFromAniList } from "../lib/catalog-meta.js";
+import { normalizeTitlePreference, projectCatalogMetas } from "../lib/title-preference.js";
 import { applyKitsuFallback, resolveAniListKitsuMappings } from "../lib/kitsu-fallback.js";
 import { classifyAniListFailure, queryAnime, queryAiringSchedulePage } from "../lib/catalog-anilist.js";
 import { resolveAniListMappings } from "../lib/arm-mapping.js";
@@ -56,8 +57,8 @@ export {
   toMetaFromAniList,
 };
 
-export function catalogDefinitions(info) {
-  return getCatalogDefinitions(info);
+export function catalogDefinitions(info, titlePreference = "english") {
+  return getCatalogDefinitions(info, titlePreference);
 }
 
 export function toCatalogIdentity(meta) {
@@ -209,13 +210,16 @@ export default {
   // IncomingMessage adapter and its deprecated URL parsing path.
   const url = new URL(request.url);
   const parts = url.pathname.split("/").filter(Boolean);
+  const prefixed = parts[0] === "romaji" || parts[0] === "native";
+  const offset = prefixed ? 1 : 0;
   const queryParams = Object.fromEntries(url.searchParams.entries());
-  const rawExtraPath = queryParams.extra ?? parts.slice(3).join("/");
+  const titlePreference = normalizeTitlePreference(prefixed ? parts[0] : queryParams.titleMode);
+  const rawExtraPath = queryParams.extra ?? parts.slice(offset + 3).join("/");
   const pathExtra = parseCatalogExtraPath(rawExtraPath);
   const query = { ...pathExtra, ...queryParams };
-  const resource = query.resource || parts[0];
-  const type = query.type || parts[1];
-  const rawId = query.id || parts[2]?.replace(/\.json$/, "");
+  const resource = query.resource || parts[offset];
+  const type = query.type || parts[offset + 1];
+  const rawId = query.id || parts[offset + 2]?.replace(/\.json$/, "");
   let id = "";
   try {
     id = rawId ? decodeURIComponent(String(rawId).replace(/\.json$/, "")) : "";
@@ -264,12 +268,12 @@ export default {
         const cached = await getCatalogRuntimeCache(cacheKey);
         if (cached && Array.isArray(cached.metas)) {
           if (Number(cached.freshUntil) > Date.now()) {
-            return send({ metas: cached.metas }, 200, null, false, id);
+            return send({ metas: projectCatalogMetas(cached.metas, titlePreference) }, 200, null, false, id);
           }
 
           await scheduleCatalogRefresh(cacheKey, id, seasonInfo, skip, search, cachePolicy);
           return send(
-            { metas: cached.metas },
+            { metas: projectCatalogMetas(cached.metas, titlePreference) },
             200,
             { "X-Nuvio-Catalog-Stale": "1", "Cache-Control": "no-store" },
             false,
@@ -282,7 +286,7 @@ export default {
       const metas = diagnosticsEnabled
         ? await build()
         : await buildCatalogWithRefreshLock(cacheKey, build, cachePolicy);
-      return send({ metas }, 200, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null, diagnosticsEnabled, id);
+      return send({ metas: projectCatalogMetas(metas, titlePreference) }, 200, diagnosticsEnabled ? formatCatalogDiagnostics(performance.now() - diagnosticsStart, coldStart, diagnosticsStages, process.uptime() * 1000) : null, diagnosticsEnabled, id);
     } catch (error) {
       console.error("[catalog] request failed", {
         id,
