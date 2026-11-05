@@ -1,3 +1,5 @@
+import { retryTransientProductionFetch } from "./retry-production-fetch.mjs";
+
 export const PRODUCTION_CATALOG_IDS = [
   "upcoming_season",
   "current_season",
@@ -171,7 +173,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const baseUrl = process.env.PRODUCTION_BASE_URL || "https://anibloom.vercel.app";
   const expectedVersion = process.env.EXPECTED_VERSION;
   if (!expectedVersion) throw new Error("EXPECTED_VERSION is required.");
-  await validateProduction(baseUrl, expectedVersion, fetch, { allowLegacy: process.env.ALLOW_LEGACY_PRODUCTION_CONTRACT === "true" });
+  await validateProduction(baseUrl, expectedVersion, (url) => retryTransientProductionFetch(fetch, url), { allowLegacy: process.env.ALLOW_LEGACY_PRODUCTION_CONTRACT === "true" });
   console.log("Production validation passed.");
 }
 
