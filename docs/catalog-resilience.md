@@ -4,7 +4,7 @@
 
 AniBloom uses Vercel Runtime Cache through `@vercel/functions` for successful AniList GraphQL responses and normalized catalog responses.
 
-- AniList GraphQL responses are cached for 60 seconds.
+- Exact, complete AniList seasonal search responses are cached for 5 minutes; all other AniList GraphQL responses, including rolling airing schedules, remain cached for 60 seconds. Cached data always retains the original upstream ordering and page; no prefix-derived partial search index is used.
 - Rolling catalogs are fresh for 30 seconds and retained for up to 5 additional minutes for stale fallback.
 - Seasonal catalogs are fresh for 1 hour and retained for up to 24 additional hours for stale fallback.
 - Cache reads and writes fail open: a cache outage does not prevent a direct upstream request.
@@ -25,7 +25,7 @@ A background refresh is deduplicated within one warm function instance. This is 
 
 ## AniList request safeguards
 
-- Successful AniList GraphQL responses are shared through Runtime Cache for 60 seconds.
+- Successful AniList GraphQL responses are shared through Runtime Cache and optional Redis for 60 seconds by default. Complete exact seasonal search results use a 5-minute TTL to reduce repeated prefix requests across users, regions, and title variants. This is shorter than the existing 1-hour canonical seasonal catalog freshness policy.
 - Identical concurrent requests are coalesced within a function instance.
 - HTTP 429 opens a local and Runtime Cache-backed cooldown.
 - `Retry-After` is preferred; `X-RateLimit-Reset` is used when present. Parsed cooldowns are bounded to one hour.
@@ -47,7 +47,7 @@ The Upstash token bucket is the proactive shared limiter when its Vercel Marketp
 - Redis client: `@upstash/redis` 1.41.0.
 - Rate limiter: `@upstash/ratelimit` 2.2.0.
 - Algorithm: atomic token bucket, one token every 3 seconds (20 requests/minute), maximum burst of 5. The refill interval is deliberately short: Upstash's token-bucket algorithm adds the configured refill amount only when the interval elapses, capped at the burst capacity. A 20-token refill every 60 seconds with a burst of 5 would therefore refill only 5 usable tokens per minute.
-- Permit acquisition waits for the next shared refill when the bucket is exhausted, with a 12-second per-request wait ceiling. If a permit is still unavailable at the deadline, the catalog request fails with a retryable budget error rather than exceeding the upstream budget.
+- Permit acquisition waits for the next shared refill when the bucket is exhausted, with an 18-second per-request wait ceiling. If a permit is still unavailable at the deadline, the catalog request fails with a retryable budget error rather than exceeding the upstream budget.
 - Shared identifier: `global`; do not derive the identifier from user input or catalog query parameters. The Redis key prefix is also scoped by `VERCEL_ENV`, keeping Preview traffic separate from the Production budget even though both environments share the same database.
 - Redis timeout: 800 ms; analytics disabled; denied decisions are cached in-process by the SDK.
 - Vercel Marketplace environment variables are sensitive and must never be copied into source, logs, tests, or public artifacts.
@@ -84,11 +84,19 @@ After a controlled deployment:
 
 ## Cross-region AniList response reuse
 
-Successful AniList GraphQL responses are also stored for 60 seconds in the existing
-Upstash Redis database, using hashed query keys and a separate versioned namespace.
+Successful AniList GraphQL responses are also stored in the existing
+Upstash Redis database, using hashed query keys and a separate versioned namespace. Exact seasonal search pages use a 5-minute TTL; unsearched and rolling responses use 60 seconds.
 This allows Singapore and Mumbai functions to reuse the same successful upstream
 response after a regional Runtime Cache miss, including while another region holds
 the shared request lock. Entries over 256 KiB are not written to Redis; the existing
 regional cache and upstream fallback remain operational. Redis cache failures are
 non-fatal. The additional Redis commands consume Free-plan quota, so monitor
 monthly command usage after rollout.
+
+## v2.13.0 search-budget regression evidence
+
+The deterministic eight-query simulation consists of six distinct seasonal/format searches plus the two rolling schedules. The first cold burst requires eight AniList requests. After 90 seconds, a new instance requesting the same eight exact query shapes now requires two upstream requests (rolling schedule refresh only); before this change, all eight would have expired. At 330 seconds, the seasonal query responses refresh again. The test also verifies retained response order and IDs.
+
+A separate mocked token-bucket test demonstrates recovery after six three-second refill waits (18 seconds) without permitting requests beyond the existing 20/minute shared budget. The extended wait can increase latency and function duration; fully saturated traffic still receives bounded retryable HTTP 503 with `Retry-After`, and real AniList HTTP 429 still opens a shared cooldown. The distributed request-lock contention deadline was extended to allow its owner to finish the new bounded wait plus its upstream request.
+
+These are mock results, **not** measured production success rates. Request-volume denominators and latency percentiles could not be established through the available read-only observability query. Do not claim that the changes eliminate genuinely distinct prefix requests or resolve every budget-related 503; follow-up production observability remains tracked in #511. No live AniList load tests are permitted.
