@@ -13,6 +13,12 @@ AniBloom uses Vercel Runtime Cache through `@vercel/functions` for successful An
 
 Runtime Cache is regional and isolated by Vercel project and deployment environment. It is not a globally shared store across regions. It also has a 2 MB per-entry limit. Cache entries are an optimization and recovery layer, not durable storage.
 
+## Catalog cover quality
+
+Seasonal, movie, and rolling AniList GraphQL requests include `coverImage.extraLarge`, `large`, and `medium`. The shared catalog metadata conversion selects the first valid HTTPS cover in that order. This uses AniList-provided URLs as-is (without guessing image variants from filenames). Missing or malformed cover variants fall back safely; no poster is emitted if none is usable.
+
+The change affects AniBloom's catalog `poster` field only. Nuvio and independently installed metadata providers can choose different artwork on detail pages or in certain layouts. Existing normalized catalog caches and downstream CDN/client caches can retain earlier posters until their ordinary lifetimes expire; do not purge the upstream rate-limit protection or caches solely for cover refresh. The additional GraphQL fields modestly increase response metadata but do not create extra upstream requests.
+
 ## Request behavior
 
 1. A fresh normalized catalog response is returned from Runtime Cache.
