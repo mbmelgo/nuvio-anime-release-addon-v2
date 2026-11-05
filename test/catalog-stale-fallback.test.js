@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import catalogSource, { getSeasonInfo } from "../api/catalog-source.js";
 import {
-  catalogCacheKey,
+  catalogResponseCacheKey,
   setCatalogRuntimeCacheForTests,
 } from "../lib/catalog-runtime-cache.js";
 
@@ -27,7 +27,7 @@ test("catalog request serves stale successful data while a background refresh fa
   const values = new Map();
   const now = new Date();
   const seasonInfo = getSeasonInfo(now);
-  const cacheKey = catalogCacheKey("catalog-response", {
+  const cacheKey = catalogResponseCacheKey({
     id: "upcoming_3_days",
     seasonInfo,
     skip: 0,

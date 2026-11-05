@@ -34,7 +34,7 @@ import {
   resolveAniListMappingsByMalIds,
 } from "../lib/secondary-mapping.js";
 import {
-  catalogCacheKey,
+  catalogResponseCacheKey,
   getCatalogRuntimeCache,
   keepCatalogTaskAlive,
   setCatalogRuntimeCache,
@@ -262,7 +262,7 @@ export default {
       );
     }
     const cachePolicy = getCatalogRuntimeCachePolicy(id);
-    const cacheKey = catalogCacheKey("catalog-response", { id, seasonInfo, skip, search });
+    const cacheKey = catalogResponseCacheKey({ id, seasonInfo, skip, search });
     try {
       if (!diagnosticsEnabled) {
         const cached = await getCatalogRuntimeCache(cacheKey);

@@ -3,7 +3,7 @@ import { createServer } from "node:http";
 import { Worker } from "node:worker_threads";
 import test from "node:test";
 import { getSeasonInfo } from "../api/catalog-source.js";
-import { catalogCacheKey } from "../lib/catalog-runtime-cache.js";
+import { catalogResponseCacheKey } from "../lib/catalog-runtime-cache.js";
 
 async function runCatalogFanoutScenario({ stale = false, lockUnavailable = false, cacheWriteFailure = false } = {}) {
   const cache = new Map();
@@ -154,7 +154,7 @@ async function runCatalogFanoutScenario({ stale = false, lockUnavailable = false
   });
 
   const seasonInfo = getSeasonInfo(new Date());
-  const catalogKey = catalogCacheKey("catalog-response", {
+  const catalogKey = catalogResponseCacheKey({
     id: "current_season_movies",
     seasonInfo,
     skip: 0,

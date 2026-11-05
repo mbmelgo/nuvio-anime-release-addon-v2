@@ -17,7 +17,13 @@ Runtime Cache is regional and isolated by Vercel project and deployment environm
 
 Seasonal, movie, and rolling AniList GraphQL requests include `coverImage.extraLarge`, `large`, and `medium`. The shared catalog metadata conversion selects the first valid HTTPS cover in that order. This uses AniList-provided URLs as-is (without guessing image variants from filenames). Missing or malformed cover variants fall back safely; no poster is emitted if none is usable.
 
-The change affects AniBloom's catalog `poster` field only. Nuvio and independently installed metadata providers can choose different artwork on detail pages or in certain layouts. Existing normalized catalog caches and downstream CDN/client caches can retain earlier posters until their ordinary lifetimes expire; do not purge the upstream rate-limit protection or caches solely for cover refresh. The additional GraphQL fields modestly increase response metadata but do not create extra upstream requests.
+The change affects AniBloom's catalog `poster` field only. Nuvio and independently installed metadata providers can choose different artwork on detail pages or in certain layouts. The additional GraphQL fields modestly increase response metadata but do not create extra upstream requests.
+
+### Poster-schema cache isolation (v2.15.0)
+
+Normalized catalog response keys incorporate an explicit `CATALOG_RESPONSE_SCHEMA_VERSION` (currently 2). The v2.14.0 release changed image selection while retaining the legacy normalized-response key, so even a newly deployed function could serve v2.13.0-era medium-poster responses until cache expiry or a successful background refresh. A version-specific key makes those older serialized responses unreachable by new catalog requests, including seasonal first pages, movies, and rolling catalogs. Future changes to serialized catalog metadata must deliberately advance this schema version when old entries are incompatible.
+
+This migration **does not** change the shared Runtime Cache namespace, AniList GraphQL response keys, Redis rate budgets, upstream cooldown or client limiter settings. Catalogs rebuild on first use and then regain the usual freshness/stale fallback; no blanket cache purge or extra AniList fields are required. CDN and client caches remain independent and can temporarily display pre-release posters until their own existing lifetimes expire. Verify an uncached origin request as well as the canonical client URL after deployment; the normalized cache fix does not itself invalidate edge responses.
 
 ## Request behavior
 
