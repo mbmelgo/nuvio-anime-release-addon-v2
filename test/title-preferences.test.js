@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { normalizeTitlePreference, projectCatalogMetas } from "../lib/title-preference.js";
 import { buildManifest } from "../api/resolver-manifest.js";
 import catalogSource, { getSeasonInfo } from "../api/catalog-source.js";
-import { catalogCacheKey, setCatalogRuntimeCacheForTests } from "../lib/catalog-runtime-cache.js";
+import { catalogResponseCacheKey, setCatalogRuntimeCacheForTests } from "../lib/catalog-runtime-cache.js";
 import { readFileSync } from "node:fs";
 
 const seasons = {
@@ -64,7 +64,7 @@ test("Vercel rewrites route each fixed variant with no user token", () => {
 test("language variants project a shared catalog cache response without poisoning the default", async () => {
   const id = "current_season";
   const seasonInfo = getSeasonInfo(new Date());
-  const key = catalogCacheKey("catalog-response", {id, seasonInfo, skip: 0, search: ""});
+  const key = catalogResponseCacheKey({id, seasonInfo, skip: 0, search: ""});
   const cached = {metas: rows, cachedAt: Date.now(), freshUntil: Date.now() + 60000};
   setCatalogRuntimeCacheForTests({ async get(k) { return k === key ? cached : null; }, async set() {} });
   try {
@@ -106,7 +106,7 @@ test("the local preview server serves both manifest variants over HTTP", async (
 test("catalog search and skip survive the variant URL prefix", async () => {
   const now = getSeasonInfo(new Date());
   const cached = {metas: rows.slice(0, 1), cachedAt: Date.now(), freshUntil: Date.now() + 60000};
-  const key = catalogCacheKey("catalog-response", {id: "current_season", seasonInfo: now, skip: 50, search: "進撃の巨人"});
+  const key = catalogResponseCacheKey({id: "current_season", seasonInfo: now, skip: 50, search: "進撃の巨人"});
   setCatalogRuntimeCacheForTests({async get(k) {return k === key ? cached : null;}, async set() {}});
   try {
     for (const mode of ["romaji", "native"]) {
