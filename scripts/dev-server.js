@@ -83,9 +83,9 @@ export function createPreviewServer() {
       const { default: home } = await import(`../api/home-selector.js?preview=${Date.now()}`);
       return home(req, res);
     }
-    if (url.pathname === "/manifest.json") return manifest(req, res);
+    if (/^\/(?:romaji\/|native\/)?manifest\.json$/.test(url.pathname)) return manifest(req, res);
     if (url.pathname === "/version") return res.json({ version: ADDON_VERSION });
-    if (url.pathname.startsWith("/catalog/")) return catalog(req, res);
+    if (/^\/(?:romaji\/|native\/)?catalog\//.test(url.pathname)) return catalog(req, res);
     response.statusCode = 404;
     response.end("Not found");
   } catch (error) {

@@ -5,6 +5,30 @@
   },
   "rewrites": [
     {
+      "source": "/romaji/manifest.json",
+      "destination": "/api/resolver-manifest?titleMode=romaji"
+    },
+    {
+      "source": "/romaji/catalog/:type/:id.json",
+      "destination": "/api/catalog-source?resource=catalog&type=:type&id=:id&titleMode=romaji"
+    },
+    {
+      "source": "/romaji/catalog/:type/:id/:extra*",
+      "destination": "/api/catalog-source?resource=catalog&type=:type&id=:id&extra=:extra*&titleMode=romaji"
+    },
+    {
+      "source": "/native/manifest.json",
+      "destination": "/api/resolver-manifest?titleMode=native"
+    },
+    {
+      "source": "/native/catalog/:type/:id.json",
+      "destination": "/api/catalog-source?resource=catalog&type=:type&id=:id&titleMode=native"
+    },
+    {
+      "source": "/native/catalog/:type/:id/:extra*",
+      "destination": "/api/catalog-source?resource=catalog&type=:type&id=:id&extra=:extra*&titleMode=native"
+    },
+    {
       "source": "/manifest.json",
       "destination": "/api/resolver-manifest"
     },

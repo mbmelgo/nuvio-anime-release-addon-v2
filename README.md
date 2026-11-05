@@ -6,7 +6,7 @@
 
 [![Nuvio](https://img.shields.io/badge/Nuvio-addon-ff6f61.svg)](https://nuvio.tv)
 [![Vercel](https://img.shields.io/badge/deployed_on-Vercel-black.svg?logo=vercel)](https://vercel.com)
-[![Version](https://img.shields.io/badge/version-2.10.0-blue.svg)](https://github.com/AniBloomHQ/AniBloom/releases)
+[![Version](https://img.shields.io/badge/version-2.11.0-blue.svg)](https://github.com/AniBloomHQ/AniBloom/releases)
 
 > Where anime blooms.
 
@@ -43,6 +43,21 @@ https://anibloom.vercel.app/manifest.json
 ```
 
 For manual installation, use the same manifest URL.
+
+### Anime title preferences
+
+The homepage offers three fixed public manifest URLs. Select a display style before installing:
+
+| Preference | Manifest URL | Catalog names |
+| --- | --- | --- |
+| English (default) | `https://anibloom.vercel.app/manifest.json` | English |
+| Romaji | `https://anibloom.vercel.app/romaji/manifest.json` | English |
+| Native | `https://anibloom.vercel.app/native/manifest.json` | Japanese |
+
+English titles fall back to Romaji, then Native; Romaji titles fall back to English, then Native; Native titles fall back to Romaji, then English. Native means the original writing system (not always Japanese).
+
+All variants share the same eight catalog IDs, media identities, search, pagination, and upstream processing. No user accounts, unique manifests, or server-side language preferences are created. Nuvio may treat each URL as a separate installation: remove the old variant when switching to avoid duplicates. Nuvio or a separate metadata provider may override titles shown on detail pages; AniBloom controls its catalog responses, not Nuvio's application language.
+
 
 ## Self-hosting
 
@@ -173,7 +188,7 @@ If AniBloom is useful to you, you can support its ongoing maintenance and hostin
 AniBloom is a JavaScript serverless addon deployed on Vercel.
 
 - **Production:** `v2.10.0`
-- **Development:** `v2.10.0`
+- **Development:** `v2.11.0`
 
 Run the automated test suite:
 
