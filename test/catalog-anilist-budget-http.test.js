@@ -29,14 +29,14 @@ test("catalog HTTP responses distinguish outgoing budget 503, recovered search 2
     async limit() {
       return incomingAllowed
         ? { success: true }
-        : { success: false, reset: Date.now() + 15_000 };
+        : { success: false, reset: Date.now() + 30_000 };
     },
   });
   setAniListRateLimiterForTests(async () => {
     outboundChecks++;
     return outboundAllowed
       ? { success: true }
-      : { success: false, reset: Date.now() + 15_000 };
+      : { success: false, reset: Date.now() + 30_000 };
   });
   globalThis.fetch = async (url) => {
     assert.equal(url, "https://graphql.anilist.co", "no external mapping services are required for empty results");
