@@ -421,8 +421,8 @@ test("AniList classifies shared request-lock contention as retryable work in pro
   assert.equal(classifyAniListFailure({ code: "ANILIST_REQUEST_IN_PROGRESS" }), "request_in_progress");
 });
 
-test("shared request-budget exhaustion opens a cooldown for subsequent instances", async () => {
-  const { setCatalogRuntimeCacheForTests } = await import("../lib/catalog-runtime-cache.js");
+test("shared token bucket remains authoritative after local budget exhaustion", async () => {
+  const { getSharedAniListCooldownUntil, setCatalogRuntimeCacheForTests } = await import("../lib/catalog-runtime-cache.js");
   const { setAniListRedisClientForTests, setAniListRateLimiterForTests } = await import("../lib/catalog-rate-limiter.js");
   const originalFetch = globalThis.fetch;
   const originalNow = Date.now;
@@ -474,13 +474,14 @@ test("shared request-budget exhaustion opens a cooldown for subsequent instances
     const checksAfterBudgetFailure = permitChecks;
     assert.ok(checksAfterBudgetFailure > 1);
     assert.equal(fetchCalls, 0);
+    assert.equal(await getSharedAniListCooldownUntil(), 0, "the local token bucket must not publish an upstream cooldown");
 
     clearAniListRateLimitState();
     await assert.rejects(
       queryAnime({ season: "FALL", seasonYear: 2026, sort: ["ID"] }, 1),
-      error => error.code === "ANILIST_RATE_LIMIT_COOLDOWN" && error.retryAfterSeconds >= 1,
+      error => error.code === "ANILIST_RATE_LIMIT_BUDGET" && error.retryAfterSeconds >= 1,
     );
-    assert.equal(permitChecks, checksAfterBudgetFailure, "the shared cooldown should prevent another permit wait");
+    assert.ok(permitChecks > checksAfterBudgetFailure, "a new instance must re-check the shared token bucket");
     assert.equal(fetchCalls, 0);
   } finally {
     Date.now = originalNow;
