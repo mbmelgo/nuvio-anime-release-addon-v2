@@ -107,6 +107,8 @@ test("release waits for manifest readiness without repeatedly crawling every cat
   assert.ok(release.includes("Production manifest is ready"));
   assert.ok(release.includes("seq 1 3"), "smoke suite retries only a small number of times");
   assert.ok(!release.includes("for attempt in $(seq 1 30); do\n            if EXPECTED_VERSION="), "full validator must not be rerun thirty times");
-  assert.ok(!release.includes("for attempt in $(seq 1 30); do\n            root_manifest="), "readiness polls should not fetch full catalogs");
+  const readinessSection = release.split("# Poll only the inexpensive manifest")[1]?.split("# Once ready")[0] ?? "";
+  assert.ok(readinessSection.includes("for attempt in $(seq 1 30); do"));
+  assert.ok(!readinessSection.includes("/catalog/"), "readiness polls must not fetch catalogs");
   assert.ok(release.includes("run: npm test"), "release must retain full predeploy tests");
 });
