@@ -48,6 +48,17 @@ For protected previews, run these commands from the repository directory linked 
 
 The catalog endpoint also enforces an incoming per-client rate limit of 120 requests per minute with a burst capacity of 60. All requests from one load generator share the same client-IP bucket, including requests across separate probe invocations. A response of HTTP 429 with body code `RATE_LIMITED` and a `Retry-After` header means this guard has been reached; it is not an AniList upstream failure or proof that the server is overloaded. Stop the run, honor `Retry-After`, and allow the bucket to refill before another stage. Do not immediately repeat a failed stage, spoof `X-Forwarded-For`, or disable the limiter. Testing aggregate multi-user throughput above one client's allowance requires multiple legitimate source IPs and a separately approved distributed test plan.
 
+## AniList upstream budget and retry behavior
+
+AniBloom also has a **shared outbound AniList token bucket** (currently 20 requests per minute with a five-token burst and up to 12 seconds of bounded permit waiting). This is distinct from the 120 requests/minute incoming per-client guard and from AniList's own HTTP 429 responses:
+
+- A request that cannot obtain an outbound token within the deadline returns a retryable catalog HTTP 503 with `Retry-After` where available. **Budget denial does not publish an AniList HTTP 429 cooldown.** A later request must be allowed to recheck the shared bucket and use a newly available permit.
+- A real HTTP 429 from AniList triggers the existing shared cooldown, using upstream retry headers. That cooldown remains in place across requests and instances; existing successful caches are checked before new upstream work.
+- Different search prefixes, catalog formats, and pages can generate distinct AniList requests. They cannot always be satisfied from one another's cached results without changing AniList search semantics or risking incomplete data. Cached exact responses and identical-request coalescing remain enabled.
+- Repeated 503s under a genuinely exhausted token bucket are expected safety behavior, not evidence of a broken cooldown. Measure errors with request-volume denominators before drawing conclusions about error rates.
+
+The release regression tests use a fake limiter and fake AniList responses to exercise sequential prefix searches, separate catalog formats, rolling schedule requests, and cross-instance recovery. They must not be reproduced by blasting the live AniList API.
+
 ## Interpreting results
 
 Record p50/p95/p99 latency, throughput, HTTP status counts, Vercel CDN cache status, stale responses, and failures. The unique query parameter is intended to make CDN cache status show misses; that alone does not prove an application Runtime Cache hit. Compare upstream AniList/provider logs and Redis usage before and after the run to confirm that upstream work did not increase unexpectedly.
