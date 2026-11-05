@@ -138,23 +138,18 @@ test("all GitHub Actions dependencies are pinned to immutable full commit SHAs",
   }
 });
 
-test("production availability monitor uses minimal permissions and validates public catalog endpoints", () => {
-  const workflow = read("../.github/workflows/production-health-check.yml");
-  assert.ok(workflow.includes("push:\n    branches: [main]"));
-  assert.ok(workflow.includes('- "privacy.html"'));
-  assert.ok(workflow.includes('- "api/home-selector.js"'));
-  assert.ok(workflow.includes('- ".github/workflows/production-health-check.yml"'));
-  assert.ok(workflow.includes('cron: "*/30 * * * *"'));
-  assert.ok(workflow.includes("workflow_dispatch:"));
-  assert.ok(workflow.includes("permissions: {}"));
-  assert.ok(workflow.includes("PRODUCTION_BASE_URL: https://anibloom.vercel.app"));
-  assert.ok(workflow.includes("$PRODUCTION_BASE_URL/manifest.json"));
-  assert.ok(workflow.includes('"$PRODUCTION_BASE_URL/privacy.html"'));
-  assert.ok(workflow.includes('href="/privacy.html"'));
-  assert.ok(workflow.includes("Privacy &amp; service data"));
-  assert.ok(workflow.includes("$PRODUCTION_BASE_URL/catalog/series/current_season.json"));
-  assert.ok(workflow.includes("--max-time 35"));
-  assert.ok(workflow.includes("Production manifest does not advertise series and movie types"));
-  assert.ok(workflow.includes("Current-season catalog response is missing its metas array"));
-  assert.ok(!workflow.includes("secrets."));
+test("periodic production availability monitor stays removed without affecting release safeguards", () => {
+  const workflowsDirectory = new URL("../.github/workflows/", import.meta.url);
+  const files = fs.readdirSync(workflowsDirectory).filter((name) => name.endsWith(".yml"));
+
+  assert.ok(!files.includes("production-health-check.yml"), "retired monitor must not be scheduled");
+  for (const name of files) {
+    const workflow = fs.readFileSync(new URL(name, workflowsDirectory), "utf8");
+    assert.ok(!workflow.includes("production-availability-monitor"), `${name} references removed monitor`);
+    assert.ok(!workflow.includes("Production availability monitor"), `${name} reintroduces monitor`);
+  }
+
+  for (const preserved of ["ci.yml", "pr-ci.yml", "secret-history-scan.yml", "sync-version.yml", "catalog-snapshot.yml"]) {
+    assert.ok(files.includes(preserved), `${preserved} must remain in place`);
+  }
 });
