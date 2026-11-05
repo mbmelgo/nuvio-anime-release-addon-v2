@@ -3,9 +3,8 @@ name: Post-release catalog snapshot
 env:
   ADDON_DOMAIN: anibloom.vercel.app
 
+# Catalog snapshots consume production function capacity; run only when explicitly requested.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       release_version:
@@ -26,11 +25,6 @@ concurrency:
 
 jobs:
   capture:
-    if: >-
-      ${{
-        github.event_name == 'workflow_dispatch' ||
-        contains(github.event.head_commit.message || '', '[capture-catalog]')
-      }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -402,4 +396,3 @@ jobs:
 
           echo "Snapshot persisted to $branch"
 
-# Release-state commits carry [capture-catalog] so each successful release is snapshotted automatically.

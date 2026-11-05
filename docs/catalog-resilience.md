@@ -112,3 +112,31 @@ The deterministic eight-query simulation consists of six distinct seasonal/forma
 A separate mocked token-bucket test demonstrates recovery after six three-second refill waits (18 seconds) without permitting requests beyond the existing 20/minute shared budget. The extended wait can increase latency and function duration; fully saturated traffic still receives bounded retryable HTTP 503 with `Retry-After`, and real AniList HTTP 429 still opens a shared cooldown. The distributed request-lock contention deadline was extended to allow its owner to finish the new bounded wait plus its upstream request.
 
 These are mock results, **not** measured production success rates. Request-volume denominators and latency percentiles could not be established through the available read-only observability query. Do not claim that the changes eliminate genuinely distinct prefix requests or resolve every budget-related 503; follow-up production observability remains tracked in #511. No live AniList load tests are permitted.
+
+## Manual catalog snapshots and resource-aware release validation
+
+Catalog snapshots are **manual-only**. Neither a production release nor a release-state
+commit automatically starts a snapshot. To capture one, open GitHub Actions →
+**Post-release catalog snapshot** → **Run workflow** on `main`, and provide:
+- `release_version`: the deployed version without a leading `v` (for example `2.15.0`).
+- `release_sha`: the exact 40-character deployed release commit SHA from `ops/release-state.json` or the annotated Git tag.
+
+The workflow still crawls all eight production catalogs, records every page,
+creates the versioned snapshot branch, and compares with the previous snapshot
+when available. Run it only when explicitly requested; it consumes production
+Vercel Function and AniList request capacity. The snapshot comparison workflow
+may run after a manually captured snapshot branch is pushed, but it does not
+make production HTTP requests.
+
+Controlled releases always run CI, dependency auditing, production smoke
+checks and the existing integrity/security gates. The extra full-page
+production catalog crawl is selected by a **conservative changed-path gate**
+against the last deployed SHA. Any runtime, catalog, dependency, asset or
+unknown change runs exhaustive validation; only a known documentation,
+test, workflow, release-state or version-metadata change can skip it.
+An unavailable, divergent or empty Git history comparison also runs exhaustive
+validation. Manual `dry_run` runs always perform exhaustive validation, and
+a manual release dispatch can force it via `full_validation: true`.
+
+This gating reduces redundant production traffic without changing the catalog
+runtime, cache TTLs, or production deployment criteria.

@@ -23,6 +23,11 @@ on:
         required: true
         default: false
         type: boolean
+      full_validation:
+        description: 'Force exhaustive production catalog validation (normally only for runtime-affecting releases)'
+        required: false
+        default: false
+        type: boolean
       release_target_sha:
         description: 'Exact release commit SHA; required for finalize_release and optional for deploy_prod'
         required: false
@@ -32,7 +37,6 @@ on:
 permissions:
   contents: write
   statuses: read
-  actions: write
 
 concurrency:
   group: main-release-pipeline
@@ -151,6 +155,15 @@ jobs:
           if version != expected:
               raise SystemExit(f"Release target version {version} does not match next release baseline {expected}.")
           PY
+      - name: Determine extended validation scope
+        if: steps.gate.outputs.release == 'true' || inputs.dry_run == true
+        id: validation_scope
+        env:
+          RELEASE_TARGET_SHA: ${{ steps.gate.outputs.release_target_sha }}
+          FORCE_FULL_VALIDATION: ${{ inputs.full_validation }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: node scripts/extended-validation-scope.mjs
+
       - name: Revalidate current release state before deployment
         if: steps.gate.outputs.release == 'true' && inputs.dry_run != true
         env:
@@ -262,7 +275,7 @@ jobs:
           done
           exit 1
       - name: Extended production validation
-        if: steps.gate.outputs.release == 'true' || inputs.dry_run == true
+        if: steps.validation_scope.outputs.full == 'true'
         env:
           REDEPLOY: ${{ steps.gate.outputs.redeploy }}
           RELEASE_TARGET_SHA: ${{ steps.gate.outputs.release_target_sha }}
@@ -408,7 +421,7 @@ jobs:
           readme_path.write_text(readme)
           PY
           git add ops/release-state.json README.md
-          git commit -m "chore: record $tag production release [skip-release-pipeline] [capture-catalog] [skip-version-automation]"
+          git commit -m "chore: record $tag production release [skip-release-pipeline] [skip-version-automation]"
           branch="automation/release-state-v$release_version"
           git switch -c "$branch"
           git push --force origin "HEAD:refs/heads/$branch"
@@ -421,21 +434,6 @@ jobs:
               --repo "$GITHUB_REPOSITORY" \
               --base main \
               --head "$branch" \
-              --title "chore: record $tag production release [skip-release-pipeline] [capture-catalog] [skip-version-automation]" \
+              --title "chore: record $tag production release [skip-release-pipeline] [skip-version-automation]" \
               --body "Records the production deployment and updates release state after the controlled release pipeline's smoke tests passed. This PR does not trigger a deployment; merge only after pull-request CI passes."
           fi
-
-
-      - name: Trigger post-release catalog snapshot
-        if: steps.gate.outputs.release == 'true' && inputs.dry_run != true
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TARGET_SHA: ${{ steps.gate.outputs.release_target_sha }}
-        run: |
-          set -euo pipefail
-          release_version="$(python -c 'import json;print(json.load(open("ops/release-state.json"))["lastDeploymentVersion"])')"
-          gh workflow run catalog-snapshot.yml \
-            --repo "$GITHUB_REPOSITORY" \
-            --ref main \
-            -f release_version="$release_version" \
-            -f release_sha="$RELEASE_TARGET_SHA"
