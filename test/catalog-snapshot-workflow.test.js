@@ -10,6 +10,16 @@ const workflow = fs.readFileSync(
   "utf8",
 );
 
+test("snapshot capture is exclusively manual with required release metadata", () => {
+  const trigger = workflow.split("\non:\n")[1]?.split("\npermissions:")[0] ?? "";
+  assert.ok(trigger.includes("workflow_dispatch:"), "manual dispatch must be available");
+  assert.ok(trigger.includes("release_version:"));
+  assert.ok(trigger.includes("release_sha:"));
+  assert.ok(!/^\s*(push|schedule|workflow_run|repository_dispatch):/m.test(trigger));
+  assert.ok(!workflow.includes("[capture-catalog]"), "release-state commits must not launch snapshots");
+  assert.ok(!workflow.includes("github.event.head_commit"), "manual snapshot must not use push-event gating");
+});
+
 test("catalog snapshots capture all movie and series protocol catalogs across every page", () => {
   assert.ok(workflow.includes('node scripts/find-previous-catalog-snapshot.js "$RELEASE_VERSION"'));
   assert.ok(!workflow.includes("git fetch --quiet origin '+refs/heads/catalog-snapshots/v*:refs/remotes/origin/catalog-snapshots/v*' || true"));
