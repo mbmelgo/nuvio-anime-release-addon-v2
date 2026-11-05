@@ -42,7 +42,7 @@ test("temporary local budget rejection does not poison independent search querie
     permitChecks++;
     return accepted.includes(permitChecks)
       ? { success: true }
-      : { success: false, reset: Date.now() + 15_000 };
+      : { success: false, reset: Date.now() + 30_000 };
   });
   globalThis.fetch = async (_url, options) => {
     upstreamCalls++;
@@ -93,7 +93,7 @@ test("a new instance can use a recovered token after another instance exhausted 
   installFakeSharedCache();
   setAniListRateLimiterForTests(async () => {
     checks++;
-    return grant ? { success: true } : { success: false, reset: Date.now() + 15_000 };
+    return grant ? { success: true } : { success: false, reset: Date.now() + 30_000 };
   });
   globalThis.fetch = async () => {
     upstreamCalls++;
