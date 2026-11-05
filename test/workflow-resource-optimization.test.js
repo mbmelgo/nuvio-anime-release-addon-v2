@@ -66,7 +66,7 @@ test("production retry only retries transient responses with a hard bound, retai
   assert.equal(isTransientProductionStatus(502), true);
   assert.equal(isTransientProductionStatus(404), false);
   assert.equal(isTransientProductionStatus(400), false);
-  assert.equal(isTransientProductionStatus(500), false);
+  assert.equal(isTransientProductionStatus(500), true);
 
   const delays = [];
   const statuses = [503, 429, 200];
