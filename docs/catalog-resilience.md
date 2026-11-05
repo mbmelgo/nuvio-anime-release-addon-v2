@@ -140,3 +140,36 @@ a manual release dispatch can force it via `full_validation: true`.
 
 This gating reduces redundant production traffic without changing the catalog
 runtime, cache TTLs, or production deployment criteria.
+
+## Workflow resource optimizations
+
+Standalone snapshot **comparison** is manual-only, just like the production
+snapshot capture workflow. A manually captured snapshot already generates its
+comparison artifact, so no second workflow starts when its branch is pushed.
+
+The GitHub Actions historical secret scan still checks every pull request and
+push to `main`. Its daily schedule was removed because it did not execute
+Gitleaks; the manual `workflow_dispatch` remains available and now runs the
+full redacted history scan. This does not replace PR and push protection.
+
+Main-branch CI still installs dependencies, audits production packages, and
+runs the complete test suite. Only after the main CI job passes, version
+automation inspects the committed paths. Documentation, tests, workflow, and
+release-state-only changes do not open an automatic patch-version PR. Runtime
+or unknown changes are treated conservatively. When metadata is generated, the
+automation validates the actual release metadata and package-lock version,
+without reinstalling dependencies or rerunning all tests in a second job.
+
+During production releases, deployment readiness polling checks only the
+manifest until it advertises the expected version; representative series and
+movie catalogs are then checked by the existing smoke suite (up to three
+attempts). Exhaustive validation is still mandatory for catalog/runtime
+changes and explicit dry-runs. Once invoked, it makes one full catalog pass
+and retries only transient failed fetches (up to three attempts with bounded
+backoff and `Retry-After` handling); terminal HTTP errors still fail the
+release, without repeating pages that already passed validation. CI and smoke
+checks remain mandatory on every controlled release.
+
+These changes reduce avoidable GitHub Actions work and Vercel Function
+requests during failed or unstable releases. They do not alter runtime cache
+policies, and actual CPU savings have not been measured.
