@@ -63,7 +63,7 @@ test("release pipeline uses the scoped GitHub App token only for release-state P
   assert.ok(sync.includes("name: Install locked dependencies\n        run: npm ci --ignore-scripts"));
   assert.ok(sync.includes("npm audit --omit=dev --audit-level=high"));
   assert.ok(sync.includes("name: Run full CI"));
-  assert.ok(sync.includes("actions: write"));
+  assert.ok(!sync.includes("actions: write"), "release pipeline should not retain dispatch-only permission");
   assert.ok(sync.includes("automation/release-state-v$release_version"));
   assert.ok(sync.includes("[skip-version-automation]"));
   assert.ok(sync.includes("gh pr create"));
@@ -76,10 +76,9 @@ test("release pipeline uses the scoped GitHub App token only for release-state P
   assert.ok(sync.includes("AUTOMATION_TOKEN: ${{ steps.automation-app-token.outputs.token }}"));
   assert.ok(sync.includes('GH_TOKEN="$AUTOMATION_TOKEN" gh pr create'));
   assert.ok(!sync.includes("git push origin HEAD:main"));
-  assert.ok(sync.includes("name: Trigger post-release catalog snapshot"));
-  assert.ok(sync.includes("gh workflow run catalog-snapshot.yml"));
-  assert.ok(sync.includes("-f release_version="));
-  assert.ok(sync.includes("-f release_sha="));
+  assert.ok(!sync.includes("name: Trigger post-release catalog snapshot"));
+  assert.ok(!sync.includes("gh workflow run catalog-snapshot.yml"));
+  assert.ok(!sync.includes("[capture-catalog]"), "release state updates must not trigger snapshot captures");
   assert.ok(!sync.includes("pull-requests: write\n  actions: write"));
 });
 
