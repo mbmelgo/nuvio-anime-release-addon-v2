@@ -161,9 +161,20 @@ function readReadmeVersions(readme) {
   return { badge: badge[1], production: production[1], development: development[1] };
 }
 
+export function validatePackageLockVersion(packageVersion, lock) {
+  if (!lock || typeof lock !== "object" ||
+      lock.version !== packageVersion ||
+      lock.packages?.[""]?.version !== packageVersion) {
+    throw new Error("Package lock version metadata does not match package.json");
+  }
+  return true;
+}
+
 export function validateRepositoryReleaseState(root = process.cwd()) {
   const addonVersion = readVersionFile(path.join(root, "api/version.js"));
   const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+  const packageLock = JSON.parse(fs.readFileSync(path.join(root, "package-lock.json"), "utf8"));
+  validatePackageLockVersion(packageJson.version, packageLock);
   const state = JSON.parse(fs.readFileSync(path.join(root, "ops/release-state.json"), "utf8"));
   const readmeVersions = readReadmeVersions(fs.readFileSync(path.join(root, "README.md"), "utf8"));
 
