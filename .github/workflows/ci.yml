@@ -40,11 +40,19 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 26
+      - name: Check whether version metadata requires a bump
+        id: scope
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: node scripts/version-automation-scope.mjs
       - name: Bump patch version and sync metadata
+        if: steps.scope.outputs.update == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -76,13 +84,11 @@ jobs:
           readme = re.sub(r"(\*\*Development:\*\*\s*)`v?[^\`]+`", rf"\g<1>`v{next_version}`", readme)
           readme_path.write_text(readme)
           PY
-      - name: Install locked dependencies
-        run: npm ci --ignore-scripts
-      - name: Audit production dependencies
-        run: npm audit --omit=dev --audit-level=high
-      - name: Verify versioned tree
-        run: npm test
+      - name: Validate generated version metadata
+        if: steps.scope.outputs.update == 'true'
+        run: node scripts/release-integrity.mjs
       - name: Create automation GitHub App token
+        if: steps.scope.outputs.update == 'true'
         id: automation-app-token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510
         with:
@@ -92,6 +98,7 @@ jobs:
           repositories: AniBloom
           permission-pull-requests: write
       - name: Open version metadata pull request
+        if: steps.scope.outputs.update == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ steps.automation-app-token.outputs.token }}

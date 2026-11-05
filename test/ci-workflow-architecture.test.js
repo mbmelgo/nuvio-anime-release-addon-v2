@@ -107,11 +107,11 @@ test("historical secret scan uses full git history with minimal permissions and 
   assert.ok(scan.includes("push:\n    branches: [main]"));
   assert.ok(scan.includes("pull_request:\n    branches: [main]"));
   assert.ok(scan.includes("workflow_dispatch:"));
-  assert.ok(scan.includes("schedule:"));
+  assert.ok(!scan.includes("schedule:"), "unused daily secret-scan schedule should remain removed");
   assert.ok(scan.includes("permissions:\n  contents: read\n  pull-requests: read"));
   assert.ok(scan.includes("fetch-depth: 0"));
   assert.ok(scan.includes("name: Scan complete Git history"));
-  assert.ok(scan.includes("if: github.event_name == 'pull_request' || github.event_name == 'push'"));
+  assert.ok(!scan.includes("if: github.event_name == 'pull_request' || github.event_name == 'push'"), "manual dispatch must scan history too");
   assert.ok(scan.includes("persist-credentials: false"));
   assert.ok(scan.includes("actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1"));
   assert.ok(scan.includes("name: Install pinned Gitleaks CLI"));
