@@ -120,3 +120,60 @@ test("moderate cold-search bursts can wait for six token refills without exceedi
     clearAniListRateLimitState();
   }
 });
+
+test("a second region reuses exact seasonal prefix results through Redis for five minutes", async () => {
+  const previousFetch = globalThis.fetch;
+  const previousNow = Date.now;
+  let now = 1_000_000_000_000;
+  let upstreamCalls = 0;
+  const redisEntries = new Map();
+  const redis = {
+    async get(key) {
+      const entry = redisEntries.get(key);
+      return entry && entry.expiresAt > Date.now() ? entry.value : null;
+    },
+    async set(key, value, options) {
+      if (options?.nx) return "OK";
+      if (options?.ex) {
+        redisEntries.set(key, { value, ttlSeconds: options.ex, expiresAt: Date.now() + options.ex * 1000 });
+      }
+      return "OK";
+    },
+    async eval() { return 1; },
+  };
+  Date.now = () => now;
+  setAniListRedisClientForTests(redis);
+  setCatalogRuntimeCacheForTests({ async get() { return null; }, async set() { return false; } });
+  setAniListRateLimiterForTests(async () => ({ success: true }));
+  globalThis.fetch = async () => {
+    upstreamCalls++;
+    return new Response(JSON.stringify({ data: { Page: { media: [{ id: 12345 }] } } }), { status: 200 });
+  };
+  clearAniListRateLimitState();
+
+  try {
+    const filter = { season: { season: "FALL", year: 2026 }, sort: ["POPULARITY_DESC"], formats: ["TV"] };
+    const first = await queryAnime(filter, 1, "repeated-prefix", { includeMalId: true });
+    const responseEntries = [...redisEntries.entries()].filter(([key]) => key.startsWith("anibloom:anilist:response:v1:"));
+    assert.equal(responseEntries.length, 1);
+    assert.equal(responseEntries[0][1].ttlSeconds, 300);
+    assert.ok(!responseEntries[0][0].includes("repeated-prefix"), "search terms must not appear in shared cache keys");
+
+    now += 120_000;
+    clearAniListResponseCache(); // Different function instance / region without a warm Runtime Cache.
+    assert.deepEqual(await queryAnime(filter, 1, "repeated-prefix", { includeMalId: true }), first);
+    assert.equal(upstreamCalls, 1);
+
+    now += 240_000;
+    clearAniListResponseCache();
+    assert.deepEqual(await queryAnime(filter, 1, "repeated-prefix", { includeMalId: true }), first);
+    assert.equal(upstreamCalls, 2, "expired Redis results must trigger a new upstream query");
+  } finally {
+    Date.now = previousNow;
+    globalThis.fetch = previousFetch;
+    clearAniListRateLimitState();
+    setAniListRateLimiterForTests(null);
+    setAniListRedisClientForTests(null);
+    setCatalogRuntimeCacheForTests(null);
+  }
+});
