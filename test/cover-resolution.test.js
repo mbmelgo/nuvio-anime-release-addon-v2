@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { CATALOG_MEDIA_FIELDS, SCHEDULE_MEDIA_FIELDS } from "../lib/catalog-anilist.js";
 import { selectAniListPoster, toMetaFromAniList } from "../lib/catalog-meta.js";
 
-const EXTRA_LARGE = "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx187316-example.jpg";
+const EXTRA_LARGE = "https://example.test/cover-extra-large.jpg";
 const LARGE = "https://example.test/cover-large.jpg";
 const MEDIUM = "https://example.test/cover-medium.jpg";
 
@@ -46,6 +46,7 @@ test("invalid or unsafe cover variants are skipped and no poster is emitted if a
     "ftp://example.test/a.jpg",
     "https://user:password@example.test/a.jpg",
     "not-a-url",
+    "https://example.test/space in filename.jpg",
     "",
     "   ",
     17,
